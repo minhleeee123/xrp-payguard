@@ -3,7 +3,7 @@
 Status: `observed`, not a PayGuard deployment or release manifest.
 
 On 2026-08-09, the local read-only resolver queried the official Flare Contract
-Registry at block `33790374` using the supported Coston2 RPC
+Registry at block `33791042` using the supported Coston2 RPC
 `https://coston2-api.flare.network/ext/C/rpc`. The registry address is the
 canonical Flare registry, not a PayGuard contract. The lookup returned the
 following non-zero addresses and non-empty runtime bytecode:
