@@ -5,9 +5,11 @@ import {
   unavailablePayeeState,
   unavailableRequestState,
   unavailableVaultState,
+  unavailableWorkspaceState,
   type PublicAuditReadState,
   type PublicPayeeReadState,
   type PublicRequestReadState,
+  type PublicWorkspaceReadState,
   type VaultReadState,
 } from "@xrp-payguard/integrations";
 import {
@@ -40,6 +42,7 @@ let vaultState: VaultReadState = unavailableVaultState();
 let requestState: PublicRequestReadState = unavailableRequestState();
 let auditState: PublicAuditReadState = unavailableAuditState();
 let payeeState: PublicPayeeReadState = unavailablePayeeState();
+let workspaceState: PublicWorkspaceReadState = unavailableWorkspaceState();
 
 const esc = (value: string): string => value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character] ?? character));
 const short = (value: string): string => value.length > 18 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value;
@@ -221,8 +224,22 @@ function auditUnavailableReason(reason: string): string {
 }
 
 function teamView(): string {
+  const workspace = workspaceState.status === "UNAVAILABLE" ? undefined : workspaceState.snapshot;
+  const workspaceReason = workspaceState.status === "UNAVAILABLE" ? workspaceUnavailableReason(workspaceState.reason) : "Finalized public role registry";
+  const roleRows = workspace
+    ? workspace.roles.map((assignment) => `<div class="role-row"><div class="avatar dashed">◌</div><div class="role-person"><strong>${esc(assignment.role)}</strong><small>${esc(short(assignment.account))} · ${assignment.active ? "Active assignment" : "Inactive assignment"}</small></div><span class="role-permission">Public role only</span></div>`).join("")
+    : `<div class="role-row"><div class="avatar purple">O</div><div class="role-person"><strong>Owner</strong><small>Local preview · policy author · funder · emergency recovery</small></div><span class="role-permission">Full public controls</span><button class="text-button" type="button">···</button></div><div class="role-row muted-row"><div class="avatar dashed">+</div><div class="role-person"><strong>Invite a teammate</strong><small>Auditor, payee, or delegated executor</small></div><button class="outline-button" type="button" data-action="invite">Invite</button></div>`;
   return `${pageIntro("ROLES & GOVERNANCE", "Team workspace", "Separate policy author, funder, executor, payee, and auditor responsibilities. No role can supply an authorization result.", "invite")}
-    <section class="panel roles-panel"><div class="panel-heading"><div><div class="eyebrow">CURRENT WORKSPACE</div><h2>Personal workspace</h2></div><span class="state-tag gray-tag">LOCAL ONLY</span></div><div class="role-row"><div class="avatar purple">O</div><div class="role-person"><strong>Owner</strong><small>Policy author · funder · emergency recovery</small></div><span class="role-permission">Full public controls</span><button class="text-button" type="button">···</button></div><div class="role-row muted-row"><div class="avatar dashed">+</div><div class="role-person"><strong>Invite a teammate</strong><small>Auditor, payee, or delegated executor</small></div><button class="outline-button" type="button" data-action="invite">Invite</button></div></section><div class="team-note"><span class="lock-icon">▣</span><div><strong>Governance is explicit</strong><p>Policy changes create a new version and new three-machine receipts. Active rules never silently mutate.</p></div></div>`;
+    <section class="panel roles-panel"><div class="panel-heading"><div><div class="eyebrow">CURRENT WORKSPACE</div><h2>Personal workspace</h2></div><span class="state-tag ${workspace ? "green-tag" : "gray-tag"}">${workspace ? "VERIFIED" : "LOCAL ONLY"}</span></div>${roleRows}</section><div class="team-note"><span class="lock-icon">▣</span><div><strong>${workspace ? "Public role registry verified" : "Role registry unavailable"}</strong><p>${esc(workspaceReason)}. Role assignments can expose public controls only; no role supplies, overrides, or infers an authorization result.</p></div></div>`;
+}
+
+function workspaceUnavailableReason(reason: string): string {
+  return ({
+    RPC_UNCONFIGURED: "No verified RPC provider configured",
+    RPC_UNAVAILABLE: "RPC provider unavailable",
+    REGISTRY_UNFINALIZED: "Role registry is not finalized",
+    REGISTRY_INVALID: "Public role registry failed validation",
+  } as Record<string, string>)[reason] ?? "Public role registry unavailable";
 }
 
 function wireEvents(): void {

@@ -24,6 +24,8 @@ by the public evidence wire.
 Payee receipts bind the public target, asset, amount, expected timing, request
 hash, settlement transaction, and resulting checkpoint; missing or drifting
 receipts remain unavailable.
+Team roles are schema-checked and hashed as public assignments; the permission
+projection covers public controls only and always returns `canAuthorize: false`.
 
 Run locally with the pinned Node toolchain:
 
