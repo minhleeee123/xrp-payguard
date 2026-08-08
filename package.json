@@ -16,6 +16,7 @@
     "privacy:scan": "node tooling/privacy-scan.mjs",
     "evidence:check": "node tooling/check-evidence.mjs",
     "release:check": "node tooling/check-release.mjs",
-    "check": "pnpm toolchain:check && pnpm docs:check && pnpm secret:scan && pnpm privacy:scan && pnpm evidence:check && pnpm release:check && pnpm bindings:check"
+    "release:test": "node --test tooling/check-release.test.mjs",
+    "check": "pnpm toolchain:check && pnpm docs:check && pnpm secret:scan && pnpm privacy:scan && pnpm evidence:check && pnpm release:check && pnpm release:test && pnpm bindings:check"
   }
 }
