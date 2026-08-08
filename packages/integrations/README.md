@@ -83,6 +83,13 @@ verification claim. The helper never submits an FDC request, verifies the
 Merkle root, signs, or logs credentials. The public DA service is rate-limited;
 production must use an appropriately controlled DA service.
 
+`readCoston2FdcRoundFinality` is the public on-chain finality checkpoint. It
+resolves `fdcProtocolId` and the bound `relay` from the supplied
+`FdcVerification` address, reads `isFinalized(protocolId, votingRoundId)`, and
+reads a non-zero `merkleRoots` value only after finality is reported. A pending
+round returns `merkleRoot: null`; the reader does not submit, verify a proof
+leaf, or treat a DA envelope as authorized payment evidence.
+
 `computeDirectMintingPaymentQuote` and `readDirectMintingPaymentQuote` cover the
 official FAssets direct-mint amount boundary. They use integer UBA values and
 the AssetManager getters `getDirectMintingFeeBIPS`,

@@ -34,6 +34,12 @@ without logging the runtime key. Its `AVAILABLE` envelope means DA retrieval
 only; on-chain round finality and Merkle verification remain separate gates.
 It does not submit, sign, or treat a retrieved envelope as a verified payment.
 
+The finality boundary separately resolves `fdcProtocolId` and the bound relay
+from the runtime `FdcVerification` address, then reads
+`isFinalized(protocolId, votingRoundId)` and (only after finality) the non-zero
+Merkle root. A pending round remains an explicit checkpoint; no proof leaf is
+accepted until a later verifier binds the DA envelope to that root.
+
 The codec validates non-zero EVM addresses, uint bounds, call/data limits,
 wallet ID, and executor fee. It returns only public bytes, hashes, nonce, and
 the sum of call values. It never accepts an XRPL seed, signs a Payment, calls
@@ -70,3 +76,4 @@ Official references:
 - [XRPL ledger method](https://xrpl.org/docs/references/http-websocket-apis/public-api-methods/ledger-methods/ledger)
 - [FDC getting started](https://dev.flare.network/fdc/getting-started)
 - [FDC `IXRPPayment` reference](https://dev.flare.network/fdc/reference/IXRPPayment)
+- [FDC `IFdcVerification` reference](https://dev.flare.network/fdc/reference/IFdcVerification)

@@ -27,7 +27,7 @@ Forbidden evidence:
 | D — Deterministic evaluation | cross-language vectors and private policy result | LOCAL PASS / LIVE NOT VERIFIED |
 | E — Threshold execution | two distinct exact results authorize one atomic action | LOCAL PASS / CONTRACTS DEPLOYED / FCC EXECUTION OPEN |
 | F — Vault conservation | deposits/reservations/spend/refund and adversarial invariants | LOCAL PASS / VAULT DEPLOYED / LIVE ASSET LIFECYCLE OPEN |
-| G — XRP-native funding | XRPL payment, FDC proof, Smart Account deposit | LOCAL FUNDING CHECKPOINTS + PUBLIC `PersonalAccount`/nonce/`0xFE`/`XRPPayment` REQUEST CODEC + INTEGER FASSETS QUOTE + VALIDATED XRPL READ + STRICT FDC PREPARE/DA ENVELOPE PARSE PASS / LIVE PAYMENT, FDC FINALITY/PROOF VERIFICATION, AND SMART ACCOUNT DEPOSIT NOT VERIFIED |
+| G — XRP-native funding | XRPL payment, FDC proof, Smart Account deposit | LOCAL FUNDING CHECKPOINTS + PUBLIC `PersonalAccount`/nonce/`0xFE`/`XRPPayment` REQUEST CODEC + INTEGER FASSETS QUOTE + VALIDATED XRPL READ + STRICT FDC PREPARE/DA ENVELOPE/FINALITY CHECKPOINT PASS / LIVE PAYMENT, FDC MERKLE LEAF VERIFICATION, AND SMART ACCOUNT DEPOSIT NOT VERIFIED |
 | H — Product release | full roles, recovery, accessibility, live deployment | LOCAL SHELL + LANDING + RESPONSIVE BROWSER SMOKE + CONTRACT DEPLOYMENT / HOSTED PRIVATE LIFECYCLE OPEN |
 | I — User validation | interviews, usability, and design-partner pilot | NOT STARTED |
 

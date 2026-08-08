@@ -244,6 +244,9 @@ verified on Coston2. External review and registered FCC execution remain open.
 - [x] Add a bounded Coston2 DA reader/parser for the public XRPPayment envelope;
   it binds request/response fields and Merkle-node shape without claiming
   on-chain round finality or cryptographic proof verification.
+- [x] Add a runtime-bound Coston2 FDC finality checkpoint for protocol ID,
+  relay, finalized state, and non-zero Merkle root; leaf verification remains
+  a separate live gate.
 - [x] Add an integer-only official-field FAssets direct-mint quote calculator
   and injected settings reader; live quote drift, payment, and mint execution
   remain open.
