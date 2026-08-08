@@ -22,6 +22,13 @@ FDC, submits a transaction, or decides authorization. The Master Account
 Controller address must be resolved from the current Flare Contract Registry;
 it is not copied into the codec.
 
+The same package now contains an integer-only direct-mint quote boundary. It
+reads the three official AssetManager settings through an injected reader and
+computes the UBA payment as net mint amount plus the larger of the proportional
+fee (floor division by 10,000 BIPS) and minimum fee, plus the direct executor
+fee. It is a quote/checkpoint helper only: settings can drift, and no quote is
+treated as a payment, proof, or mint receipt.
+
 The local tests cover deterministic encoding, malformed/overflow rejection,
 PersonalAccount/nonce read failures, exact memo length, and strict FDC request
 fields. A live PersonalAccount lookup, XRPL Payment, FDC request/proof,
@@ -32,3 +39,5 @@ Official references:
 - [Smart Accounts overview](https://dev.flare.network/smart-accounts/overview)
 - [Custom instruction guide](https://dev.flare.network/smart-accounts/guides/typescript-viem/custom-instruction-ts)
 - [Master Account Controller reference](https://dev.flare.network/smart-accounts/reference/IMasterAccountController)
+- [FAssets direct mint guide](https://dev.flare.network/fassets/developer-guides/fassets-direct-minting)
+- [FAssets AssetManager reference](https://dev.flare.network/fassets/reference/IAssetManager)

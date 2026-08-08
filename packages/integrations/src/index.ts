@@ -13,3 +13,4 @@ export * from "./flare-registry.js";
 export * from "./custody.js";
 export * from "./smart-account.js";
 export * from "./fdc-request.js";
+export * from "./fassets-direct-mint.js";

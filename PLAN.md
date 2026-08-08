@@ -237,6 +237,9 @@ verified on Coston2. External review and registered FCC execution remain open.
   remains open.
 - [x] Build the exact public FDC `XRPPayment` prepare request with source ID and
   executor `proofOwner`; live verifier/MIC/proof submission remains open.
+- [x] Add an integer-only official-field FAssets direct-mint quote calculator
+  and injected settings reader; live quote drift, payment, and mint execution
+  remain open.
 - [ ] Request, retrieve, and verify a real FDC `XRPPayment` proof.
 - [ ] Execute Smart Account direct mint/funding and bind payment, user-op hash,
   owner, nonce, asset, amount, executor fee, and PayGuard destination.

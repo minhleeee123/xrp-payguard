@@ -59,3 +59,12 @@ Smart Account/FDC execution remains an external gate.
 prepare body for `testXRP` or `XRP`, including the transaction ID and the
 non-zero executor `proofOwner`. It does not compute a MIC, pay an FDC fee, or
 retrieve a proof.
+
+`computeDirectMintingPaymentQuote` and `readDirectMintingPaymentQuote` cover the
+official FAssets direct-mint amount boundary. They use integer UBA values and
+the AssetManager getters `getDirectMintingFeeBIPS`,
+`getDirectMintingMinimumFeeUBA`, and `getDirectMintingExecutorFeeUBA` to derive
+`netMintAmountUBA + max(proportionalFeeUBA, minimumFeeUBA) + executorFeeUBA`.
+The reader is injected and the calculator performs no RPC, signing, XRPL
+payment, FDC proof retrieval, or mint execution. A live quote can drift before
+execution and must be re-read and bound to the eventual public receipt.
