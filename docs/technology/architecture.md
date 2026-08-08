@@ -164,6 +164,13 @@ The XRPL owner commits a Smart Account operation in a supported Payment/mint
 flow. FDC proves the exact payment, the controller resolves the PersonalAccount,
 and the operation deposits into PayGuard. Only public transaction/checkpoint
 data is retained; the owner signs in its XRPL wallet.
+The local funding model keeps separate domain hashes for the expected XRPL
+payment and Smart Account operation, recomputes both after every asynchronous
+checkpoint, seals the public transition fields in a state-checkpoint hash, and
+binds execution to the accepted FDC response commitment. A
+direct-mint success is accepted only from an exact public receipt matching all
+owner/account/destination/asset/value/fee/nonce/operation fields. Live supported
+service execution remains unverified.
 
 ### Recurring execution
 

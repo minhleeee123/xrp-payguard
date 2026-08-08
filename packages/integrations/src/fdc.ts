@@ -34,6 +34,20 @@ export interface FdcProofVerifier {
   verify(proof: XrplPaymentProofV1): Promise<boolean>;
 }
 
+export function matchesExpectedXrplPayment(
+  proof: XrplPaymentProofV1,
+  expected: ExpectedXrplPayment,
+): boolean {
+  return proof.network === expected.network
+    && proof.sourceId.toLowerCase() === expected.sourceId.toLowerCase()
+    && proof.txHash.toLowerCase() === expected.txHash.toLowerCase()
+    && proof.source === expected.source
+    && getAddress(proof.destination) === getAddress(expected.destination)
+    && proof.amountDrops === expected.amountDrops
+    && proof.memoHash.toLowerCase() === expected.memoHash.toLowerCase()
+    && proof.ledgerIndex >= expected.minLedgerIndex;
+}
+
 export async function verifyXrplPaymentProof(
   proof: XrplPaymentProofV1,
   expected: ExpectedXrplPayment,
@@ -47,15 +61,7 @@ export async function verifyXrplPaymentProof(
   if (!/^0x[0-9a-fA-F]{64}$/.test(proof.sourceId) || !/^0x[0-9a-fA-F]{64}$/.test(proof.responseCommitment)
     || proof.votingRound <= 0n || !/^0x[0-9a-fA-F]{64}$/.test(proof.txHash) || !/^0x[0-9a-fA-F]{64}$/.test(proof.memoHash)
     || !isAddress(proof.destination) || !isAddress(expected.destination)) return { ok: false, reason: "SOURCE_MISMATCH" };
-  const paymentMatches = proof.network === expected.network
-    && proof.sourceId.toLowerCase() === expected.sourceId.toLowerCase()
-    && proof.txHash.toLowerCase() === expected.txHash.toLowerCase()
-    && proof.source === expected.source
-    && getAddress(proof.destination) === getAddress(expected.destination)
-    && proof.amountDrops === expected.amountDrops
-    && proof.memoHash.toLowerCase() === expected.memoHash.toLowerCase()
-    && proof.ledgerIndex >= expected.minLedgerIndex;
-  if (!paymentMatches) return { ok: false, reason: "PAYMENT_MISMATCH" };
+  if (!matchesExpectedXrplPayment(proof, expected)) return { ok: false, reason: "PAYMENT_MISMATCH" };
   let verified = false;
   try {
     verified = await verifier.verify(proof);

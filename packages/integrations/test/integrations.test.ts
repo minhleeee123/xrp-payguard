@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { padHex, stringToHex, type Hex } from "viem";
-import { acceptFdcProof, buildOperationHash, createFundingJob, executeDirectMint, markFdcRequested, observeXrplPayment, resumeDelayed } from "../src/funding.js";
+import { padHex, stringToHex, zeroHash, type Hex } from "viem";
+import { acceptFdcProof, assertFundingJobIntegrity, buildOperationHash, createFundingJob, executeDirectMint, markFdcRequested, observeXrplPayment, resumeDelayed } from "../src/funding.js";
 import { verifyXrplPaymentProof, type ExpectedXrplPayment, type XrplPaymentProofV1 } from "../src/fdc.js";
 import { referenceValueCeil, validateFtsoSnapshot, type FtsoSnapshotV1 } from "../src/ftso.js";
 
@@ -38,12 +38,76 @@ describe("FTSO/FDC/Smart Account fail-closed boundaries", () => {
       asset: "0x00000000000000000000000000000000000000a3", amount: 1_000_000n, executorFee: 10n, nonce: 1n, memoHash: expected.memoHash, expectedPayment: expected,
     });
     expect(job.operationHash).toBe(buildOperationHash(job));
+    expect(job.expectedPaymentHash).toMatch(/^0x[0-9a-f]{64}$/);
+    expect(job.checkpointHash).toMatch(/^0x[0-9a-f]{64}$/);
+    expect(() => observeXrplPayment(job, { ...expected, sourceId: id("wrong-source"), validated: true, result: "tesSUCCESS", ledgerIndex: 11n })).toThrow(/mismatch/);
     const observed = observeXrplPayment(job, { ...expected, validated: true, result: "tesSUCCESS", ledgerIndex: 11n });
     const requested = markFdcRequested(observed, id("fdc-request"));
     const ready = await acceptFdcProof(requested, proof(), { verify: async () => true });
-    const delayed = await executeDirectMint(ready, proof(), { executeDirectMint: async () => ({ status: "DELAYED", executionAllowedAt: 30n }) });
+    const delayed = await executeDirectMint(ready, proof(), { executeDirectMint: async (candidate) => ({ status: "DELAYED", operationHash: candidate.operationHash, executionAllowedAt: 30n }) });
     expect(delayed.state).toBe("DELAYED");
     expect(resumeDelayed(delayed, 30n).state).toBe("PROOF_READY");
     await expect(executeDirectMint(ready, proof(), undefined)).rejects.toThrow(/unavailable/);
+
+    await expect(executeDirectMint({ ...ready, nonce: 2n }, proof(), { executeDirectMint: async () => { throw new Error("must not call"); } })).rejects.toThrow(/drift/);
+    await expect(executeDirectMint(
+      { ...ready, expectedPayment: { ...ready.expectedPayment, txHash: id("drifted-tx") } },
+      proof({ txHash: id("drifted-tx") }),
+      { executeDirectMint: async () => { throw new Error("must not call"); } },
+    )).rejects.toThrow(/drift/);
+    await expect(executeDirectMint(ready, proof({ responseCommitment: id("other-proof") }), { executeDirectMint: async () => { throw new Error("must not call"); } })).rejects.toThrow(/proof drift/);
+    await expect(executeDirectMint(
+      { ...ready, proofCommitment: id("other-proof") },
+      proof({ responseCommitment: id("other-proof") }),
+      { executeDirectMint: async () => { throw new Error("must not call"); } },
+    )).rejects.toThrow(/drift/);
+    await expect(executeDirectMint(ready, proof(), { executeDirectMint: async () => ({ status: "DELAYED", operationHash: id("wrong-operation"), executionAllowedAt: 30n }) })).rejects.toThrow(/unknown/);
+
+    const minted = await executeDirectMint(ready, proof(), {
+      executeDirectMint: async (candidate) => ({
+        status: "DIRECT_MINTED",
+        transactionHash: id("mint-transaction"),
+        operationHash: candidate.operationHash,
+        owner: candidate.owner,
+        personalAccount: candidate.personalAccount,
+        destination: candidate.destination,
+        asset: candidate.asset,
+        amount: candidate.amount,
+        executorFee: candidate.executorFee,
+        nonce: candidate.nonce,
+      }),
+    });
+    expect(minted).toMatchObject({ state: "DIRECT_MINTED", mintTransactionHash: id("mint-transaction") });
+    expect(() => assertFundingJobIntegrity(minted)).not.toThrow();
+    await expect(executeDirectMint(ready, proof(), {
+      executeDirectMint: async (candidate) => ({
+        status: "DIRECT_MINTED",
+        transactionHash: id("mint-transaction"),
+        operationHash: candidate.operationHash,
+        owner: candidate.owner,
+        personalAccount: candidate.personalAccount,
+        destination: candidate.destination,
+        asset: "0x00000000000000000000000000000000000000a4",
+        amount: candidate.amount,
+        executorFee: candidate.executorFee,
+        nonce: candidate.nonce,
+      }),
+    })).rejects.toThrow(/receipt drift/);
+    await expect(executeDirectMint(ready, proof(), {
+      executeDirectMint: async (candidate) => ({
+        status: "DIRECT_MINTED",
+        transactionHash: zeroHash,
+        operationHash: candidate.operationHash,
+        owner: candidate.owner,
+        personalAccount: candidate.personalAccount,
+        destination: candidate.destination,
+        asset: candidate.asset,
+        amount: candidate.amount,
+        executorFee: candidate.executorFee,
+        nonce: candidate.nonce,
+      }),
+    })).rejects.toThrow(/receipt drift/);
+    expect(() => resumeDelayed({ ...delayed, destination: "0x00000000000000000000000000000000000000a4" }, 30n)).toThrow(/drift/);
+    expect(() => resumeDelayed({ ...delayed, executionAllowedAt: 29n }, 30n)).toThrow(/drift/);
   });
 });

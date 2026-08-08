@@ -195,8 +195,11 @@ execute, or bypass FCC authorization.
 - [ ] Request, retrieve, and verify a real FDC `XRPPayment` proof.
 - [ ] Execute Smart Account direct mint/funding and bind payment, user-op hash,
   owner, nonce, asset, amount, executor fee, and PayGuard destination.
-- [ ] Support public-safe delayed-mint checkpoint/resume and reject quote,
-  address, nonce, or commitment drift.
+- [x] Implement a local fail-closed funding state machine that revalidates the
+  operation and expected-payment hashes at every transition, binds accepted FDC
+  proof commitment, and requires an exact public direct-mint receipt.
+- [ ] Prove public-safe delayed-mint checkpoint/resume and quote, address, nonce,
+  proof, operation, or receipt drift rejection against live supported services.
 - [ ] Add `EVMTransaction` and XRPL Payment trigger adapters. Add Web2Json only
   after source allowlisting and semantic trust are explicit.
 - [ ] Implement official FAssets redemption as an exit, without claiming an
