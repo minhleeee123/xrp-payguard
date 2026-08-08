@@ -1,11 +1,16 @@
 # Web application
 
-Vite laptop-first shell with Overview, Policy Studio, Vaults, Requests,
-wallet-free Auditor, and Team/roles surfaces. The Policy Studio computes a
-commitment from an in-memory draft only; it does not use browser storage, send
-ciphertext, or provide an authorization result. Other screens render explicit
-`planned`, `local`, and `unavailable` states until a verified Coston2 release is
-connected.
+Vite laptop-first shell with Overview, Policy Studio, Vaults, Requests, Payee,
+wallet-free Auditor, and Team/roles surfaces. Its visual language follows the
+repository-level [`DESIGN.md`](../../DESIGN.md). The Policy Studio computes a
+domain-bound commitment from an in-memory draft only. It includes three policy
+templates, structured local validation, fresh browser cryptographic entropy,
+and an exact activation/request/private visibility map. Its contract addresses
+are explicitly local examples, and receipt progress remains unavailable rather
+than substituting local receipts until a verified Coston2 machine set exists.
+It does not use browser storage, send ciphertext, or provide an authorization
+result. Other screens render explicit `planned`, `local`, and `unavailable`
+states until a verified Coston2 release is connected.
 
 Run locally with the pinned Node toolchain:
 
