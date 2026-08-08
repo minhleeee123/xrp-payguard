@@ -11,8 +11,10 @@ import { FDC_XRP_PAYMENT_V1, type XrplPaymentRequestBodyV1 } from "./triggers.js
 
 const HEX32 = /^0x[0-9a-fA-F]{64}$/;
 
-export const XRPL_TESTNET_SOURCE_ID = padHex(stringToHex("testXRP"), { size: 32 });
-export const XRPL_MAINNET_SOURCE_ID = padHex(stringToHex("XRP"), { size: 32 });
+// FDC source IDs are fixed-width ASCII identifiers right-padded with zero bytes,
+// matching the official attestation registry encoding.
+export const XRPL_TESTNET_SOURCE_ID = padHex(stringToHex("testXRP"), { dir: "right", size: 32 });
+export const XRPL_MAINNET_SOURCE_ID = padHex(stringToHex("XRP"), { dir: "right", size: 32 });
 
 export interface XrplPaymentPrepareRequestV1 {
   attestationType: typeof FDC_XRP_PAYMENT_V1;
