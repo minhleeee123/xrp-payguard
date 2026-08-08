@@ -30,6 +30,13 @@ only the canonical ABI tuple and returns the same fields plus their binding
 hash. This proves local wire compatibility only; an official outer FCC result
 and registered TEE signer remain Gate A evidence requirements.
 
+Deployment tooling resolves the manager from the digest-pinned official
+scaffold file, verifies the live diamond interface, and journals deploy,
+register, one-shot bind, owner permissions, and EVM key-type configuration.
+`fcc-foundation-deployment.md` defines the exact runbook and evidence boundary.
+The read-only Coston2 preflight passes at the time of implementation; broadcast
+still requires the tooling source to be committed in a clean worktree.
+
 ## Official discovery sources
 
 - FCC build flow: <https://dev.flare.network/fcc/guides/getting-started>

@@ -27,6 +27,10 @@
     "fcc:container:smoke": "node tooling/fcc-container-smoke.mjs",
     "fcc:container:test": "node --test tooling/fcc-container.test.mjs",
     "fcc:image:repro": "node tooling/fcc-image-repro.mjs",
-    "check": "pnpm toolchain:check && pnpm docs:check && pnpm secret:scan && pnpm privacy:scan && pnpm evidence:check && pnpm release:check && pnpm release:test && pnpm deploy:coston2:test && pnpm fcc:container:test && pnpm bindings:check"
+    "fcc:foundation:plan": "node tooling/fcc-foundation-deploy.mjs plan",
+    "fcc:foundation:deploy": "node tooling/fcc-foundation-deploy.mjs deploy --broadcast",
+    "fcc:foundation:verify": "node tooling/fcc-foundation-deploy.mjs verify",
+    "fcc:foundation:test": "node --test tooling/fcc-foundation-registration.test.mjs",
+    "check": "pnpm toolchain:check && pnpm docs:check && pnpm secret:scan && pnpm privacy:scan && pnpm evidence:check && pnpm release:check && pnpm release:test && pnpm deploy:coston2:test && pnpm fcc:container:test && pnpm fcc:foundation:test && pnpm bindings:check"
   }
 }

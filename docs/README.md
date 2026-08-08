@@ -22,6 +22,8 @@
   canonical encrypted policy wire, fresh TEE identity derivation, and loopback decryption.
 - [`technology/fcc-container-build.md`](technology/fcc-container-build.md):
   pinned reproducible image and disposable local three-machine smoke boundary.
+- [`technology/fcc-foundation-deployment.md`](technology/fcc-foundation-deployment.md):
+  fail-closed official-manager resolution and resumable sender registration.
 - [`technology/release-manifest.md`](technology/release-manifest.md): canonical
   public-safe Coston2 release-manifest shape and verification gate.
 - [`technology/foundations.md`](technology/foundations.md): pinned local
