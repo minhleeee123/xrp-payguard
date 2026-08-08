@@ -106,6 +106,12 @@ describe("deterministic evaluator", () => {
     expect(result.publicReasonClass).toBe("FTSO_INVALID");
     const deniedPolicy = { ...policy, denyTargets: [addressC] };
     expect(evaluatePolicy(deniedPolicy, { ...request(), policyCommitment: policyCommitment(deniedPolicy) }, state()).publicReasonClass).toBe("TARGET_DENIED");
+    const conflictingPolicy = { ...deniedPolicy, maxPerAction: 1n };
+    expect(evaluatePolicy(
+      conflictingPolicy,
+      { ...request(), policyCommitment: policyCommitment(conflictingPolicy) },
+      { ...state(), availableBalance: 1n },
+    ).publicReasonClass).toBe("TARGET_DENIED");
   });
 
   it("rejects stale public checkpoints and future requests", () => {

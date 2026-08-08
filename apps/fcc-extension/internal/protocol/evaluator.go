@@ -28,7 +28,46 @@ const (
 	ReasonActionDenied          uint8 = 13
 	ReasonFTSOInvalid           uint8 = 14
 	ReasonCooldown              uint8 = 15
+
+	ViolationPolicyDenied        uint64 = 1 << 0
+	ViolationTargetDenied        uint64 = 1 << 1
+	ViolationRequesterDenied     uint64 = 1 << 2
+	ViolationActionDenied        uint64 = 1 << 3
+	ViolationOccurrenceExceeded  uint64 = 1 << 4
+	ViolationCooldown            uint64 = 1 << 5
+	ViolationInsufficientBalance uint64 = 1 << 6
+	ViolationFTSOInvalid         uint64 = 1 << 7
+	ViolationCapExceeded         uint64 = 1 << 8
+	policyViolationMaskV1               = ViolationPolicyDenied | ViolationTargetDenied | ViolationRequesterDenied | ViolationActionDenied | ViolationOccurrenceExceeded | ViolationCooldown | ViolationInsufficientBalance | ViolationFTSOInvalid | ViolationCapExceeded
 )
+
+// ComposePolicyDecisionV1 applies one fixed priority to simultaneous rule
+// outcomes. The mask contains no policy plaintext or intermediate values.
+func ComposePolicyDecisionV1(violations uint64) (uint8, uint8) {
+	if violations & ^uint64(policyViolationMaskV1) != 0 {
+		return DecisionDeny, ReasonMalformed
+	}
+	priorities := [...]struct {
+		violation uint64
+		reason    uint8
+	}{
+		{ViolationPolicyDenied, ReasonPolicyDenied},
+		{ViolationTargetDenied, ReasonTargetDenied},
+		{ViolationRequesterDenied, ReasonRequesterDenied},
+		{ViolationActionDenied, ReasonActionDenied},
+		{ViolationOccurrenceExceeded, ReasonOccurrenceExceeded},
+		{ViolationCooldown, ReasonCooldown},
+		{ViolationInsufficientBalance, ReasonInsufficientBalance},
+		{ViolationFTSOInvalid, ReasonFTSOInvalid},
+		{ViolationCapExceeded, ReasonCapExceeded},
+	}
+	for _, priority := range priorities {
+		if violations&priority.violation != 0 {
+			return DecisionDeny, priority.reason
+		}
+	}
+	return DecisionAllow, ReasonOK
+}
 
 type FTSOSnapshotV1 struct {
 	FeedID     common.Hash
@@ -148,40 +187,47 @@ func EvaluatePolicy(policy PolicyV1, request ActionRequestV1, state SpendStateV1
 		}
 		return denied(request, ReasonMalformed, state.Now), nil
 	}
+	var violations uint64
 	if state.Now < normalized.StartAt || (normalized.EndAt != 0 && state.Now > normalized.EndAt) {
-		return denied(request, ReasonPolicyDenied, state.Now), nil
+		violations |= ViolationPolicyDenied
 	}
 	if containsAddress(normalized.DenyTargets, request.Target) || (len(normalized.AllowTargets) > 0 && !containsAddress(normalized.AllowTargets, request.Target)) {
-		return denied(request, ReasonTargetDenied, state.Now), nil
+		violations |= ViolationTargetDenied
 	}
 	if len(normalized.AllowRequesters) > 0 && !containsAddress(normalized.AllowRequesters, request.Requester) {
-		return denied(request, ReasonRequesterDenied, state.Now), nil
+		violations |= ViolationRequesterDenied
 	}
 	if len(normalized.AllowActionTypes) > 0 && !containsHash(normalized.AllowActionTypes, request.ActionType) {
-		return denied(request, ReasonActionDenied, state.Now), nil
+		violations |= ViolationActionDenied
 	}
 	if normalized.MaxOccurrences != 0 && state.OccurrenceCount >= normalized.MaxOccurrences {
-		return denied(request, ReasonOccurrenceExceeded, state.Now), nil
+		violations |= ViolationOccurrenceExceeded
 	}
 	if normalized.CooldownSecs != 0 && state.LastExecutionAt != 0 && state.Now < state.LastExecutionAt+normalized.CooldownSecs {
-		return denied(request, ReasonCooldown, state.Now), nil
+		violations |= ViolationCooldown
 	}
 	if state.AvailableBalance.Cmp(request.Amount) < 0 {
-		return denied(request, ReasonInsufficientBalance, state.Now), nil
+		violations |= ViolationInsufficientBalance
 	}
 	referenceValue := new(big.Int).Set(request.Amount)
 	if normalized.RequireFTSO {
 		if state.FTSO == nil || state.FTSO.Value == nil || state.FTSO.FeedID != normalized.FTSOFeedID || state.FTSO.Timestamp > state.Now || state.Now-state.FTSO.Timestamp > normalized.MaxPriceAgeSecs || state.FTSO.Checkpoint == zeroHash() || request.InputCommitment != state.FTSO.Checkpoint {
-			return denied(request, ReasonFTSOInvalid, state.Now), nil
+			violations |= ViolationFTSOInvalid
+		} else {
+			value, valid := ReferenceValueV1(request.Amount, state.FTSO.Value, state.FTSO.Decimals)
+			if !valid {
+				violations |= ViolationFTSOInvalid
+			} else {
+				referenceValue = value
+			}
 		}
-		value, valid := ReferenceValueV1(request.Amount, state.FTSO.Value, state.FTSO.Decimals)
-		if !valid {
-			return denied(request, ReasonFTSOInvalid, state.Now), nil
-		}
-		referenceValue = value
 	}
-	if (normalized.MaxPerAction.Sign() != 0 && referenceValue.Cmp(normalized.MaxPerAction) > 0) || (normalized.DailyCap.Sign() != 0 && new(big.Int).Add(new(big.Int).Set(state.DailySpend), referenceValue).Cmp(normalized.DailyCap) > 0) || (normalized.RollingCap.Sign() != 0 && new(big.Int).Add(new(big.Int).Set(state.RollingSpend), referenceValue).Cmp(normalized.RollingCap) > 0) {
-		return denied(request, ReasonCapExceeded, state.Now), nil
+	if violations&ViolationFTSOInvalid == 0 && ((normalized.MaxPerAction.Sign() != 0 && referenceValue.Cmp(normalized.MaxPerAction) > 0) || (normalized.DailyCap.Sign() != 0 && new(big.Int).Add(new(big.Int).Set(state.DailySpend), referenceValue).Cmp(normalized.DailyCap) > 0) || (normalized.RollingCap.Sign() != 0 && new(big.Int).Add(new(big.Int).Set(state.RollingSpend), referenceValue).Cmp(normalized.RollingCap) > 0)) {
+		violations |= ViolationCapExceeded
+	}
+	decision, reason := ComposePolicyDecisionV1(violations)
+	if decision == DecisionDeny {
+		return denied(request, reason, state.Now), nil
 	}
 	nextCheckpoint, err := calculateNextCheckpoint(request, request.Amount, state.OccurrenceCount+1, state.Now)
 	if err != nil {

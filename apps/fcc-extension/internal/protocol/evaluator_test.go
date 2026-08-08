@@ -67,6 +67,23 @@ func TestEvaluatorDeniesFailClosed(t *testing.T) {
 	if result.PublicReasonClass != ReasonTargetDenied {
 		t.Fatalf("target reason: %d", result.PublicReasonClass)
 	}
+	conflictingPolicy := deniedPolicy
+	conflictingPolicy.MaxPerAction = big.NewInt(1)
+	conflictingCommitment, err := PolicyCommitment(conflictingPolicy)
+	if err != nil {
+		t.Fatal(err)
+	}
+	conflictingRequest := request
+	conflictingRequest.PolicyCommitment = conflictingCommitment
+	conflictingState := state
+	conflictingState.AvailableBalance = big.NewInt(1)
+	result, err = EvaluatePolicy(conflictingPolicy, conflictingRequest, conflictingState)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.PublicReasonClass != ReasonTargetDenied {
+		t.Fatalf("conflict reason: %d", result.PublicReasonClass)
+	}
 
 	cappedPolicy := policy
 	cappedPolicy.MaxPerAction = big.NewInt(50)

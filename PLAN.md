@@ -125,14 +125,15 @@ machines authorize one domain-bound test action.
 
 ### Phase 3 — deterministic policy protocol
 
-Codec/evaluator checks marked here are local cross-language coverage; full
-Solidity policy composition and live machine-domain verification remain open.
+Codec/evaluator checks marked here are local cross-language coverage. Solidity
+contains math and bitmask-only composition references, never private policy
+fields; live machine-domain verification remains open.
 
 - [x] Freeze `POLICY_SCHEMA_V1`, `POLICY_RECEIPT_V1`, `ACTION_REQUEST_V1`,
   `SPEND_CHECKPOINT_V1`, and `EVALUATION_RESULT_V1`.
 - [x] Implement fixed-point value conversion with shared Go/Solidity/TypeScript
   golden vectors.
-- [ ] Implement deterministic policy composition with shared
+- [x] Implement deterministic policy composition with shared
   Go/Solidity/TypeScript golden vectors.
 - [ ] Implement recurring slots, rolling windows, target rules, occurrence
   limits, delegated allowances, expiry, and deny precedence.

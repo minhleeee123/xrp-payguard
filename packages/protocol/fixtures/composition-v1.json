@@ -1,0 +1,16 @@
+{
+  "schema": "POLICY_COMPOSITION_V1",
+  "caseCount": 10,
+  "cases": [
+    { "name": "no-violations-allows", "violations": "0", "decision": 1, "reason": 0 },
+    { "name": "cap-only", "violations": "256", "decision": 0, "reason": 9 },
+    { "name": "ftso-before-cap", "violations": "384", "decision": 0, "reason": 14 },
+    { "name": "balance-before-ftso-and-cap", "violations": "448", "decision": 0, "reason": 8 },
+    { "name": "occurrence-before-cooldown", "violations": "48", "decision": 0, "reason": 10 },
+    { "name": "requester-before-action", "violations": "12", "decision": 0, "reason": 12 },
+    { "name": "target-before-cap", "violations": "258", "decision": 0, "reason": 11 },
+    { "name": "policy-window-first", "violations": "511", "decision": 0, "reason": 1 },
+    { "name": "bit-order-does-not-change-priority", "violations": "322", "decision": 0, "reason": 11 },
+    { "name": "unknown-bit-fails-closed", "violations": "512", "decision": 0, "reason": 2 }
+  ]
+}
