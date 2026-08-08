@@ -1,0 +1,108 @@
+import { getAddress, keccak256, padHex, stringToHex, zeroAddress } from "viem";
+import { describe, expect, it } from "vitest";
+import { ACTION_FTESTXRP_TRANSFER, CHAIN_ID, ZERO_BYTES32 } from "../src/constants.js";
+import { actionRequestHash, encodePolicyV1, evaluationDigest, policyCommitment, policyReceiptDigest } from "../src/codec.js";
+import { evaluatePolicy } from "../src/evaluator.js";
+import type { ActionRequestV1, PolicyBindingV1, PolicyReceiptV1, PolicyV1, SpendStateV1 } from "../src/types.js";
+
+const addressA = getAddress("0x00000000000000000000000000000000000000a1");
+const addressB = getAddress("0x00000000000000000000000000000000000000b2");
+const addressC = getAddress("0x00000000000000000000000000000000000000c3");
+const id = (value: string) => padHex(stringToHex(value), { size: 32 });
+
+const policy: PolicyV1 = {
+  schemaVersion: 1, chainId: CHAIN_ID, registry: addressA, vault: addressB, router: addressC, owner: addressA,
+  policyId: id("policy-1"), policyVersion: 1, asset: addressB, referenceCurrency: id("USD"), maxPerAction: 100n,
+  dailyCap: 500n, rollingCap: 800n, rollingWindowSeconds: 86_400n, startAt: 1_000n, endAt: 10_000n,
+  cooldownSeconds: 0n, maxOccurrences: 5, allowTargets: [addressC, addressB], denyTargets: [], allowRequesters: [addressA],
+  allowActionTypes: [ACTION_FTESTXRP_TRANSFER], requireFtso: false, ftsoFeedId: ZERO_BYTES32, maxPriceAgeSeconds: 0n,
+  privateSalt: id("salt"), submissionNonce: id("submit"),
+};
+
+const request = (): ActionRequestV1 => ({
+  chainId: CHAIN_ID, registry: addressA, vault: addressB, router: addressC, policyId: policy.policyId, policyVersion: 1,
+  policyCommitment: policyCommitment(policy), requestId: id("request-1"), requestNonce: 1n, attempt: 0, requester: addressA,
+  target: addressC, asset: addressB, actionType: ACTION_FTESTXRP_TRANSFER, amount: 75n, scheduleSlot: 1_000n, occurrence: 0,
+  spendCheckpoint: id("spend-0"), balanceCheckpoint: id("balance-0"), inputCommitment: ZERO_BYTES32, createdAt: 1_001n,
+  graceDeadline: 1_100n, expiry: 1_200n,
+});
+
+const state = (): SpendStateV1 => ({ availableBalance: 100n, dailySpend: 0n, rollingSpend: 0n, occurrenceCount: 0, lastExecutionAt: 0n,
+  spendCheckpoint: id("spend-0"), balanceCheckpoint: id("balance-0"), now: 1_050n });
+
+describe("POLICY_SCHEMA_V1 deterministic codec", () => {
+  it("canonicalizes unordered rule lists before hashing", () => {
+    const reversed = { ...policy, allowTargets: [addressB, addressC] };
+    expect(policyCommitment(policy)).toBe(policyCommitment(reversed));
+    expect(encodePolicyV1(policy)).toMatch(/^0x[0-9a-f]+$/);
+  });
+
+  it("rejects duplicate or inconsistent private rules", () => {
+    expect(() => policyCommitment({ ...policy, denyTargets: [addressC, addressC] })).toThrow(/duplicates/);
+    expect(() => policyCommitment({ ...policy, requireFtso: true })).toThrow(/FTSO feed/);
+    expect(() => policyCommitment({ ...policy, endAt: 999n })).toThrow(/endAt/);
+  });
+});
+
+describe("ACTION_REQUEST_V1 and result domains", () => {
+  it("binds all public request fields", () => {
+    const first = actionRequestHash(request());
+    expect(first).not.toBe(actionRequestHash({ ...request(), amount: 76n }));
+    expect(first).not.toBe(actionRequestHash({ ...request(), attempt: 1 }));
+    expect(first).not.toBe(actionRequestHash({ ...request(), expiry: 1_201n }));
+  });
+
+  it("binds machine and decision fields in result signatures", () => {
+    const base = { request: request(), decision: "ALLOW" as const, publicReasonClass: "OK" as const, reservedAmount: 75n,
+      resultingCheckpoint: id("next"), resultNonce: id("result"), attempt: 0, issuedAt: 1_050n, expiry: 1_200n,
+      machineId: id("machine-a"), keyFingerprint: id("key-a") };
+    expect(evaluationDigest(base)).not.toBe(evaluationDigest({ ...base, machineId: id("machine-b") }));
+    expect(evaluationDigest(base)).not.toBe(evaluationDigest({ ...base, decision: "DENY", publicReasonClass: "POLICY_DENIED", reservedAmount: 0n }));
+  });
+
+  it("binds receipt machine, owner, and expiry", () => {
+    const binding: PolicyBindingV1 = { chainId: CHAIN_ID, registry: addressA, vault: addressB, router: addressC, owner: addressA,
+      policyId: policy.policyId, policyVersion: 1, policyCommitment: policyCommitment(policy), schema: id("schema"), extensionId: id("ext"),
+      codeVersion: id("code"), machineIds: [id("m1"), id("m2"), id("m3")], keyFingerprints: [id("k1"), id("k2"), id("k3")],
+      custodyThreshold: 3, resultThreshold: 2, policyNonce: 1n };
+    const receipt: PolicyReceiptV1 = { binding, machineId: id("m1"), keyFingerprint: id("k1"), submissionNonce: id("submit"), receiptNonce: 1n, issuedAt: 1_000n, expiry: 2_000n };
+    expect(policyReceiptDigest(receipt)).not.toBe(policyReceiptDigest({ ...receipt, expiry: 2_001n }));
+  });
+});
+
+describe("deterministic evaluator", () => {
+  it("allows an eligible action and computes a new checkpoint", () => {
+    const result = evaluatePolicy(policy, request(), state());
+    expect(result.decision).toBe("ALLOW");
+    expect(result.reservedAmount).toBe(75n);
+    expect(result.publicReasonClass).toBe("OK");
+    expect(result.resultingCheckpoint).not.toBe(request().spendCheckpoint);
+  });
+
+  it.each([
+    ["wrong domain", { chainId: 115n }, "WRONG_DOMAIN"],
+    ["deny target", { target: addressA }, "TARGET_DENIED"],
+    ["requester not allowed", { requester: addressB }, "REQUESTER_DENIED"],
+    ["balance exceeded", { amount: 101n }, "INSUFFICIENT_BALANCE"],
+    ["expired", { expiry: 1_049n }, "EXPIRED"],
+  ] as const)("denies %s", (_label, requestPatch, expected) => {
+    const result = evaluatePolicy(policy, { ...request(), ...requestPatch }, state());
+    expect(result.decision).toBe("DENY");
+    expect(result.publicReasonClass).toBe(expected);
+  });
+
+  it("denies a request over the per-action cap", () => {
+    const cappedPolicy = { ...policy, maxPerAction: 50n };
+    const result = evaluatePolicy(cappedPolicy, { ...request(), policyCommitment: policyCommitment(cappedPolicy) }, state());
+    expect(result.publicReasonClass).toBe("CAP_EXCEEDED");
+  });
+
+  it("uses deny precedence and fails closed for missing FTSO", () => {
+    const ftsoPolicy = { ...policy, requireFtso: true, ftsoFeedId: id("feed"), maxPriceAgeSeconds: 60n };
+    const result = evaluatePolicy(ftsoPolicy, { ...request(), policyCommitment: policyCommitment(ftsoPolicy), inputCommitment: keccak256(stringToHex("ftso")) }, state());
+    expect(result.decision).toBe("DENY");
+    expect(result.publicReasonClass).toBe("FTSO_INVALID");
+    const deniedPolicy = { ...policy, denyTargets: [addressC] };
+    expect(evaluatePolicy(deniedPolicy, { ...request(), policyCommitment: policyCommitment(deniedPolicy) }, state()).publicReasonClass).toBe("TARGET_DENIED");
+  });
+});

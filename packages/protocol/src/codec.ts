@@ -1,0 +1,172 @@
+import {
+  encodeAbiParameters,
+  getAddress,
+  isAddress,
+  keccak256,
+  type AbiParameter,
+  type Hex,
+} from "viem";
+import {
+  ACTION_REQUEST_V1,
+  EVALUATION_RESULT_V1,
+  POLICY_RECEIPT_V1,
+  POLICY_SCHEMA_V1,
+  REASON_CODE,
+  ZERO_BYTES32,
+} from "./constants.js";
+import type { ActionRequestV1, PolicyBindingV1, PolicyReceiptV1, PolicyV1 } from "./types.js";
+
+const policyParameters: readonly AbiParameter[] = [
+  { type: "uint16" }, { type: "uint256" }, { type: "address" }, { type: "address" }, { type: "address" },
+  { type: "address" }, { type: "bytes32" }, { type: "uint32" }, { type: "address" }, { type: "bytes32" },
+  { type: "uint256" }, { type: "uint256" }, { type: "uint256" }, { type: "uint64" }, { type: "uint64" },
+  { type: "uint64" }, { type: "uint64" }, { type: "uint32" }, { type: "address[]" }, { type: "address[]" },
+  { type: "address[]" }, { type: "bytes32[]" }, { type: "bool" }, { type: "bytes32" }, { type: "uint64" },
+  { type: "bytes32" }, { type: "bytes32" },
+];
+
+const policyBindingParameters: readonly AbiParameter[] = [
+  { type: "bytes32" }, { type: "uint256" }, { type: "address" }, { type: "address" }, { type: "address" },
+  { type: "address" }, { type: "bytes32" }, { type: "uint32" }, { type: "bytes32" }, { type: "bytes32" },
+  { type: "bytes32" }, { type: "bytes32" }, { type: "bytes32[3]" }, { type: "bytes32[3]" }, { type: "uint8" }, { type: "uint8" },
+  { type: "uint64" },
+];
+
+const receiptParameters: readonly AbiParameter[] = [
+  ...policyBindingParameters, { type: "bytes32" }, { type: "bytes32" }, { type: "bytes32" },
+  { type: "uint64" }, { type: "uint64" }, { type: "uint64" },
+];
+
+const requestParameters: readonly AbiParameter[] = [
+  { type: "bytes32" }, { type: "uint256" }, { type: "address" }, { type: "address" }, { type: "address" },
+  { type: "bytes32" }, { type: "uint32" }, { type: "bytes32" }, { type: "bytes32" }, { type: "uint64" },
+  { type: "uint32" }, { type: "address" }, { type: "address" }, { type: "address" }, { type: "bytes32" },
+  { type: "uint256" }, { type: "uint64" }, { type: "uint32" }, { type: "bytes32" }, { type: "bytes32" },
+  { type: "bytes32" }, { type: "uint64" }, { type: "uint64" }, { type: "uint64" },
+];
+
+const resultParameters: readonly AbiParameter[] = [
+  { type: "bytes32" }, ...requestParameters, { type: "bytes32" }, { type: "uint8" }, { type: "uint8" }, { type: "uint256" },
+  { type: "bytes32" }, { type: "bytes32" }, { type: "uint32" }, { type: "uint64" }, { type: "uint64" },
+  { type: "bytes32" }, { type: "bytes32" },
+];
+
+function bytes32(value: Hex, label: string): Hex {
+  if (!/^0x[0-9a-fA-F]{64}$/.test(value)) throw new Error(`${label} must be bytes32`);
+  return value.toLowerCase() as Hex;
+}
+
+function uint(value: bigint | number, label: string): bigint {
+  const result = typeof value === "number" ? BigInt(value) : value;
+  if (result < 0n) throw new Error(`${label} must be unsigned`);
+  return result;
+}
+
+function address(value: Hex, label: string): Hex {
+  if (!isAddress(value)) throw new Error(`${label} must be an address`);
+  return getAddress(value) as Hex;
+}
+
+function sortedAddresses(values: Hex[], label: string): Hex[] {
+  const normalized = values.map((value) => address(value, label).toLowerCase() as Hex).sort();
+  for (let index = 1; index < normalized.length; index += 1) {
+    if (normalized[index] === normalized[index - 1]) throw new Error(`${label} contains duplicates`);
+  }
+  return normalized;
+}
+
+function sortedBytes32(values: Hex[], label: string): Hex[] {
+  const normalized = values.map((value) => bytes32(value, label)).sort();
+  for (let index = 1; index < normalized.length; index += 1) {
+    if (normalized[index] === normalized[index - 1]) throw new Error(`${label} contains duplicates`);
+  }
+  return normalized;
+}
+
+export function normalizePolicy(policy: PolicyV1): PolicyV1 {
+  if (policy.schemaVersion !== 1) throw new Error("unsupported policy schema");
+  const endAt = uint(policy.endAt, "endAt");
+  const startAt = uint(policy.startAt, "startAt");
+  if (endAt !== 0n && endAt <= startAt) throw new Error("endAt must be after startAt");
+  if (policy.requireFtso && policy.ftsoFeedId === ZERO_BYTES32) throw new Error("FTSO feed is required");
+  if (!policy.requireFtso && policy.ftsoFeedId !== ZERO_BYTES32) throw new Error("unexpected FTSO feed");
+  return {
+    ...policy,
+    chainId: uint(policy.chainId, "chainId"),
+    registry: address(policy.registry, "registry"), vault: address(policy.vault, "vault"), router: address(policy.router, "router"),
+    owner: address(policy.owner, "owner"), policyId: bytes32(policy.policyId, "policyId"), asset: address(policy.asset, "asset"),
+    referenceCurrency: bytes32(policy.referenceCurrency, "referenceCurrency"), policyVersion: Number(uint(policy.policyVersion, "policyVersion")),
+    maxPerAction: uint(policy.maxPerAction, "maxPerAction"), dailyCap: uint(policy.dailyCap, "dailyCap"), rollingCap: uint(policy.rollingCap, "rollingCap"),
+    rollingWindowSeconds: uint(policy.rollingWindowSeconds, "rollingWindowSeconds"), startAt, endAt,
+    cooldownSeconds: uint(policy.cooldownSeconds, "cooldownSeconds"), maxOccurrences: Number(uint(policy.maxOccurrences, "maxOccurrences")),
+    allowTargets: sortedAddresses(policy.allowTargets, "allowTargets"), denyTargets: sortedAddresses(policy.denyTargets, "denyTargets"),
+    allowRequesters: sortedAddresses(policy.allowRequesters, "allowRequesters"), allowActionTypes: sortedBytes32(policy.allowActionTypes, "allowActionTypes"),
+    ftsoFeedId: bytes32(policy.ftsoFeedId, "ftsoFeedId"), maxPriceAgeSeconds: uint(policy.maxPriceAgeSeconds, "maxPriceAgeSeconds"),
+    privateSalt: bytes32(policy.privateSalt, "privateSalt"), submissionNonce: bytes32(policy.submissionNonce, "submissionNonce"),
+  };
+}
+
+export function encodePolicyV1(policy: PolicyV1): Hex {
+  const normalized = normalizePolicy(policy);
+  return encodeAbiParameters(policyParameters, [
+    normalized.schemaVersion, normalized.chainId, normalized.registry, normalized.vault, normalized.router, normalized.owner,
+    normalized.policyId, normalized.policyVersion, normalized.asset, normalized.referenceCurrency, normalized.maxPerAction,
+    normalized.dailyCap, normalized.rollingCap, normalized.rollingWindowSeconds, normalized.startAt, normalized.endAt,
+    normalized.cooldownSeconds, normalized.maxOccurrences, normalized.allowTargets, normalized.denyTargets,
+    normalized.allowRequesters, normalized.allowActionTypes, normalized.requireFtso, normalized.ftsoFeedId,
+    normalized.maxPriceAgeSeconds, normalized.privateSalt, normalized.submissionNonce,
+  ]);
+}
+
+export function policyCommitment(policy: PolicyV1): Hex {
+  return keccak256(encodePolicyV1(policy));
+}
+
+function bindingValues(binding: PolicyBindingV1): readonly unknown[] {
+  return [POLICY_SCHEMA_V1, uint(binding.chainId, "chainId"), address(binding.registry, "registry"), address(binding.vault, "vault"),
+    address(binding.router, "router"), address(binding.owner, "owner"), bytes32(binding.policyId, "policyId"), binding.policyVersion,
+    bytes32(binding.policyCommitment, "policyCommitment"), bytes32(binding.schema, "schema"), bytes32(binding.extensionId, "extensionId"),
+    bytes32(binding.codeVersion, "codeVersion"), binding.machineIds.map((value) => bytes32(value, "machineId")),
+    binding.keyFingerprints.map((value) => bytes32(value, "keyFingerprint")), binding.custodyThreshold, binding.resultThreshold,
+    uint(binding.policyNonce, "policyNonce")];
+}
+
+export function encodePolicyBinding(binding: PolicyBindingV1): Hex {
+  return encodeAbiParameters(policyBindingParameters, bindingValues(binding));
+}
+
+export function policyReceiptDigest(receipt: PolicyReceiptV1): Hex {
+  const binding = bindingValues(receipt.binding);
+  return keccak256(encodeAbiParameters(receiptParameters, [...binding, bytes32(receipt.machineId, "machineId"), bytes32(receipt.keyFingerprint, "keyFingerprint"),
+    bytes32(receipt.submissionNonce, "submissionNonce"), uint(receipt.receiptNonce, "receiptNonce"), uint(receipt.issuedAt, "issuedAt"), uint(receipt.expiry, "expiry")]));
+}
+
+function requestValues(request: ActionRequestV1): readonly unknown[] {
+  return [ACTION_REQUEST_V1, uint(request.chainId, "chainId"), address(request.registry, "registry"), address(request.vault, "vault"), address(request.router, "router"),
+    bytes32(request.policyId, "policyId"), request.policyVersion, bytes32(request.policyCommitment, "policyCommitment"), bytes32(request.requestId, "requestId"),
+    uint(request.requestNonce, "requestNonce"), request.attempt, address(request.requester, "requester"), address(request.target, "target"),
+    address(request.asset, "asset"), bytes32(request.actionType, "actionType"), uint(request.amount, "amount"), uint(request.scheduleSlot, "scheduleSlot"),
+    request.occurrence, bytes32(request.spendCheckpoint, "spendCheckpoint"), bytes32(request.balanceCheckpoint, "balanceCheckpoint"),
+    bytes32(request.inputCommitment, "inputCommitment"), uint(request.createdAt, "createdAt"), uint(request.graceDeadline, "graceDeadline"), uint(request.expiry, "expiry")];
+}
+
+export function encodeActionRequest(request: ActionRequestV1): Hex {
+  return encodeAbiParameters(requestParameters, requestValues(request));
+}
+
+export function actionRequestHash(request: ActionRequestV1): Hex {
+  return keccak256(encodeActionRequest(request));
+}
+
+export function evaluationDigest(result: Omit<import("./types.js").EvaluationResultV1, "request"> & { request: ActionRequestV1 }): Hex {
+  const request = requestValues(result.request);
+  const decision = result.decision === "ALLOW" ? 1 : 0;
+  return keccak256(encodeAbiParameters(resultParameters, [EVALUATION_RESULT_V1, ...request, bytes32(actionRequestHash(result.request), "requestHash"), decision,
+    REASON_CODE[result.publicReasonClass], uint(result.reservedAmount, "reservedAmount"), bytes32(result.resultingCheckpoint, "resultingCheckpoint"),
+    bytes32(result.resultNonce, "resultNonce"), result.attempt, uint(result.issuedAt, "issuedAt"), uint(result.expiry, "expiry"),
+    bytes32(result.machineId, "machineId"), bytes32(result.keyFingerprint, "keyFingerprint")]));
+}
+
+export function publicReasonCode(reason: import("./types.js").PublicReasonClass): number {
+  return REASON_CODE[reason];
+}
