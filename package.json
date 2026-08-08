@@ -12,9 +12,10 @@
     "docs:check": "node tooling/check-docs.mjs",
     "secret:scan": "node tooling/scan-secrets.mjs",
     "bindings:generate": "node tooling/generate-bindings.mjs",
+    "bindings:check": "node tooling/check-bindings.mjs",
     "privacy:scan": "node tooling/privacy-scan.mjs",
     "evidence:check": "node tooling/check-evidence.mjs",
     "release:check": "node tooling/check-release.mjs",
-    "check": "pnpm toolchain:check && pnpm docs:check && pnpm secret:scan && pnpm privacy:scan && pnpm evidence:check && pnpm release:check"
+    "check": "pnpm toolchain:check && pnpm docs:check && pnpm secret:scan && pnpm privacy:scan && pnpm evidence:check && pnpm release:check && pnpm bindings:check"
   }
 }

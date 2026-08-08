@@ -26,6 +26,7 @@ for (const [name, source] of contracts) {
   sections.push(`export const ${name}Abi = ${JSON.stringify(artifact.abi, null, 2)} as const;`, "");
 }
 
-const output = resolve(root, "packages/bindings/src/generated.ts");
+const requestedOutput = process.argv[2];
+const output = requestedOutput ? resolve(root, requestedOutput) : resolve(root, "packages/bindings/src/generated.ts");
 await writeFile(output, `${sections.join("\n").replace(/\n+$/, "")}\n`, "utf8");
 console.log(JSON.stringify({ status: "ok", output: output.replace(`${root}/`, ""), contracts: contracts.map(([name]) => name) }));
