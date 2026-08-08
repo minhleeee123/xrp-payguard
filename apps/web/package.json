@@ -1,0 +1,22 @@
+{
+  "name": "@xrp-payguard/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@xrp-payguard/protocol": "workspace:*",
+    "viem": "2.55.11"
+  },
+  "devDependencies": {
+    "@types/node": "24.0.0",
+    "typescript": "7.0.2",
+    "vite": "8.2.1",
+    "vitest": "4.1.10"
+  }
+}
