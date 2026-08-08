@@ -68,3 +68,10 @@ the AssetManager getters `getDirectMintingFeeBIPS`,
 The reader is injected and the calculator performs no RPC, signing, XRPL
 payment, FDC proof retrieval, or mint execution. A live quote can drift before
 execution and must be re-read and bound to the eventual public receipt.
+
+`readValidatedXrplAccountInfo`, `readValidatedXrplLedger`, and
+`readValidatedXrplPayment` expose a narrow XRPL JSON-RPC API v2 read boundary.
+They request only validated public state, reject unvalidated/RPC-error
+responses, enforce classic addresses/native-XRP amounts/ledger bounds, and cap
+memo/search inputs. The transport is injected so the package never creates a
+client, stores an endpoint credential, signs, or submits a transaction.

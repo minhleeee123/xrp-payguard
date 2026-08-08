@@ -29,6 +29,11 @@ fee (floor division by 10,000 BIPS) and minimum fee, plus the direct executor
 fee. It is a quote/checkpoint helper only: settings can drift, and no quote is
 treated as a payment, proof, or mint receipt.
 
+The package also has an injected, read-only XRPL API v2 boundary for validated
+`account_info`, `ledger`, and native-XRP `tx` responses. It is limited to public
+checkpoints, checks ledger/hash/account/payment consistency, caps memo data and
+search ranges, and never accepts a seed or submit/signing method.
+
 The local tests cover deterministic encoding, malformed/overflow rejection,
 PersonalAccount/nonce read failures, exact memo length, and strict FDC request
 fields. A live PersonalAccount lookup, XRPL Payment, FDC request/proof,
@@ -41,3 +46,6 @@ Official references:
 - [Master Account Controller reference](https://dev.flare.network/smart-accounts/reference/IMasterAccountController)
 - [FAssets direct mint guide](https://dev.flare.network/fassets/developer-guides/fassets-direct-minting)
 - [FAssets AssetManager reference](https://dev.flare.network/fassets/reference/IAssetManager)
+- [XRPL request formatting](https://xrpl.org/docs/references/http-websocket-apis/api-conventions/request-formatting)
+- [XRPL `tx` method](https://xrpl.org/docs/references/http-websocket-apis/public-api-methods/transaction-methods/tx)
+- [XRPL ledger method](https://xrpl.org/docs/references/http-websocket-apis/public-api-methods/ledger-methods/ledger)
