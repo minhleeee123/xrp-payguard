@@ -20,6 +20,9 @@ describe("Smart Account 0xFE public codec", () => {
     const second = encodeHashInstructionMemo(input);
     expect(first).toEqual(second);
     expect(first.userOperationData).toMatch(/^0x[0-9a-f]+$/);
+    // Flare Smart Accounts consume one ABI-encoded PackedUserOperation tuple;
+    // the leading tuple offset guards against accidentally encoding nine flat parameters.
+    expect(first.userOperationData.slice(2, 66)).toBe("0".repeat(62) + "20");
     expect(first.userOperationHash).toBe(keccak256(first.userOperationData));
     expect(first.memoData).toMatch(/^0xfe00[0-9a-f]{16}[0-9a-f]{64}$/);
     expect(first.memoData.length).toBe(86);

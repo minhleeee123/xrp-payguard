@@ -53,17 +53,17 @@ const PERSONAL_ACCOUNT_EXECUTE_ABI = [{
   outputs: [],
 }] as const;
 
-const PACKED_USER_OPERATION_TYPES = [
-  { type: "address" },
-  { type: "uint256" },
-  { type: "bytes" },
-  { type: "bytes" },
-  { type: "bytes32" },
-  { type: "uint256" },
-  { type: "bytes32" },
-  { type: "bytes" },
-  { type: "bytes" },
-] as const;
+const PACKED_USER_OPERATION_PARAMETER = [{ type: "tuple", components: [
+  { name: "sender", type: "address" },
+  { name: "nonce", type: "uint256" },
+  { name: "initCode", type: "bytes" },
+  { name: "callData", type: "bytes" },
+  { name: "accountGasLimits", type: "bytes32" },
+  { name: "preVerificationGas", type: "uint256" },
+  { name: "gasFees", type: "bytes32" },
+  { name: "paymasterAndData", type: "bytes" },
+  { name: "signature", type: "bytes" },
+] }] as const;
 
 export interface SmartAccountReader {
   readContract(args: {
@@ -141,17 +141,17 @@ export function encodePackedUserOperationData(input: Pick<HashInstructionInput, 
     functionName: "executeUserOp",
     args: [input.calls.map((call) => ({ target: normalizeAddress(call.target, "call target"), value: call.value, data: call.data }))],
   });
-  return encodeAbiParameters(PACKED_USER_OPERATION_TYPES, [
+  return encodeAbiParameters(PACKED_USER_OPERATION_PARAMETER, [{
     sender,
-    input.nonce,
-    "0x",
+    nonce: input.nonce,
+    initCode: "0x",
     callData,
-    zeroHash,
-    0n,
-    zeroHash,
-    "0x",
-    "0x",
-  ]) as Hex;
+    accountGasLimits: zeroHash,
+    preVerificationGas: 0n,
+    gasFees: zeroHash,
+    paymasterAndData: "0x",
+    signature: "0x",
+  }]) as Hex;
 }
 
 export function encodeHashInstructionMemo(input: HashInstructionInput): HashInstructionEncoding {
