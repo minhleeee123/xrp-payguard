@@ -53,6 +53,7 @@ let payeeState: PublicPayeeReadState = unavailablePayeeState();
 let workspaceState: PublicWorkspaceReadState = unavailableWorkspaceState();
 let notificationState: PublicNotificationReadState = unavailableNotificationState();
 let notificationOpen = false;
+let mobileMenuOpen = false;
 
 const esc = (value: string): string => value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character] ?? character));
 const short = (value: string): string => value.length > 18 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value;
@@ -71,7 +72,9 @@ function render(): void {
           ${navItem("payee", "Payee", "◍")}
           ${navItem("auditor", "Auditor", "◌")}
           ${navItem("team", "Team & roles", "♧")}
+          <button class="nav-item mobile-more" type="button" data-action="mobile-menu" aria-expanded="${mobileMenuOpen}" aria-controls="mobile-secondary-nav"><span class="nav-icon">＋</span>More</button>
         </nav>
+        ${mobileMenuOpen ? `<div class="mobile-secondary-nav" id="mobile-secondary-nav" aria-label="Secondary navigation">${navItem("payee", "Payee", "◍")}${navItem("auditor", "Auditor", "◌")}${navItem("team", "Team & roles", "♧")}</div>` : ""}
         <div class="sidebar-bottom">
           <div class="security-card"><span class="status-dot amber"></span><div><strong>Local preview</strong><small>Live providers are not connected</small></div></div>
           <button class="help-link" type="button" data-action="help">? <span>How PayGuard works</span></button>
@@ -89,7 +92,7 @@ function render(): void {
 }
 
 function navItem(view: View, text: string, icon: string): string {
-  return `<button class="nav-item ${activeView === view ? "active" : ""}" type="button" data-view="${view}"><span class="nav-icon">${icon}</span>${text}${view === "requests" ? '<span class="nav-count">2</span>' : ""}</button>`;
+  return `<button class="nav-item nav-item-${view} ${activeView === view ? "active" : ""}" type="button" data-view="${view}"><span class="nav-icon">${icon}</span>${text}${view === "requests" ? '<span class="nav-count">2</span>' : ""}</button>`;
 }
 
 function label(view: View): string { return ({ overview: "Overview", studio: "Policy Studio", vaults: "Vaults", requests: "Requests", payee: "Payee", auditor: "Auditor", team: "Team & roles" })[view]; }
@@ -303,7 +306,7 @@ function workspaceUnavailableReason(reason: string): string {
 }
 
 function wireEvents(): void {
-  app.querySelectorAll<HTMLButtonElement>("[data-view]").forEach((button) => button.addEventListener("click", () => { activeView = button.dataset.view as View; render(); }));
+  app.querySelectorAll<HTMLButtonElement>("[data-view]").forEach((button) => button.addEventListener("click", () => { activeView = button.dataset.view as View; mobileMenuOpen = false; render(); }));
   app.querySelectorAll<HTMLButtonElement>("[data-action]").forEach((button) => button.addEventListener("click", () => handleAction(button.dataset.action ?? "")));
   app.querySelectorAll<HTMLButtonElement>("[data-template]").forEach((button) => button.addEventListener("click", () => selectTemplate(button.dataset.template ?? "")));
   const form = app.querySelector<HTMLFormElement>("#studio-form");
@@ -323,6 +326,7 @@ function wireEvents(): void {
 function handleAction(action: string): void {
   if (action === "new-policy") { activeView = "studio"; render(); return; }
   if (action === "notifications") { notificationOpen = !notificationOpen; render(); return; }
+  if (action === "mobile-menu") { mobileMenuOpen = !mobileMenuOpen; render(); return; }
   if (action === "export-notifications") { exportNotifications(); return; }
   if (action === "verify") appNotice = "Evidence endpoint is unavailable; no transaction, block, proof, or signer was asserted.";
   else if (action === "connect") appNotice = "Wallet providers are unavailable until a verified Coston2 release is configured.";

@@ -107,6 +107,7 @@ h1, h2, h3 { font-family: var(--font-pt-serif); font-weight: 300; }
 .workspace-label::after, .eyebrow::after { content: " ]"; }
 
 .primary-nav { display: grid; gap: 2px; }
+.mobile-more, .mobile-secondary-nav { display: none; }
 
 .nav-item {
   display: flex;
@@ -406,10 +407,28 @@ h1, h2, h3 { font-family: var(--font-pt-serif); font-weight: 300; }
   .sidebar { position: fixed; z-index: 4; right: 0; bottom: 0; left: 0; width: 100%; min-height: 0; height: 64px; flex-basis: auto; padding: 5px 7px; border-top: 1px solid var(--color-graphite); border-right: 0; background: var(--color-void-black); }
   .brand, .workspace-label, .sidebar-bottom { display: none; }
   .primary-nav { display: flex; justify-content: space-around; gap: 2px; }
+  .mobile-more { display: flex; }
   .nav-item { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2px; min-width: 0; padding: 5px 3px; border-top: 1px solid transparent; border-left: 0; font-size: 8px; letter-spacing: .06em; text-align: center; }
   .nav-item.active { border-top-color: var(--color-signal-lime); border-left: 0; }
+  .primary-nav > .nav-item-payee, .primary-nav > .nav-item-auditor, .primary-nav > .nav-item-team { display: none; }
   .nav-icon { width: auto; font-size: 15px; }
   .nav-count { position: absolute; margin: -20px 0 0 21px; }
+  .mobile-secondary-nav {
+    position: fixed;
+    right: 8px;
+    bottom: 68px;
+    left: 8px;
+    z-index: 5;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 2px;
+    border: 1px solid var(--color-graphite);
+    padding: 5px;
+    background: var(--color-void-black);
+    box-shadow: 0 0 0 1px var(--color-carbon);
+  }
+  .mobile-secondary-nav .nav-item { display: flex; min-height: 48px; border: 0; }
+  .mobile-secondary-nav .nav-item.active { color: var(--color-signal-lime); }
   .topbar { height: 60px; padding: 0 16px; }
   .breadcrumbs span, .breadcrumbs b { display: none; }
   .top-actions { gap: 7px; }
