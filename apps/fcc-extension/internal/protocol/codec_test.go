@@ -42,6 +42,8 @@ type vectorPolicy struct {
 	RollingWindowSeconds string   `json:"rollingWindowSeconds"`
 	StartAt              string   `json:"startAt"`
 	EndAt                string   `json:"endAt"`
+	ScheduleInterval     string   `json:"scheduleIntervalSeconds"`
+	ScheduleGrace        string   `json:"scheduleGraceSeconds"`
 	CooldownSeconds      string   `json:"cooldownSeconds"`
 	MaxOccurrences       uint32   `json:"maxOccurrences"`
 	AllowTargets         []string `json:"allowTargets"`
@@ -158,7 +160,7 @@ func policyFromVector(v vectorPolicy) PolicyV1 {
 		}
 		return result
 	}
-	return PolicyV1{SchemaVersion: v.SchemaVersion, ChainID: bigFromString(v.ChainID), Registry: mustAddress(v.Registry), Vault: mustAddress(v.Vault), Router: mustAddress(v.Router), Owner: mustAddress(v.Owner), PolicyID: mustHash(v.PolicyID), PolicyVersion: v.PolicyVersion, Asset: mustAddress(v.Asset), ReferenceCurrency: mustHash(v.ReferenceCurrency), MaxPerAction: bigFromString(v.MaxPerAction), DailyCap: bigFromString(v.DailyCap), RollingCap: bigFromString(v.RollingCap), RollingWindowSecs: mustUint64(v.RollingWindowSeconds), StartAt: mustUint64(v.StartAt), EndAt: mustUint64(v.EndAt), CooldownSecs: mustUint64(v.CooldownSeconds), MaxOccurrences: v.MaxOccurrences, AllowTargets: addresses(v.AllowTargets), DenyTargets: addresses(v.DenyTargets), AllowRequesters: addresses(v.AllowRequesters), AllowActionTypes: hashes(v.AllowActionTypes), RequireFTSO: v.RequireFTSO, FTSOFeedID: mustHash(v.FTSOFeedID), MaxPriceAgeSecs: mustUint64(v.MaxPriceAgeSeconds), PrivateSalt: mustHash(v.PrivateSalt), SubmissionNonce: mustHash(v.SubmissionNonce)}
+	return PolicyV1{SchemaVersion: v.SchemaVersion, ChainID: bigFromString(v.ChainID), Registry: mustAddress(v.Registry), Vault: mustAddress(v.Vault), Router: mustAddress(v.Router), Owner: mustAddress(v.Owner), PolicyID: mustHash(v.PolicyID), PolicyVersion: v.PolicyVersion, Asset: mustAddress(v.Asset), ReferenceCurrency: mustHash(v.ReferenceCurrency), MaxPerAction: bigFromString(v.MaxPerAction), DailyCap: bigFromString(v.DailyCap), RollingCap: bigFromString(v.RollingCap), RollingWindowSecs: mustUint64(v.RollingWindowSeconds), StartAt: mustUint64(v.StartAt), EndAt: mustUint64(v.EndAt), ScheduleIntervalSecs: mustUint64(v.ScheduleInterval), ScheduleGraceSecs: mustUint64(v.ScheduleGrace), CooldownSecs: mustUint64(v.CooldownSeconds), MaxOccurrences: v.MaxOccurrences, AllowTargets: addresses(v.AllowTargets), DenyTargets: addresses(v.DenyTargets), AllowRequesters: addresses(v.AllowRequesters), AllowActionTypes: hashes(v.AllowActionTypes), RequireFTSO: v.RequireFTSO, FTSOFeedID: mustHash(v.FTSOFeedID), MaxPriceAgeSecs: mustUint64(v.MaxPriceAgeSeconds), PrivateSalt: mustHash(v.PrivateSalt), SubmissionNonce: mustHash(v.SubmissionNonce)}
 }
 
 func bigFromString(value string) *big.Int {
@@ -233,5 +235,15 @@ func TestPolicyNormalizationRejectsDuplicate(t *testing.T) {
 	policy.DenyTargets = []common.Address{policy.Router, policy.Router}
 	if _, err := PolicyCommitment(policy); err == nil {
 		t.Fatal("expected duplicate target rejection")
+	}
+	invalidSchedule := policyFromVector(vector.Policy)
+	invalidSchedule.ScheduleGraceSecs = invalidSchedule.ScheduleIntervalSecs
+	if _, err := PolicyCommitment(invalidSchedule); err == nil {
+		t.Fatal("expected overlapping schedule rejection")
+	}
+	shortPolicy := policyFromVector(vector.Policy)
+	shortPolicy.EndAt = 1050
+	if _, err := PolicyCommitment(shortPolicy); err == nil {
+		t.Fatal("expected schedule past policy end rejection")
 	}
 }

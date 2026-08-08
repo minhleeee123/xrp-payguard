@@ -23,33 +23,35 @@ var (
 var maxUint256 = new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(1))
 
 type PolicyV1 struct {
-	SchemaVersion     uint16
-	ChainID           *big.Int
-	Registry          common.Address
-	Vault             common.Address
-	Router            common.Address
-	Owner             common.Address
-	PolicyID          common.Hash
-	PolicyVersion     uint32
-	Asset             common.Address
-	ReferenceCurrency common.Hash
-	MaxPerAction      *big.Int
-	DailyCap          *big.Int
-	RollingCap        *big.Int
-	RollingWindowSecs uint64
-	StartAt           uint64
-	EndAt             uint64
-	CooldownSecs      uint64
-	MaxOccurrences    uint32
-	AllowTargets      []common.Address
-	DenyTargets       []common.Address
-	AllowRequesters   []common.Address
-	AllowActionTypes  []common.Hash
-	RequireFTSO       bool
-	FTSOFeedID        common.Hash
-	MaxPriceAgeSecs   uint64
-	PrivateSalt       common.Hash
-	SubmissionNonce   common.Hash
+	SchemaVersion        uint16
+	ChainID              *big.Int
+	Registry             common.Address
+	Vault                common.Address
+	Router               common.Address
+	Owner                common.Address
+	PolicyID             common.Hash
+	PolicyVersion        uint32
+	Asset                common.Address
+	ReferenceCurrency    common.Hash
+	MaxPerAction         *big.Int
+	DailyCap             *big.Int
+	RollingCap           *big.Int
+	RollingWindowSecs    uint64
+	StartAt              uint64
+	EndAt                uint64
+	ScheduleIntervalSecs uint64
+	ScheduleGraceSecs    uint64
+	CooldownSecs         uint64
+	MaxOccurrences       uint32
+	AllowTargets         []common.Address
+	DenyTargets          []common.Address
+	AllowRequesters      []common.Address
+	AllowActionTypes     []common.Hash
+	RequireFTSO          bool
+	FTSOFeedID           common.Hash
+	MaxPriceAgeSecs      uint64
+	PrivateSalt          common.Hash
+	SubmissionNonce      common.Hash
 }
 
 type PolicyBindingV1 struct {
@@ -194,6 +196,15 @@ func normalizePolicy(policy PolicyV1) (PolicyV1, error) {
 	if policy.RollingCap.Sign() != 0 && policy.RollingWindowSecs == 0 {
 		return PolicyV1{}, errors.New("rolling window is required")
 	}
+	if (policy.ScheduleIntervalSecs == 0) != (policy.ScheduleGraceSecs == 0) {
+		return PolicyV1{}, errors.New("schedule interval and grace must both be zero or positive")
+	}
+	if policy.ScheduleIntervalSecs != 0 {
+		firstWindow, valid := ScheduleWindowV1(policy.StartAt, policy.ScheduleIntervalSecs, policy.ScheduleGraceSecs, 1)
+		if !valid || (policy.EndAt != 0 && firstWindow.Deadline > policy.EndAt) {
+			return PolicyV1{}, errors.New("invalid recurring schedule")
+		}
+	}
 	maxPerAction, err := uint256(policy.MaxPerAction, "maxPerAction")
 	if err != nil {
 		return PolicyV1{}, err
@@ -242,10 +253,10 @@ func EncodePolicyV1(policy PolicyV1) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	types := []string{"uint16", "uint256", "address", "address", "address", "address", "bytes32", "uint32", "address", "bytes32", "uint256", "uint256", "uint256", "uint64", "uint64", "uint64", "uint64", "uint32", "address[]", "address[]", "address[]", "bytes32[]", "bool", "bytes32", "uint64", "bytes32", "bytes32"}
+	types := []string{"uint16", "uint256", "address", "address", "address", "address", "bytes32", "uint32", "address", "bytes32", "uint256", "uint256", "uint256", "uint64", "uint64", "uint64", "uint64", "uint64", "uint64", "uint32", "address[]", "address[]", "address[]", "bytes32[]", "bool", "bytes32", "uint64", "bytes32", "bytes32"}
 	return pack(types, normalized.SchemaVersion, normalized.ChainID, normalized.Registry, normalized.Vault, normalized.Router, normalized.Owner, normalized.PolicyID,
 		normalized.PolicyVersion, normalized.Asset, normalized.ReferenceCurrency, normalized.MaxPerAction, normalized.DailyCap, normalized.RollingCap,
-		normalized.RollingWindowSecs, normalized.StartAt, normalized.EndAt, normalized.CooldownSecs, normalized.MaxOccurrences, normalized.AllowTargets,
+		normalized.RollingWindowSecs, normalized.StartAt, normalized.EndAt, normalized.ScheduleIntervalSecs, normalized.ScheduleGraceSecs, normalized.CooldownSecs, normalized.MaxOccurrences, normalized.AllowTargets,
 		normalized.DenyTargets, normalized.AllowRequesters, normalized.AllowActionTypes, normalized.RequireFTSO, normalized.FTSOFeedID,
 		normalized.MaxPriceAgeSecs, normalized.PrivateSalt, normalized.SubmissionNonce)
 }

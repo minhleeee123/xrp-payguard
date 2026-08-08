@@ -139,6 +139,8 @@ fields; live machine-domain verification remains open.
   limits, delegated allowances, expiry, and deny precedence.
 - [x] Freeze checked, inclusive UTC recurring-slot arithmetic with shared
   Go/Solidity/TypeScript boundary and overflow vectors.
+- [x] Bind recurring interval/grace into `POLICY_SCHEMA_V1` and enforce exact
+  slot, occurrence, inclusive deadline, expiry, and ad-hoc-zero semantics.
 - [ ] Define deterministic tie/conflict rules: explicit deny outranks allow;
   malformed, unknown, stale, or unavailable input denies.
 - [ ] Add range, rounding, overflow, time-boundary, timezone-independent,

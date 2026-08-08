@@ -1,6 +1,7 @@
 import { encodeAbiParameters, keccak256, type Hex } from "viem";
 import { ACTION_FTESTXRP_TRANSFER, SPEND_CHECKPOINT_V1, ZERO_BYTES32 } from "./constants.js";
 import { actionRequestHash, genesisSpendCheckpoint, normalizePolicy, policyCommitment } from "./codec.js";
+import { scheduleWindowV1 } from "./schedule.js";
 import type { ActionRequestV1, Decision, EvaluationResultV1, PolicyV1, PublicReasonClass, SpendStateV1 } from "./types.js";
 
 const MAX_UINT256 = (1n << 256n) - 1n;
@@ -91,6 +92,20 @@ export function evaluatePolicy(policyInput: PolicyV1, request: ActionRequestV1, 
   }
   let violations = 0n;
   if (policy.startAt > now || (policy.endAt !== 0n && now > policy.endAt)) violations |= POLICY_VIOLATION_V1.POLICY_DENIED;
+  if (policy.scheduleIntervalSeconds === 0n) {
+    if (request.scheduleSlot !== 0n) violations |= POLICY_VIOLATION_V1.POLICY_DENIED;
+  } else {
+    const window = scheduleWindowV1(
+      policy.startAt,
+      policy.scheduleIntervalSeconds,
+      policy.scheduleGraceSeconds,
+      BigInt(request.occurrence),
+    );
+    if (!window || request.scheduleSlot !== window.slot || request.createdAt < window.slot
+      || request.createdAt > window.deadline || request.graceDeadline !== window.deadline
+      || request.expiry !== window.deadline || now < window.slot || now > window.deadline
+      || (policy.endAt !== 0n && window.deadline > policy.endAt)) violations |= POLICY_VIOLATION_V1.POLICY_DENIED;
+  }
   if (containsAddress(policy.denyTargets, request.target)
     || (policy.allowTargets.length > 0 && !containsAddress(policy.allowTargets, request.target))) violations |= POLICY_VIOLATION_V1.TARGET_DENIED;
   if (policy.allowRequesters.length > 0 && !containsAddress(policy.allowRequesters, request.requester)) violations |= POLICY_VIOLATION_V1.REQUESTER_DENIED;

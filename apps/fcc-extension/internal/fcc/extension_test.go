@@ -21,13 +21,13 @@ func fccPolicy() protocol.PolicyV1 {
 	owner := common.HexToAddress("0x00000000000000000000000000000000000000a1")
 	vault := common.HexToAddress("0x00000000000000000000000000000000000000b2")
 	router := common.HexToAddress("0x00000000000000000000000000000000000000c3")
-	return protocol.PolicyV1{SchemaVersion: 1, ChainID: big.NewInt(114), Registry: owner, Vault: vault, Router: router, Owner: owner, PolicyID: fccHash("policy"), PolicyVersion: 1, Asset: vault, ReferenceCurrency: fccHash("USD"), MaxPerAction: big.NewInt(100), DailyCap: big.NewInt(500), RollingCap: big.NewInt(800), RollingWindowSecs: 86400, StartAt: 1000, EndAt: 10000, MaxOccurrences: 5, AllowTargets: []common.Address{router}, AllowRequesters: []common.Address{owner}, AllowActionTypes: []common.Hash{protocol.ActionFTestXRPTransfer}, PrivateSalt: fccHash("private-salt"), SubmissionNonce: fccHash("submit")}
+	return protocol.PolicyV1{SchemaVersion: 1, ChainID: big.NewInt(114), Registry: owner, Vault: vault, Router: router, Owner: owner, PolicyID: fccHash("policy"), PolicyVersion: 1, Asset: vault, ReferenceCurrency: fccHash("USD"), MaxPerAction: big.NewInt(100), DailyCap: big.NewInt(500), RollingCap: big.NewInt(800), RollingWindowSecs: 86400, StartAt: 1000, EndAt: 10000, ScheduleIntervalSecs: 3600, ScheduleGraceSecs: 100, MaxOccurrences: 5, AllowTargets: []common.Address{router}, AllowRequesters: []common.Address{owner}, AllowActionTypes: []common.Hash{protocol.ActionFTestXRPTransfer}, PrivateSalt: fccHash("private-salt"), SubmissionNonce: fccHash("submit")}
 }
 
 func fccRequest(policy protocol.PolicyV1) protocol.ActionRequestV1 {
 	commitment, _ := protocol.PolicyCommitment(policy)
 	checkpoint, _ := protocol.GenesisSpendCheckpoint(commitment)
-	return protocol.ActionRequestV1{ChainID: policy.ChainID, Registry: policy.Registry, Vault: policy.Vault, Router: policy.Router, PolicyID: policy.PolicyID, PolicyVersion: policy.PolicyVersion, PolicyCommitment: commitment, RequestID: fccHash("request"), RequestNonce: 1, Requester: policy.Owner, Target: policy.Router, Asset: policy.Asset, ActionType: protocol.ActionFTestXRPTransfer, Amount: big.NewInt(75), ScheduleSlot: 1000, Occurrence: 1, SpendCheckpoint: checkpoint, BalanceCheckpoint: fccHash("balance"), CreatedAt: 1001, GraceDeadline: 1100, Expiry: 1200}
+	return protocol.ActionRequestV1{ChainID: policy.ChainID, Registry: policy.Registry, Vault: policy.Vault, Router: policy.Router, PolicyID: policy.PolicyID, PolicyVersion: policy.PolicyVersion, PolicyCommitment: commitment, RequestID: fccHash("request"), RequestNonce: 1, Requester: policy.Owner, Target: policy.Router, Asset: policy.Asset, ActionType: protocol.ActionFTestXRPTransfer, Amount: big.NewInt(75), ScheduleSlot: 1000, Occurrence: 1, SpendCheckpoint: checkpoint, BalanceCheckpoint: fccHash("balance"), CreatedAt: 1001, GraceDeadline: 1100, Expiry: 1100}
 }
 
 func actionFor(opCommand common.Hash, original []byte) (teetypes.Action, *instruction.DataFixed) {

@@ -39,6 +39,8 @@ export function buildInMemoryPolicy(input: StudioInput): PolicyV1 {
     rollingWindowSeconds: 86_400n,
     startAt: input.startAt,
     endAt: input.endAt,
+    scheduleIntervalSeconds: 0n,
+    scheduleGraceSeconds: 0n,
     cooldownSeconds: 0n,
     maxOccurrences: 0,
     allowTargets: [input.target],

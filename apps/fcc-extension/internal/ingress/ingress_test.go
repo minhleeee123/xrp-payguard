@@ -20,7 +20,7 @@ func testPolicy() protocol.PolicyV1 {
 	owner := common.HexToAddress("0x00000000000000000000000000000000000000a1")
 	vault := common.HexToAddress("0x00000000000000000000000000000000000000b2")
 	router := common.HexToAddress("0x00000000000000000000000000000000000000c3")
-	return protocol.PolicyV1{SchemaVersion: 1, ChainID: big.NewInt(114), Registry: owner, Vault: vault, Router: router, Owner: owner, PolicyID: ingressHash("policy"), PolicyVersion: 1, Asset: vault, ReferenceCurrency: ingressHash("USD"), MaxPerAction: big.NewInt(100), DailyCap: big.NewInt(500), RollingCap: big.NewInt(800), RollingWindowSecs: 86400, StartAt: 1000, EndAt: 10000, MaxOccurrences: 5, AllowTargets: []common.Address{router}, AllowRequesters: []common.Address{owner}, AllowActionTypes: []common.Hash{protocol.ActionFTestXRPTransfer}, FTSOFeedID: common.Hash{}, PrivateSalt: ingressHash("salt"), SubmissionNonce: ingressHash("submit")}
+	return protocol.PolicyV1{SchemaVersion: 1, ChainID: big.NewInt(114), Registry: owner, Vault: vault, Router: router, Owner: owner, PolicyID: ingressHash("policy"), PolicyVersion: 1, Asset: vault, ReferenceCurrency: ingressHash("USD"), MaxPerAction: big.NewInt(100), DailyCap: big.NewInt(500), RollingCap: big.NewInt(800), RollingWindowSecs: 86400, StartAt: 1000, EndAt: 10000, ScheduleIntervalSecs: 3600, ScheduleGraceSecs: 100, MaxOccurrences: 5, AllowTargets: []common.Address{router}, AllowRequesters: []common.Address{owner}, AllowActionTypes: []common.Hash{protocol.ActionFTestXRPTransfer}, FTSOFeedID: common.Hash{}, PrivateSalt: ingressHash("salt"), SubmissionNonce: ingressHash("submit")}
 }
 
 func testBinding(policy protocol.PolicyV1, machines [3]*Machine) protocol.PolicyBindingV1 {
@@ -44,7 +44,7 @@ func testRequest(policy protocol.PolicyV1) protocol.ActionRequestV1 {
 	if err != nil {
 		panic(err)
 	}
-	return protocol.ActionRequestV1{ChainID: policy.ChainID, Registry: policy.Registry, Vault: policy.Vault, Router: policy.Router, PolicyID: policy.PolicyID, PolicyVersion: policy.PolicyVersion, PolicyCommitment: commitment, RequestID: ingressHash("request"), RequestNonce: 1, Requester: policy.Owner, Target: policy.Router, Asset: policy.Asset, ActionType: protocol.ActionFTestXRPTransfer, Amount: big.NewInt(75), ScheduleSlot: 1000, Occurrence: 1, SpendCheckpoint: checkpoint, BalanceCheckpoint: ingressHash("balance"), InputCommitment: common.Hash{}, CreatedAt: 1001, GraceDeadline: 1100, Expiry: 1200}
+	return protocol.ActionRequestV1{ChainID: policy.ChainID, Registry: policy.Registry, Vault: policy.Vault, Router: policy.Router, PolicyID: policy.PolicyID, PolicyVersion: policy.PolicyVersion, PolicyCommitment: commitment, RequestID: ingressHash("request"), RequestNonce: 1, Requester: policy.Owner, Target: policy.Router, Asset: policy.Asset, ActionType: protocol.ActionFTestXRPTransfer, Amount: big.NewInt(75), ScheduleSlot: 1000, Occurrence: 1, SpendCheckpoint: checkpoint, BalanceCheckpoint: ingressHash("balance"), InputCommitment: common.Hash{}, CreatedAt: 1001, GraceDeadline: 1100, Expiry: 1100}
 }
 
 func testState(request protocol.ActionRequestV1) protocol.SpendStateV1 {

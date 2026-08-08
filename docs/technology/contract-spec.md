@@ -215,6 +215,12 @@ mapping before counting distinct signers.
   `[startAt + (occurrence - 1) * interval, slot + grace]`. Occurrence is
   one-indexed `uint32`; timestamps are checked `uint64`; interval and grace are
   positive; grace must be strictly less than interval; any overflow denies.
+- `POLICY_SCHEMA_V1` binds `scheduleIntervalSeconds` and
+  `scheduleGraceSeconds`. Both zero selects ad-hoc mode and requires public
+  `scheduleSlot == 0`. Otherwise evaluation requires the exact derived slot,
+  `createdAt` and canonical evaluation time inside the inclusive window, and
+  `graceDeadline == expiry == slot + grace`. A window past policy `endAt`
+  denies. All comparisons use UTC chain timestamps only.
 - Reference-value conversion binds feed, decimals, timestamp, freshness, and
   documented rounding direction.
 - `REFERENCE_VALUE_V1` computes `ceil(amount * price / 10**decimals)` with
@@ -224,7 +230,7 @@ mapping before counting distinct signers.
   boundary.
 - Deny overrides allow when multiple rules conflict.
 - `POLICY_COMPOSITION_V1` resolves a private evaluator's violation bitmask in
-  this fixed order: policy time window, target, requester, action, occurrence,
+  this fixed order: policy time/schedule window, target, requester, action, occurrence,
   cooldown, available balance, required FTSO input, then value caps. Zero allows;
   any unknown bit fails closed as `MALFORMED`. Solidity contains only this
   bitmask reference, never policy fields or intermediate values.

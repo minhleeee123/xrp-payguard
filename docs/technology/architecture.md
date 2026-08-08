@@ -165,6 +165,9 @@ data is retained; the owner signs in its XRPL wallet.
 The owner pre-funds a PayGuard vault. A permissionless executor may request an
 eligible scheduled occurrence, but cannot choose target/amount outside the
 public request domain and cannot execute without threshold FCC authorization.
+The private policy fixes a UTC interval and non-overlapping grace duration.
+Occurrence one starts at `startAt`; every later slot is derived with checked
+integer arithmetic. Ad-hoc policies explicitly use interval/grace/slot zero.
 
 ## 7. Recovery
 

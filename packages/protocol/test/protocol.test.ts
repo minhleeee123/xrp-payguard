@@ -14,7 +14,8 @@ const policy: PolicyV1 = {
   schemaVersion: 1, chainId: CHAIN_ID, registry: addressA, vault: addressB, router: addressC, owner: addressA,
   policyId: id("policy-1"), policyVersion: 1, asset: addressB, referenceCurrency: id("USD"), maxPerAction: 100n,
   dailyCap: 500n, rollingCap: 800n, rollingWindowSeconds: 86_400n, startAt: 1_000n, endAt: 10_000n,
-  cooldownSeconds: 0n, maxOccurrences: 5, allowTargets: [addressC, addressB], denyTargets: [], allowRequesters: [addressA],
+  scheduleIntervalSeconds: 3_600n, scheduleGraceSeconds: 100n, cooldownSeconds: 0n, maxOccurrences: 5,
+  allowTargets: [addressC, addressB], denyTargets: [], allowRequesters: [addressA],
   allowActionTypes: [ACTION_FTESTXRP_TRANSFER], requireFtso: false, ftsoFeedId: ZERO_BYTES32, maxPriceAgeSeconds: 0n,
   privateSalt: id("salt"), submissionNonce: id("submit"),
 };
@@ -24,7 +25,7 @@ const request = (): ActionRequestV1 => ({
   policyCommitment: policyCommitment(policy), requestId: id("request-1"), requestNonce: 1n, attempt: 0, requester: addressA,
   target: addressC, asset: addressB, actionType: ACTION_FTESTXRP_TRANSFER, amount: 75n, scheduleSlot: 1_000n, occurrence: 1,
   spendCheckpoint: genesisSpendCheckpoint(policyCommitment(policy)), balanceCheckpoint: id("balance-0"), inputCommitment: ZERO_BYTES32, createdAt: 1_001n,
-  graceDeadline: 1_100n, expiry: 1_200n,
+  graceDeadline: 1_100n, expiry: 1_100n,
 });
 
 const state = (): SpendStateV1 => ({ availableBalance: 100n, dailySpend: 0n, rollingSpend: 0n, occurrenceCount: 0, lastExecutionAt: 0n,
@@ -51,6 +52,8 @@ describe("POLICY_SCHEMA_V1 deterministic codec", () => {
     expect(() => policyCommitment({ ...policy, requireFtso: true })).toThrow(/FTSO feed/);
     expect(() => policyCommitment({ ...policy, endAt: 999n })).toThrow(/endAt/);
     expect(() => policyCommitment({ ...policy, rollingWindowSeconds: 0n })).toThrow(/rolling window/);
+    expect(() => policyCommitment({ ...policy, scheduleGraceSeconds: 3_600n })).toThrow(/recurring schedule/);
+    expect(() => policyCommitment({ ...policy, endAt: 1_050n })).toThrow(/recurring schedule/);
     expect(() => policyCommitment({ ...policy, owner: zeroAddress })).toThrow(/non-zero/);
   });
 });
@@ -138,6 +141,17 @@ describe("deterministic evaluator", () => {
     ).publicReasonClass).toBe("STALE_INPUT");
     const forged = id("forged-genesis");
     expect(evaluatePolicy(policy, { ...request(), spendCheckpoint: forged }, { ...state(), spendCheckpoint: forged }).publicReasonClass).toBe("STALE_INPUT");
+  });
+
+  it("enforces exact inclusive recurring windows", () => {
+    expect(evaluatePolicy(policy, request(), { ...state(), now: 1_100n }).decision).toBe("ALLOW");
+    expect(evaluatePolicy(policy, { ...request(), scheduleSlot: 1_001n }, state()).publicReasonClass).toBe("POLICY_DENIED");
+    expect(evaluatePolicy(policy, { ...request(), createdAt: 999n }, state()).publicReasonClass).toBe("POLICY_DENIED");
+    expect(evaluatePolicy(policy, { ...request(), graceDeadline: 1_101n, expiry: 1_101n }, state()).publicReasonClass).toBe("POLICY_DENIED");
+    expect(evaluatePolicy(policy, request(), { ...state(), now: 1_101n }).publicReasonClass).toBe("EXPIRED");
+    const adHocPolicy = { ...policy, scheduleIntervalSeconds: 0n, scheduleGraceSeconds: 0n };
+    const adHocRequest = { ...requestForPolicy(adHocPolicy), scheduleSlot: 0n };
+    expect(evaluatePolicy(adHocPolicy, adHocRequest, stateForRequest(adHocRequest)).decision).toBe("ALLOW");
   });
 
   it("binds an FTSO decision to the request input commitment", () => {

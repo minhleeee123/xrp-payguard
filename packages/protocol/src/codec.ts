@@ -16,12 +16,13 @@ import {
   ZERO_BYTES32,
 } from "./constants.js";
 import type { ActionRequestV1, PolicyBindingV1, PolicyReceiptV1, PolicyV1 } from "./types.js";
+import { scheduleWindowV1 } from "./schedule.js";
 
 const policyParameters: readonly AbiParameter[] = [
   { type: "uint16" }, { type: "uint256" }, { type: "address" }, { type: "address" }, { type: "address" },
   { type: "address" }, { type: "bytes32" }, { type: "uint32" }, { type: "address" }, { type: "bytes32" },
   { type: "uint256" }, { type: "uint256" }, { type: "uint256" }, { type: "uint64" }, { type: "uint64" },
-  { type: "uint64" }, { type: "uint64" }, { type: "uint32" }, { type: "address[]" }, { type: "address[]" },
+  { type: "uint64" }, { type: "uint64" }, { type: "uint64" }, { type: "uint64" }, { type: "uint32" }, { type: "address[]" }, { type: "address[]" },
   { type: "address[]" }, { type: "bytes32[]" }, { type: "bool" }, { type: "bytes32" }, { type: "uint64" },
   { type: "bytes32" }, { type: "bytes32" },
 ];
@@ -114,6 +115,13 @@ export function normalizePolicy(policy: PolicyV1): PolicyV1 {
   if (endAt !== 0n && endAt <= startAt) throw new Error("endAt must be after startAt");
   const rollingWindowSeconds = boundedUint(policy.rollingWindowSeconds, 64, "rollingWindowSeconds");
   if (policy.rollingCap !== 0n && rollingWindowSeconds === 0n) throw new Error("rolling window is required");
+  const scheduleIntervalSeconds = boundedUint(policy.scheduleIntervalSeconds, 64, "scheduleIntervalSeconds");
+  const scheduleGraceSeconds = boundedUint(policy.scheduleGraceSeconds, 64, "scheduleGraceSeconds");
+  if ((scheduleIntervalSeconds === 0n) !== (scheduleGraceSeconds === 0n)) throw new Error("schedule interval and grace must both be zero or positive");
+  if (scheduleIntervalSeconds !== 0n) {
+    const firstWindow = scheduleWindowV1(startAt, scheduleIntervalSeconds, scheduleGraceSeconds, 1n);
+    if (firstWindow === null || (endAt !== 0n && firstWindow.deadline > endAt)) throw new Error("invalid recurring schedule");
+  }
   if (policy.requireFtso && policy.ftsoFeedId === ZERO_BYTES32) throw new Error("FTSO feed is required");
   if (!policy.requireFtso && policy.ftsoFeedId !== ZERO_BYTES32) throw new Error("unexpected FTSO feed");
   const maxPriceAgeSeconds = boundedUint(policy.maxPriceAgeSeconds, 64, "maxPriceAgeSeconds");
@@ -123,7 +131,7 @@ export function normalizePolicy(policy: PolicyV1): PolicyV1 {
     registry, vault, router, owner, policyId, asset,
     referenceCurrency, policyVersion: Number(boundedUint(policy.policyVersion, 32, "policyVersion")),
     maxPerAction: uint(policy.maxPerAction, "maxPerAction"), dailyCap: uint(policy.dailyCap, "dailyCap"), rollingCap: uint(policy.rollingCap, "rollingCap"),
-    rollingWindowSeconds, startAt, endAt,
+    rollingWindowSeconds, startAt, endAt, scheduleIntervalSeconds, scheduleGraceSeconds,
     cooldownSeconds: boundedUint(policy.cooldownSeconds, 64, "cooldownSeconds"), maxOccurrences: Number(boundedUint(policy.maxOccurrences, 32, "maxOccurrences")),
     allowTargets: sortedAddresses(policy.allowTargets, "allowTargets"), denyTargets: sortedAddresses(policy.denyTargets, "denyTargets"),
     allowRequesters: sortedAddresses(policy.allowRequesters, "allowRequesters"), allowActionTypes: sortedBytes32(policy.allowActionTypes, "allowActionTypes"),
@@ -138,7 +146,8 @@ export function encodePolicyV1(policy: PolicyV1): Hex {
     normalized.schemaVersion, normalized.chainId, normalized.registry, normalized.vault, normalized.router, normalized.owner,
     normalized.policyId, normalized.policyVersion, normalized.asset, normalized.referenceCurrency, normalized.maxPerAction,
     normalized.dailyCap, normalized.rollingCap, normalized.rollingWindowSeconds, normalized.startAt, normalized.endAt,
-    normalized.cooldownSeconds, normalized.maxOccurrences, normalized.allowTargets, normalized.denyTargets,
+    normalized.scheduleIntervalSeconds, normalized.scheduleGraceSeconds, normalized.cooldownSeconds, normalized.maxOccurrences,
+    normalized.allowTargets, normalized.denyTargets,
     normalized.allowRequesters, normalized.allowActionTypes, normalized.requireFtso, normalized.ftsoFeedId,
     normalized.maxPriceAgeSeconds, normalized.privateSalt, normalized.submissionNonce,
   ]);

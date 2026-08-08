@@ -195,6 +195,16 @@ func EvaluatePolicy(policy PolicyV1, request ActionRequestV1, state SpendStateV1
 	if state.Now < normalized.StartAt || (normalized.EndAt != 0 && state.Now > normalized.EndAt) {
 		violations |= ViolationPolicyDenied
 	}
+	if normalized.ScheduleIntervalSecs == 0 {
+		if request.ScheduleSlot != 0 {
+			violations |= ViolationPolicyDenied
+		}
+	} else {
+		window, valid := ScheduleWindowV1(normalized.StartAt, normalized.ScheduleIntervalSecs, normalized.ScheduleGraceSecs, uint64(request.Occurrence))
+		if !valid || request.ScheduleSlot != window.Slot || request.CreatedAt < window.Slot || request.CreatedAt > window.Deadline || request.GraceDeadline != window.Deadline || request.Expiry != window.Deadline || state.Now < window.Slot || state.Now > window.Deadline || (normalized.EndAt != 0 && window.Deadline > normalized.EndAt) {
+			violations |= ViolationPolicyDenied
+		}
+	}
 	if containsAddress(normalized.DenyTargets, request.Target) || (len(normalized.AllowTargets) > 0 && !containsAddress(normalized.AllowTargets, request.Target)) {
 		violations |= ViolationTargetDenied
 	}

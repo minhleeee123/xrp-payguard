@@ -9,7 +9,7 @@ const vector = JSON.parse(readFileSync(resolve(import.meta.dirname, "../fixtures
   policy: Record<string, unknown>; binding: Record<string, unknown>; receipt: Record<string, unknown>; request: Record<string, unknown>;
   result: Record<string, unknown>; expected: Record<string, string>;
 };
-const bigintFields = ["chainId", "maxPerAction", "dailyCap", "rollingCap", "rollingWindowSeconds", "startAt", "endAt", "cooldownSeconds", "maxPriceAgeSeconds"];
+const bigintFields = ["chainId", "maxPerAction", "dailyCap", "rollingCap", "rollingWindowSeconds", "startAt", "endAt", "scheduleIntervalSeconds", "scheduleGraceSeconds", "cooldownSeconds", "maxPriceAgeSeconds"];
 const policy = { ...vector.policy } as unknown as PolicyV1;
 for (const field of bigintFields) (policy as unknown as Record<string, unknown>)[field] = BigInt(policy[field as keyof PolicyV1] as string);
 const request = { ...vector.request } as unknown as ActionRequestV1;

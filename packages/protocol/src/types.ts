@@ -40,6 +40,8 @@ export interface PolicyV1 {
   rollingWindowSeconds: bigint;
   startAt: bigint;
   endAt: bigint;
+  scheduleIntervalSeconds: bigint;
+  scheduleGraceSeconds: bigint;
   cooldownSeconds: bigint;
   maxOccurrences: number;
   allowTargets: Hex[];

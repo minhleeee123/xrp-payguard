@@ -184,3 +184,40 @@ func TestEvaluatorRejectsStaleStateAndFutureRequest(t *testing.T) {
 		t.Fatalf("genesis reason: %d", result.PublicReasonClass)
 	}
 }
+
+func TestEvaluatorEnforcesRecurringWindow(t *testing.T) {
+	vector := readVector(t)
+	policy := policyFromVector(vector.Policy)
+	request := requestFromVector(vector.Request)
+	state := stateFromVector(request)
+	state.Now = request.GraceDeadline
+	result, err := EvaluatePolicy(policy, request, state)
+	if err != nil || result.Decision != DecisionAllow {
+		t.Fatalf("inclusive deadline denied: result=%+v err=%v", result, err)
+	}
+	for name, changed := range map[string]ActionRequestV1{
+		"slot":  func() ActionRequestV1 { value := request; value.ScheduleSlot++; return value }(),
+		"early": func() ActionRequestV1 { value := request; value.CreatedAt = request.ScheduleSlot - 1; return value }(),
+		"grace": func() ActionRequestV1 { value := request; value.GraceDeadline++; value.Expiry++; return value }(),
+	} {
+		result, err = EvaluatePolicy(policy, changed, stateFromVector(request))
+		if err != nil || result.PublicReasonClass != ReasonPolicyDenied {
+			t.Fatalf("%s schedule mismatch: result=%+v err=%v", name, result, err)
+		}
+	}
+	expiredState := stateFromVector(request)
+	expiredState.Now = request.Expiry + 1
+	result, err = EvaluatePolicy(policy, request, expiredState)
+	if err != nil || result.PublicReasonClass != ReasonExpired {
+		t.Fatalf("expired window: result=%+v err=%v", result, err)
+	}
+	adHocPolicy := policy
+	adHocPolicy.ScheduleIntervalSecs = 0
+	adHocPolicy.ScheduleGraceSecs = 0
+	adHocRequest, adHocState := rebindPolicyRequest(t, adHocPolicy, request)
+	adHocRequest.ScheduleSlot = 0
+	result, err = EvaluatePolicy(adHocPolicy, adHocRequest, adHocState)
+	if err != nil || result.Decision != DecisionAllow {
+		t.Fatalf("ad hoc request denied: result=%+v err=%v", result, err)
+	}
+}
