@@ -28,6 +28,12 @@ PATH="$PWD/.local/toolchains/bin:$PATH" forge test -vv
 PATH="$PWD/.local/toolchains/bin:$PATH" forge build
 ```
 
+Foundry runs 256 cases per fuzz test and a 128-run, 64-call-depth vault handler
+invariant. The invariant checks conservation buckets, active reservation totals,
+and the vault token balance after arbitrary deposit/withdraw/reserve/release/
+execute sequences. Adversarial token tests cover reentrant `transferFrom`,
+fee-on-transfer deposits, and false-return execute/withdraw rollback.
+
 The tests include shared receipt/request/evaluation, reference-value, and
 policy-composition vectors, plus replay, stale-checkpoint, wrong-signer,
 conservation, cancellation, and machine-replacement negatives. Addresses, token

@@ -180,8 +180,9 @@ external review, and live protocol wiring remain open.
   atomically only when two matching registered machines reach `ALLOW`.
 - [x] Restrict V1 actions to an explicitly supported FTestXRP-like transfer;
   arbitrary calls remain disabled and the adapter still needs independent audit.
-- [x] Add unit, reentrancy, token-failure, and conservation tests. Fuzz/invariant
-  and external review remain open.
+- [x] Add unit, reentrancy, fee/false-return token failure, 256-run fuzz, and
+  128-run/64-depth stateful conservation/reservation invariant tests. External
+  review remains open.
 
 Exit: a local multi-policy state machine cannot overspend, replay, partially
 execute, or bypass FCC authorization.

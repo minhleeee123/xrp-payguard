@@ -15,3 +15,11 @@ line_length = 100
 tab_width = 4
 bracket_spacing = true
 multiline_func_header = "params_first"
+
+[fuzz]
+runs = 256
+
+[invariant]
+runs = 128
+depth = 64
+fail_on_revert = true

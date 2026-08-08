@@ -44,6 +44,8 @@ Forbidden evidence:
 ### Contracts
 
 - Unit/fuzz/invariant/stateful tests.
+- Vault adversarial coverage includes reentrant callbacks, fee-on-transfer and
+  false-return rollback, plus conservation/reservation/token-balance invariants.
 - Receipt/signature/domain/machine/code/threshold negatives.
 - Request replay, duplicate occurrence, attempt/expiry/grace behavior.
 - Conservation across execute, deny, expire, stop, revoke, withdraw, refund.
