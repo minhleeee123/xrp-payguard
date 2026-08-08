@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "suite": "payguard-workspace-bootstrap-funding-supplement",
+  "recordedAt": "2026-08-08T18:35:41.000Z",
+  "network": {
+    "name": "flare-coston2",
+    "chainId": 114,
+    "observedBlock": "33791854"
+  },
+  "publicIdentifiers": {
+    "source": "0xE412d04DA2A211F7ADC80311CC0FF9F03440B64E",
+    "destination": "0xDC1cc527423C882156a632C250528D1922d18Fc7",
+    "assetManagerFxrp": "0xc1Ca88b937d0b528842F95d5731ffB586f4fbDFA",
+    "fTestXrp": "0x0b6A3645c240605887a5532109323A3E12273dc7",
+    "transferAmountFTestXrp": "18.829053",
+    "transactionHash": "0xa22f17fe0913d6e03f24500d3303c761c39f2e58aeac6dedf3ec6f81c0498da0",
+    "transactionFeeC2FLR": "0.0780117",
+    "sourceBalanceBeforeFTestXrp": "37.658107",
+    "sourceBalanceAfterFTestXrp": "18.829054",
+    "destinationBalanceBeforeFTestXrp": "85.316212",
+    "destinationBalanceAfterFTestXrp": "104.145265"
+  },
+  "assertions": {
+    "registryResolvedAssetManager": true,
+    "assetManagerResolvedFTestXrp": true,
+    "transferSimulationSucceeded": true,
+    "receiptConfirmed": true,
+    "twoConfirmationsObserved": true,
+    "balanceConservationVerified": true,
+    "testnetOnly": true,
+    "noPrivateKeyRecorded": true,
+    "noXrplAssetMoved": true
+  },
+  "notes": [
+    "The transfer moved the largest whole-token-unit value not exceeding one half of an odd 37658107-unit source balance.",
+    "The destination is the dedicated XRP PayGuard Coston2 development wallet.",
+    "This is testnet bootstrap funding only, not PayGuard deployment, FCC, FDC, Smart Account, FAssets mint, policy execution, or release evidence."
+  ]
+}

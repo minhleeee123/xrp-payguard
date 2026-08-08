@@ -20,7 +20,7 @@ Forbidden evidence:
 
 | Gate | Required proof | Status |
 |---|---|---|
-| 0 — Foundations | pinned supported tools, registries, services, three machine capacity | NOT STARTED |
+| 0 — Foundations | pinned supported tools, registries, services, three machine capacity | PARTIAL — COSTON2 FUNDING VERIFIED / THREE MACHINE CAPACITY OPEN |
 | A — FCC result | registered extension result verified on Coston2 | NOT STARTED |
 | B — Private policy ingress | sealed policy, three receipts, replay/domain negatives | NOT STARTED |
 | C — Common custody | all-three matching policy availability and commitment | NOT STARTED |

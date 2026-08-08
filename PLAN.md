@@ -88,8 +88,9 @@ Exit: one validated policy journey and one real design partner target exist.
 
 ### Phase 1 — pinned official foundations
 
-The checked items below are local reproducibility gates. Official endpoint
-resolution, three stable FCC origins, and funded live access remain open.
+The checked items below are local reproducibility gates. The dedicated PayGuard
+Coston2 development wallet has verified testnet bootstrap funding; complete
+official endpoint resolution and three stable FCC origins remain open.
 
 - [x] Pin Node 24, pnpm, Go, Foundry, Solidity, viem, XRPL, and official Flare
   periphery/FCC revisions.
