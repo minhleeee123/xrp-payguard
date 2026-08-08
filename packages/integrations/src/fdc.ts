@@ -6,6 +6,7 @@ export interface ExpectedXrplPayment {
   sourceId: Hex;
   txHash: Hex;
   source: string;
+  proofOwner: string;
   destination: string;
   amountDrops: bigint;
   memoHash: Hex;
@@ -21,6 +22,7 @@ export interface XrplPaymentProofV1 {
   network: "testnet" | "mainnet";
   txHash: Hex;
   source: string;
+  proofOwner: string;
   destination: string;
   amountDrops: bigint;
   memoHash: Hex;
@@ -38,7 +40,11 @@ export function matchesExpectedXrplPayment(
   proof: XrplPaymentProofV1,
   expected: ExpectedXrplPayment,
 ): boolean {
-  return proof.network === expected.network
+  return isAddress(proof.proofOwner) && isAddress(expected.proofOwner)
+    && getAddress(proof.proofOwner) !== "0x0000000000000000000000000000000000000000"
+    && getAddress(expected.proofOwner) !== "0x0000000000000000000000000000000000000000"
+    && getAddress(proof.proofOwner) === getAddress(expected.proofOwner)
+    && proof.network === expected.network
     && proof.sourceId.toLowerCase() === expected.sourceId.toLowerCase()
     && proof.txHash.toLowerCase() === expected.txHash.toLowerCase()
     && proof.source === expected.source
@@ -60,6 +66,7 @@ export async function verifyXrplPaymentProof(
   if (usedProofCommitments.has(proof.responseCommitment.toLowerCase())) return { ok: false, reason: "REPLAY" };
   if (!/^0x[0-9a-fA-F]{64}$/.test(proof.sourceId) || !/^0x[0-9a-fA-F]{64}$/.test(proof.responseCommitment)
     || proof.votingRound <= 0n || !/^0x[0-9a-fA-F]{64}$/.test(proof.txHash) || !/^0x[0-9a-fA-F]{64}$/.test(proof.memoHash)
+    || !isAddress(proof.proofOwner) || !isAddress(expected.proofOwner)
     || !isAddress(proof.destination) || !isAddress(expected.destination)) return { ok: false, reason: "SOURCE_MISMATCH" };
   if (!matchesExpectedXrplPayment(proof, expected)) return { ok: false, reason: "PAYMENT_MISMATCH" };
   let verified = false;

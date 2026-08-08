@@ -30,9 +30,10 @@ returns a non-zero receipt commitment. Request creation alone remains pending;
 it is never described as an XRP payout.
 
 The FDC verifier and Smart Account client are injected interfaces. An absent or
-negative verifier, stale/mismatched payment, missing proof, or unavailable mint
-client cannot become success. `DELAYED` is an explicit checkpoint that resumes
-only at the client-provided public `executionAllowedAt` time.
+negative verifier, stale/mismatched payment, mismatched `proofOwner`, missing
+proof, or unavailable mint client cannot become success. `DELAYED` is an
+explicit checkpoint that resumes only at the client-provided public
+`executionAllowedAt` time.
 
 Policy Studio custody bundles verify the exact public binding, frozen machine
 and key order, shared submission nonce/time window, three receipt digests, and

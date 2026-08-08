@@ -6,11 +6,11 @@ import { referenceValueCeil, validateFtsoSnapshot, type FtsoSnapshotV1 } from ".
 
 const id = (value: string): Hex => padHex(stringToHex(value), { size: 32 });
 const expected: ExpectedXrplPayment = {
-  network: "testnet", sourceId: id("source"), txHash: id("tx"), source: "rSource", destination: "0x00000000000000000000000000000000000000a1", amountDrops: 1_000_000n, memoHash: id("memo"), minLedgerIndex: 10n,
+  network: "testnet", sourceId: id("source"), txHash: id("tx"), source: "rSource", proofOwner: "0x00000000000000000000000000000000000000c3", destination: "0x00000000000000000000000000000000000000a1", amountDrops: 1_000_000n, memoHash: id("memo"), minLedgerIndex: 10n,
 };
 const proof = (patch: Partial<XrplPaymentProofV1> = {}): XrplPaymentProofV1 => ({
   attestationType: "XRPPayment", sourceId: id("source"), responseCommitment: id("proof"), votingRound: 22n, finalized: true,
-  network: expected.network, txHash: expected.txHash, source: expected.source, destination: expected.destination,
+  network: expected.network, txHash: expected.txHash, source: expected.source, proofOwner: expected.proofOwner, destination: expected.destination,
   amountDrops: expected.amountDrops, memoHash: expected.memoHash, ledgerIndex: 11n, ...patch,
 });
 
@@ -29,6 +29,7 @@ describe("FTSO/FDC/Smart Account fail-closed boundaries", () => {
     const verifier = { verify: async () => true };
     expect(await verifyXrplPaymentProof(proof(), expected, verifier)).toEqual({ ok: true, proofCommitment: id("proof") });
     expect((await verifyXrplPaymentProof(proof({ amountDrops: 1n }), expected, verifier)).ok).toBe(false);
+    expect((await verifyXrplPaymentProof(proof({ proofOwner: "0x00000000000000000000000000000000000000c4" }), expected, verifier)).ok).toBe(false);
     expect((await verifyXrplPaymentProof(proof({ finalized: false }), expected, verifier)).ok).toBe(false);
   });
 
@@ -41,6 +42,7 @@ describe("FTSO/FDC/Smart Account fail-closed boundaries", () => {
     expect(job.expectedPaymentHash).toMatch(/^0x[0-9a-f]{64}$/);
     expect(job.checkpointHash).toMatch(/^0x[0-9a-f]{64}$/);
     expect(() => observeXrplPayment(job, { ...expected, sourceId: id("wrong-source"), validated: true, result: "tesSUCCESS", ledgerIndex: 11n })).toThrow(/mismatch/);
+    expect(() => observeXrplPayment(job, { ...expected, proofOwner: "0x00000000000000000000000000000000000000c4", validated: true, result: "tesSUCCESS", ledgerIndex: 11n })).toThrow(/mismatch/);
     const observed = observeXrplPayment(job, { ...expected, validated: true, result: "tesSUCCESS", ledgerIndex: 11n });
     const requested = markFdcRequested(observed, id("fdc-request"));
     const ready = await acceptFdcProof(requested, proof(), { verify: async () => true });

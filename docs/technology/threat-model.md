@@ -68,7 +68,7 @@ closed. Owner recovery is time-bounded and cannot race execution.
 | Empty delegate list authorizes public callers | Empty means owner-only; every non-owner must be explicitly listed and still passes all other rules |
 | Double scheduled payment | Unique schedule slot/occurrence plus atomic checkpoint advance |
 | FTSO manipulation/staleness | Official feed, freshness/bounds, deterministic rounding, fail closed |
-| FDC proof substitution | Verify type/source/response fields/MIC/domain/freshness and used transaction ID |
+| FDC proof substitution | Verify type/source/response fields, exact EVM `proofOwner`/executor binding, MIC/domain/freshness, and used transaction ID |
 | XRPL operation substitution | Bind owner, PersonalAccount, memo/user-op hash, nonce, fees, target, events |
 | Ingress/proxy logs private payload | Structured redaction, bodyless logs, output scans, access controls |
 | Malicious target/reentrancy | Adapter allowlist, CEI/reentrancy guard, atomic accounting, bounded gas |

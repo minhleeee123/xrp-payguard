@@ -216,7 +216,8 @@ data is retained; the owner signs in its XRPL wallet.
 The local funding model keeps separate domain hashes for the expected XRPL
 payment and Smart Account operation, recomputes both after every asynchronous
 checkpoint, seals the public transition fields in a state-checkpoint hash, and
-binds execution to the accepted FDC response commitment. A
+binds the expected payment and proof to the exact EVM `proofOwner` that will
+submit the direct-mint transaction. A
 direct-mint success is accepted only from an exact public receipt matching all
 owner/account/destination/asset/value/fee/nonce/operation fields. Live supported
 service execution remains unverified.

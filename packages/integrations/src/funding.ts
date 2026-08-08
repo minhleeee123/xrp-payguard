@@ -66,13 +66,14 @@ function isNonZeroHex32(value: unknown): value is Hex {
 
 export function buildPaymentExpectationHash(expected: ExpectedXrplPayment): Hex {
   if (!HEX32.test(expected.sourceId) || !HEX32.test(expected.txHash) || !HEX32.test(expected.memoHash)
-    || (expected.network !== "testnet" && expected.network !== "mainnet") || expected.source.length === 0 || !isAddress(expected.destination)
+    || (expected.network !== "testnet" && expected.network !== "mainnet") || expected.source.length === 0
+    || !isAddress(expected.proofOwner) || getAddress(expected.proofOwner) === zeroAddress || !isAddress(expected.destination)
     || expected.amountDrops <= 0n || expected.amountDrops > MAX_UINT256
     || expected.minLedgerIndex < 0n || expected.minLedgerIndex > MAX_UINT256) throw new Error("payment expectation invalid");
   return keccak256(encodeAbiParameters(
-    [{ type: "bytes32" }, { type: "uint8" }, { type: "bytes32" }, { type: "bytes32" }, { type: "bytes32" }, { type: "address" }, { type: "uint256" }, { type: "bytes32" }, { type: "uint256" }],
+    [{ type: "bytes32" }, { type: "uint8" }, { type: "address" }, { type: "bytes32" }, { type: "bytes32" }, { type: "bytes32" }, { type: "address" }, { type: "uint256" }, { type: "bytes32" }, { type: "uint256" }],
     [keccak256(new TextEncoder().encode("PAYGUARD_XRPL_PAYMENT_EXPECTATION_V1")), expected.network === "testnet" ? 0 : 1,
-      expected.sourceId, expected.txHash, keccak256(new TextEncoder().encode(expected.source)), expected.destination as Hex,
+      expected.proofOwner as Hex, expected.sourceId, expected.txHash, keccak256(new TextEncoder().encode(expected.source)), expected.destination as Hex,
       expected.amountDrops, expected.memoHash, expected.minLedgerIndex],
   ));
 }
@@ -142,6 +143,7 @@ export function observeXrplPayment(job: SmartAccountFundingJob, observation: Exp
   if (!observation.validated || observation.result !== "tesSUCCESS" || observation.network !== job.expectedPayment.network
     || observation.sourceId.toLowerCase() !== job.expectedPayment.sourceId.toLowerCase()
     || observation.txHash.toLowerCase() !== job.expectedPayment.txHash.toLowerCase() || observation.source !== job.expectedPayment.source
+    || getAddress(observation.proofOwner) !== getAddress(job.expectedPayment.proofOwner)
     || getAddress(observation.destination) !== getAddress(job.expectedPayment.destination) || observation.amountDrops !== job.expectedPayment.amountDrops
     || observation.memoHash.toLowerCase() !== job.expectedPayment.memoHash.toLowerCase()
     || observation.ledgerIndex < job.expectedPayment.minLedgerIndex) throw new Error("XRPL payment mismatch");
