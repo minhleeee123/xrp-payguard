@@ -1,8 +1,9 @@
 # Gate 0/1 foundations
 
-Status: foundation pins, source map, local protocol, contracts, bindings, and
-FCC adapter scaffolding are committed. FCC registration, machine identities,
-and Coston2 deployment remain planned and not yet verified.
+Status: foundation pins, source map, local protocol, contracts, bindings, FCC
+sign-port domain adapter, and Coston2 testnet funding are committed. FCC
+registration, machine identities, and PayGuard Coston2 deployment remain
+planned and not yet verified.
 
 ## Pinned local toolchain
 
@@ -38,7 +39,6 @@ The following cannot be truthfully completed from this local workspace alone:
 
 - three distinct registered FCC machines with stable HTTPS origins and active
   policy/result capacity;
-- deployer wallet access and testnet gas for PayGuard contracts;
 - organizer confirmation of current Summer Signal schedule, submission
   mechanics, and FCC access;
 - interviews/usability sessions and a design-partner testnet pilot;

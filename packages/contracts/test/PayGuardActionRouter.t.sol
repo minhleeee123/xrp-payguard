@@ -115,6 +115,11 @@ contract PayGuardActionRouterTest is TestBase {
                 == 0x8625c2b20a7baca2bdbb90a0005ea8a39708c9e2659964091741b7c088ce8b0d,
             "receipt digest"
         );
+        require(
+            PayGuardTypes.receiptAttestationDigest(goldenBinding, goldenReceipt)
+                == 0xb4db269c442958dbc3f7cf73e0bdb66eb379991aa2e905aa25d7cc1f51cb3edd,
+            "receipt attestation digest"
+        );
         PayGuardTypes.ActionRequest memory request = PayGuardTypes.ActionRequest({
             chainId: 114,
             registry: address(0xA1),
@@ -163,6 +168,11 @@ contract PayGuardActionRouterTest is TestBase {
                 == 0x4823cc4d3f36569052a569af9759bcab4e44fab890c0ed004bef7287565a19ea,
             "evaluation digest"
         );
+        require(
+            PayGuardTypes.evaluationAttestationDigest(result)
+                == 0x9796e29e8db9aaaaf54d4f39deef1a9ee8024ef846a9a342f5445fc5cd9fd590,
+            "evaluation attestation digest"
+        );
     }
 
     function testTwoDistinctMatchingResultsExecuteOnceAndConserve() public {
@@ -172,14 +182,14 @@ contract PayGuardActionRouterTest is TestBase {
         router.createRequest(request);
         PayGuardTypes.EvaluationResult memory result = _allowResult(request);
         router.submitEvaluation(
-            result, _signature(machineAKey, PayGuardTypes.evaluationDigest(result))
+            result, _signature(machineAKey, PayGuardTypes.evaluationAttestationDigest(result))
         );
         PayGuardActionRouter.StoredRequest memory pending = router.getRequest(request.requestId);
         assertEq(uint8(pending.status), uint8(PayGuardActionRouter.RequestStatus.Pending));
         result.machineId = machineB;
         result.keyFingerprint = keyB;
         router.submitEvaluation(
-            result, _signature(machineBKey, PayGuardTypes.evaluationDigest(result))
+            result, _signature(machineBKey, PayGuardTypes.evaluationAttestationDigest(result))
         );
         PayGuardActionRouter.StoredRequest memory allowed = router.getRequest(request.requestId);
         assertEq(uint8(allowed.status), uint8(PayGuardActionRouter.RequestStatus.Allowed));
@@ -200,20 +210,57 @@ contract PayGuardActionRouterTest is TestBase {
         vm.prank(owner);
         router.createRequest(request);
         PayGuardTypes.EvaluationResult memory denied = _denyResult(request, 11);
-        bytes32 digest = PayGuardTypes.evaluationDigest(denied);
         uint256 unregisteredKey = _key("payguard-unregistered");
         vm.expectRevert(PayGuardActionRouter.InvalidSignature.selector);
-        router.submitEvaluation(denied, _signature(unregisteredKey, digest));
-        router.submitEvaluation(denied, _signature(machineAKey, digest));
+        router.submitEvaluation(
+            denied, _signature(unregisteredKey, PayGuardTypes.evaluationAttestationDigest(denied))
+        );
+        router.submitEvaluation(
+            denied, _signature(machineAKey, PayGuardTypes.evaluationAttestationDigest(denied))
+        );
         denied.machineId = machineB;
         denied.keyFingerprint = keyB;
-        digest = PayGuardTypes.evaluationDigest(denied);
-        router.submitEvaluation(denied, _signature(machineBKey, digest));
+        router.submitEvaluation(
+            denied, _signature(machineBKey, PayGuardTypes.evaluationAttestationDigest(denied))
+        );
         PayGuardActionRouter.StoredRequest memory stored = router.getRequest(request.requestId);
         assertEq(uint8(stored.status), uint8(PayGuardActionRouter.RequestStatus.Denied));
         PayGuardVault.Accounting memory accounting = vault.accounting(owner, address(token));
         assertEq(accounting.available, 500);
         assertEq(accounting.reserved, 0);
+    }
+
+    function testEvaluationRejectsRawWrongChainWrongPurposeAndHighSProofs() public {
+        PayGuardTypes.ActionRequest memory request =
+            _request(keccak256("attestation-negatives"), 1, _genesis(commitment), 50);
+        vm.prank(owner);
+        router.createRequest(request);
+        PayGuardTypes.EvaluationResult memory result = _allowResult(request);
+        bytes32 bareDigest = PayGuardTypes.evaluationDigest(result);
+
+        vm.expectRevert(PayGuardActionRouter.InvalidSignature.selector);
+        router.submitEvaluation(result, _rawSignature(machineAKey, bareDigest));
+
+        bytes32 wrongChain = PayGuardTypes.fccAttestationDigest(
+            PayGuardTypes.FCC_EVALUATION_PREFIX, 115, bareDigest
+        );
+        vm.expectRevert(PayGuardActionRouter.InvalidSignature.selector);
+        router.submitEvaluation(result, _signature(machineAKey, wrongChain));
+
+        bytes32 wrongPurpose = PayGuardTypes.fccAttestationDigest(
+            PayGuardTypes.FCC_POLICY_RECEIPT_PREFIX, 114, bareDigest
+        );
+        vm.expectRevert(PayGuardActionRouter.InvalidSignature.selector);
+        router.submitEvaluation(result, _signature(machineAKey, wrongPurpose));
+
+        bytes memory valid =
+            _signature(machineAKey, PayGuardTypes.evaluationAttestationDigest(result));
+        vm.expectRevert(PayGuardActionRouter.InvalidSignature.selector);
+        router.submitEvaluation(result, _malleateHighS(valid));
+
+        router.submitEvaluation(result, valid);
+        PayGuardActionRouter.StoredRequest memory stored = router.getRequest(request.requestId);
+        assertEq(uint8(stored.status), uint8(PayGuardActionRouter.RequestStatus.Pending));
     }
 
     function testFrozenMachineRegistrationCannotBeSilentlyReplaced() public {
@@ -277,7 +324,8 @@ contract PayGuardActionRouterTest is TestBase {
         oldResult.keyFingerprint = replacementFingerprint;
         vm.expectRevert(PayGuardActionRouter.InvalidSignature.selector);
         router.submitEvaluation(
-            oldResult, _signature(replacementKey, PayGuardTypes.evaluationDigest(oldResult))
+            oldResult,
+            _signature(replacementKey, PayGuardTypes.evaluationAttestationDigest(oldResult))
         );
         vm.prank(owner);
         router.cancel(oldRequest.requestId);
@@ -292,12 +340,13 @@ contract PayGuardActionRouterTest is TestBase {
         newResult.machineId = replacementMachine;
         newResult.keyFingerprint = replacementFingerprint;
         router.submitEvaluation(
-            newResult, _signature(replacementKey, PayGuardTypes.evaluationDigest(newResult))
+            newResult,
+            _signature(replacementKey, PayGuardTypes.evaluationAttestationDigest(newResult))
         );
         newResult.machineId = machineB;
         newResult.keyFingerprint = keyB;
         router.submitEvaluation(
-            newResult, _signature(machineBKey, PayGuardTypes.evaluationDigest(newResult))
+            newResult, _signature(machineBKey, PayGuardTypes.evaluationAttestationDigest(newResult))
         );
         router.execute(newRequest.requestId);
         assertEq(token.balanceOf(payee), 25);
@@ -310,12 +359,12 @@ contract PayGuardActionRouterTest is TestBase {
         router.createRequest(first);
         PayGuardTypes.EvaluationResult memory allowed = _allowResult(first);
         router.submitEvaluation(
-            allowed, _signature(machineAKey, PayGuardTypes.evaluationDigest(allowed))
+            allowed, _signature(machineAKey, PayGuardTypes.evaluationAttestationDigest(allowed))
         );
         allowed.machineId = machineB;
         allowed.keyFingerprint = keyB;
         router.submitEvaluation(
-            allowed, _signature(machineBKey, PayGuardTypes.evaluationDigest(allowed))
+            allowed, _signature(machineBKey, PayGuardTypes.evaluationAttestationDigest(allowed))
         );
         router.execute(first.requestId);
 
@@ -399,14 +448,15 @@ contract PayGuardActionRouterTest is TestBase {
         forged.resultingCheckpoint = keccak256("forged-transition");
         vm.expectRevert(PayGuardActionRouter.InvalidEvaluation.selector);
         router.submitEvaluation(
-            forged, _signature(machineAKey, PayGuardTypes.evaluationDigest(forged))
+            forged, _signature(machineAKey, PayGuardTypes.evaluationAttestationDigest(forged))
         );
 
         PayGuardTypes.EvaluationResult memory forgedDeny = _denyResult(first, 1);
         forgedDeny.resultingCheckpoint = keccak256("forged-deny-transition");
         vm.expectRevert(PayGuardActionRouter.InvalidEvaluation.selector);
         router.submitEvaluation(
-            forgedDeny, _signature(machineAKey, PayGuardTypes.evaluationDigest(forgedDeny))
+            forgedDeny,
+            _signature(machineAKey, PayGuardTypes.evaluationAttestationDigest(forgedDeny))
         );
 
         _thresholdAllow(first);
@@ -422,7 +472,7 @@ contract PayGuardActionRouterTest is TestBase {
         regressed.resultingCheckpoint = PayGuardTypes.nextSpendCheckpoint(second, 1049);
         vm.expectRevert(PayGuardActionRouter.InvalidEvaluation.selector);
         router.submitEvaluation(
-            regressed, _signature(machineAKey, PayGuardTypes.evaluationDigest(regressed))
+            regressed, _signature(machineAKey, PayGuardTypes.evaluationAttestationDigest(regressed))
         );
     }
 
@@ -463,15 +513,41 @@ contract PayGuardActionRouterTest is TestBase {
             signature: ""
         });
         receipt.signature =
-            _signature(privateKey, PayGuardTypes.receiptDigest(receiptBinding, receipt));
+            _signature(privateKey, PayGuardTypes.receiptAttestationDigest(receiptBinding, receipt));
     }
 
     function _signature(
         uint256 privateKey,
         bytes32 digest
     ) internal returns (bytes memory signature) {
+        bytes32 ethSigned = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", digest));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, ethSigned);
+        signature = abi.encodePacked(r, s, v);
+    }
+
+    function _rawSignature(
+        uint256 privateKey,
+        bytes32 digest
+    ) internal returns (bytes memory signature) {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
         signature = abi.encodePacked(r, s, v);
+    }
+
+    function _malleateHighS(
+        bytes memory signature
+    ) internal pure returns (bytes memory) {
+        bytes32 r;
+        bytes32 s;
+        uint8 v;
+        assembly ("memory-safe") {
+            r := mload(add(signature, 32))
+            s := mload(add(signature, 64))
+            v := byte(0, mload(add(signature, 96)))
+        }
+        uint256 curveOrder = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141;
+        bytes32 highS = bytes32(curveOrder - uint256(s));
+        uint8 flippedV = v == 27 ? 28 : 27;
+        return abi.encodePacked(r, highS, flippedV);
     }
 
     function _request(
@@ -537,12 +613,12 @@ contract PayGuardActionRouterTest is TestBase {
     ) internal {
         PayGuardTypes.EvaluationResult memory result = _allowResult(request);
         router.submitEvaluation(
-            result, _signature(machineAKey, PayGuardTypes.evaluationDigest(result))
+            result, _signature(machineAKey, PayGuardTypes.evaluationAttestationDigest(result))
         );
         result.machineId = machineB;
         result.keyFingerprint = keyB;
         router.submitEvaluation(
-            result, _signature(machineBKey, PayGuardTypes.evaluationDigest(result))
+            result, _signature(machineBKey, PayGuardTypes.evaluationAttestationDigest(result))
         );
     }
 

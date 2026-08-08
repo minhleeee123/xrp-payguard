@@ -1,7 +1,7 @@
 import { getAddress, keccak256, padHex, stringToHex, zeroAddress } from "viem";
 import { describe, expect, it } from "vitest";
-import { ACTION_FTESTXRP_TRANSFER, CHAIN_ID, ZERO_BYTES32 } from "../src/constants.js";
-import { actionRequestHash, encodePolicyV1, evaluationDigest, genesisSpendCheckpoint, policyCommitment, policyReceiptDigest } from "../src/codec.js";
+import { ACTION_FTESTXRP_TRANSFER, CHAIN_ID, FCC_EVALUATION_PREFIX, FCC_POLICY_RECEIPT_PREFIX, ZERO_BYTES32 } from "../src/constants.js";
+import { actionRequestHash, encodeFccAttestation, encodePolicyV1, evaluationAttestationDigest, evaluationDigest, fccAttestationDigest, genesisSpendCheckpoint, policyCommitment, policyReceiptAttestationDigest, policyReceiptDigest } from "../src/codec.js";
 import { evaluatePolicy } from "../src/evaluator.js";
 import type { ActionRequestV1, PolicyBindingV1, PolicyReceiptV1, PolicyV1, SpendStateV1 } from "../src/types.js";
 
@@ -72,6 +72,9 @@ describe("ACTION_REQUEST_V1 and result domains", () => {
       machineId: id("machine-a"), keyFingerprint: id("key-a") };
     expect(evaluationDigest(base)).toBe(evaluationDigest({ ...base, machineId: id("machine-b") }));
     expect(evaluationDigest(base)).not.toBe(evaluationDigest({ ...base, decision: "DENY", publicReasonClass: "POLICY_DENIED", reservedAmount: 0n }));
+    expect(evaluationAttestationDigest(base)).toBe(fccAttestationDigest(FCC_EVALUATION_PREFIX, CHAIN_ID, evaluationDigest(base)));
+    expect(evaluationAttestationDigest(base)).not.toBe(fccAttestationDigest(FCC_EVALUATION_PREFIX, CHAIN_ID + 1n, evaluationDigest(base)));
+    expect(encodeFccAttestation(FCC_EVALUATION_PREFIX, CHAIN_ID, evaluationDigest(base))).toHaveLength(2 + 96 * 2);
   });
 
   it("binds receipt machine, owner, and expiry", () => {
@@ -81,6 +84,8 @@ describe("ACTION_REQUEST_V1 and result domains", () => {
       custodyThreshold: 3, resultThreshold: 2, policyNonce: 1n };
     const receipt: PolicyReceiptV1 = { binding, machineId: id("m1"), keyFingerprint: id("k1"), submissionNonce: id("submit"), receiptNonce: 1n, issuedAt: 1_000n, expiry: 2_000n };
     expect(policyReceiptDigest(receipt)).not.toBe(policyReceiptDigest({ ...receipt, expiry: 2_001n }));
+    expect(policyReceiptAttestationDigest(receipt)).toBe(fccAttestationDigest(FCC_POLICY_RECEIPT_PREFIX, CHAIN_ID, policyReceiptDigest(receipt)));
+    expect(policyReceiptAttestationDigest(receipt)).not.toBe(fccAttestationDigest(FCC_EVALUATION_PREFIX, CHAIN_ID, policyReceiptDigest(receipt)));
   });
 });
 

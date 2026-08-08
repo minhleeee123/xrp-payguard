@@ -1,11 +1,12 @@
 import {
   actionRequestHash,
+  evaluationAttestationDigest,
   evaluationDigest,
   type ActionRequestV1,
   type Hex,
   type SpendStateV1,
 } from "@xrp-payguard/protocol";
-import { getAddress, isAddress, keccak256, recoverAddress, stringToHex } from "viem";
+import { getAddress, isAddress, keccak256, recoverMessageAddress, stringToHex } from "viem";
 import type {
   EvaluationEnvelope,
   MachineDescriptor,
@@ -236,7 +237,8 @@ async function isValidEnvelope(
     const machine = machines.find((candidate) => candidate.machineId.toLowerCase() === envelope.result.machineId.toLowerCase());
     if (!machine || machine.keyFingerprint.toLowerCase() !== envelope.result.keyFingerprint.toLowerCase()) return false;
     if (getAddress(envelope.signer) !== getAddress(machine.signer)) return false;
-    return getAddress(await recoverAddress({ hash: envelope.digest, signature: envelope.signature })) === getAddress(machine.signer);
+    const attestationDigest = evaluationAttestationDigest(envelope.result);
+    return getAddress(await recoverMessageAddress({ message: { raw: attestationDigest }, signature: envelope.signature })) === getAddress(machine.signer);
   } catch {
     return false;
   }

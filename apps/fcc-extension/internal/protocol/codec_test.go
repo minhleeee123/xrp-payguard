@@ -18,10 +18,12 @@ type vectorFile struct {
 	Request  vectorRequest `json:"request"`
 	Result   vectorResult  `json:"result"`
 	Expected struct {
-		PolicyCommitment string `json:"policyCommitment"`
-		ReceiptDigest    string `json:"receiptDigest"`
-		RequestHash      string `json:"requestHash"`
-		EvaluationDigest string `json:"evaluationDigest"`
+		PolicyCommitment            string `json:"policyCommitment"`
+		ReceiptDigest               string `json:"receiptDigest"`
+		ReceiptAttestationDigest    string `json:"receiptAttestationDigest"`
+		RequestHash                 string `json:"requestHash"`
+		EvaluationDigest            string `json:"evaluationDigest"`
+		EvaluationAttestationDigest string `json:"evaluationAttestationDigest"`
 	} `json:"expected"`
 }
 
@@ -211,6 +213,13 @@ func TestGoldenVector(t *testing.T) {
 	if receiptDigest != mustHash(vector.Expected.ReceiptDigest) {
 		t.Fatalf("receipt digest mismatch: %s", receiptDigest.Hex())
 	}
+	receiptAttestationDigest, err := PolicyReceiptAttestationDigest(receipt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if receiptAttestationDigest != mustHash(vector.Expected.ReceiptAttestationDigest) {
+		t.Fatalf("receipt attestation digest mismatch: %s", receiptAttestationDigest.Hex())
+	}
 	request := requestFromVector(vector.Request)
 	requestHash, err := ActionRequestHash(request)
 	if err != nil {
@@ -226,6 +235,13 @@ func TestGoldenVector(t *testing.T) {
 	}
 	if evaluationDigest != mustHash(vector.Expected.EvaluationDigest) {
 		t.Fatalf("evaluation digest mismatch: %s", evaluationDigest.Hex())
+	}
+	evaluationAttestationDigest, err := EvaluationAttestationDigest(result)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if evaluationAttestationDigest != mustHash(vector.Expected.EvaluationAttestationDigest) {
+		t.Fatalf("evaluation attestation digest mismatch: %s", evaluationAttestationDigest.Hex())
 	}
 }
 

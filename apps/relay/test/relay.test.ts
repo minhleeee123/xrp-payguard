@@ -3,6 +3,7 @@ import { getAddress, keccak256, padHex, stringToHex, type Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import {
   ACTION_FTESTXRP_TRANSFER,
+  evaluationAttestationDigest,
   evaluationDigest,
   type ActionRequestV1,
   type EvaluationResultV1,
@@ -51,7 +52,8 @@ const resultFor = (machine: MachineDescriptor, patch: Partial<Pick<EvaluationRes
 
 async function envelope(machine: MachineFixture, result = resultFor(machine.descriptor)): Promise<EvaluationEnvelope> {
   const digest = evaluationDigest(result);
-  return { result, digest, signer: machine.account.address, signature: await machine.account.sign({ hash: digest }) };
+  const attestationDigest = evaluationAttestationDigest(result);
+  return { result, digest, signer: machine.account.address, signature: await machine.account.signMessage({ message: { raw: attestationDigest } }) };
 }
 
 class StaticTransport implements MachineTransport {

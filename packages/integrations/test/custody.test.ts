@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { getAddress, padHex, stringToHex, type Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import { POLICY_SCHEMA_V1, policyReceiptDigest, type PolicyBindingV1 } from "@xrp-payguard/protocol";
+import { POLICY_SCHEMA_V1, policyReceiptAttestationDigest, policyReceiptDigest, type PolicyBindingV1 } from "@xrp-payguard/protocol";
 import {
   POLICY_CUSTODY_BUNDLE_V1,
   decodePublicPolicyCustodyBundle,
@@ -46,8 +46,10 @@ async function bundle(): Promise<PublicPolicyCustodyBundleV1> {
       machineId: binding.machineIds[index]!, keyFingerprint: binding.keyFingerprints[index]!, submissionNonce: id("submission"),
       receiptNonce: 7n, issuedAt: 100n, expiry: 200n,
     };
-    const digest = policyReceiptDigest({ binding, ...body });
-    receipts.push({ ...body, digest, signer: accounts[index]!.address as Hex, signature: await accounts[index]!.sign({ hash: digest }) });
+    const protocolReceipt = { binding, ...body };
+    const digest = policyReceiptDigest(protocolReceipt);
+    const attestationDigest = policyReceiptAttestationDigest(protocolReceipt);
+    receipts.push({ ...body, digest, signer: accounts[index]!.address as Hex, signature: await accounts[index]!.signMessage({ message: { raw: attestationDigest } }) });
   }
   const typedReceipts = receipts as [PublicPolicyReceiptV1, PublicPolicyReceiptV1, PublicPolicyReceiptV1];
   return { binding, receipts: typedReceipts, bundleHash: policyCustodyBundleHash({ binding, receipts: typedReceipts }) };

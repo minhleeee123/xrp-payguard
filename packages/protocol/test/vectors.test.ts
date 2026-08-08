@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { actionRequestHash, evaluationDigest, policyCommitment, policyReceiptDigest } from "../src/codec.js";
+import { actionRequestHash, evaluationAttestationDigest, evaluationDigest, policyCommitment, policyReceiptAttestationDigest, policyReceiptDigest } from "../src/codec.js";
 import { evaluatePolicy } from "../src/evaluator.js";
 import type { ActionRequestV1, PolicyBindingV1, PolicyReceiptV1, PolicyV1, SpendStateV1 } from "../src/types.js";
 
@@ -22,6 +22,7 @@ describe("cross-language golden vector", () => {
     expect(request.requestNonce).toBe(1n << 64n);
     expect(policyCommitment(policy)).toBe(vector.expected.policyCommitment);
     expect(policyReceiptDigest(receipt)).toBe(vector.expected.receiptDigest);
+    expect(policyReceiptAttestationDigest(receipt)).toBe(vector.expected.receiptAttestationDigest);
     expect(actionRequestHash(request)).toBe(vector.expected.requestHash);
     const state: SpendStateV1 = { availableBalance: 100n, history: [], occurrenceCount: 0, lastAccountingAt: 0n,
       spendCheckpoint: request.spendCheckpoint, balanceCheckpoint: request.balanceCheckpoint, now: 1050n };
@@ -29,5 +30,6 @@ describe("cross-language golden vector", () => {
     const result = { ...evaluated, machineId: vector.result.machineId, keyFingerprint: vector.result.keyFingerprint } as typeof evaluated;
     expect(result.resultingCheckpoint).toBe(vector.result.resultingCheckpoint);
     expect(evaluationDigest(result)).toBe(vector.expected.evaluationDigest);
+    expect(evaluationAttestationDigest(result)).toBe(vector.expected.evaluationAttestationDigest);
   });
 });

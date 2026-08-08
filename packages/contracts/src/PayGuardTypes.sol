@@ -10,6 +10,13 @@ library PayGuardTypes {
     bytes32 internal constant SPEND_CHECKPOINT_V1 = keccak256("SPEND_CHECKPOINT_V1");
     bytes32 internal constant EVALUATION_RESULT_V1 = keccak256("EVALUATION_RESULT_V1");
     bytes32 internal constant ACTION_FTESTXRP_TRANSFER = keccak256("FTESTXRP_TRANSFER_V1");
+    // ASCII literals are shorter than 32 bytes and Solidity right-pads them.
+    // forge-lint: disable-next-line(unsafe-typecast)
+    bytes32 internal constant FCC_POLICY_RECEIPT_PREFIX = bytes32("PAYGUARD_POLICY_RECEIPT_V1");
+    // forge-lint: disable-next-line(unsafe-typecast)
+    bytes32 internal constant FCC_EVALUATION_PREFIX = bytes32("PAYGUARD_EVALUATION_V1");
+    uint256 private constant SECP256K1_HALF_ORDER =
+        0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0;
 
     struct PolicyBinding {
         uint256 chainId;
@@ -135,6 +142,26 @@ library PayGuardTypes {
         );
     }
 
+    /// @notice Digest produced when tee-node v0.0.24 receives the ABI payload
+    /// through POST /sign. tee-node applies the Ethereum signed-message wrapper
+    /// after hashing this value.
+    function fccAttestationDigest(
+        bytes32 prefix,
+        uint256 chainId,
+        bytes32 dataHash
+    ) internal pure returns (bytes32) {
+        return keccak256(abi.encode(prefix, chainId, dataHash));
+    }
+
+    function receiptAttestationDigest(
+        PolicyBinding memory binding,
+        PolicyReceipt memory receipt
+    ) internal pure returns (bytes32) {
+        return fccAttestationDigest(
+            FCC_POLICY_RECEIPT_PREFIX, binding.chainId, receiptDigest(binding, receipt)
+        );
+    }
+
     function requestHash(
         ActionRequest memory request
     ) internal pure returns (bytes32) {
@@ -210,5 +237,36 @@ library PayGuardTypes {
                 result.expiry
             )
         );
+    }
+
+    function evaluationAttestationDigest(
+        EvaluationResult memory result
+    ) internal pure returns (bytes32) {
+        return fccAttestationDigest(
+            FCC_EVALUATION_PREFIX, result.request.chainId, evaluationDigest(result)
+        );
+    }
+
+    function recoverFccSigner(
+        bytes32 attestationDigest,
+        bytes memory signature
+    ) internal pure returns (address signer) {
+        if (signature.length != 65) return address(0);
+        bytes32 r;
+        bytes32 s;
+        uint8 v;
+        assembly ("memory-safe") {
+            r := mload(add(signature, 32))
+            s := mload(add(signature, 64))
+            v := byte(0, mload(add(signature, 96)))
+        }
+        if (uint256(r) == 0 || uint256(s) == 0 || uint256(s) > SECP256K1_HALF_ORDER) {
+            return address(0);
+        }
+        if (v < 27) v += 27;
+        if (v != 27 && v != 28) return address(0);
+        bytes32 ethSigned =
+            keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", attestationDigest));
+        return ecrecover(ethSigned, v, r, s);
     }
 }

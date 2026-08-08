@@ -117,7 +117,8 @@ func TestEvaluateActionUsesPrivateMachineState(t *testing.T) {
 	if err := json.Unmarshal(result.Data, &envelope); err != nil {
 		t.Fatal(err)
 	}
-	if envelope.Result.Decision != protocol.DecisionAllow || !ingress.VerifySignature(envelope.Digest, envelope.Signature, machine.Signer()) {
+	attestationDigest, err := protocol.EvaluationAttestationDigest(envelope.Result)
+	if err != nil || envelope.Result.Decision != protocol.DecisionAllow || !ingress.VerifySignature(attestationDigest, envelope.Signature, machine.Signer()) {
 		t.Fatal("evaluation result was not signed/allowed")
 	}
 }

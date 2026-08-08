@@ -104,7 +104,9 @@
   "expected": {
     "policyCommitment": "0x318df3938877daa30fbc22e92ed0dca3610132870fd342f73dda56828eae38ca",
     "receiptDigest": "0x8625c2b20a7baca2bdbb90a0005ea8a39708c9e2659964091741b7c088ce8b0d",
+    "receiptAttestationDigest": "0xb4db269c442958dbc3f7cf73e0bdb66eb379991aa2e905aa25d7cc1f51cb3edd",
     "requestHash": "0x0fc911c41dc4de74cf60f8ca504906b76f38c8381574b4200beeb32a9dd72fb6",
-    "evaluationDigest": "0x4823cc4d3f36569052a569af9759bcab4e44fab890c0ed004bef7287565a19ea"
+    "evaluationDigest": "0x4823cc4d3f36569052a569af9759bcab4e44fab890c0ed004bef7287565a19ea",
+    "evaluationAttestationDigest": "0x9796e29e8db9aaaaf54d4f39deef1a9ee8024ef846a9a342f5445fc5cd9fd590"
   }
 }

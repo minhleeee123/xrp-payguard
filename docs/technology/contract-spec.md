@@ -54,14 +54,17 @@ the receipt/binding, conservation, request, threshold, and replay rules in a
 local Foundry package. The registry rejects non-canonical schema values and
 missing extension/code bindings; the local FCC evaluator rejects a request when
 its public spend/balance checkpoints or required FTSO checkpoint do not match
-the supplied state. V1 uses raw `ecrecover` over the shared digest because a
-live FCC signing-prefix convention has not yet been verified; the release gate
-must verify that convention before deployment. The local token adapter accepts
-only explicitly enabled ERC-20-like assets and does not claim that any Flare
-reference address is a PayGuard release fact. Local replacement coverage
-registers a different machine only for a separately receipted policy version;
-the replacement signer is rejected for the old commitment, whose frozen set is
-unchanged and fails closed when its threshold is unavailable.
+the supplied state. V1 derives a purpose-separated, chain-bound ABI message for
+the pinned tee-node `v0.0.24` sign port, then recovers the registered signer
+through the Ethereum signed-message wrapper. Raw-digest, wrong-chain,
+cross-purpose, and high-S signatures fail closed; the exact convention and
+remaining live boundary are recorded in `fcc-attestation-domain.md`. The local
+token adapter accepts only explicitly enabled ERC-20-like assets and does not
+claim that any Flare reference address is a PayGuard release fact. Local
+replacement coverage registers a different machine only for a separately
+receipted policy version; the replacement signer is rejected for the old
+commitment, whose frozen set is unchanged and fails closed when its threshold
+is unavailable.
 
 ## 2. Schemas
 
@@ -207,8 +210,9 @@ fixedGraceDeadline
 expiry
 ```
 
-Signatures use the current FCC-supported prefix/domain and registered signer
-mapping. A generic EIP-191 assumption is not accepted without live verification.
+Signatures use the pinned tee-node sign-port behavior, PayGuard purpose prefix,
+chain ID, and registered signer mapping. The local fixture proves byte equality;
+registered Coston2 signer recovery remains a separate live gate.
 
 Machine identity and key fingerprint are verified signer metadata, but are not
 included in the shared evaluation digest. This is intentional: two distinct

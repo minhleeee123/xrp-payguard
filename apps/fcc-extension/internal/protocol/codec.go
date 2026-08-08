@@ -18,9 +18,20 @@ var (
 	SpendCheckpointTypeHash  = crypto.Keccak256Hash([]byte("SPEND_CHECKPOINT_V1"))
 	EvaluationResultTypeHash = crypto.Keccak256Hash([]byte("EVALUATION_RESULT_V1"))
 	ActionFTestXRPTransfer   = crypto.Keccak256Hash([]byte("FTESTXRP_TRANSFER_V1"))
+	FCCPolicyReceiptPrefix   = stringBytes32("PAYGUARD_POLICY_RECEIPT_V1")
+	FCCEvaluationPrefix      = stringBytes32("PAYGUARD_EVALUATION_V1")
 )
 
 var maxUint256 = new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(1))
+
+func stringBytes32(value string) common.Hash {
+	if len(value) > 32 {
+		panic("bytes32 string is too long")
+	}
+	var result common.Hash
+	copy(result[:], value)
+	return result
+}
 
 type PolicyV1 struct {
 	SchemaVersion        uint16
@@ -298,6 +309,43 @@ func PolicyReceiptDigest(receipt PolicyReceiptV1) (common.Hash, error) {
 	return digest(types, values...)
 }
 
+// FCCAttestationMessage is the exact byte sequence passed to tee-node v0.0.24
+// POST /sign. The node signs accounts.TextHash(keccak256(message)).
+func FCCAttestationMessage(prefix common.Hash, chainID *big.Int, dataHash common.Hash) ([]byte, error) {
+	canonicalChainID, err := uint256(chainID, "attestation chainId")
+	if err != nil || canonicalChainID.Sign() == 0 {
+		return nil, errors.New("attestation chainId must be non-zero uint256")
+	}
+	if prefix == (common.Hash{}) || dataHash == (common.Hash{}) {
+		return nil, errors.New("attestation prefix and data hash must be non-zero")
+	}
+	return pack([]string{"bytes32", "uint256", "bytes32"}, prefix, canonicalChainID, dataHash)
+}
+
+func FCCAttestationDigest(prefix common.Hash, chainID *big.Int, dataHash common.Hash) (common.Hash, error) {
+	message, err := FCCAttestationMessage(prefix, chainID, dataHash)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	return crypto.Keccak256Hash(message), nil
+}
+
+func PolicyReceiptAttestationMessage(receipt PolicyReceiptV1) ([]byte, error) {
+	digest, err := PolicyReceiptDigest(receipt)
+	if err != nil {
+		return nil, err
+	}
+	return FCCAttestationMessage(FCCPolicyReceiptPrefix, receipt.Binding.ChainID, digest)
+}
+
+func PolicyReceiptAttestationDigest(receipt PolicyReceiptV1) (common.Hash, error) {
+	message, err := PolicyReceiptAttestationMessage(receipt)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	return crypto.Keccak256Hash(message), nil
+}
+
 func requestTypes() []string {
 	return []string{"bytes32", "uint256", "address", "address", "address", "bytes32", "uint32", "bytes32", "bytes32", "uint256", "uint32", "address", "address", "address", "bytes32", "uint256", "uint64", "uint32", "bytes32", "bytes32", "bytes32", "uint64", "uint64", "uint64"}
 }
@@ -339,4 +387,20 @@ func EvaluationDigest(result EvaluationResultV1) (common.Hash, error) {
 		result.Request.GraceDeadline, result.Request.Expiry, requestHash, result.Decision, result.PublicReasonClass, result.ReservedAmount, result.ResultingCheckpoint,
 		result.ResultNonce, result.Attempt, result.IssuedAt, result.Expiry}
 	return digest(types, values...)
+}
+
+func EvaluationAttestationMessage(result EvaluationResultV1) ([]byte, error) {
+	digest, err := EvaluationDigest(result)
+	if err != nil {
+		return nil, err
+	}
+	return FCCAttestationMessage(FCCEvaluationPrefix, result.Request.ChainID, digest)
+}
+
+func EvaluationAttestationDigest(result EvaluationResultV1) (common.Hash, error) {
+	message, err := EvaluationAttestationMessage(result)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	return crypto.Keccak256Hash(message), nil
 }

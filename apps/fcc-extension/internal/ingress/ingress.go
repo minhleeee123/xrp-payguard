@@ -15,7 +15,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/minhleeee123/xrp-payguard/apps/fcc-extension/internal/protocol"
 )
 
@@ -47,13 +46,21 @@ type Machine struct {
 	mu          sync.RWMutex
 	id          common.Hash
 	fingerprint common.Hash
-	signer      *ecdsa.PrivateKey
+	signer      AttestationSigner
 	resolver    PolicyResolver
 	policies    map[common.Hash]sealedPolicy
 }
 
 func NewMachine(id, fingerprint common.Hash, signer *ecdsa.PrivateKey, resolver PolicyResolver) (*Machine, error) {
-	if id == (common.Hash{}) || fingerprint == (common.Hash{}) || signer == nil || resolver == nil {
+	localSigner, err := newLocalAttestationSigner(signer)
+	if err != nil {
+		return nil, err
+	}
+	return NewMachineWithSigner(id, fingerprint, localSigner, resolver)
+}
+
+func NewMachineWithSigner(id, fingerprint common.Hash, signer AttestationSigner, resolver PolicyResolver) (*Machine, error) {
+	if id == (common.Hash{}) || fingerprint == (common.Hash{}) || signer == nil || signer.Address() == (common.Address{}) || resolver == nil {
 		return nil, errors.New("machine requires identity, signer, and sealed resolver")
 	}
 	return &Machine{id: id, fingerprint: fingerprint, signer: signer, resolver: resolver, policies: make(map[common.Hash]sealedPolicy)}, nil
@@ -61,7 +68,7 @@ func NewMachine(id, fingerprint common.Hash, signer *ecdsa.PrivateKey, resolver 
 
 func (m *Machine) ID() common.Hash          { return m.id }
 func (m *Machine) Fingerprint() common.Hash { return m.fingerprint }
-func (m *Machine) Signer() common.Address   { return crypto.PubkeyToAddress(m.signer.PublicKey) }
+func (m *Machine) Signer() common.Address   { return m.signer.Address() }
 
 func (m *Machine) Submit(binding protocol.PolicyBindingV1, submissionNonce common.Hash, issuedAt, expiry uint64, ciphertext []byte) (ReceiptEnvelope, error) {
 	if len(ciphertext) == 0 || len(ciphertext) > maxCiphertextBytes {
@@ -109,7 +116,11 @@ func (m *Machine) Submit(binding protocol.PolicyBindingV1, submissionNonce commo
 	if err != nil {
 		return ReceiptEnvelope{}, err
 	}
-	signature, err := crypto.Sign(digest.Bytes(), m.signer)
+	attestationMessage, err := protocol.PolicyReceiptAttestationMessage(receipt)
+	if err != nil {
+		return ReceiptEnvelope{}, err
+	}
+	signature, err := m.signer.Sign(attestationMessage)
 	if err != nil {
 		return ReceiptEnvelope{}, fmt.Errorf("sign receipt: %w", err)
 	}
@@ -134,7 +145,11 @@ func (m *Machine) Evaluate(request protocol.ActionRequestV1, state protocol.Spen
 	if err != nil {
 		return EvaluationEnvelope{}, err
 	}
-	signature, err := crypto.Sign(digest.Bytes(), m.signer)
+	attestationMessage, err := protocol.EvaluationAttestationMessage(result)
+	if err != nil {
+		return EvaluationEnvelope{}, err
+	}
+	signature, err := m.signer.Sign(attestationMessage)
 	if err != nil {
 		return EvaluationEnvelope{}, fmt.Errorf("sign evaluation: %w", err)
 	}
@@ -290,14 +305,6 @@ func (s *HTTPServer) handleIngress(w http.ResponseWriter, request *http.Request)
 	// this public response boundary and is not included in logs or metrics.
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(bundle)
-}
-
-func VerifySignature(digest common.Hash, signature []byte, signer common.Address) bool {
-	if len(signature) != 65 {
-		return false
-	}
-	publicKey, err := crypto.SigToPub(digest.Bytes(), signature)
-	return err == nil && crypto.PubkeyToAddress(*publicKey) == signer
 }
 
 func ContainsBytes(body []byte, forbidden ...[]byte) bool {

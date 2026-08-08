@@ -119,6 +119,12 @@ contract PayGuardActionRouter {
         return PayGuardTypes.evaluationDigest(_copyEvaluation(result));
     }
 
+    function evaluationAttestationDigest(
+        PayGuardTypes.EvaluationResult calldata result
+    ) external pure returns (bytes32) {
+        return PayGuardTypes.evaluationAttestationDigest(_copyEvaluation(result));
+    }
+
     function createRequest(
         PayGuardTypes.ActionRequest calldata input
     ) external returns (bytes32 requestId) {
@@ -226,7 +232,9 @@ contract PayGuardActionRouter {
             revert DuplicateMachine();
         }
         bytes32 digest = PayGuardTypes.evaluationDigest(result);
-        address signer = _recover(digest, signature);
+        address signer = PayGuardTypes.recoverFccSigner(
+            PayGuardTypes.evaluationAttestationDigest(result), signature
+        );
         if (!registry.isFrozenSigner(
                 result.request.policyCommitment, result.machineId, result.keyFingerprint, signer
             )) {
@@ -377,23 +385,5 @@ contract PayGuardActionRouter {
         target.expiry = source.expiry;
         target.machineId = source.machineId;
         target.keyFingerprint = source.keyFingerprint;
-    }
-
-    function _recover(
-        bytes32 digest,
-        bytes memory signature
-    ) private pure returns (address signer) {
-        if (signature.length != 65) return address(0);
-        bytes32 r;
-        bytes32 s;
-        uint8 v;
-        assembly ("memory-safe") {
-            r := mload(add(signature, 32))
-            s := mload(add(signature, 64))
-            v := byte(0, mload(add(signature, 96)))
-        }
-        if (v < 27) v += 27;
-        if (v != 27 && v != 28) return address(0);
-        return ecrecover(digest, v, r, s);
     }
 }

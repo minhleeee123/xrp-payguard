@@ -102,7 +102,8 @@ func TestCiphertextOnlyCustodyAndSignedReceipts(t *testing.T) {
 		if digestErr != nil || digest != envelope.Digest {
 			t.Fatalf("receipt %d digest mismatch", index)
 		}
-		if !VerifySignature(envelope.Digest, envelope.Signature, machines[index].Signer()) {
+		attestationDigest, attestationErr := protocol.PolicyReceiptAttestationDigest(envelope.Receipt)
+		if attestationErr != nil || !VerifySignature(attestationDigest, envelope.Signature, machines[index].Signer()) {
 			t.Fatalf("receipt %d signature invalid", index)
 		}
 	}
@@ -146,7 +147,8 @@ func TestThresholdEvaluationFailsClosed(t *testing.T) {
 		t.Fatal("matching threshold results were not produced")
 	}
 	for index, result := range results {
-		if !VerifySignature(result.Digest, result.Signature, machines[index].Signer()) {
+		attestationDigest, attestationErr := protocol.EvaluationAttestationDigest(result.Result)
+		if attestationErr != nil || !VerifySignature(attestationDigest, result.Signature, machines[index].Signer()) {
 			t.Fatalf("result %d signature invalid", index)
 		}
 	}

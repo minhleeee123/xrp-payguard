@@ -9,6 +9,8 @@ import {
 import {
   ACTION_REQUEST_V1,
   EVALUATION_RESULT_V1,
+  FCC_EVALUATION_PREFIX,
+  FCC_POLICY_RECEIPT_PREFIX,
   POLICY_RECEIPT_V1,
   POLICY_SCHEMA_V1,
   REASON_CODE,
@@ -50,6 +52,10 @@ const requestParameters: readonly AbiParameter[] = [
 const resultParameters: readonly AbiParameter[] = [
   { type: "bytes32" }, ...requestParameters, { type: "bytes32" }, { type: "uint8" }, { type: "uint8" }, { type: "uint256" },
   { type: "bytes32" }, { type: "bytes32" }, { type: "uint32" }, { type: "uint64" }, { type: "uint64" },
+];
+
+const fccAttestationParameters: readonly AbiParameter[] = [
+  { type: "bytes32" }, { type: "uint256" }, { type: "bytes32" },
 ];
 
 function bytes32(value: Hex, label: string): Hex {
@@ -183,6 +189,24 @@ export function policyReceiptDigest(receipt: PolicyReceiptV1): Hex {
     bytes32(receipt.submissionNonce, "submissionNonce"), uint(receipt.receiptNonce, "receiptNonce"), uint(receipt.issuedAt, "issuedAt"), uint(receipt.expiry, "expiry")]));
 }
 
+/** Exact message passed to tee-node v0.0.24 POST /sign. The node computes
+ * keccak256(message), then applies the Ethereum signed-message wrapper. */
+export function encodeFccAttestation(prefix: Hex, chainId: bigint, dataHash: Hex): Hex {
+  return encodeAbiParameters(fccAttestationParameters, [
+    bytes32(prefix, "attestation prefix"),
+    uint(chainId, "attestation chainId"),
+    bytes32(dataHash, "attestation dataHash"),
+  ]);
+}
+
+export function fccAttestationDigest(prefix: Hex, chainId: bigint, dataHash: Hex): Hex {
+  return keccak256(encodeFccAttestation(prefix, chainId, dataHash));
+}
+
+export function policyReceiptAttestationDigest(receipt: PolicyReceiptV1): Hex {
+  return fccAttestationDigest(FCC_POLICY_RECEIPT_PREFIX, receipt.binding.chainId, policyReceiptDigest(receipt));
+}
+
 function requestValues(request: ActionRequestV1): readonly unknown[] {
   return [ACTION_REQUEST_V1, uint(request.chainId, "chainId"), address(request.registry, "registry"), address(request.vault, "vault"), address(request.router, "router"),
     bytes32(request.policyId, "policyId"), request.policyVersion, bytes32(request.policyCommitment, "policyCommitment"), bytes32(request.requestId, "requestId"),
@@ -206,6 +230,10 @@ export function evaluationDigest(result: Omit<import("./types.js").EvaluationRes
   return keccak256(encodeAbiParameters(resultParameters, [EVALUATION_RESULT_V1, ...request, bytes32(actionRequestHash(result.request), "requestHash"), decision,
     REASON_CODE[result.publicReasonClass], uint(result.reservedAmount, "reservedAmount"), bytes32(result.resultingCheckpoint, "resultingCheckpoint"),
     bytes32(result.resultNonce, "resultNonce"), result.attempt, uint(result.issuedAt, "issuedAt"), uint(result.expiry, "expiry")]));
+}
+
+export function evaluationAttestationDigest(result: Omit<import("./types.js").EvaluationResultV1, "request"> & { request: ActionRequestV1 }): Hex {
+  return fccAttestationDigest(FCC_EVALUATION_PREFIX, result.request.chainId, evaluationDigest(result));
 }
 
 export function publicReasonCode(reason: import("./types.js").PublicReasonClass): number {

@@ -170,8 +170,10 @@ contract PayGuardPolicyRegistry {
             if (!machineEntry.registered || machineEntry.keyFingerprint != receipt.keyFingerprint) {
                 revert UnknownMachine();
             }
-            address recovered = _recover(
-                PayGuardTypes.receiptDigest(_copyBinding(binding), _copyReceipt(receipt)),
+            address recovered = PayGuardTypes.recoverFccSigner(
+                PayGuardTypes.receiptAttestationDigest(
+                    _copyBinding(binding), _copyReceipt(receipt)
+                ),
                 receipt.signature
             );
             if (recovered == address(0) || recovered != machineEntry.signer) {
@@ -249,23 +251,5 @@ contract PayGuardPolicyRegistry {
         target.issuedAt = source.issuedAt;
         target.expiry = source.expiry;
         target.signature = source.signature;
-    }
-
-    function _recover(
-        bytes32 digest,
-        bytes memory signature
-    ) private pure returns (address signer) {
-        if (signature.length != 65) return address(0);
-        bytes32 r;
-        bytes32 s;
-        uint8 v;
-        assembly ("memory-safe") {
-            r := mload(add(signature, 32))
-            s := mload(add(signature, 64))
-            v := byte(0, mload(add(signature, 96)))
-        }
-        if (v < 27) v += 27;
-        if (v != 27 && v != 28) return address(0);
-        return ecrecover(digest, v, r, s);
     }
 }

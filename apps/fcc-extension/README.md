@@ -4,7 +4,11 @@ The Go module contains the PayGuard-specific deterministic protocol codec in
 `internal/protocol` and a local ciphertext-only custody/evaluation path in
 `internal/ingress`. It matches the TypeScript `POLICY_SCHEMA_V1`, receipt,
 request, and evaluation golden vector, signs receipts/results with ephemeral
-machine keys in tests, and fails closed on replay/domain/threshold errors.
+machine keys in tests, and fails closed on replay/domain/threshold errors. The
+same fixture now covers the pinned tee-node `v0.0.24` sign-port convention:
+purpose-separated ABI message, Coston2 chain ID, Keccak-256, and the Ethereum
+signed-message wrapper. A bounded loopback-only sign-port client verifies the
+echoed message, canonical signature, and configured TEE identity.
 The public Go/TypeScript HTTP boundary uses lower-camel field names, named
 decision/reason enums, and quoted unsigned decimal strings for every bigint or
 `uint64`; numeric JSON bigints and unknown enums are rejected before hashing.

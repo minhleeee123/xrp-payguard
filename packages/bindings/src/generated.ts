@@ -219,6 +219,199 @@ export const PayGuardActionRouterAbi = [
   },
   {
     "type": "function",
+    "name": "evaluationAttestationDigest",
+    "inputs": [
+      {
+        "name": "result",
+        "type": "tuple",
+        "internalType": "struct PayGuardTypes.EvaluationResult",
+        "components": [
+          {
+            "name": "request",
+            "type": "tuple",
+            "internalType": "struct PayGuardTypes.ActionRequest",
+            "components": [
+              {
+                "name": "chainId",
+                "type": "uint256",
+                "internalType": "uint256"
+              },
+              {
+                "name": "registry",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "vault",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "router",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "policyId",
+                "type": "bytes32",
+                "internalType": "bytes32"
+              },
+              {
+                "name": "policyVersion",
+                "type": "uint32",
+                "internalType": "uint32"
+              },
+              {
+                "name": "policyCommitment",
+                "type": "bytes32",
+                "internalType": "bytes32"
+              },
+              {
+                "name": "requestId",
+                "type": "bytes32",
+                "internalType": "bytes32"
+              },
+              {
+                "name": "requestNonce",
+                "type": "uint256",
+                "internalType": "uint256"
+              },
+              {
+                "name": "attempt",
+                "type": "uint32",
+                "internalType": "uint32"
+              },
+              {
+                "name": "requester",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "target",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "asset",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "actionType",
+                "type": "bytes32",
+                "internalType": "bytes32"
+              },
+              {
+                "name": "amount",
+                "type": "uint256",
+                "internalType": "uint256"
+              },
+              {
+                "name": "scheduleSlot",
+                "type": "uint64",
+                "internalType": "uint64"
+              },
+              {
+                "name": "occurrence",
+                "type": "uint32",
+                "internalType": "uint32"
+              },
+              {
+                "name": "spendCheckpoint",
+                "type": "bytes32",
+                "internalType": "bytes32"
+              },
+              {
+                "name": "balanceCheckpoint",
+                "type": "bytes32",
+                "internalType": "bytes32"
+              },
+              {
+                "name": "inputCommitment",
+                "type": "bytes32",
+                "internalType": "bytes32"
+              },
+              {
+                "name": "createdAt",
+                "type": "uint64",
+                "internalType": "uint64"
+              },
+              {
+                "name": "graceDeadline",
+                "type": "uint64",
+                "internalType": "uint64"
+              },
+              {
+                "name": "expiry",
+                "type": "uint64",
+                "internalType": "uint64"
+              }
+            ]
+          },
+          {
+            "name": "decision",
+            "type": "uint8",
+            "internalType": "uint8"
+          },
+          {
+            "name": "publicReasonClass",
+            "type": "uint8",
+            "internalType": "uint8"
+          },
+          {
+            "name": "reservedAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "resultingCheckpoint",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "resultNonce",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "attempt",
+            "type": "uint32",
+            "internalType": "uint32"
+          },
+          {
+            "name": "issuedAt",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "expiry",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "machineId",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "keyFingerprint",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          }
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "pure"
+  },
+  {
+    "type": "function",
     "name": "evaluationDigest",
     "inputs": [
       {

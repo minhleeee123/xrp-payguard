@@ -1,5 +1,6 @@
 import {
   POLICY_SCHEMA_V1,
+  policyReceiptAttestationDigest,
   policyReceiptDigest,
   type Hex,
   type PolicyBindingV1,
@@ -11,7 +12,7 @@ import {
   isAddress,
   isHex,
   keccak256,
-  recoverAddress,
+  recoverMessageAddress,
   stringToHex,
   zeroAddress,
   zeroHash,
@@ -123,7 +124,7 @@ export async function decodePublicPolicyCustodyBundle(value: unknown): Promise<P
   if (!Array.isArray(record.receipts) || record.receipts.length !== 3) throw new Error("policy custody requires three receipts");
   const receipts = record.receipts.map((receipt, index) => decodeReceipt(receipt, binding, index)) as [PublicPolicyReceiptV1, PublicPolicyReceiptV1, PublicPolicyReceiptV1];
   assertReceiptSet(receipts, binding);
-  for (let index = 0; index < receipts.length; index += 1) await validateReceiptSignature(receipts[index]!, index);
+  for (let index = 0; index < receipts.length; index += 1) await validateReceiptSignature(receipts[index]!, binding, index);
   const bundleHash = nonZeroBytes32(record.bundleHash, "bundleHash");
   const expectedHash = policyCustodyBundleHash({ binding, receipts });
   if (bundleHash !== expectedHash) throw new Error("policy custody bundle hash mismatch");
@@ -246,8 +247,18 @@ function validateReceipt(receipt: PublicPolicyReceiptV1, binding: PolicyBindingV
   return { ...receipt, machineId, keyFingerprint, submissionNonce, digest, signer: getAddress(receipt.signer) as Hex };
 }
 
-async function validateReceiptSignature(receipt: PublicPolicyReceiptV1, index: number): Promise<void> {
-  if (getAddress(await recoverAddress({ hash: receipt.digest, signature: receipt.signature })) !== getAddress(receipt.signer)) {
+async function validateReceiptSignature(receipt: PublicPolicyReceiptV1, binding: PolicyBindingV1, index: number): Promise<void> {
+  const protocolReceipt: PolicyReceiptV1 = {
+    binding,
+    machineId: receipt.machineId,
+    keyFingerprint: receipt.keyFingerprint,
+    submissionNonce: receipt.submissionNonce,
+    receiptNonce: receipt.receiptNonce,
+    issuedAt: receipt.issuedAt,
+    expiry: receipt.expiry,
+  };
+  const attestationDigest = policyReceiptAttestationDigest(protocolReceipt);
+  if (getAddress(await recoverMessageAddress({ message: { raw: attestationDigest }, signature: receipt.signature })) !== getAddress(receipt.signer)) {
     throw new Error(`receipt ${index} signature mismatch`);
   }
 }

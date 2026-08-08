@@ -1,4 +1,4 @@
-import { keccak256, stringToHex } from "viem";
+import { keccak256, padHex, stringToHex } from "viem";
 
 export const CHAIN_ID = 114n;
 export const POLICY_SCHEMA_V1 = keccak256(stringToHex("POLICY_SCHEMA_V1"));
@@ -7,6 +7,8 @@ export const ACTION_REQUEST_V1 = keccak256(stringToHex("ACTION_REQUEST_V1"));
 export const SPEND_CHECKPOINT_V1 = keccak256(stringToHex("SPEND_CHECKPOINT_V1"));
 export const EVALUATION_RESULT_V1 = keccak256(stringToHex("EVALUATION_RESULT_V1"));
 export const ACTION_FTESTXRP_TRANSFER = keccak256(stringToHex("FTESTXRP_TRANSFER_V1"));
+export const FCC_POLICY_RECEIPT_PREFIX = padHex(stringToHex("PAYGUARD_POLICY_RECEIPT_V1"), { size: 32, dir: "right" });
+export const FCC_EVALUATION_PREFIX = padHex(stringToHex("PAYGUARD_EVALUATION_V1"), { size: 32, dir: "right" });
 
 export const ZERO_BYTES32 = `0x${"00".repeat(32)}` as const;
 

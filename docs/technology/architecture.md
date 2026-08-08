@@ -54,15 +54,18 @@ become a correctness authority.
 The browser may verify public receipt metadata and signatures, but activation
 requires all three receipts in the exact frozen machine/key order. Each receipt
 binds the same public policy domain, submission nonce, receipt nonce, and time
-window; digest or signer drift fails closed. Receipt verification is not an
-authorization result and cannot grant `ALLOW`.
+window. The TEE sign-port attestation additionally binds the PayGuard receipt
+purpose and chain ID; raw, wrong-purpose, wrong-chain, digest, or signer drift
+fails closed. Receipt verification is not an authorization result and cannot
+grant `ALLOW`.
 
 ### FCC extension
 
 Maintains sealed policy state keyed by full domain and machine identity. It
 validates canonical schemas, commitment, nonce, owner authorization, and replay;
-then evaluates frozen public request/checkpoint inputs. It returns only a public
-receipt or minimal decision result.
+then evaluates frozen public request/checkpoint inputs. It uses the loopback-only
+tee-node sign port for purpose-separated receipt/evaluation attestations and
+returns only a public receipt or minimal decision result.
 
 ### PolicyRegistry
 
