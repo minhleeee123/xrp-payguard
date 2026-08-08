@@ -242,6 +242,13 @@ recovers both low-S signatures under the distinct `TEE_ACTION_RESULT` and
 registered TEE and proxy IDs. Run its deterministic positive and negative
 vectors with `pnpm fcc:result:test`.
 
+The same module provides bounded polling against only the canonical
+`/action/result/<instruction-id>` path of a credential-free HTTPS origin. It
+disables redirects, applies a per-request timeout, retries only HTTP `202`/`404`
+within a fixed window, and requires strict UTF-8 JSON within 512 KiB before
+verification. Raw signatures remain transient in memory and are never emitted
+or written by the poller.
+
 This verifier does not itself dispatch a transaction or claim a live result.
 The operational dispatch/poll/evidence command and a production machine remain
 open, so Gate A is unchanged.

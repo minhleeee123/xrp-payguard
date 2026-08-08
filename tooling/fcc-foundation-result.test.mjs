@@ -11,6 +11,7 @@ import {
   FOUNDATION_OP_COMMAND,
   FOUNDATION_OP_TYPE,
   foundationBindingHash,
+  pollAndVerifyFoundationResult,
   PROXY_ACTION_RESULT_PREFIX,
   TEE_ACTION_RESULT_PREFIX,
   verifyFoundationActionResponse,
@@ -80,4 +81,36 @@ test("rejects high-S and malformed signatures before recovery", async () => {
   await assert.rejects(() => verifyFoundationActionResponse(value, expected), /non-canonical/);
   value.signature = "0x1234";
   await assert.rejects(() => verifyFoundationActionResponse(value, expected), /65-byte/);
+});
+
+test("polls only a bounded strict HTTPS JSON result path", async () => {
+  const { value, expected } = await fixture();
+  const calls = [];
+  const fetcher = async (url, options) => {
+    calls.push([url, options]);
+    if (calls.length === 1) return new Response("", { status: 404 });
+    return new Response(JSON.stringify(value), { status: 200, headers: { "content-type": "application/json" } });
+  };
+  const verified = await pollAndVerifyFoundationResult({ origin: "https://machine.example/", expected, fetcher, attempts: 2, delay: async () => {} });
+  assert.equal(verified.status, "verified");
+  assert.equal(calls[1][0], `https://machine.example/action/result/${expected.instructionId}`);
+  assert.equal(calls[1][1].redirect, "error");
+  await assert.rejects(() => pollAndVerifyFoundationResult({ origin: "https://machine.example/path", expected, fetcher }));
+  await assert.rejects(() => pollAndVerifyFoundationResult({ origin: "https://127.0.0.1", expected, fetcher }));
+});
+
+test("poller fails closed on timeout, content type, and body bounds", async () => {
+  const { value, expected } = await fixture();
+  await assert.rejects(() => pollAndVerifyFoundationResult({
+    origin: "https://machine.example", expected, attempts: 1,
+    fetcher: async () => new Response("", { status: 202 }), delay: async () => {},
+  }), /bounded polling window/);
+  await assert.rejects(() => pollAndVerifyFoundationResult({
+    origin: "https://machine.example", expected,
+    fetcher: async () => new Response(JSON.stringify(value), { status: 200, headers: { "content-type": "text/plain" } }),
+  }), /application\/json/);
+  await assert.rejects(() => pollAndVerifyFoundationResult({
+    origin: "https://machine.example", expected,
+    fetcher: async () => new Response("{}", { status: 200, headers: { "content-type": "application/json", "content-length": "600000" } }),
+  }), /exceeds/);
 });

@@ -10,6 +10,7 @@ import {
   recoverMessageAddress,
   stringToHex,
 } from "viem";
+import { isIP } from "node:net";
 
 import { COSTON2_CHAIN_ID } from "./fcc-foundation-registration.mjs";
 import { PAYGUARD_EXTENSION_ID, PAYGUARD_FOUNDATION_SENDER } from "./fcc-code-version.mjs";
@@ -149,4 +150,57 @@ export async function verifyFoundationActionResponse(value, expected) {
 
 export function encodeFoundationResponse(response) {
   return encodeAbiParameters([responseType], [response]);
+}
+
+function resultOrigin(value) {
+  let url;
+  try { url = new URL(value); } catch { throw new Error("result origin must be valid HTTPS"); }
+  if (
+    url.protocol !== "https:" || url.username || url.password || url.port || url.pathname !== "/"
+      || url.search || url.hash || isIP(url.hostname) !== 0 || url.hostname === "localhost" || !url.hostname.includes(".")
+  ) throw new Error("result origin must be a credential-free public HTTPS origin");
+  return url.origin;
+}
+
+export async function pollAndVerifyFoundationResult({
+  origin,
+  expected,
+  fetcher = fetch,
+  attempts = 15,
+  delay = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds)),
+}) {
+  const normalizedOrigin = resultOrigin(origin);
+  if (!Number.isInteger(attempts) || attempts < 1 || attempts > 30) throw new Error("result polling attempts must be between 1 and 30");
+  const instructionId = bytes32(expected?.instructionId, "expected instruction ID");
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    let response;
+    try {
+      response = await fetcher(`${normalizedOrigin}/action/result/${instructionId}`, {
+        method: "GET",
+        redirect: "error",
+        signal: AbortSignal.timeout(10_000),
+        headers: { accept: "application/json" },
+      });
+    } catch (error) {
+      throw new Error("FCC result endpoint request failed closed", { cause: error });
+    }
+    if ([202, 404].includes(response.status)) {
+      if (attempt === attempts) throw new Error("FCC result was not ready within the bounded polling window");
+      await delay(2_000);
+      continue;
+    }
+    if (response.status !== 200) throw new Error(`FCC result endpoint returned HTTP ${response.status}`);
+    const contentType = response.headers.get("content-type")?.split(";", 1)[0].trim().toLowerCase();
+    if (contentType !== "application/json") throw new Error("FCC result endpoint did not return application/json");
+    const declaredLength = Number(response.headers.get("content-length") ?? 0);
+    if (!Number.isSafeInteger(declaredLength) || declaredLength < 0 || declaredLength > 512 * 1024) throw new Error("FCC result response exceeds the public envelope limit");
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    if (bytes.length === 0 || bytes.length > 512 * 1024) throw new Error("FCC result response is empty or oversized");
+    let value;
+    try { value = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes)); } catch (error) {
+      throw new Error("FCC result response is not strict UTF-8 JSON", { cause: error });
+    }
+    return verifyFoundationActionResponse(value, expected);
+  }
+  throw new Error("FCC result polling failed closed");
 }
