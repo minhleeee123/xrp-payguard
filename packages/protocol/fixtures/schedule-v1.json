@@ -1,0 +1,16 @@
+{
+  "schema": "SCHEDULE_WINDOW_V1",
+  "boundary": "INCLUSIVE",
+  "caseCount": 9,
+  "cases": [
+    { "name": "first-slot", "startAt": "1000", "interval": "3600", "grace": "100", "occurrence": "1", "slot": "1000", "deadline": "1100", "valid": true },
+    { "name": "second-slot", "startAt": "1000", "interval": "3600", "grace": "100", "occurrence": "2", "slot": "4600", "deadline": "4700", "valid": true },
+    { "name": "uint64-boundary", "startAt": "18446744073709551604", "interval": "10", "grace": "1", "occurrence": "2", "slot": "18446744073709551614", "deadline": "18446744073709551615", "valid": true },
+    { "name": "zero-occurrence", "startAt": "1000", "interval": "3600", "grace": "100", "occurrence": "0", "slot": "0", "deadline": "0", "valid": false },
+    { "name": "occurrence-overflow", "startAt": "1000", "interval": "3600", "grace": "100", "occurrence": "4294967296", "slot": "0", "deadline": "0", "valid": false },
+    { "name": "zero-interval", "startAt": "1000", "interval": "0", "grace": "100", "occurrence": "1", "slot": "0", "deadline": "0", "valid": false },
+    { "name": "overlapping-window", "startAt": "1000", "interval": "100", "grace": "100", "occurrence": "1", "slot": "0", "deadline": "0", "valid": false },
+    { "name": "slot-overflow", "startAt": "18446744073709551610", "interval": "10", "grace": "1", "occurrence": "2", "slot": "0", "deadline": "0", "valid": false },
+    { "name": "deadline-overflow", "startAt": "18446744073709551615", "interval": "10", "grace": "1", "occurrence": "1", "slot": "0", "deadline": "0", "valid": false }
+  ]
+}

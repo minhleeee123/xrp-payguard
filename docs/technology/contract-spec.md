@@ -211,6 +211,10 @@ mapping before counting distinct signers.
 - Checked integer/fixed-point math only.
 - UTC timestamps/slots from canonical chain state; no local timezone.
 - Explicit inclusive/exclusive boundary definitions.
+- `SCHEDULE_WINDOW_V1` derives the inclusive window
+  `[startAt + (occurrence - 1) * interval, slot + grace]`. Occurrence is
+  one-indexed `uint32`; timestamps are checked `uint64`; interval and grace are
+  positive; grace must be strictly less than interval; any overflow denies.
 - Reference-value conversion binds feed, decimals, timestamp, freshness, and
   documented rounding direction.
 - `REFERENCE_VALUE_V1` computes `ceil(amount * price / 10**decimals)` with

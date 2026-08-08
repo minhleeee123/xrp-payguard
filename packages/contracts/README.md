@@ -16,6 +16,8 @@ Local Foundry/Solidity V1 implementation of the public state machine:
 - `PayGuardPolicyComposition` is a bitmask-only precedence reference shared with
   the private evaluators; no private policy field or intermediate value enters
   Solidity.
+- `PayGuardScheduleMath` is the checked UTC slot/deadline reference shared with
+  Go and TypeScript; it is not called by the public router.
 
 Run with the pinned local toolchain from the repository root:
 

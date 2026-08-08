@@ -137,6 +137,8 @@ fields; live machine-domain verification remains open.
   Go/Solidity/TypeScript golden vectors.
 - [ ] Implement recurring slots, rolling windows, target rules, occurrence
   limits, delegated allowances, expiry, and deny precedence.
+- [x] Freeze checked, inclusive UTC recurring-slot arithmetic with shared
+  Go/Solidity/TypeScript boundary and overflow vectors.
 - [ ] Define deterministic tie/conflict rules: explicit deny outranks allow;
   malformed, unknown, stale, or unavailable input denies.
 - [ ] Add range, rounding, overflow, time-boundary, timezone-independent,
