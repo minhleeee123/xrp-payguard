@@ -143,6 +143,8 @@ fields; live machine-domain verification remains open.
   slot, occurrence, inclusive deadline, expiry, and ad-hoc-zero semantics.
 - [x] Make delegated requester authority owner-only by default and require every
   non-owner to be explicitly allowlisted under the same policy caps.
+- [x] Freeze UTC calendar and exact sliding rolling-window sums with shared
+  Go/Solidity/TypeScript boundary, order, range, and overflow vectors.
 - [ ] Define deterministic tie/conflict rules: explicit deny outranks allow;
   malformed, unknown, stale, or unavailable input denies.
 - [ ] Add range, rounding, overflow, time-boundary, timezone-independent,

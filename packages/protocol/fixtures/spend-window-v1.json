@@ -1,0 +1,15 @@
+{
+  "schema": "SPEND_WINDOW_V1",
+  "calendarBoundary": "[dayStart, now]",
+  "rollingBoundary": "(now-window, now]",
+  "caseCount": 7,
+  "cases": [
+    { "name": "empty", "now": "90000", "window": "86400", "entryCount": 0, "entries": [], "daily": "0", "rolling": "0", "valid": true },
+    { "name": "calendar-and-rolling-boundaries", "now": "172800", "window": "86400", "entryCount": 3, "entries": [{ "value": "10", "executedAt": "86400" }, { "value": "20", "executedAt": "172799" }, { "value": "30", "executedAt": "172800" }], "daily": "30", "rolling": "50", "valid": true },
+    { "name": "window-before-epoch", "now": "50", "window": "100", "entryCount": 2, "entries": [{ "value": "5", "executedAt": "0" }, { "value": "7", "executedAt": "50" }], "daily": "12", "rolling": "12", "valid": true },
+    { "name": "future-entry", "now": "100", "window": "50", "entryCount": 1, "entries": [{ "value": "1", "executedAt": "101" }], "daily": "0", "rolling": "0", "valid": false },
+    { "name": "unordered-entry", "now": "100", "window": "50", "entryCount": 2, "entries": [{ "value": "1", "executedAt": "90" }, { "value": "1", "executedAt": "89" }], "daily": "0", "rolling": "0", "valid": false },
+    { "name": "zero-value", "now": "100", "window": "50", "entryCount": 1, "entries": [{ "value": "0", "executedAt": "100" }], "daily": "0", "rolling": "0", "valid": false },
+    { "name": "sum-overflow", "now": "100", "window": "50", "entryCount": 2, "entries": [{ "value": "115792089237316195423570985008687907853269984665640564039457584007913129639935", "executedAt": "99" }, { "value": "1", "executedAt": "100" }], "daily": "0", "rolling": "0", "valid": false }
+  ]
+}

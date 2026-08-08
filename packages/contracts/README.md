@@ -18,6 +18,8 @@ Local Foundry/Solidity V1 implementation of the public state machine:
   Solidity.
 - `PayGuardScheduleMath` is the checked UTC slot/deadline reference shared with
   Go and TypeScript; it is not called by the public router.
+- `PayGuardSpendWindowMath` fixes UTC calendar and sliding rolling-window
+  boundaries for the private evaluators without wiring history into the router.
 
 Run with the pinned local toolchain from the repository root:
 

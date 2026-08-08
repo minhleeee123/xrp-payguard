@@ -3,3 +3,4 @@ export * from "./types.js";
 export * from "./codec.js";
 export * from "./evaluator.js";
 export * from "./schedule.js";
+export * from "./spend-window.js";

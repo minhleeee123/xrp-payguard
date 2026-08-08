@@ -242,6 +242,10 @@ mapping before counting distinct signers.
 - Missing, stale, negative, zero, overflowed, or inconsistent oracle/proof input
   denies or pauses; never falls back.
 - Calendar and rolling windows use canonical history/checkpoint data.
+- `SPEND_WINDOW_V1` defines a UTC calendar day as `[dayStart, now]` and a
+  sliding rolling window as `(now - rollingWindowSeconds, now]`. Ordered history
+  is capped at 4,096 entries; future/unordered/non-positive entries and checked
+  `uint256` sum overflow deny.
 
 ## 7. Conservation and authorization invariants
 
