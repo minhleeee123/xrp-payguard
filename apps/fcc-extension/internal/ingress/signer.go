@@ -16,6 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	teetypes "github.com/flare-foundation/tee-node/pkg/types"
+	teeutils "github.com/flare-foundation/tee-node/pkg/utils"
 	"github.com/minhleeee123/xrp-payguard/apps/fcc-extension/internal/protocol"
 )
 
@@ -25,6 +26,7 @@ const (
 )
 
 var identityDiscoveryMessage = []byte("PAYGUARD_TEE_IDENTITY_DISCOVERY_V1")
+var decryptReadinessMessage = []byte("PAYGUARD_TEE_DECRYPT_READINESS_V1")
 
 type AttestationSigner interface {
 	Address() common.Address
@@ -82,30 +84,35 @@ func NewTeeSignPortSigner(signPort int, signer common.Address) (*TeeSignPortSign
 }
 
 func DiscoverTeeSignPortSigner(signPort int) (*TeeSignPortSigner, TeeIdentity, error) {
+	signer, identity, _, err := discoverTeeSignPortSigner(signPort)
+	return signer, identity, err
+}
+
+func discoverTeeSignPortSigner(signPort int) (*TeeSignPortSigner, TeeIdentity, *ecdsa.PublicKey, error) {
 	if signPort <= 0 || signPort > 65535 {
-		return nil, TeeIdentity{}, errors.New("TEE sign port is invalid")
+		return nil, TeeIdentity{}, nil, errors.New("TEE sign port is invalid")
 	}
 	client := &http.Client{Timeout: 5 * time.Second}
 	endpoint, err := loopbackEndpoint(fmt.Sprintf("http://127.0.0.1:%d", signPort), "/sign")
 	if err != nil {
-		return nil, TeeIdentity{}, err
+		return nil, TeeIdentity{}, nil, err
 	}
 	signed, err := requestTeeSignature(endpoint, client, identityDiscoveryMessage)
 	if err != nil {
-		return nil, TeeIdentity{}, fmt.Errorf("discover TEE identity: %w", err)
+		return nil, TeeIdentity{}, nil, fmt.Errorf("discover TEE identity: %w", err)
 	}
 	normalized, ok := normalizeCanonicalSignature(signed.Signature)
 	if !ok {
-		return nil, TeeIdentity{}, errors.New("TEE identity signature is not canonical")
+		return nil, TeeIdentity{}, nil, errors.New("TEE identity signature is not canonical")
 	}
 	digest := crypto.Keccak256Hash(identityDiscoveryMessage)
 	publicKey, err := crypto.SigToPub(accounts.TextHash(digest.Bytes()), normalized)
 	if err != nil || publicKey == nil {
-		return nil, TeeIdentity{}, errors.New("recover TEE identity signature")
+		return nil, TeeIdentity{}, nil, errors.New("recover TEE identity signature")
 	}
 	publicBytes := crypto.FromECDSAPub(publicKey)
 	if len(publicBytes) != 65 {
-		return nil, TeeIdentity{}, errors.New("TEE identity public key is invalid")
+		return nil, TeeIdentity{}, nil, errors.New("TEE identity public key is invalid")
 	}
 	signerAddress := crypto.PubkeyToAddress(*publicKey)
 	identity := TeeIdentity{
@@ -115,9 +122,9 @@ func DiscoverTeeSignPortSigner(signPort int) (*TeeSignPortSigner, TeeIdentity, e
 	}
 	signer, err := newTeeSignPortSigner(endpoint, signerAddress, client)
 	if err != nil {
-		return nil, TeeIdentity{}, err
+		return nil, TeeIdentity{}, nil, err
 	}
-	return signer, identity, nil
+	return signer, identity, publicKey, nil
 }
 
 func newTeeSignPortSigner(endpoint string, signer common.Address, client *http.Client) (*TeeSignPortSigner, error) {
@@ -271,13 +278,31 @@ func (d *TeeDecryptor) ResolvePolicy(ciphertext []byte) (protocol.PolicyV1, erro
 }
 
 func NewTeeMachine(signPort int) (*Machine, TeeIdentity, error) {
-	signer, identity, err := DiscoverTeeSignPortSigner(signPort)
+	signer, identity, publicKey, err := discoverTeeSignPortSigner(signPort)
 	if err != nil {
 		return nil, TeeIdentity{}, err
 	}
 	decryptor, err := NewTeeDecryptor(signPort)
 	if err != nil {
 		return nil, TeeIdentity{}, err
+	}
+	probeCiphertext, err := teeutils.Encrypt(decryptReadinessMessage, publicKey)
+	if err != nil {
+		return nil, TeeIdentity{}, errors.New("encrypt TEE decrypt-readiness probe")
+	}
+	decryptedProbe, err := decryptor.decrypt(probeCiphertext)
+	for index := range probeCiphertext {
+		probeCiphertext[index] = 0
+	}
+	if err != nil {
+		return nil, TeeIdentity{}, fmt.Errorf("TEE decrypt-readiness probe: %w", err)
+	}
+	probeMatches := bytes.Equal(decryptedProbe, decryptReadinessMessage)
+	for index := range decryptedProbe {
+		decryptedProbe[index] = 0
+	}
+	if !probeMatches {
+		return nil, TeeIdentity{}, errors.New("TEE decrypt-readiness response mismatch")
 	}
 	machine, err := NewMachineWithSigner(identity.MachineID, identity.KeyFingerprint, signer, decryptor.ResolvePolicy)
 	if err != nil {

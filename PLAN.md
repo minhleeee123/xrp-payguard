@@ -99,6 +99,8 @@ official endpoint resolution and three stable FCC origins remain open.
 - [ ] Resolve Coston2 FCC manager, registries, FDC, FTSO, FAssets, Smart Account,
   verifier, DA, RPC, faucet, and explorer through supported sources.
 - [x] Build the official FCC scaffold unchanged and run its local smoke first.
+- [x] Build a digest-pinned reproducible PayGuard FCC image and pass a
+  credential-free local three-machine identity/restart/hardening smoke.
 - [ ] Obtain three stable HTTPS FCC machine origins and an indexer path without
   committing credentials.
 - [x] Add secret, dependency, source-provenance, and release-doc checks.

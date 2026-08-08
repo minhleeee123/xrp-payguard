@@ -11,6 +11,12 @@ Adapted patterns:
   scaffold's documented container contract and official Go imports.
 - `cmd/docker` starts the pinned `tee-node` extension server using the official
   `StartServerExtension` entry point.
+- The official scaffold image/compose layout was used as a pattern, then reduced
+  to PayGuard's static binary and private-ingress boundary. All frontend/base
+  images are pinned by `linux/amd64` digest, production mode is the image
+  default, and new PayGuard scripts verify byte-identical builds plus three
+  disposable identities. The pinned scaffold checkout contained no license
+  file, so no source file was copied wholesale.
 - Browser encryption follows the interoperable ECIES construction reviewed in
   VeilBid commit `fcc61b731ddb1a2818fa447ad797c328fd8f5cfe`, under its MIT license.
   The PayGuard implementation has a different plaintext schema and ingress

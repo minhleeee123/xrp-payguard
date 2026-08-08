@@ -1,0 +1,48 @@
+x-payguard-fcc: &payguard-fcc
+  image: xrp-payguard/fcc-extension:${PAYGUARD_FCC_IMAGE_TAG:-local}
+  pull_policy: never
+  environment:
+    MODE: "1"
+    SIMULATED_TEE: "true"
+    CHAIN_ID: "114"
+    CONFIG_PORT: "5501"
+    SIGN_PORT: "7701"
+    EXTENSION_PORT: "7702"
+    PRIVATE_INGRESS_PORT: "7703"
+    LOG_LEVEL: ERROR
+  read_only: true
+  tmpfs:
+    - /tmp:size=16m,mode=1777
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+  restart: "no"
+  networks:
+    - payguard-fcc-local
+
+services:
+  payguard-fcc-a:
+    <<: *payguard-fcc
+    build:
+      context: .
+      dockerfile: Dockerfile
+      provenance: false
+      args:
+        SOURCE_COMMIT: ${SOURCE_COMMIT:-unknown}
+        SOURCE_DATE_EPOCH: ${SOURCE_DATE_EPOCH:-0}
+    ports:
+      - "127.0.0.1:${PAYGUARD_FCC_A_PORT:-17703}:7703"
+
+  payguard-fcc-b:
+    <<: *payguard-fcc
+    ports:
+      - "127.0.0.1:${PAYGUARD_FCC_B_PORT:-27703}:7703"
+
+  payguard-fcc-c:
+    <<: *payguard-fcc
+    ports:
+      - "127.0.0.1:${PAYGUARD_FCC_C_PORT:-37703}:7703"
+
+networks:
+  payguard-fcc-local: {}

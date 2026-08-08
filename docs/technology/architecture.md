@@ -272,6 +272,11 @@ Target services:
 - optional public-safe indexer/evidence API;
 - Coston2 contracts and official protocol dependencies.
 
+The pinned PayGuard FCC image and disposable three-machine simulated compose
+pass locally. That compose publishes only authenticated ingress on loopback and
+is not a hosted topology or machine-registration claim. The image defaults to
+production attestation; local simulation is an explicit override.
+
 Stable origins, pinned images, independent identities, explicit health binding,
 and secret-separated environments are required. Quick tunnels, shared machine
 keys, browser-shipped API credentials, or proxy fallback to a mock are forbidden.

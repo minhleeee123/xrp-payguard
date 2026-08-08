@@ -20,7 +20,7 @@ Forbidden evidence:
 
 | Gate | Required proof | Status |
 |---|---|---|
-| 0 — Foundations | pinned supported tools, registries, services, three machine capacity | PARTIAL — FUNDING + CONTRACT DEPLOYMENT VERIFIED / THREE MACHINE CAPACITY OPEN |
+| 0 — Foundations | pinned supported tools, registries, services, three machine capacity | PARTIAL — FUNDING + CONTRACTS + LOCAL REPRO IMAGE/3 IDs PASS / STABLE LIVE MACHINES OPEN |
 | A — FCC result | registered extension result verified on Coston2 | NOT STARTED |
 | B — Private policy ingress | sealed policy, three receipts, replay/domain negatives | LOCAL AUTH/ECIES PASS / SEALED LIVE NOT VERIFIED |
 | C — Common custody | all-three matching policy availability and commitment | NOT STARTED |
@@ -54,6 +54,10 @@ Forbidden evidence:
 
 ### FCC/private path
 
+- Two byte-identical no-cache image builds, pinned base/frontend digests, and
+  secret-free build context.
+- Three fresh local container identities, startup sign/decrypt readiness,
+  hardening, malformed-ingress failure, cleanup, and restart rotation.
 - Wrong key/owner/policy/request/nonce/commitment/schema/code/machine rejection.
 - No plaintext/ciphertext in chain, logs, browser persistence, evidence, or output.
 - Sealed restart behavior, rollback check, one-machine result outage.

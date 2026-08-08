@@ -107,6 +107,36 @@ func TestTeeSignPortSignerFailsClosedOnEndpointAndResponseDrift(t *testing.T) {
 	}
 }
 
+func TestNewTeeMachineFailsClosedWhenDecryptReadinessDrifts(t *testing.T) {
+	key, err := crypto.GenerateKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
+		switch request.URL.Path {
+		case "/sign":
+			var payload teetypes.SignRequest
+			if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
+				http.Error(w, "malformed", http.StatusBadRequest)
+				return
+			}
+			signature, _ := crypto.Sign(accounts.TextHash(crypto.Keccak256(payload.Message)), key)
+			_ = json.NewEncoder(w).Encode(teetypes.SignResponse{Message: payload.Message, Signature: signature})
+		case "/decrypt":
+			_ = json.NewEncoder(w).Encode(teetypes.DecryptResponse{DecryptedMessage: []byte("substituted")})
+		default:
+			http.NotFound(w, request)
+		}
+	}))
+	defer server.Close()
+	parsed, _ := url.Parse(server.URL)
+	_, portText, _ := net.SplitHostPort(parsed.Host)
+	port, _ := strconv.Atoi(portText)
+	if _, _, err := NewTeeMachine(port); err == nil {
+		t.Fatal("substituted decrypt-readiness response was accepted")
+	}
+}
+
 func TestVerifySignatureRejectsHighSAndWrongSigner(t *testing.T) {
 	key, err := crypto.GenerateKey()
 	if err != nil {

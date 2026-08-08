@@ -43,6 +43,7 @@ Read-only source workspaces:
 | PayGuard component | Read-only source provenance | License | Adaptation and independent verification |
 |---|---|---|---|
 | Browser-to-tee-node ECIES | VeilBid workspace HEAD `d28b2d448e8f08f684b55162453dd69b5ba46964`; last source commit `fcc61b731ddb1a2818fa447ad797c328fd8f5cfe`; `packages/flare-bindings/src/private-bid.ts` | MIT, Copyright 2026 Hữu Trung | Adapted only the secp256k1 / AES-128-CTR / SHA-256 / HMAC-SHA-256 interoperability pattern. PayGuard adds its own strict policy wire, 64 KiB bound, key wiping, machine descriptor, owner-authorized ingress domain, and deterministic TypeScript-to-Go decrypt vector. No VeilBid key, ciphertext, environment, identity, deployment, or evidence was copied. |
+| FCC image/compose layout | Official Flare `fce-extension-scaffold` HEAD `ffb6c4ca7c160c49be59e00fe537e24d2477b000`; last relevant commit `7b64958be7cd793927e6effdb7880a5680776541`; `go/Dockerfile` and `docker-compose.yaml` | No license file was present in the pinned checkout; treated as an official pattern reference, not copied wholesale | PayGuard uses its own module, entrypoint, private ingress, current pinned Go/distroless/frontend digests, production-safe mode default, minimal build context, deterministic two-build check, and credential-free disposable three-machine smoke. No scaffold env, proxy key, extension ID, deployment, or evidence was copied. |
 
 ## 5. Reuse acceptance checklist
 
