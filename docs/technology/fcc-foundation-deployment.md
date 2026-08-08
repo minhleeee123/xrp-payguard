@@ -250,5 +250,10 @@ verification. Raw signatures remain transient in memory and are never emitted
 or written by the poller.
 
 This verifier does not itself dispatch a transaction or claim a live result.
-The operational dispatch/poll/evidence command and a production machine remain
-open, so Gate A is unchanged.
+The operational command is now `pnpm fcc:ping:plan` (read-only) or
+`pnpm fcc:ping:send -- --url ... --image-id ...`; it requires the exact
+production machine/code-version readbacks, simulates the payable sender call,
+requires explicit broadcast and two confirmations, checks the dispatch event,
+polls the same machine origin, and writes public evidence only after the two
+FCC signatures verify. A production machine is still required before this
+command can succeed; Gate A remains open until that live evidence exists.
