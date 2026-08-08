@@ -219,7 +219,7 @@ review remain open.
 - [x] Run full-history secret scans plus browser/network/log/evidence privacy scans.
 - [x] Add rate limits, idempotency, health bindings, timeout budgets, and
   competing-executor tests.
-- [ ] Verify machine replacement for new policies and fail-closed behavior for
+- [x] Verify machine replacement for new policies and fail-closed behavior for
   policies bound to unavailable frozen machines.
 - [ ] Commission external contract and TEE-path review before production value.
 

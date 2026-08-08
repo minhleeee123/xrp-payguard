@@ -48,6 +48,10 @@ func testState(request protocol.ActionRequestV1) protocol.SpendStateV1 {
 }
 
 func newTestCoordinator(t *testing.T, policy protocol.PolicyV1) (*Coordinator, [3]*Machine, protocol.PolicyBindingV1) {
+	return newTestCoordinatorSet(t, policy, "machine", "fingerprint")
+}
+
+func newTestCoordinatorSet(t *testing.T, policy protocol.PolicyV1, machinePrefix, fingerprintPrefix string) (*Coordinator, [3]*Machine, protocol.PolicyBindingV1) {
 	t.Helper()
 	var machines [3]*Machine
 	ciphertext := []byte("opaque-ciphertext")
@@ -56,7 +60,7 @@ func newTestCoordinator(t *testing.T, policy protocol.PolicyV1) (*Coordinator, [
 		if err != nil {
 			t.Fatal(err)
 		}
-		machine, err := NewMachine(ingressHash("machine-"+string(rune('a'+index))), ingressHash("fingerprint-"+string(rune('a'+index))), key, func(received []byte) (protocol.PolicyV1, error) {
+		machine, err := NewMachine(ingressHash(machinePrefix+"-"+string(rune('a'+index))), ingressHash(fingerprintPrefix+"-"+string(rune('a'+index))), key, func(received []byte) (protocol.PolicyV1, error) {
 			if !bytes.Equal(received, ciphertext) {
 				return protocol.PolicyV1{}, errUnexpectedCiphertext
 			}
@@ -170,5 +174,45 @@ func TestCoordinatorBindsFrozenOrderAndSubmissionNonce(t *testing.T) {
 	}
 	if _, err := coordinator.Submit(binding, ingressHash("different-submission"), 1000, 2000, []byte("opaque-ciphertext")); err == nil {
 		t.Fatal("policy was accepted under a different submission nonce")
+	}
+}
+
+func TestReplacementCustodyIsLimitedToNewPolicyVersion(t *testing.T) {
+	oldPolicy := testPolicy()
+	oldCoordinator, oldMachines, oldBinding := newTestCoordinator(t, oldPolicy)
+	if _, err := oldCoordinator.Submit(oldBinding, oldPolicy.SubmissionNonce, 1000, 2000, []byte("opaque-ciphertext")); err != nil {
+		t.Fatal(err)
+	}
+
+	replacementPolicy := oldPolicy
+	replacementPolicy.PolicyVersion = 2
+	replacementPolicy.PrivateSalt = ingressHash("replacement-salt")
+	replacementPolicy.SubmissionNonce = ingressHash("replacement-submit")
+	replacementCoordinator, _, replacementBinding := newTestCoordinatorSet(t, replacementPolicy, "replacement-machine", "replacement-fingerprint")
+	replacementBinding.PolicyNonce = 2
+	if _, err := replacementCoordinator.Submit(replacementBinding, replacementPolicy.SubmissionNonce, 1000, 2000, []byte("opaque-ciphertext")); err != nil {
+		t.Fatal(err)
+	}
+
+	oldRequest := testRequest(oldPolicy)
+	if _, err := replacementCoordinator.Evaluate(oldRequest, testState(oldRequest)); err == nil {
+		t.Fatal("replacement machines evaluated a policy they never receipted")
+	}
+	replacementRequest := testRequest(replacementPolicy)
+	results, err := replacementCoordinator.Evaluate(replacementRequest, testState(replacementRequest))
+	if err != nil || len(results) != 3 {
+		t.Fatalf("replacement policy did not reach its new custody set: %v", err)
+	}
+	if _, err := oldCoordinator.Evaluate(replacementRequest, testState(replacementRequest)); err == nil {
+		t.Fatal("old machines evaluated a replacement policy they never receipted")
+	}
+
+	for index := 1; index < len(oldMachines); index++ {
+		oldMachines[index].mu.Lock()
+		delete(oldMachines[index].policies, oldRequest.PolicyCommitment)
+		oldMachines[index].mu.Unlock()
+	}
+	if _, err := oldCoordinator.Evaluate(oldRequest, testState(oldRequest)); err == nil {
+		t.Fatal("replacement availability manufactured an old-policy threshold")
 	}
 }

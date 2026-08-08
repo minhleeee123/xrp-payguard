@@ -68,9 +68,9 @@ contract PayGuardActionRouterTest is TestBase {
             policyNonce: 1
         });
         PayGuardTypes.PolicyReceipt[3] memory receipts;
-        receipts[0] = _receipt(machineA, keyA, machineAKey);
-        receipts[1] = _receipt(machineB, keyB, machineBKey);
-        receipts[2] = _receipt(machineC, keyC, machineCKey);
+        receipts[0] = _receiptFor(binding, machineA, keyA, machineAKey);
+        receipts[1] = _receiptFor(binding, machineB, keyB, machineBKey);
+        receipts[2] = _receiptFor(binding, machineC, keyC, machineCKey);
         registry.registerPolicy(binding, receipts);
 
         token.mint(owner, 500);
@@ -231,6 +231,81 @@ contract PayGuardActionRouterTest is TestBase {
         registry.registerPolicy(invalid, emptyReceipts);
     }
 
+    function testReplacementMachineAppliesOnlyToNewPolicyVersion() public {
+        bytes32 replacementMachine = keccak256("replacement-machine");
+        bytes32 replacementFingerprint = keccak256("replacement-fingerprint");
+        uint256 replacementKey = _key("payguard-replacement-machine");
+        address replacementSigner = vm.addr(replacementKey);
+        registry.registerMachine(replacementMachine, replacementFingerprint, replacementSigner);
+
+        bytes32 replacementCommitment = keccak256("replacement-policy-commitment");
+        PayGuardTypes.PolicyBinding memory replacement = binding;
+        replacement.policyVersion = 2;
+        replacement.policyCommitment = replacementCommitment;
+        replacement.policyNonce = 2;
+        replacement.machineIds[0] = replacementMachine;
+        replacement.keyFingerprints[0] = replacementFingerprint;
+        PayGuardTypes.PolicyReceipt[3] memory replacementReceipts;
+        replacementReceipts[0] =
+            _receiptFor(replacement, replacementMachine, replacementFingerprint, replacementKey);
+        replacementReceipts[1] = _receiptFor(replacement, machineB, keyB, machineBKey);
+        replacementReceipts[2] = _receiptFor(replacement, machineC, keyC, machineCKey);
+        registry.registerPolicy(replacement, replacementReceipts);
+
+        assertTrue(registry.isFrozenSigner(commitment, machineA, keyA, vm.addr(machineAKey)));
+        assertEq(
+            registry.isFrozenSigner(
+                commitment, replacementMachine, replacementFingerprint, replacementSigner
+            ),
+            false
+        );
+        assertTrue(
+            registry.isFrozenSigner(
+                replacementCommitment, replacementMachine, replacementFingerprint, replacementSigner
+            )
+        );
+        assertEq(
+            registry.isFrozenSigner(replacementCommitment, machineA, keyA, vm.addr(machineAKey)),
+            false
+        );
+
+        PayGuardTypes.ActionRequest memory oldRequest =
+            _request(keccak256("old-policy-request"), 1, _b(0x7370656e642d31), 25);
+        vm.prank(owner);
+        router.createRequest(oldRequest);
+        PayGuardTypes.EvaluationResult memory oldResult =
+            _allowResult(oldRequest, 25, keccak256("old-policy-next"));
+        oldResult.machineId = replacementMachine;
+        oldResult.keyFingerprint = replacementFingerprint;
+        vm.expectRevert(PayGuardActionRouter.InvalidSignature.selector);
+        router.submitEvaluation(
+            oldResult, _signature(replacementKey, PayGuardTypes.evaluationDigest(oldResult))
+        );
+        vm.prank(owner);
+        router.cancel(oldRequest.requestId);
+
+        PayGuardTypes.ActionRequest memory newRequest =
+            _request(keccak256("new-policy-request"), 1, _b(0x6e65772d7370656e64), 25);
+        newRequest.policyVersion = 2;
+        newRequest.policyCommitment = replacementCommitment;
+        vm.prank(owner);
+        router.createRequest(newRequest);
+        PayGuardTypes.EvaluationResult memory newResult =
+            _allowResult(newRequest, 25, keccak256("new-policy-next"));
+        newResult.machineId = replacementMachine;
+        newResult.keyFingerprint = replacementFingerprint;
+        router.submitEvaluation(
+            newResult, _signature(replacementKey, PayGuardTypes.evaluationDigest(newResult))
+        );
+        newResult.machineId = machineB;
+        newResult.keyFingerprint = keyB;
+        router.submitEvaluation(
+            newResult, _signature(machineBKey, PayGuardTypes.evaluationDigest(newResult))
+        );
+        router.execute(newRequest.requestId);
+        assertEq(token.balanceOf(payee), 25);
+    }
+
     function testStaleCheckpointAndCancellationAreSafe() public {
         PayGuardTypes.ActionRequest memory first =
             _request(keccak256("request-state"), 1, _b(0x7370656e642d31), 100);
@@ -268,7 +343,8 @@ contract PayGuardActionRouterTest is TestBase {
         assertEq(accounting.reserved, 0);
     }
 
-    function _receipt(
+    function _receiptFor(
+        PayGuardTypes.PolicyBinding memory receiptBinding,
         bytes32 machineId,
         bytes32 keyFingerprint,
         uint256 privateKey
@@ -277,12 +353,13 @@ contract PayGuardActionRouterTest is TestBase {
             machineId: machineId,
             keyFingerprint: keyFingerprint,
             submissionNonce: keccak256("submission"),
-            receiptNonce: 1,
+            receiptNonce: receiptBinding.policyNonce,
             issuedAt: 1000,
             expiry: 2000,
             signature: ""
         });
-        receipt.signature = _signature(privateKey, PayGuardTypes.receiptDigest(binding, receipt));
+        receipt.signature =
+            _signature(privateKey, PayGuardTypes.receiptDigest(receiptBinding, receipt));
     }
 
     function _signature(

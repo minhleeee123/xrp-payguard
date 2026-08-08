@@ -58,7 +58,10 @@ the supplied state. V1 uses raw `ecrecover` over the shared digest because a
 live FCC signing-prefix convention has not yet been verified; the release gate
 must verify that convention before deployment. The local token adapter accepts
 only explicitly enabled ERC-20-like assets and does not claim that any Flare
-reference address is a PayGuard release fact.
+reference address is a PayGuard release fact. Local replacement coverage
+registers a different machine only for a separately receipted policy version;
+the replacement signer is rejected for the old commitment, whose frozen set is
+unchanged and fails closed when its threshold is unavailable.
 
 ## 2. Schemas
 
