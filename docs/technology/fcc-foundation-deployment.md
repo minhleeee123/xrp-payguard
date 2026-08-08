@@ -88,7 +88,9 @@ expected reproducible image ID:
 ```bash
 pnpm fcc:machine:preflight -- \
   -url https://machine.example \
-  -image-id sha256:<64-lowercase-hex>
+  -image-id sha256:<64-lowercase-hex> \
+  -leaf-crl /trusted/public/leaf.crl \
+  -intermediate-crl /trusted/public/intermediate.crl
 ```
 
 The defaults bind Coston2 chain `114`, PayGuard extension `66037`, and the
@@ -107,8 +109,12 @@ unsupported hardware all fail closed. The Google PKI token must use RS256,
 the expected issuer and `https://sts.google.com` audience, the exact TEE-info
 hash nonce, a valid certificate chain to the embedded root, and available CRLs
 whenever a certificate declares a distribution point. This first preflight
-does not fetch CRLs from token-controlled URLs: such a token is rejected until
-a separately trusted CRL input path is implemented and reviewed.
+does not fetch CRLs from token-controlled URLs. Instead, the two optional CRL
+flags accept only nonempty regular DER or PEM files of at most 2 MiB, obtained
+through a separately trusted public source. The pinned verifier then checks
+their validity window, issuer signature, and revocation entries against the
+already parsed certificate chain. A declared distribution point without its
+required explicit CRL still fails closed.
 
 The embedded Google Confidential Space root was taken from the pinned official
 `tee-node v0.0.24` asset and independently matched on 2026-08-09 against

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"math/big"
 	"os"
 	"strings"
@@ -17,6 +18,7 @@ import (
 const (
 	defaultExtensionID = "66037"
 	defaultOwner       = "0xDC1cc527423C882156a632C250528D1922d18Fc7"
+	maxCRLBytes        = 2 * 1024 * 1024
 )
 
 type output struct {
@@ -43,6 +45,8 @@ func main() {
 	extensionIDValue := flag.String("extension-id", defaultExtensionID, "expected registered extension ID")
 	ownerValue := flag.String("initial-owner", defaultOwner, "expected initial owner address")
 	timeout := flag.Duration("timeout", 10*time.Second, "HTTP timeout, at most 30s")
+	leafCRLPath := flag.String("leaf-crl", "", "optional trusted leaf certificate CRL file (DER or PEM)")
+	intermediateCRLPath := flag.String("intermediate-crl", "", "optional trusted intermediate certificate CRL file (DER or PEM)")
 	flag.Parse()
 
 	origin, err := admission.NormalizeProductionOrigin(*machineURL)
@@ -60,11 +64,15 @@ func main() {
 	if owner.Hex() != *ownerValue {
 		check(fmt.Errorf("initial owner must use the exact EIP-55 checksum"))
 	}
+	leafCRL, err := readPublicCRL(*leafCRLPath)
+	check(err)
+	intermediateCRL, err := readPublicCRL(*intermediateCRLPath)
+	check(err)
+	verifier, err := admission.NewGoogleAttestationVerifierWithCRLs(leafCRL, intermediateCRL)
+	check(err)
 	client, err := admission.NewProductionHTTPClient(*timeout)
 	check(err)
 	info, err := admission.FetchInfo(origin, client)
-	check(err)
-	verifier, err := admission.NewGoogleAttestationVerifier()
 	check(err)
 	result, err := admission.VerifyProductionMachine(info, admission.Config{
 		ChainID:          admission.Coston2ChainID,
@@ -93,6 +101,32 @@ func main() {
 	})
 	check(err)
 	fmt.Println(string(encoded))
+}
+
+func readPublicCRL(path string) ([]byte, error) {
+	if path == "" {
+		return nil, nil
+	}
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("open public CRL: %w", err)
+	}
+	defer file.Close()
+	info, err := file.Stat()
+	if err != nil {
+		return nil, fmt.Errorf("inspect public CRL: %w", err)
+	}
+	if !info.Mode().IsRegular() || info.Size() <= 0 || info.Size() > maxCRLBytes {
+		return nil, fmt.Errorf("public CRL must be a nonempty regular file no larger than %d bytes", maxCRLBytes)
+	}
+	value, err := io.ReadAll(io.LimitReader(file, maxCRLBytes+1))
+	if err != nil {
+		return nil, fmt.Errorf("read public CRL: %w", err)
+	}
+	if len(value) > maxCRLBytes {
+		return nil, fmt.Errorf("public CRL exceeds %d bytes", maxCRLBytes)
+	}
+	return value, nil
 }
 
 func parseHash(value string) (common.Hash, error) {

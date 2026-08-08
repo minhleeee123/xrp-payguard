@@ -40,6 +40,9 @@ a future production machine. They verify the pinned Google Confidential Space
 PKI token and workload claims, FCC machine/proxy signature domains, Coston2,
 extension `66037`, owner, image ID, platform, governance, and freshness. The
 client accepts only a public HTTPS origin and emits no raw token or signature.
+Optional bounded `-leaf-crl` and `-intermediate-crl` files let an operator pin
+public revocation data obtained through a separately trusted channel; the tool
+never follows a distribution URL from the unverified token.
 Run it through `pnpm fcc:machine:preflight`; passing it does not replace the
 official code-version, FDC promotion, registry, or live-result gates.
 

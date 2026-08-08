@@ -70,10 +70,16 @@ type Result struct {
 }
 
 type GoogleAttestationVerifier struct {
-	root *x509.Certificate
+	root            *x509.Certificate
+	leafCRL         *x509.RevocationList
+	intermediateCRL *x509.RevocationList
 }
 
 func NewGoogleAttestationVerifier() (*GoogleAttestationVerifier, error) {
+	return NewGoogleAttestationVerifierWithCRLs(nil, nil)
+}
+
+func NewGoogleAttestationVerifierWithCRLs(leafCRLBytes, intermediateCRLBytes []byte) (*GoogleAttestationVerifier, error) {
 	block, rest := pem.Decode(googleConfidentialSpaceRootPEM)
 	if block == nil || block.Type != "CERTIFICATE" || len(bytes.TrimSpace(rest)) != 0 {
 		return nil, errors.New("embedded Google Confidential Space root is malformed")
@@ -86,7 +92,33 @@ func NewGoogleAttestationVerifier() (*GoogleAttestationVerifier, error) {
 	if hex.EncodeToString(digest[:]) != rootCertificateDERHash {
 		return nil, errors.New("embedded Google Confidential Space root fingerprint mismatch")
 	}
-	return &GoogleAttestationVerifier{root: root}, nil
+	leafCRL, err := parseOptionalCRL("leaf", leafCRLBytes)
+	if err != nil {
+		return nil, err
+	}
+	intermediateCRL, err := parseOptionalCRL("intermediate", intermediateCRLBytes)
+	if err != nil {
+		return nil, err
+	}
+	return &GoogleAttestationVerifier{root: root, leafCRL: leafCRL, intermediateCRL: intermediateCRL}, nil
+}
+
+func parseOptionalCRL(name string, value []byte) (*x509.RevocationList, error) {
+	if len(value) == 0 {
+		return nil, nil
+	}
+	der := value
+	if block, rest := pem.Decode(value); block != nil {
+		if block.Type != "X509 CRL" || len(bytes.TrimSpace(rest)) != 0 {
+			return nil, fmt.Errorf("%s CRL PEM is malformed", name)
+		}
+		der = block.Bytes
+	}
+	crl, err := x509.ParseRevocationList(der)
+	if err != nil {
+		return nil, fmt.Errorf("parse %s CRL: %w", name, err)
+	}
+	return crl, nil
 }
 
 func (v *GoogleAttestationVerifier) Verify(token string, teeInfoHash common.Hash, expectedCodeHash common.Hash) (AttestationClaims, error) {
@@ -108,7 +140,7 @@ func (v *GoogleAttestationVerifier) Verify(token string, teeInfoHash common.Hash
 		RequireSecBoot:       true,
 		AllowedDebugStatuses: []string{productionDebugStatus},
 	}
-	_, claims, err := googlecloud.ParseAndValidatePKIToken(token, v.root, nil, nil, policy)
+	_, claims, err := googlecloud.ParseAndValidatePKIToken(token, v.root, v.leafCRL, v.intermediateCRL, policy)
 	if err != nil {
 		return AttestationClaims{}, fmt.Errorf("verify Google Confidential Space attestation: %w", err)
 	}

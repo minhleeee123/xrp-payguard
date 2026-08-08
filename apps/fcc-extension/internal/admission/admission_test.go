@@ -1,6 +1,11 @@
 package admission
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
 	"errors"
 	"math/big"
 	"strings"
@@ -195,6 +200,53 @@ func TestPinnedGoogleVerifierRejectsSimulationAndUntrustedTokens(t *testing.T) {
 	for _, token := range []string{"", teeattestationMagicPassForTest, "not-a-jwt"} {
 		if _, err := verifier.Verify(token, common.HexToHash("0x01"), productionCode); err == nil {
 			t.Fatalf("untrusted attestation token %q was accepted", token)
+		}
+	}
+}
+
+func TestGoogleVerifierParsesOnlyWellFormedExplicitCRLs(t *testing.T) {
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now().UTC()
+	certificateTemplate := &x509.Certificate{
+		SerialNumber:          big.NewInt(1),
+		Subject:               pkix.Name{CommonName: "PayGuard CRL test issuer"},
+		NotBefore:             now.Add(-time.Hour),
+		NotAfter:              now.Add(time.Hour),
+		IsCA:                  true,
+		BasicConstraintsValid: true,
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
+		SubjectKeyId:          []byte{1, 2, 3, 4},
+	}
+	certificateDER, err := x509.CreateCertificate(rand.Reader, certificateTemplate, certificateTemplate, &key.PublicKey, key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	certificate, err := x509.ParseCertificate(certificateDER)
+	if err != nil {
+		t.Fatal(err)
+	}
+	crlDER, err := x509.CreateRevocationList(rand.Reader, &x509.RevocationList{
+		Number:     big.NewInt(1),
+		ThisUpdate: now.Add(-time.Minute),
+		NextUpdate: now.Add(time.Hour),
+	}, certificate, key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	crlPEM := pem.EncodeToMemory(&pem.Block{Type: "X509 CRL", Bytes: crlDER})
+	verifier, err := NewGoogleAttestationVerifierWithCRLs(crlDER, crlPEM)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if verifier.leafCRL == nil || verifier.intermediateCRL == nil {
+		t.Fatal("explicit public CRLs were not retained for PKI verification")
+	}
+	for _, malformed := range [][]byte{[]byte("not-a-crl"), pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: crlDER})} {
+		if _, err := NewGoogleAttestationVerifierWithCRLs(malformed, nil); err == nil {
+			t.Fatal("malformed explicit CRL was accepted")
 		}
 	}
 }

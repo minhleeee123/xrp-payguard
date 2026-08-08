@@ -1,6 +1,9 @@
 package main
 
 import (
+	"bytes"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -23,5 +26,40 @@ func TestParseImageHash(t *testing.T) {
 		if _, err := parseHash(value); err == nil {
 			t.Fatalf("invalid image hash %q accepted", value)
 		}
+	}
+}
+
+func TestReadPublicCRLIsOptionalAndBounded(t *testing.T) {
+	value, err := readPublicCRL("")
+	if err != nil || value != nil {
+		t.Fatalf("empty optional CRL path rejected: %v", err)
+	}
+	directory := t.TempDir()
+	path := filepath.Join(directory, "leaf.crl")
+	expected := []byte("public-crl-fixture")
+	if err := os.WriteFile(path, expected, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	value, err = readPublicCRL(path)
+	if err != nil || !bytes.Equal(value, expected) {
+		t.Fatalf("bounded public CRL read failed: %v", err)
+	}
+	if _, err := readPublicCRL(directory); err == nil {
+		t.Fatal("directory was accepted as a public CRL")
+	}
+	oversized := filepath.Join(directory, "oversized.crl")
+	file, err := os.Create(oversized)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := file.Truncate(maxCRLBytes + 1); err != nil {
+		file.Close()
+		t.Fatal(err)
+	}
+	if err := file.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := readPublicCRL(oversized); err == nil {
+		t.Fatal("oversized public CRL was accepted")
 	}
 }
