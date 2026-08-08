@@ -229,10 +229,14 @@ mapping before counting distinct signers.
   quotient/remainder rounding so it never adds `scale - 1` near the uint256
   boundary.
 - Deny overrides allow when multiple rules conflict.
+- Delegated requester authority defaults to owner-only. `allowRequesters` adds
+  explicit delegates; an empty list never means public authorization. Delegates
+  remain subject to the same target, action, schedule, occurrence, balance, and
+  value-cap rules as the owner.
 - `POLICY_COMPOSITION_V1` resolves a private evaluator's violation bitmask in
-  this fixed order: policy time/schedule window, target, requester, action, occurrence,
-  cooldown, available balance, required FTSO input, then value caps. Zero allows;
-  any unknown bit fails closed as `MALFORMED`. Solidity contains only this
+  this fixed order: policy time/schedule window, target, requester, action,
+  occurrence, cooldown, available balance, required FTSO input, then value caps.
+  Zero allows; any unknown bit fails closed as `MALFORMED`. Solidity contains only this
   bitmask reference, never policy fields or intermediate values.
 - Unknown schema/rule/action/input denies.
 - Missing, stale, negative, zero, overflowed, or inconsistent oracle/proof input

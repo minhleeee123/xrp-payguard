@@ -108,7 +108,8 @@ export function evaluatePolicy(policyInput: PolicyV1, request: ActionRequestV1, 
   }
   if (containsAddress(policy.denyTargets, request.target)
     || (policy.allowTargets.length > 0 && !containsAddress(policy.allowTargets, request.target))) violations |= POLICY_VIOLATION_V1.TARGET_DENIED;
-  if (policy.allowRequesters.length > 0 && !containsAddress(policy.allowRequesters, request.requester)) violations |= POLICY_VIOLATION_V1.REQUESTER_DENIED;
+  if (request.requester.toLowerCase() !== policy.owner.toLowerCase()
+    && !containsAddress(policy.allowRequesters, request.requester)) violations |= POLICY_VIOLATION_V1.REQUESTER_DENIED;
   if (policy.allowActionTypes.length > 0 && !containsBytes32(policy.allowActionTypes, request.actionType)) violations |= POLICY_VIOLATION_V1.ACTION_DENIED;
   if (policy.maxOccurrences !== 0 && state.occurrenceCount >= policy.maxOccurrences) violations |= POLICY_VIOLATION_V1.OCCURRENCE_EXCEEDED;
   if (policy.cooldownSeconds !== 0n && state.lastExecutionAt !== 0n && now < state.lastExecutionAt + policy.cooldownSeconds) violations |= POLICY_VIOLATION_V1.COOLDOWN;

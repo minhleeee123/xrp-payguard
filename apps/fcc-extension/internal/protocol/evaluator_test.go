@@ -221,3 +221,26 @@ func TestEvaluatorEnforcesRecurringWindow(t *testing.T) {
 		t.Fatalf("ad hoc request denied: result=%+v err=%v", result, err)
 	}
 }
+
+func TestEvaluatorDefaultsDelegationToOwnerOnly(t *testing.T) {
+	vector := readVector(t)
+	policy := policyFromVector(vector.Policy)
+	policy.AllowRequesters = nil
+	request, state := rebindPolicyRequest(t, policy, requestFromVector(vector.Request))
+	result, err := EvaluatePolicy(policy, request, state)
+	if err != nil || result.Decision != DecisionAllow {
+		t.Fatalf("owner denied: result=%+v err=%v", result, err)
+	}
+	delegate := common.HexToAddress("0x00000000000000000000000000000000000000d4")
+	request.Requester = delegate
+	result, err = EvaluatePolicy(policy, request, state)
+	if err != nil || result.PublicReasonClass != ReasonRequesterDenied {
+		t.Fatalf("unlisted delegate: result=%+v err=%v", result, err)
+	}
+	policy.AllowRequesters = []common.Address{delegate}
+	request, state = rebindPolicyRequest(t, policy, request)
+	result, err = EvaluatePolicy(policy, request, state)
+	if err != nil || result.Decision != DecisionAllow {
+		t.Fatalf("listed delegate denied: result=%+v err=%v", result, err)
+	}
+}

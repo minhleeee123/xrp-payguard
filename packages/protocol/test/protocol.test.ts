@@ -154,6 +154,20 @@ describe("deterministic evaluator", () => {
     expect(evaluatePolicy(adHocPolicy, adHocRequest, stateForRequest(adHocRequest)).decision).toBe("ALLOW");
   });
 
+  it("defaults delegated authority to owner-only", () => {
+    const ownerOnlyPolicy = { ...policy, allowRequesters: [] };
+    const ownerRequest = requestForPolicy(ownerOnlyPolicy);
+    expect(evaluatePolicy(ownerOnlyPolicy, ownerRequest, stateForRequest(ownerRequest)).decision).toBe("ALLOW");
+    expect(evaluatePolicy(
+      ownerOnlyPolicy,
+      { ...ownerRequest, requester: addressB },
+      stateForRequest(ownerRequest),
+    ).publicReasonClass).toBe("REQUESTER_DENIED");
+    const delegatedPolicy = { ...ownerOnlyPolicy, allowRequesters: [addressB] };
+    const delegatedRequest = { ...requestForPolicy(delegatedPolicy), requester: addressB };
+    expect(evaluatePolicy(delegatedPolicy, delegatedRequest, stateForRequest(delegatedRequest)).decision).toBe("ALLOW");
+  });
+
   it("binds an FTSO decision to the request input commitment", () => {
     const feedId = id("xrp-usd");
     const feedCheckpoint = id("ftso-checkpoint");

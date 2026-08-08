@@ -208,7 +208,7 @@ func EvaluatePolicy(policy PolicyV1, request ActionRequestV1, state SpendStateV1
 	if containsAddress(normalized.DenyTargets, request.Target) || (len(normalized.AllowTargets) > 0 && !containsAddress(normalized.AllowTargets, request.Target)) {
 		violations |= ViolationTargetDenied
 	}
-	if len(normalized.AllowRequesters) > 0 && !containsAddress(normalized.AllowRequesters, request.Requester) {
+	if request.Requester != normalized.Owner && !containsAddress(normalized.AllowRequesters, request.Requester) {
 		violations |= ViolationRequesterDenied
 	}
 	if len(normalized.AllowActionTypes) > 0 && !containsHash(normalized.AllowActionTypes, request.ActionType) {
