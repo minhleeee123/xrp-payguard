@@ -54,3 +54,8 @@ The `smart-account.ts` module resolves a registry-provided
 encodes the official `0xFE` custom-instruction `PackedUserOperation`. It emits
 no XRPL seed, signature, Payment, FDC request, or authorization decision. Live
 Smart Account/FDC execution remains an external gate.
+
+`buildXrplPaymentPrepareRequest` creates the exact public FDC `XRPPayment`
+prepare body for `testXRP` or `XRP`, including the transaction ID and the
+non-zero executor `proofOwner`. It does not compute a MIC, pay an FDC fee, or
+retrieve a proof.
