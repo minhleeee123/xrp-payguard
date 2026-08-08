@@ -1,8 +1,10 @@
 package protocol
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"math/big"
 	"strconv"
 
@@ -33,6 +35,38 @@ type actionRequestWireV1 struct {
 	CreatedAt         string         `json:"createdAt"`
 	GraceDeadline     string         `json:"graceDeadline"`
 	Expiry            string         `json:"expiry"`
+}
+
+type policyWireV1 struct {
+	SchemaVersion        uint16           `json:"schemaVersion"`
+	ChainID              string           `json:"chainId"`
+	Registry             common.Address   `json:"registry"`
+	Vault                common.Address   `json:"vault"`
+	Router               common.Address   `json:"router"`
+	Owner                common.Address   `json:"owner"`
+	PolicyID             common.Hash      `json:"policyId"`
+	PolicyVersion        uint32           `json:"policyVersion"`
+	Asset                common.Address   `json:"asset"`
+	ReferenceCurrency    common.Hash      `json:"referenceCurrency"`
+	MaxPerAction         string           `json:"maxPerAction"`
+	DailyCap             string           `json:"dailyCap"`
+	RollingCap           string           `json:"rollingCap"`
+	RollingWindowSecs    string           `json:"rollingWindowSeconds"`
+	StartAt              string           `json:"startAt"`
+	EndAt                string           `json:"endAt"`
+	ScheduleIntervalSecs string           `json:"scheduleIntervalSeconds"`
+	ScheduleGraceSecs    string           `json:"scheduleGraceSeconds"`
+	CooldownSecs         string           `json:"cooldownSeconds"`
+	MaxOccurrences       uint32           `json:"maxOccurrences"`
+	AllowTargets         []common.Address `json:"allowTargets"`
+	DenyTargets          []common.Address `json:"denyTargets"`
+	AllowRequesters      []common.Address `json:"allowRequesters"`
+	AllowActionTypes     []common.Hash    `json:"allowActionTypes"`
+	RequireFTSO          bool             `json:"requireFtso"`
+	FTSOFeedID           common.Hash      `json:"ftsoFeedId"`
+	MaxPriceAgeSecs      string           `json:"maxPriceAgeSeconds"`
+	PrivateSalt          common.Hash      `json:"privateSalt"`
+	SubmissionNonce      common.Hash      `json:"submissionNonce"`
 }
 
 type policyBindingWireV1 struct {
@@ -185,6 +219,124 @@ func actionRequestWire(request ActionRequestV1) (actionRequestWireV1, error) {
 		InputCommitment: request.InputCommitment, CreatedAt: strconv.FormatUint(request.CreatedAt, 10),
 		GraceDeadline: strconv.FormatUint(request.GraceDeadline, 10), Expiry: strconv.FormatUint(request.Expiry, 10),
 	}, nil
+}
+
+func (policy PolicyV1) MarshalJSON() ([]byte, error) {
+	if policy.AllowTargets == nil || policy.DenyTargets == nil || policy.AllowRequesters == nil || policy.AllowActionTypes == nil {
+		return nil, fmt.Errorf("policy rule lists must be explicit arrays")
+	}
+	chainID, err := decimalBig(policy.ChainID, "chainId")
+	if err != nil {
+		return nil, err
+	}
+	maxPerAction, err := decimalBig(policy.MaxPerAction, "maxPerAction")
+	if err != nil {
+		return nil, err
+	}
+	dailyCap, err := decimalBig(policy.DailyCap, "dailyCap")
+	if err != nil {
+		return nil, err
+	}
+	rollingCap, err := decimalBig(policy.RollingCap, "rollingCap")
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(policyWireV1{
+		SchemaVersion: policy.SchemaVersion, ChainID: chainID, Registry: policy.Registry,
+		Vault: policy.Vault, Router: policy.Router, Owner: policy.Owner, PolicyID: policy.PolicyID,
+		PolicyVersion: policy.PolicyVersion, Asset: policy.Asset, ReferenceCurrency: policy.ReferenceCurrency,
+		MaxPerAction: maxPerAction, DailyCap: dailyCap, RollingCap: rollingCap,
+		RollingWindowSecs: strconv.FormatUint(policy.RollingWindowSecs, 10),
+		StartAt:           strconv.FormatUint(policy.StartAt, 10), EndAt: strconv.FormatUint(policy.EndAt, 10),
+		ScheduleIntervalSecs: strconv.FormatUint(policy.ScheduleIntervalSecs, 10),
+		ScheduleGraceSecs:    strconv.FormatUint(policy.ScheduleGraceSecs, 10),
+		CooldownSecs:         strconv.FormatUint(policy.CooldownSecs, 10), MaxOccurrences: policy.MaxOccurrences,
+		AllowTargets: policy.AllowTargets, DenyTargets: policy.DenyTargets,
+		AllowRequesters: policy.AllowRequesters, AllowActionTypes: policy.AllowActionTypes,
+		RequireFTSO: policy.RequireFTSO, FTSOFeedID: policy.FTSOFeedID,
+		MaxPriceAgeSecs: strconv.FormatUint(policy.MaxPriceAgeSecs, 10),
+		PrivateSalt:     policy.PrivateSalt, SubmissionNonce: policy.SubmissionNonce,
+	})
+}
+
+func (policy *PolicyV1) UnmarshalJSON(data []byte) error {
+	var wire policyWireV1
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&wire); err != nil {
+		return err
+	}
+	var trailing any
+	if err := decoder.Decode(&trailing); err != io.EOF {
+		return fmt.Errorf("encrypted policy contains trailing data")
+	}
+	if wire.AllowTargets == nil || wire.DenyTargets == nil || wire.AllowRequesters == nil || wire.AllowActionTypes == nil {
+		return fmt.Errorf("policy rule lists must be explicit arrays")
+	}
+	chainID, err := parseDecimalBig(wire.ChainID, "chainId")
+	if err != nil {
+		return err
+	}
+	maxPerAction, err := parseDecimalBig(wire.MaxPerAction, "maxPerAction")
+	if err != nil {
+		return err
+	}
+	dailyCap, err := parseDecimalBig(wire.DailyCap, "dailyCap")
+	if err != nil {
+		return err
+	}
+	rollingCap, err := parseDecimalBig(wire.RollingCap, "rollingCap")
+	if err != nil {
+		return err
+	}
+	rollingWindowSecs, err := parseDecimalUint64(wire.RollingWindowSecs, "rollingWindowSecs")
+	if err != nil {
+		return err
+	}
+	startAt, err := parseDecimalUint64(wire.StartAt, "startAt")
+	if err != nil {
+		return err
+	}
+	endAt, err := parseDecimalUint64(wire.EndAt, "endAt")
+	if err != nil {
+		return err
+	}
+	scheduleIntervalSecs, err := parseDecimalUint64(wire.ScheduleIntervalSecs, "scheduleIntervalSecs")
+	if err != nil {
+		return err
+	}
+	scheduleGraceSecs, err := parseDecimalUint64(wire.ScheduleGraceSecs, "scheduleGraceSecs")
+	if err != nil {
+		return err
+	}
+	cooldownSecs, err := parseDecimalUint64(wire.CooldownSecs, "cooldownSecs")
+	if err != nil {
+		return err
+	}
+	maxPriceAgeSecs, err := parseDecimalUint64(wire.MaxPriceAgeSecs, "maxPriceAgeSecs")
+	if err != nil {
+		return err
+	}
+	decoded := PolicyV1{
+		SchemaVersion: wire.SchemaVersion, ChainID: chainID, Registry: wire.Registry,
+		Vault: wire.Vault, Router: wire.Router, Owner: wire.Owner, PolicyID: wire.PolicyID,
+		PolicyVersion: wire.PolicyVersion, Asset: wire.Asset, ReferenceCurrency: wire.ReferenceCurrency,
+		MaxPerAction: maxPerAction, DailyCap: dailyCap, RollingCap: rollingCap,
+		RollingWindowSecs: rollingWindowSecs, StartAt: startAt, EndAt: endAt,
+		ScheduleIntervalSecs: scheduleIntervalSecs, ScheduleGraceSecs: scheduleGraceSecs,
+		CooldownSecs: cooldownSecs, MaxOccurrences: wire.MaxOccurrences,
+		AllowTargets: wire.AllowTargets, DenyTargets: wire.DenyTargets,
+		AllowRequesters: wire.AllowRequesters, AllowActionTypes: wire.AllowActionTypes,
+		RequireFTSO: wire.RequireFTSO, FTSOFeedID: wire.FTSOFeedID,
+		MaxPriceAgeSecs: maxPriceAgeSecs, PrivateSalt: wire.PrivateSalt,
+		SubmissionNonce: wire.SubmissionNonce,
+	}
+	normalized, err := normalizePolicy(decoded)
+	if err != nil {
+		return fmt.Errorf("invalid encrypted policy: %w", err)
+	}
+	*policy = normalized
+	return nil
 }
 
 func (binding PolicyBindingV1) MarshalJSON() ([]byte, error) {

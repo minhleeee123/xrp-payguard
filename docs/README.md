@@ -18,6 +18,8 @@
   fail-closed, resumable contract deployment and independent runtime/wiring checks.
 - [`technology/fcc-attestation-domain.md`](technology/fcc-attestation-domain.md):
   pinned tee-node sign-port behavior and PayGuard cross-language signature domain.
+- [`technology/fcc-private-policy-wire.md`](technology/fcc-private-policy-wire.md):
+  canonical encrypted policy wire, fresh TEE identity derivation, and loopback decryption.
 - [`technology/release-manifest.md`](technology/release-manifest.md): canonical
   public-safe Coston2 release-manifest shape and verification gate.
 - [`technology/foundations.md`](technology/foundations.md): pinned local

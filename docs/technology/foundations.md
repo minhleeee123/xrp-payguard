@@ -3,8 +3,10 @@
 Status: foundation pins, source map, local protocol, contracts, bindings, FCC
 sign-port domain adapter, Coston2 testnet funding, and fail-closed deployment
 tooling are committed. The PayGuard registry, vault, router, and FTestXRP vault
-wiring are runtime/constructor-verified on Coston2. FCC registration, machine
-identities, and the private live lifecycle remain planned and not yet verified.
+wiring are runtime/constructor-verified on Coston2. Fresh TEE identity discovery,
+strict private-policy wire, and loopback ECIES decryption pass locally. FCC
+registration, authenticated ingress, stable machine origins, sealed recovery,
+and the private live lifecycle remain planned and not yet verified.
 
 ## Pinned local toolchain
 

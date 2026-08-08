@@ -52,6 +52,56 @@ func TestEvaluationWireUsesSharedLowerCamelDecimalSchema(t *testing.T) {
 	}
 }
 
+func TestEncryptedPolicyWireIsCanonicalAndCommitmentPreserving(t *testing.T) {
+	policy := policyFromVector(readVector(t).Policy)
+	wire, err := json.Marshal(policy)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, expected := range [][]byte{
+		[]byte(`"chainId":"114"`), []byte(`"maxPerAction":"100"`),
+		[]byte(`"rollingWindowSeconds":"86400"`), []byte(`"allowTargets":[`),
+		[]byte(`"privateSalt":"0x`), []byte(`"submissionNonce":"0x`),
+	} {
+		if !bytes.Contains(wire, expected) {
+			t.Fatalf("encrypted policy wire missing %s", expected)
+		}
+	}
+	var decoded PolicyV1
+	if err := json.Unmarshal(wire, &decoded); err != nil {
+		t.Fatal(err)
+	}
+	originalCommitment, err := PolicyCommitment(policy)
+	if err != nil {
+		t.Fatal(err)
+	}
+	decodedCommitment, err := PolicyCommitment(decoded)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decodedCommitment != originalCommitment {
+		t.Fatalf("encrypted policy wire changed commitment: %s != %s", decodedCommitment, originalCommitment)
+	}
+
+	numeric := bytes.Replace(wire, []byte(`"maxPerAction":"100"`), []byte(`"maxPerAction":100`), 1)
+	if err := json.Unmarshal(numeric, new(PolicyV1)); err == nil {
+		t.Fatal("numeric private uint256 was accepted")
+	}
+	unknown := bytes.Replace(wire, []byte(`{"schemaVersion"`), []byte(`{"unexpected":true,"schemaVersion"`), 1)
+	if err := json.Unmarshal(unknown, new(PolicyV1)); err == nil {
+		t.Fatal("unknown encrypted policy field was accepted")
+	}
+	var missingArrayRecord map[string]any
+	if err := json.Unmarshal(wire, &missingArrayRecord); err != nil {
+		t.Fatal(err)
+	}
+	missingArrayRecord["allowTargets"] = nil
+	missingArray, _ := json.Marshal(missingArrayRecord)
+	if err := json.Unmarshal(missingArray, new(PolicyV1)); err == nil {
+		t.Fatal("missing explicit private rule array was accepted")
+	}
+}
+
 func TestSpendStateWireRoundTripPreservesHistory(t *testing.T) {
 	vector := readVector(t)
 	request := requestFromVector(vector.Request)

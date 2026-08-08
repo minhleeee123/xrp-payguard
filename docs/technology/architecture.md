@@ -67,6 +67,13 @@ then evaluates frozen public request/checkpoint inputs. It uses the loopback-onl
 tee-node sign port for purpose-separated receipt/evaluation attestations and
 returns only a public receipt or minimal decision result.
 
+The machine identity and ECIES decryption key are the fresh tee-node identity,
+not an application key loaded from environment. PayGuard derives its bytes32
+machine ID and full public-key fingerprint from a loopback discovery signature,
+then uses the same node's loopback decrypt port for independently addressed
+policy ciphertext. Authenticated HTTPS ingress, owner authorization, and sealed
+rollback/recovery remain mandatory before this local boundary becomes live.
+
 ### PolicyRegistry
 
 Records owner, policy commitment/version, schema, extension, code version,

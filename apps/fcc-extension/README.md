@@ -9,6 +9,12 @@ same fixture now covers the pinned tee-node `v0.0.24` sign-port convention:
 purpose-separated ABI message, Coston2 chain ID, Keccak-256, and the Ethereum
 signed-message wrapper. A bounded loopback-only sign-port client verifies the
 echoed message, canonical signature, and configured TEE identity.
+The production entrypoint discovers the fresh TEE identity rather than loading
+an application key, fails closed unless both `/sign` and `/decrypt` are ready,
+and ECIES-decrypts the strict private policy wire only through loopback. Policy
+plaintext bytes are cleared after parsing. Authenticated public ingress and
+sealed restart recovery remain live gates; this adapter alone is not custody
+evidence.
 The public Go/TypeScript HTTP boundary uses lower-camel field names, named
 decision/reason enums, and quoted unsigned decimal strings for every bigint or
 `uint64`; numeric JSON bigints and unknown enums are rejected before hashing.
