@@ -1,4 +1,5 @@
 import {
+  encodeAbiParameters,
   getAddress,
   isAddress,
   padHex,
@@ -19,6 +20,11 @@ export interface XrplPaymentPrepareRequestV1 {
   requestBody: XrplPaymentRequestBodyV1;
 }
 
+export interface XrplPaymentAbiEncodedRequestV1 extends XrplPaymentPrepareRequestV1 {
+  messageIntegrityCode: Hex;
+  abiEncodedRequest: Hex;
+}
+
 function normalizeTransactionId(value: unknown): Hex {
   if (typeof value !== "string" || !HEX32.test(value) || /^0x0+$/i.test(value)) {
     throw new Error("XRPL transaction ID must be a non-zero bytes32");
@@ -31,6 +37,13 @@ function normalizeProofOwner(value: unknown): string {
     throw new Error("FDC proof owner must be a non-zero EVM address");
   }
   return getAddress(value);
+}
+
+function normalizeMessageIntegrityCode(value: unknown): Hex {
+  if (typeof value !== "string" || !HEX32.test(value) || /^0x0+$/i.test(value)) {
+    throw new Error("FDC message integrity code must be a non-zero bytes32");
+  }
+  return value.toLowerCase() as Hex;
 }
 
 export function buildXrplPaymentPrepareRequest(input: {
@@ -47,4 +60,32 @@ export function buildXrplPaymentPrepareRequest(input: {
       proofOwner: normalizeProofOwner(input.proofOwner),
     },
   };
+}
+
+/**
+ * Encodes the official IXRPPayment.Request for FdcHub.requestAttestation.
+ * The verifier must supply the MIC; this helper never derives it or submits a
+ * transaction.
+ */
+export function buildXrplPaymentAbiEncodedRequest(input: {
+  network: "testnet" | "mainnet";
+  transactionId: Hex;
+  proofOwner: string;
+  messageIntegrityCode: Hex;
+}): XrplPaymentAbiEncodedRequestV1 {
+  const request = buildXrplPaymentPrepareRequest(input);
+  const messageIntegrityCode = normalizeMessageIntegrityCode(input.messageIntegrityCode);
+  const abiEncodedRequest = encodeAbiParameters(
+    [
+      { type: "bytes32" },
+      { type: "bytes32" },
+      { type: "bytes32" },
+      { type: "tuple", components: [{ name: "transactionId", type: "bytes32" }, { name: "proofOwner", type: "address" }] },
+    ],
+    [request.attestationType, request.sourceId, messageIntegrityCode, {
+      transactionId: request.requestBody.transactionId,
+      proofOwner: request.requestBody.proofOwner as Hex,
+    }],
+  ) as Hex;
+  return { ...request, messageIntegrityCode, abiEncodedRequest };
 }

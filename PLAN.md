@@ -235,8 +235,9 @@ verified on Coston2. External review and registered FCC execution remain open.
 - [x] Encode a bounded `0xFE` `PackedUserOperation` that can target a PayGuard
   vault without accepting a custodial XRPL signer; live Payment/activation
   remains open.
-- [x] Build the exact public FDC `XRPPayment` prepare request with source ID and
-  executor `proofOwner`; live verifier/MIC/proof submission remains open.
+- [x] Build the exact public FDC `XRPPayment` prepare request and ABI encoding
+  with source ID, verifier-supplied MIC, and executor `proofOwner`; live
+  verifier/MIC/proof submission remains open.
 - [x] Add an integer-only official-field FAssets direct-mint quote calculator
   and injected settings reader; live quote drift, payment, and mint execution
   remain open.

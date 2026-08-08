@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { getAddress, type Hex } from "viem";
 import {
+  buildXrplPaymentAbiEncodedRequest,
   buildXrplPaymentPrepareRequest,
   XRPL_MAINNET_SOURCE_ID,
   XRPL_TESTNET_SOURCE_ID,
@@ -30,5 +31,21 @@ describe("FDC XRPPayment request boundary", () => {
     expect(() => buildXrplPaymentPrepareRequest({ ...base, transactionId: "0x1234" as Hex })).toThrow(/bytes32/);
     expect(() => buildXrplPaymentPrepareRequest({ ...base, proofOwner: "0x0000000000000000000000000000000000000000" })).toThrow(/non-zero/);
     expect(() => buildXrplPaymentPrepareRequest({ ...base, proofOwner: "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh" })).toThrow(/EVM/);
+  });
+
+  it("ABI-encodes the official request while treating the MIC as verifier input", () => {
+    const encoded = buildXrplPaymentAbiEncodedRequest({
+      network: "testnet",
+      transactionId,
+      proofOwner,
+      messageIntegrityCode: `0x${"cd".repeat(32)}` as Hex,
+    });
+    expect(encoded.messageIntegrityCode).toBe(`0x${"cd".repeat(32)}`);
+    expect(encoded.abiEncodedRequest).toBe(
+      `0x${encoded.attestationType.slice(2)}${encoded.sourceId.slice(2)}${encoded.messageIntegrityCode.slice(2)}${transactionId.slice(2)}${proofOwner.slice(2).padStart(64, "0")}`,
+    );
+    expect(() => buildXrplPaymentAbiEncodedRequest({
+      network: "testnet", transactionId, proofOwner, messageIntegrityCode: `0x${"00".repeat(32)}` as Hex,
+    })).toThrow(/message integrity/);
   });
 });

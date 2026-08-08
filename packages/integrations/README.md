@@ -60,6 +60,11 @@ prepare body for `testXRP` or `XRP`, including the transaction ID and the
 non-zero executor `proofOwner`. It does not compute a MIC, pay an FDC fee, or
 retrieve a proof.
 
+`buildXrplPaymentAbiEncodedRequest` adds the verifier-supplied non-zero MIC and
+ABI-encodes the official `IXRPPayment.Request` for an eventual `FdcHub`
+submission. It still does not derive the MIC, pay the request fee, broadcast a
+transaction, or retrieve a proof.
+
 `computeDirectMintingPaymentQuote` and `readDirectMintingPaymentQuote` cover the
 official FAssets direct-mint amount boundary. They use integer UBA values and
 the AssetManager getters `getDirectMintingFeeBIPS`,

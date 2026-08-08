@@ -15,6 +15,11 @@ ID, transaction ID, and exact non-zero executor `proofOwner`. The verifier
 service, not this codec, computes the message-integrity code and asynchronous
 proof state.
 
+Given that verifier-supplied non-zero MIC, the package can also ABI-encode the
+official `IXRPPayment.Request` for a future `FdcHub.requestAttestation` call.
+This is an encoding boundary only; it never derives the MIC, pays the FDC fee,
+broadcasts a transaction, or retrieves a proof.
+
 The codec validates non-zero EVM addresses, uint bounds, call/data limits,
 wallet ID, and executor fee. It returns only public bytes, hashes, nonce, and
 the sum of call values. It never accepts an XRPL seed, signs a Payment, calls
