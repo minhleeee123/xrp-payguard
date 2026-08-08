@@ -95,6 +95,13 @@ mined request block by calling the runtime Relay `getVotingRoundId` method. It
 requires the receipt block timestamp, rejects zero or malformed rounds, and
 never substitutes a wall-clock timestamp or hard-coded 90-second formula.
 
+`verifyCoston2XrplPaymentProof` is the cryptographic verification boundary. It
+converts a parsed `XRPPayment` envelope to the official `IXRPPayment.Proof`,
+requires the matching finalized Relay checkpoint, `testXRP` source, non-zero
+owner, and successful status, then calls the runtime
+`IFdcVerification.verifyXRPPayment` view. Only an explicit `true` result yields
+a public proof commitment; a DA response alone never does.
+
 `prepareCoston2FdcSubmission` reads the current `getRequestFee` through the
 runtime `FdcHub.fdcRequestFeeConfigurations()` address and returns a bounded,
 public submission intent for `requestAttestation(bytes)`: exact calldata,

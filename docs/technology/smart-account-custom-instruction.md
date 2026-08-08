@@ -46,6 +46,12 @@ not use the local wall clock or a copied 90-second formula, and it rejects an
 unavailable, zero, or out-of-range round. The request receipt block timestamp
 is therefore a required public checkpoint before finality polling.
 
+The proof boundary converts the parsed envelope to the official
+`IXRPPayment.Proof` tuple and calls `IFdcVerification.verifyXRPPayment` at the
+runtime registry-resolved address. It accepts only an explicit `true` result
+with a matching finalized round, `testXRP` source, non-zero proof owner, and
+successful payment status; a DA envelope by itself is never a proof.
+
 The submission boundary reads the current request fee via the runtime
 `FdcHub.fdcRequestFeeConfigurations()` address and builds exact
 `requestAttestation(bytes)` calldata plus the payable wei value. It is an
@@ -101,6 +107,8 @@ Official references:
 - [FDC getting started](https://dev.flare.network/fdc/getting-started)
 - [FDC by hand](https://dev.flare.network/fdc/guides/fdc-by-hand)
 - [IRelay `getVotingRoundId`](https://dev.flare.network/network/fsp/solidity-reference/IRelay)
+- [FDC `IFdcVerification` reference](https://dev.flare.network/fdc/reference/IFdcVerification)
+- [Official `IXRPPaymentVerification.sol`](https://raw.githubusercontent.com/flare-foundation/flare-smart-contracts-v2/main/contracts/userInterfaces/fdc/IXRPPaymentVerification.sol)
 - [FDC `IXRPPayment` reference](https://dev.flare.network/fdc/reference/IXRPPayment)
 - [FDC `IFdcVerification` reference](https://dev.flare.network/fdc/reference/IFdcVerification)
 - [FDC `IFdcHub` reference](https://dev.flare.network/fdc/reference/IFdcHub)

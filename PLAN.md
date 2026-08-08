@@ -256,6 +256,9 @@ verified on Coston2. External review and registered FCC execution remain open.
 - [x] Add an exact direct-mint/`0xFE` with-data call codec bound to parsed
   successful XRPPayment and finalized-round checkpoints; Merkle verification,
   signing, broadcast, and receipt matching remain open.
+- [x] Add a runtime-bound `IFdcVerification.verifyXRPPayment` proof boundary
+  that accepts only a finalized round and a successful `testXRP` envelope;
+  live request/proof data and execution remain open.
 - [x] Resolve the official runtime `directMintingPaymentAddress()` and reject
   malformed/unavailable Core Vault addresses; live payment remains open.
 - [x] Add an integer-only official-field FAssets direct-mint quote calculator
