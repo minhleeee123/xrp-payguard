@@ -125,6 +125,9 @@ registered Coston2 `PING_V1`, receipt, and evaluation proofs remain open.
 - [x] Add a strict Go-to-Node machine-admission handoff and deterministic,
   idempotent code-version allowance plan with exact verified PayGuard
   owner/sender/extension and on-chain conflict checks.
+- [x] Add a clean-source, explicit-broadcast code-version command with pinned
+  toolchains/RPC/official manager, owner simulation, conservative gas gate,
+  fresh identity recheck, event/readback recovery, and public-safe evidence.
 - [ ] Register a production machine and verify one signed Coston2 `PING_V1`
   result before treating the live FCC path as available.
 - [x] Implement ciphertext-only policy ingress and a sealed local policy store.

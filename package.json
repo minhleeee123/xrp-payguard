@@ -33,7 +33,10 @@
     "fcc:foundation:test": "node --test tooling/fcc-foundation-registration.test.mjs",
     "fcc:machine:preflight": "cd apps/fcc-extension && go run ./cmd/machine-preflight",
     "fcc:machine:preflight:test": "cd apps/fcc-extension && go test ./internal/admission ./cmd/machine-preflight",
-    "fcc:version:test": "node --test tooling/fcc-code-version.test.mjs",
+    "fcc:version:plan": "node tooling/fcc-code-version-deploy.mjs plan",
+    "fcc:version:deploy": "node tooling/fcc-code-version-deploy.mjs deploy --broadcast",
+    "fcc:version:verify": "node tooling/fcc-code-version-deploy.mjs verify",
+    "fcc:version:test": "node --test tooling/fcc-code-version.test.mjs tooling/fcc-code-version-deploy.test.mjs",
     "check": "pnpm toolchain:check && pnpm docs:check && pnpm secret:scan && pnpm privacy:scan && pnpm evidence:check && pnpm release:check && pnpm release:test && pnpm deploy:coston2:test && pnpm fcc:container:test && pnpm fcc:foundation:test && pnpm fcc:machine:preflight:test && pnpm fcc:version:test && pnpm bindings:check"
   }
 }

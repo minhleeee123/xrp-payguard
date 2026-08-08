@@ -40,6 +40,12 @@ function hash(value, label) {
   return value.toLowerCase();
 }
 
+export function normalizeExpectedImageID(value) {
+  if (typeof value !== "string") throw new Error("expected image ID is required");
+  const normalized = value.startsWith("sha256:") ? `0x${value.slice(7)}` : value;
+  return hash(normalized, "expected image ID");
+}
+
 function address(value, label) {
   try {
     if (typeof value !== "string" || value.toLowerCase() === zeroAddress) throw new Error();

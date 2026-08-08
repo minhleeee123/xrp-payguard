@@ -6,6 +6,7 @@ import {
   PAYGUARD_FOUNDATION_SENDER,
   PAYGUARD_TEE_VERSION_BYTES32,
   evaluateCodeVersionPlan,
+  normalizeExpectedImageID,
   validateMachineAdmission,
 } from "./fcc-code-version.mjs";
 import { COSTON2_CHAIN_ID, FCC_TEE_MANAGER } from "./fcc-foundation-registration.mjs";
@@ -56,6 +57,14 @@ function plan(overrides = {}) {
 }
 
 describe("production machine admission handoff", () => {
+  it("normalizes only exact nonzero image IDs", () => {
+    assert.equal(normalizeExpectedImageID(`sha256:${codeHash.slice(2)}`), codeHash);
+    assert.equal(normalizeExpectedImageID(codeHash), codeHash);
+    for (const value of [undefined, "", "sha256:01", `0x${"0".repeat(64)}`, `sha256:${"z".repeat(64)}`]) {
+      assert.throws(() => normalizeExpectedImageID(value));
+    }
+  });
+
   it("accepts only the exact fresh public-safe result", () => {
     const value = validateMachineAdmission(admission(), { expectedCodeHash: codeHash, nowSeconds });
     assert.equal(value.codeHash, codeHash);

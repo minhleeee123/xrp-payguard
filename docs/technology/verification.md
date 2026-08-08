@@ -21,7 +21,7 @@ Forbidden evidence:
 | Gate | Required proof | Status |
 |---|---|---|
 | 0 — Foundations | pinned supported tools, registries, services, three machine capacity | PARTIAL — FUNDING + CONTRACTS + REGISTERED FOUNDATION SENDER + LOCAL REPRO IMAGE/3 IDs PASS / STABLE LIVE MACHINES OPEN |
-| A — FCC result | registered extension result verified on Coston2 | REGISTERED SENDER + LOCAL TYPED HANDLER/GOLDEN VECTOR PASS + PRODUCTION ADMISSION/CODE-VERSION PLAN IMPLEMENTED/LOCALLY TESTED / PRODUCTION MACHINE + LIVE RESULT NOT VERIFIED |
+| A — FCC result | registered extension result verified on Coston2 | REGISTERED SENDER + LOCAL TYPED HANDLER/GOLDEN VECTOR PASS + PRODUCTION ADMISSION/CODE-VERSION OPERATIONS IMPLEMENTED/LOCALLY TESTED / LIVE CODE VERSION + MACHINE + RESULT NOT VERIFIED |
 | B — Private policy ingress | sealed policy, three receipts, replay/domain negatives | LOCAL AUTH/ECIES PASS / SEALED LIVE NOT VERIFIED |
 | C — Common custody | all-three matching policy availability and commitment | NOT STARTED |
 | D — Deterministic evaluation | cross-language vectors and private policy result | LOCAL PASS / LIVE NOT VERIFIED |

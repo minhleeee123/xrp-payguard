@@ -152,7 +152,44 @@ Run the pure handoff/plan regression tests with:
 pnpm fcc:version:test
 ```
 
-This unit does not contain a broadcast path and has not allowed a live code
-version. A later operational command must invoke the fresh preflight directly,
-reread every manager value, simulate with the extension owner, require an
-explicit broadcast capability, and independently verify the receipt/readback.
+The operational commands invoke the Go preflight directly; they never accept a
+saved admission JSON file:
+
+```bash
+pnpm fcc:version:plan -- \
+  --url https://machine.example \
+  --image-id sha256:<64-lowercase-hex> \
+  --leaf-crl /trusted/public/leaf.crl \
+  --intermediate-crl /trusted/public/intermediate.crl
+
+pnpm fcc:version:deploy -- \
+  --url https://machine.example \
+  --image-id sha256:<64-lowercase-hex> \
+  --leaf-crl /trusted/public/leaf.crl \
+  --intermediate-crl /trusted/public/intermediate.crl
+
+pnpm fcc:version:verify -- \
+  --url https://machine.example \
+  --image-id sha256:<64-lowercase-hex> \
+  --leaf-crl /trusted/public/leaf.crl \
+  --intermediate-crl /trusted/public/intermediate.crl
+```
+
+Plan and verify are read-only. Deploy carries the explicit `--broadcast`
+capability in its package script and additionally requires pinned Node
+`24.19.0` and Go `1.25.12`, a clean committed source tree, the dedicated
+PayGuard extension-owner key, exact official-manager resolution, successful
+owner simulation, and a conservative gas buffer. It rechecks the source commit
+immediately before signing.
+
+After a successful receipt or an interrupted run whose exact event is already
+on-chain, deploy performs a second fresh PKI admission, requires the same
+machine/proxy/key/image/platform/governance identity, rereads support, and
+accepts only one exact `TeeVersionAdded` event from the manager. It verifies the
+owner transaction and two confirmations before writing
+`evidence/coston2/fcc-code-version-allowance.json`. That evidence explicitly
+keeps machine registration and live FCC result as blockers.
+
+The command and recovery/evidence paths are locally tested but have not run
+against a production machine, so no live PayGuard code version is currently
+claimed.
