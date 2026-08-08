@@ -131,6 +131,8 @@ registered Coston2 `PING_V1`, receipt, and evaluation proofs remain open.
 - [x] Add a guarded official `rRap` machine-registration runner with pinned
   scaffold source, strict stable origins, resumable ignored state, fresh
   identity recheck, exact production readbacks/events, and public-safe evidence.
+- [x] Add a strict public `PING_V1` result verifier for canonical response ABI,
+  exact request/binding fields, and distinct TEE/proxy FCC signing domains.
 - [ ] Register a production machine and verify one signed Coston2 `PING_V1`
   result before treating the live FCC path as available.
 - [x] Implement ciphertext-only policy ingress and a sealed local policy store.

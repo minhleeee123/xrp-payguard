@@ -229,3 +229,19 @@ keeps machine registration and live FCC result as blockers.
 The command and recovery/evidence paths are locally tested but have not run
 against a production machine, so no live PayGuard code version is currently
 claimed.
+
+### Signed result verification core
+
+`tooling/fcc-foundation-result.mjs` independently verifies the public result
+returned by `/action/result/<instruction-id>`. It requires the exact action ID,
+`submit` tag, success status, `PAYGUARD` / `PING_V1` operation, code version,
+empty additional status, canonical response ABI, and all chain/sender/extension/
+nonce/payload/binding fields. It reconstructs the pinned FCC result hash and
+recovers both low-S signatures under the distinct `TEE_ACTION_RESULT` and
+`PROXY_ACTION_RESULT` domains; the recovered addresses must equal the admitted
+registered TEE and proxy IDs. Run its deterministic positive and negative
+vectors with `pnpm fcc:result:test`.
+
+This verifier does not itself dispatch a transaction or claim a live result.
+The operational dispatch/poll/evidence command and a production machine remain
+open, so Gate A is unchanged.

@@ -59,6 +59,8 @@ Forbidden evidence:
 - Three fresh local container identities, startup sign/decrypt readiness,
   hardening, malformed-ingress failure, cleanup, and restart rotation.
 - Wrong key/owner/policy/request/nonce/commitment/schema/code/machine rejection.
+- Foundation result ABI, action ID/status/version/domain/binding checks plus
+  canonical TEE and proxy signatures over their distinct pinned FCC domains.
 - No plaintext/ciphertext in chain, logs, browser persistence, evidence, or output.
 - Sealed restart behavior, rollback check, one-machine result outage.
 - Replacement registration and frozen-policy failure/recovery.
