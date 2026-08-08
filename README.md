@@ -18,8 +18,10 @@ the local ciphertext-only FCC path, and the Foundry registry/vault/router state
 machine are implemented and tested. The three non-upgradeable contracts and
 their FTestXRP vault wiring are deployed and independently re-verified on
 Coston2 from source commit `17ff0bc1eb135195a94d0d261bc491f006730720`.
-No registered PayGuard FCC result, private live lifecycle, mainnet integration,
-user traction, production audit, or complete release claim exists yet.
+A foundation-only FCC sender and typed `PING_V1` handler now pass local
+cross-language tests; they are not deployed or registered. No registered
+PayGuard FCC result, private live lifecycle, mainnet integration, user traction,
+production audit, or complete release claim exists yet.
 
 ## Start here
 

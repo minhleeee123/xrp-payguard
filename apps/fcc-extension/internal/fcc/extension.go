@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"net/http"
 	"sync"
 
@@ -78,12 +79,55 @@ func (e *Extension) processAction(action teetypes.Action, dataFixed *instruction
 	}
 	switch dataFixed.OPCommand {
 	case teeutils.ToHash(OPCommandPing):
-		return http.StatusOK, e.result(action, dataFixed, []byte(`{"status":"ok","command":"PING_V1"}`), 1, nil)
+		return http.StatusOK, e.processFoundationPing(action, dataFixed)
 	case teeutils.ToHash(OPCommandEvaluate):
 		return http.StatusOK, e.processEvaluate(action, dataFixed)
 	default:
 		return http.StatusNotImplemented, []byte("unsupported op command")
 	}
+}
+
+func (e *Extension) processFoundationPing(
+	action teetypes.Action,
+	dataFixed *instruction.DataFixed,
+) []byte {
+	var request FoundationRequest
+	if err := decodeFoundationRequest(dataFixed.OriginalMessage, &request); err != nil {
+		return e.result(action, dataFixed, nil, 0, fmt.Errorf("invalid foundation request"))
+	}
+	if request.SchemaVersion != FoundationSchemaVersion {
+		return e.result(action, dataFixed, nil, 0, fmt.Errorf("unsupported foundation schema"))
+	}
+	if request.ChainID == nil || request.ChainID.Cmp(big.NewInt(Coston2ChainID)) != 0 {
+		return e.result(action, dataFixed, nil, 0, fmt.Errorf("wrong foundation chain"))
+	}
+	if request.Sender == (common.Address{}) || request.ExtensionID == nil || request.ExtensionID.Sign() <= 0 {
+		return e.result(action, dataFixed, nil, 0, fmt.Errorf("invalid foundation sender"))
+	}
+	if request.CodeVersion != foundationCodeVersion {
+		return e.result(action, dataFixed, nil, 0, fmt.Errorf("wrong foundation code version"))
+	}
+	if request.RequestNonce == (common.Hash{}) || request.PayloadHash == (common.Hash{}) {
+		return e.result(action, dataFixed, nil, 0, fmt.Errorf("invalid foundation nonce"))
+	}
+	bindingHash, err := foundationBindingHash(request)
+	if err != nil {
+		return e.result(action, dataFixed, nil, 0, fmt.Errorf("foundation binding unavailable"))
+	}
+	data, err := encodeFoundationResponse(FoundationResponse{
+		SchemaVersion: request.SchemaVersion,
+		ChainID:       request.ChainID,
+		Sender:        request.Sender,
+		ExtensionID:   request.ExtensionID,
+		CodeVersion:   request.CodeVersion,
+		RequestNonce:  request.RequestNonce,
+		PayloadHash:   request.PayloadHash,
+		BindingHash:   bindingHash,
+	})
+	if err != nil {
+		return e.result(action, dataFixed, nil, 0, fmt.Errorf("foundation response unavailable"))
+	}
+	return e.result(action, dataFixed, data, 1, nil)
 }
 
 func (e *Extension) processEvaluate(action teetypes.Action, dataFixed *instruction.DataFixed) []byte {

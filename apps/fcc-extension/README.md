@@ -29,6 +29,12 @@ Production sealed custody through the registered FCC scaffold and Coston2
 machine registration remain planned until the machine prerequisites are
 available.
 
+`PING_V1` is a separate public-safe foundation path. Its Solidity sender
+constructs a canonical ABI tuple bound to Coston2, the exact sender and
+registry-assigned extension ID, `0.1.0-payguard`, a nonce, and a payload hash.
+The handler returns those fields plus the shared binding hash. This local path
+cannot evaluate a policy or authorize payment, and it is not live FCC evidence.
+
 ## Container gates
 
 From the repository root:

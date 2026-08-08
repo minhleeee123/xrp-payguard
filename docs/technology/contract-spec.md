@@ -38,6 +38,18 @@ Responsibilities:
 - execute one supported adapter call atomically with state advancement;
 - expose explicit denial, expiry, cancellation, stop, and recovery state.
 
+### `PayGuardFoundationSender`
+
+Responsibilities:
+
+- deploy only on Coston2 and bind once to an exact registry-assigned public
+  extension ID;
+- choose exactly one machine through the official machine registry;
+- construct and dispatch the public `PAYGUARD` / `PING_V1` tuple with exact
+  chain, sender, extension, code, nonce, and payload-hash fields;
+- expose no evaluation command, policy field, decision input, or fund-moving
+  path.
+
 ### Adapter interfaces
 
 V1 adapters are intentionally narrow:
@@ -66,6 +78,12 @@ replacement coverage registers a different machine only for a separately
 receipted policy version; the replacement signer is rejected for the old
 commitment, whose frozen set is unchanged and fails closed when its threshold
 is unavailable.
+
+The separately generated `PayGuardFoundationSender` ABI is a local Gate A
+artifact, not part of the verified three-contract Coston2 deployment. Its
+canonical request binding is shared with the Go extension through a hard-coded
+golden digest. Registration and live result verification remain mandatory
+before it can become a release fact.
 
 ## 2. Schemas
 

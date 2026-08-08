@@ -5,8 +5,10 @@ sign-port domain adapter, Coston2 testnet funding, and fail-closed deployment
 tooling are committed. The PayGuard registry, vault, router, and FTestXRP vault
 wiring are runtime/constructor-verified on Coston2. Fresh TEE identity discovery,
 strict private-policy wire, and loopback ECIES decryption pass locally. FCC
-registration, authenticated ingress, stable machine origins, sealed recovery,
-and the private live lifecycle remain planned and not yet verified.
+foundation dispatch now has a local typed sender/handler and shared Solidity/Go
+binding vector. Sender deployment, extension registration, a registered result,
+stable machine origins, sealed recovery, and the private live lifecycle remain
+planned and not yet verified.
 
 ## Pinned local toolchain
 
@@ -19,6 +21,14 @@ directive is `1.25.1`; the selected patch release satisfies that directive.
 The official FCC scaffold was inspected read-only at commit
 `ffb6c4ca7c160c49be59e00fe537e24d2477b000`. PayGuard has not copied its
 deployment, extension ID, machine identity, key, or evidence.
+
+The local `PayGuardFoundationSender` follows the official registry instruction
+shape but constructs its own `PAYGUARD` / `PING_V1` request. The request binds
+Coston2 chain `114`, the exact sender, registry-assigned extension ID, PayGuard
+code version, nonce, and a public-safe payload hash. The Go extension accepts
+only the canonical ABI tuple and returns the same fields plus their binding
+hash. This proves local wire compatibility only; an official outer FCC result
+and registered TEE signer remain Gate A evidence requirements.
 
 ## Official discovery sources
 

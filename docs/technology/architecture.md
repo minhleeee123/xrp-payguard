@@ -79,6 +79,19 @@ policy ciphertext. Owner-authorized ingress is implemented and locally tested;
 authenticated HTTPS deployment and sealed rollback/recovery remain mandatory
 before this local boundary becomes live.
 
+### Foundation FCC sender
+
+`PayGuardFoundationSender` is the deliberately narrow pre-policy live gate. It
+binds once to the exact public extension ID assigned by the official
+`TeeExtensionRegistry`, selects exactly one registered machine through
+`TeeMachineRegistry`, and sends a public-safe typed `PING_V1`. The contract
+constructs chain, sender, extension, and code fields itself; callers can supply
+only a nonzero nonce and public payload hash. The handler rejects malformed,
+non-canonical, wrong-chain, wrong-version, or empty fields and returns a typed
+binding hash. This component cannot dispatch `EVALUATE_V1`, submit `ALLOW`, or
+move vault funds. Deployment, registration, and a live outer FCC signature are
+still unverified.
+
 ### PolicyRegistry
 
 Records owner, policy commitment/version, schema, extension, code version,

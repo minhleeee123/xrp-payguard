@@ -112,8 +112,10 @@ Exit: every mandatory dependency is pinned and reachable, or product work pauses
 The checked items below cover the local ciphertext-only/reference adapter. The
 registered Coston2 `PING_V1`, receipt, and evaluation proofs remain open.
 
-- [ ] Implement a minimal `PING_V1` foundation and verify one registered Coston2
-  result before policy code.
+- [x] Implement a typed, domain-bound `PING_V1` sender/handler with a shared
+  Solidity/Go golden vector and fail-closed negative coverage.
+- [ ] Deploy/register the foundation sender and verify one registered Coston2
+  result before treating the live FCC path as available.
 - [x] Implement ciphertext-only policy ingress and a sealed local policy store.
 - [x] Return machine-signed `POLICY_RECEIPT_V1` values bound to policy owner,
   commitment, schema, code version, chain, contracts, machine, and nonce.

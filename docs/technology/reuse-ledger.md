@@ -23,6 +23,15 @@ Adapted patterns:
   authorization domain, bounds ciphertext to 64 KiB, wipes transient key/plaintext
   buffers, and is independently checked by a TypeScript ciphertext that the
   Go/tee-node primitive decrypts.
+- The foundation sender's official `TeeInstructionParams`/registry call shape
+  follows the pinned Flare scaffold. Constant-time explicit extension-ID
+  binding and typed ABI response patterns were reviewed in read-only VeilBid
+  sources at commits `6fbdd18579dad8b6e95815028fd76f6175a4abee`,
+  `da757a0c8a6897be8abd3f132b5c73617f768be2`, and
+  `b2d23422138c7730e16a104d91842d6c78f40b14` under MIT. PayGuard changes the
+  command/domain/schema, binds sender + extension + code, constructs immutable
+  fields on-chain, rejects non-canonical Go wire, and has independent Solidity
+  and Go tests. No VeilBid deployment fact or secret was reused.
 - PayGuard handlers, command names, state, policy ingress, receipt/result
   domains, and tests are new code under this repository.
 

@@ -4,12 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"math/big"
+	"net/http"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/accounts"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/flare-foundation/go-flare-common/pkg/tee/instruction"
+	"github.com/flare-foundation/go-flare-common/pkg/tee/structs"
 	teetypes "github.com/flare-foundation/tee-node/pkg/types"
 	teeutils "github.com/flare-foundation/tee-node/pkg/utils"
 	"github.com/minhleeee123/xrp-payguard/apps/fcc-extension/internal/ingress"
@@ -36,9 +39,31 @@ func actionFor(opCommand common.Hash, original []byte) (teetypes.Action, *instru
 	return teetypes.Action{Data: teetypes.ActionData{ID: fccHash("action"), SubmissionTag: teetypes.Threshold}}, dataFixed
 }
 
+func validFoundationRequest() FoundationRequest {
+	return FoundationRequest{
+		SchemaVersion: FoundationSchemaVersion,
+		ChainID:       big.NewInt(Coston2ChainID),
+		Sender:        common.HexToAddress("0x1000000000000000000000000000000000000001"),
+		ExtensionID:   big.NewInt(66001),
+		CodeVersion:   foundationCodeVersion,
+		RequestNonce:  common.HexToHash("0x1234"),
+		PayloadHash:   common.HexToHash("0xabcd"),
+	}
+}
+
+func encodeFoundationRequest(t *testing.T, request FoundationRequest) []byte {
+	t.Helper()
+	encoded, err := abi.Arguments{foundationRequestArg}.Pack(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return encoded
+}
+
 func TestPingAndUnavailableEvaluationFailClosed(t *testing.T) {
 	extension := New(0, 0, nil)
-	action, dataFixed := actionFor(teeutils.ToHash(OPCommandPing), nil)
+	request := validFoundationRequest()
+	action, dataFixed := actionFor(teeutils.ToHash(OPCommandPing), encodeFoundationRequest(t, request))
 	status, body := extension.processAction(action, dataFixed)
 	if status != 200 {
 		t.Fatalf("ping HTTP status: %d", status)
@@ -47,8 +72,17 @@ func TestPingAndUnavailableEvaluationFailClosed(t *testing.T) {
 	if err := json.Unmarshal(body, &result); err != nil {
 		t.Fatal(err)
 	}
-	if result.Status != 1 || !bytes.Contains(result.Data, []byte("PING_V1")) {
+	if result.Status != 1 {
 		t.Fatalf("unexpected ping result: %+v", result)
+	}
+	var response FoundationResponse
+	if err := structs.DecodeTo(foundationResponseArg, result.Data, &response); err != nil {
+		t.Fatal(err)
+	}
+	expectedBinding := common.HexToHash("0x55f3ec0e0465f6db52b6c4b411e89120a09e7f01740b22a3844ee3685d4f492a")
+	if response.BindingHash != expectedBinding || response.RequestNonce != request.RequestNonce ||
+		response.Sender != request.Sender || response.ExtensionID.Cmp(request.ExtensionID) != 0 {
+		t.Fatalf("unexpected typed ping response: %+v", response)
 	}
 	if string(result.AdditionalResultStatus) != "" {
 		t.Fatalf("unexpected additional result status: %q", result.AdditionalResultStatus)
@@ -71,6 +105,71 @@ func TestPingAndUnavailableEvaluationFailClosed(t *testing.T) {
 	}
 	if result.Status != 0 || bytes.Contains(body, []byte(`"decision":"ALLOW"`)) {
 		t.Fatalf("unavailable evaluation was represented as success: %s", body)
+	}
+}
+
+func TestFoundationPingRejectsEveryInvalidBindingField(t *testing.T) {
+	extension := New(0, 0, nil)
+	tests := map[string]func(*FoundationRequest){
+		"schema":    func(value *FoundationRequest) { value.SchemaVersion++ },
+		"chain":     func(value *FoundationRequest) { value.ChainID = big.NewInt(115) },
+		"sender":    func(value *FoundationRequest) { value.Sender = common.Address{} },
+		"extension": func(value *FoundationRequest) { value.ExtensionID = big.NewInt(0) },
+		"code":      func(value *FoundationRequest) { value.CodeVersion = common.HexToHash("0x9999") },
+		"nonce":     func(value *FoundationRequest) { value.RequestNonce = common.Hash{} },
+		"payload":   func(value *FoundationRequest) { value.PayloadHash = common.Hash{} },
+	}
+	for name, mutate := range tests {
+		t.Run(name, func(t *testing.T) {
+			request := validFoundationRequest()
+			mutate(&request)
+			action, dataFixed := actionFor(
+				teeutils.ToHash(OPCommandPing), encodeFoundationRequest(t, request),
+			)
+			status, body := extension.processAction(action, dataFixed)
+			if status != http.StatusOK {
+				t.Fatalf("HTTP status: %d", status)
+			}
+			var result teetypes.ActionResult
+			if err := json.Unmarshal(body, &result); err != nil {
+				t.Fatal(err)
+			}
+			if result.Status != 0 || len(result.Data) != 0 {
+				t.Fatalf("invalid foundation request succeeded: %s", body)
+			}
+		})
+	}
+}
+
+func TestFoundationPingRejectsMalformedAndNonCanonicalWire(t *testing.T) {
+	extension := New(0, 0, nil)
+	wires := map[string][]byte{
+		"malformed":     {0x01, 0x02},
+		"trailing-data": append(encodeFoundationRequest(t, validFoundationRequest()), make([]byte, 32)...),
+	}
+	for name, wire := range wires {
+		t.Run(name, func(t *testing.T) {
+			action, dataFixed := actionFor(teeutils.ToHash(OPCommandPing), wire)
+			_, body := extension.processAction(action, dataFixed)
+			var result teetypes.ActionResult
+			if err := json.Unmarshal(body, &result); err != nil {
+				t.Fatal(err)
+			}
+			if result.Status != 0 || len(result.Data) != 0 {
+				t.Fatalf("invalid foundation wire succeeded: %s", body)
+			}
+		})
+	}
+}
+
+func TestFoundationBindingGoldenVector(t *testing.T) {
+	digest, err := foundationBindingHash(validFoundationRequest())
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected := common.HexToHash("0x55f3ec0e0465f6db52b6c4b411e89120a09e7f01740b22a3844ee3685d4f492a")
+	if digest != expected {
+		t.Fatalf("foundation digest mismatch: got %s want %s", digest, expected)
 	}
 }
 

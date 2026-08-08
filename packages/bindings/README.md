@@ -11,3 +11,6 @@ pnpm bindings:generate
 
 These are ABI bindings, not a deployment claim. Contract addresses and live
 runtime bytecode remain absent until a verified Coston2 release manifest.
+
+The generated surface includes the foundation-only FCC PING sender. Its ABI
+does not imply that the sender or an FCC extension is registered or live.

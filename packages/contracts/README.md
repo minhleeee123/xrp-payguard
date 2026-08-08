@@ -20,6 +20,9 @@ Local Foundry/Solidity V1 implementation of the public state machine:
   Go and TypeScript; it is not called by the public router.
 - `PayGuardSpendWindowMath` fixes UTC calendar and sliding rolling-window
   boundaries for the private evaluators without wiring history into the router.
+- `PayGuardFoundationSender` dispatches a public-safe, domain-bound `PING_V1`
+  through the official FCC registry interfaces to one registered machine. It is
+  intentionally unable to dispatch evaluations or authorize payments.
 
 Run with the pinned local toolchain from the repository root:
 

@@ -74,6 +74,8 @@ closed. Owner recovery is time-bounded and cannot race execution.
 | Malicious target/reentrancy | Adapter allowlist, CEI/reentrancy guard, atomic accounting, bounded gas |
 | Emergency withdrawal races action | Stop/reservation/grace state machine and atomic terminal transition |
 | Identity restart assumed stable | Replacement registration; frozen old policy fails closed/recovery |
+| Caller substitutes FCC foundation domain | Sender constructs chain/sender/extension/code fields; canonical Go decoder and binding hash reject drift |
+| Sender binds a foreign/reserved extension ID | One-time owner call plus authoritative registry mapping and public-ID bounds |
 | Hosted UI lies | Wallet-free independent reader/CLI and verified release manifest |
 
 ## 5. Residual trust
