@@ -11,6 +11,7 @@
     "toolchain:check": "node tooling/preflight.mjs",
     "docs:check": "node tooling/check-docs.mjs",
     "secret:scan": "node tooling/scan-secrets.mjs",
+    "bindings:generate": "node tooling/generate-bindings.mjs",
     "check": "pnpm toolchain:check && pnpm docs:check && pnpm secret:scan"
   }
 }
