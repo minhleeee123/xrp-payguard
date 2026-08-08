@@ -8,3 +8,4 @@ export * from "./requests.js";
 export * from "./evidence.js";
 export * from "./payee.js";
 export * from "./roles.js";
+export * from "./notifications.js";

@@ -2,11 +2,16 @@ import "./styles.css";
 import "./studio.css";
 import {
   unavailableAuditState,
+  unavailableNotificationState,
   unavailablePayeeState,
   unavailableRequestState,
   unavailableVaultState,
   unavailableWorkspaceState,
+  buildPublicNotificationExport,
+  buildUnavailableNotificationExport,
+  encodePublicNotificationExport,
   type PublicAuditReadState,
+  type PublicNotificationReadState,
   type PublicPayeeReadState,
   type PublicRequestReadState,
   type PublicWorkspaceReadState,
@@ -43,6 +48,8 @@ let requestState: PublicRequestReadState = unavailableRequestState();
 let auditState: PublicAuditReadState = unavailableAuditState();
 let payeeState: PublicPayeeReadState = unavailablePayeeState();
 let workspaceState: PublicWorkspaceReadState = unavailableWorkspaceState();
+let notificationState: PublicNotificationReadState = unavailableNotificationState();
+let notificationOpen = false;
 
 const esc = (value: string): string => value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character] ?? character));
 const short = (value: string): string => value.length > 18 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value;
@@ -69,7 +76,8 @@ function render(): void {
         </div>
       </aside>
       <main class="main-area">
-        <header class="topbar"><div class="breadcrumbs"><span>Workspace</span><b>/</b><strong>${label(activeView)}</strong></div><div class="top-actions"><span class="network-chip"><span class="status-dot amber"></span>Coston2 <em>planned</em></span><button class="icon-button" type="button" aria-label="Notifications">♢<span class="notification-dot"></span></button><button class="outline-button" type="button" data-action="connect">Connect wallet</button></div></header>
+        <header class="topbar"><div class="breadcrumbs"><span>Workspace</span><b>/</b><strong>${label(activeView)}</strong></div><div class="top-actions"><span class="network-chip"><span class="status-dot amber"></span>Coston2 <em>planned</em></span><button class="icon-button" type="button" data-action="notifications" aria-label="Notifications" aria-expanded="${notificationOpen}">♢${notificationState.status === "READY" && notificationState.feed.notifications.length > 0 ? '<span class="notification-dot"></span>' : ""}</button><button class="outline-button" type="button" data-action="connect">Connect wallet</button></div></header>
+        ${notificationOpen ? notificationTray() : ""}
         <section class="content">${viewContent()}</section>
         ${appNotice ? `<div class="toast" role="status">${esc(appNotice)}</div>` : ""}
       </main>
@@ -233,6 +241,37 @@ function teamView(): string {
     <section class="panel roles-panel"><div class="panel-heading"><div><div class="eyebrow">CURRENT WORKSPACE</div><h2>Personal workspace</h2></div><span class="state-tag ${workspace ? "green-tag" : "gray-tag"}">${workspace ? "VERIFIED" : "LOCAL ONLY"}</span></div>${roleRows}</section><div class="team-note"><span class="lock-icon">▣</span><div><strong>${workspace ? "Public role registry verified" : "Role registry unavailable"}</strong><p>${esc(workspaceReason)}. Role assignments can expose public controls only; no role supplies, overrides, or infers an authorization result.</p></div></div>`;
 }
 
+function notificationTray(): string {
+  if (notificationState.status === "UNAVAILABLE") {
+    return `<aside class="notification-tray panel" role="status"><div class="panel-heading"><div><div class="eyebrow">PUBLIC NOTIFICATIONS</div><h2>Feed unavailable</h2></div><button class="icon-button" type="button" data-action="notifications" aria-label="Close notifications">×</button></div><p class="panel-copy">${esc(notificationUnavailableReason(notificationState.reason))}. This preview never invents request, funding, or execution events.</p><div class="unavailable-box"><span class="status-dot amber"></span><div><strong>No public checkpoint feed</strong><small>Only finalized public facts may enter notifications. Policy plaintext, ciphertext, signatures, and private reasons are excluded.</small></div></div><button class="outline-button notification-export" type="button" data-action="export-notifications">Export unavailable report</button></aside>`;
+  }
+  const rows = notificationState.feed.notifications.length === 0
+    ? `<div class="empty-state notification-empty"><strong>No verified events</strong><span>The feed is finalized but contains no public events.</span></div>`
+    : `<ul class="notification-list">${notificationState.feed.notifications.map((item) => `<li><span class="evidence-icon">${item.severity === "WARNING" ? "!" : "·"}</span><div><strong>${esc(notificationLabel(item.kind))}</strong><small>Block ${item.blockNumber} · ${item.observedAt}</small></div><span class="state-tag ${item.severity === "WARNING" ? "amber-tag" : "green-tag"}">${item.severity}</span></li>`).join("")}</ul>`;
+  return `<aside class="notification-tray panel" role="status"><div class="panel-heading"><div><div class="eyebrow">PUBLIC NOTIFICATIONS</div><h2>Finalized event feed</h2></div><button class="icon-button" type="button" data-action="notifications" aria-label="Close notifications">×</button></div>${rows}<button class="outline-button notification-export" type="button" data-action="export-notifications">Export public-only report</button></aside>`;
+}
+
+function notificationLabel(kind: string): string {
+  return ({
+    REQUEST_READY: "Request ready for execution",
+    REQUEST_DENIED: "Request denied",
+    REQUEST_EXECUTED: "Request executed",
+    REQUEST_EXPIRED: "Request expired",
+    VAULT_STOPPED: "Vault emergency stop",
+    FUNDING_DELAYED: "Funding checkpoint delayed",
+    EVIDENCE_VERIFIED: "Evidence verified",
+  } as Record<string, string>)[kind] ?? "Public event";
+}
+
+function notificationUnavailableReason(reason: string): string {
+  return ({
+    RPC_UNCONFIGURED: "No verified RPC provider configured",
+    RPC_UNAVAILABLE: "RPC provider unavailable",
+    FEED_UNFINALIZED: "Notification feed is not finalized",
+    FEED_INVALID: "Public notification feed failed validation",
+  } as Record<string, string>)[reason] ?? "Public notification feed unavailable";
+}
+
 function workspaceUnavailableReason(reason: string): string {
   return ({
     RPC_UNCONFIGURED: "No verified RPC provider configured",
@@ -262,11 +301,32 @@ function wireEvents(): void {
 
 function handleAction(action: string): void {
   if (action === "new-policy") { activeView = "studio"; render(); return; }
+  if (action === "notifications") { notificationOpen = !notificationOpen; render(); return; }
+  if (action === "export-notifications") { exportNotifications(); return; }
   if (action === "verify") appNotice = "Evidence endpoint is unavailable; no transaction, block, proof, or signer was asserted.";
   else if (action === "connect") appNotice = "Wallet providers are unavailable until a verified Coston2 release is configured.";
   else if (action === "details") appNotice = "This preview reports only finalized public checkpoints; live dependencies are not configured.";
   else if (action === "help") appNotice = "PayGuard keeps policy rules in FCC custody while public requests and settlement remain visible.";
   else appNotice = "This action remains planned for a verified PayGuard release.";
+  render();
+}
+
+function exportNotifications(): void {
+  const now = BigInt(Math.floor(Date.now() / 1000));
+  const exported = notificationState.status === "READY"
+    ? buildPublicNotificationExport(notificationState.feed, now < notificationState.feed.generatedAt ? notificationState.feed.generatedAt : now)
+    : buildUnavailableNotificationExport(notificationState.reason, now);
+  const wire = encodePublicNotificationExport(exported);
+  const blob = new Blob([JSON.stringify(wire, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "payguard-public-notifications.json";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  appNotice = exported.status === "AVAILABLE" ? "Exported finalized public notifications; no private payload included." : "Exported an unavailable public-feed report; no event was asserted.";
   render();
 }
 

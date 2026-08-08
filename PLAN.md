@@ -234,7 +234,9 @@ evidence, and live role journeys remain open.
 - [ ] Build wallet-free Auditor view with policy commitment, machine/code
   binding, FTSO/FDC facts, decision digest, and execution conservation.
 - [ ] Build Team/Treasury workspace and role-aware permissions.
-- [ ] Build notifications and export without confidential payloads.
+- [x] Build a strict public notification feed and export with finalized block/time
+  facts, domain-separated hashes, and an unavailable UI/report path; hosted feed
+  delivery remains open until a verified Coston2 provider exists.
 - [x] Make laptop UX primary with responsive/mobile layout, focus states, and
   explicit loading/error/recovery copy; full accessibility and reduced-motion
   review remains open.

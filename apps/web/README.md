@@ -26,6 +26,12 @@ hash, settlement transaction, and resulting checkpoint; missing or drifting
 receipts remain unavailable.
 Team roles are schema-checked and hashed as public assignments; the permission
 projection covers public controls only and always returns `canAuthorize: false`.
+Notifications use a strict public event feed with finalized block/time facts,
+typed status/severity, request references, and domain-separated feed/export
+hashes. The tray remains unavailable until a verified provider supplies a
+finalized feed; its export action can only download a public unavailable report
+or a schema-checked public feed, never policy plaintext, ciphertext, signatures,
+or private denial reasons.
 
 Run locally with the pinned Node toolchain:
 

@@ -91,6 +91,17 @@ Reads one finalized Coston2 checkpoint and renders public policy commitment,
 machine/code binding, request, input proofs, decision digest, execution, and
 conservation. It never fetches private ingress payloads.
 
+### Public notifications and export
+
+Notifications are derived only from finalized public checkpoints. Each event
+has a fixed kind/severity, an opaque event ID, one public reference hash, and a
+request ID only for request events; free-form policy text, amounts, targets,
+signatures, ciphertext, and private denial reasons are not part of the wire.
+The feed is bounded, deduplicated, sorted deterministically, and committed by
+a domain-separated feed hash. Exports carry the same public events and an
+independent export hash, or an explicit unavailable reason with an empty feed.
+The web tray never fabricates an event when RPC/indexer state is unavailable.
+
 ## 3. Public and private data
 
 | Data | Visibility |
