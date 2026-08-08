@@ -36,3 +36,9 @@ only at the client-provided public `executionAllowedAt` time.
 
 No live XRPL Testnet payment, FDC proof or trigger, Smart Account transaction,
 FTSO feed, FAssets mint, or redemption is claimed by these local tests.
+
+`resolveCoston2Dependencies` reads the official Flare Contract Registry at its
+canonical registry address for FDC, FTSO, FAssets, Smart Account, and related
+protocol addresses. It rejects RPC failures, zero/invalid addresses, duplicate
+requests, and unsupported names. The returned addresses are a runtime lookup,
+not a PayGuard deployment manifest or release assertion.

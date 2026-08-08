@@ -93,6 +93,8 @@ resolution, three stable FCC origins, and funded live access remain open.
 
 - [x] Pin Node 24, pnpm, Go, Foundry, Solidity, viem, XRPL, and official Flare
   periphery/FCC revisions.
+- [x] Add a local fail-closed resolver for official Coston2 protocol addresses
+  through the Flare Contract Registry; live reachability remains open.
 - [ ] Resolve Coston2 FCC manager, registries, FDC, FTSO, FAssets, Smart Account,
   verifier, DA, RPC, faucet, and explorer through supported sources.
 - [x] Build the official FCC scaffold unchanged and run its local smoke first.

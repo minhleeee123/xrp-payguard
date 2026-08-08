@@ -217,6 +217,14 @@ the Coston2 consumer must atomically consume the transaction and commitment in
 canonical state. That live path is not yet verified, and Web2Json is not
 implemented.
 
+### Official Flare dependency resolution
+
+The integration layer reads Coston2 protocol addresses through Flare's
+Contract Registry at runtime. FDC, FTSO, FAssets, Smart Account, Relay, and
+systems-manager names are allowlisted; RPC errors, unsupported names, and
+zero/invalid responses fail closed. The resolver records no credentials and
+does not turn a runtime lookup into a PayGuard deployment or release manifest.
+
 ## 7. Recovery
 
 - Browser loss: recover public state; re-enter unpublished private drafts.

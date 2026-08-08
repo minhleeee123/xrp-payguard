@@ -9,3 +9,4 @@ export * from "./evidence.js";
 export * from "./payee.js";
 export * from "./roles.js";
 export * from "./notifications.js";
+export * from "./flare-registry.js";

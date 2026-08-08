@@ -12,6 +12,8 @@
   for policy owner, payee, executor, and auditor.
 - [`technology/requirements.md`](technology/requirements.md): required Flare
   primitives and current official sources.
+- [`technology/coston2-dependency-resolution.md`](technology/coston2-dependency-resolution.md):
+  timestamped official-registry lookup observation, explicitly not a PayGuard release.
 - [`technology/foundations.md`](technology/foundations.md): pinned local
   toolchain, official source map, and external Gate 0/1 blockers.
 - [`technology/reuse-ledger.md`](technology/reuse-ledger.md): PayGuard-specific
