@@ -103,8 +103,11 @@
   },
   "expected": {
     "policyCommitment": "0x318df3938877daa30fbc22e92ed0dca3610132870fd342f73dda56828eae38ca",
+    "bindingDigest": "0x3a0f0fd42896a52eeac12ab768e978925b3b072914570b2ab98143cb1ed898dc",
     "receiptDigest": "0x8625c2b20a7baca2bdbb90a0005ea8a39708c9e2659964091741b7c088ce8b0d",
     "receiptAttestationDigest": "0xb4db269c442958dbc3f7cf73e0bdb66eb379991aa2e905aa25d7cc1f51cb3edd",
+    "ingressCiphertextHash": "0x7d76e6f07d664abab972a031c84efa108530a9c2e435e9fd240b427ba4493601",
+    "ingressAuthorizationDigest": "0xba16d361b89b5dfda29c1ccf036c8d62a819e57c1d533bcc51c0fb79c0f6271b",
     "requestHash": "0x0fc911c41dc4de74cf60f8ca504906b76f38c8381574b4200beeb32a9dd72fb6",
     "evaluationDigest": "0x4823cc4d3f36569052a569af9759bcab4e44fab890c0ed004bef7287565a19ea",
     "evaluationAttestationDigest": "0x9796e29e8db9aaaaf54d4f39deef1a9ee8024ef846a9a342f5445fc5cd9fd590"

@@ -12,9 +12,12 @@ echoed message, canonical signature, and configured TEE identity.
 The production entrypoint discovers the fresh TEE identity rather than loading
 an application key, fails closed unless both `/sign` and `/decrypt` are ready,
 and ECIES-decrypts the strict private policy wire only through loopback. Policy
-plaintext bytes are cleared after parsing. Authenticated public ingress and
-sealed restart recovery remain live gates; this adapter alone is not custody
-evidence.
+plaintext bytes are cleared after parsing. The internal port `7703` accepts only
+canonical, bounded, machine-specific ciphertext requests authorized by the
+policy owner's Ethereum signed-message signature over the full public binding.
+It returns a receipt only; the former unauthenticated coordinator HTTP surface
+is not present. A stable TLS proxy/origin, proxy rate limits, and sealed restart
+recovery remain live gates; this adapter alone is not custody evidence.
 The public Go/TypeScript HTTP boundary uses lower-camel field names, named
 decision/reason enums, and quoted unsigned decimal strings for every bigint or
 `uint64`; numeric JSON bigints and unknown enums are rejected before hashing.

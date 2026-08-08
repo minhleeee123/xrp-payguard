@@ -58,6 +58,7 @@ closed. Owner recovery is time-bounded and cannot race execution.
 |---|---|
 | Client submits `ALLOW` | ABI has no client decision input; threshold digest verification |
 | Policy ciphertext published | Contracts reject ciphertext-shaped fields; scans and ingress separation |
+| Relay substitutes binding/ciphertext/machine | Owner signature binds the full binding digest, ciphertext hash, exact machine/key, nonce, and short time window |
 | Receipt for another policy/owner | Full receipt domain, nonce, expiry, registered machine/key check |
 | Mixed policy copies across TEEs | All-three matching custody receipts and commitment |
 | Two machines sign different requests | Exact digest comparison; no threshold across split results |

@@ -47,7 +47,11 @@ authorize an action.
 Authenticates the policy owner/request domain, rate-limits transport, forwards
 opaque ciphertext to the exact frozen machine origin, and returns the raw
 machine-signed public receipt. It does not decrypt, score, persist plaintext, or
-become a correctness authority.
+become a correctness authority. Each machine verifies an owner signature over
+the full binding digest, ciphertext hash, machine/key identity, submission
+nonce, and bounded time window before decrypting. The local container endpoint
+implements this contract; stable TLS origins and proxy rate limits remain a
+deployment gate.
 
 ### Policy custody receipts
 
@@ -71,8 +75,9 @@ The machine identity and ECIES decryption key are the fresh tee-node identity,
 not an application key loaded from environment. PayGuard derives its bytes32
 machine ID and full public-key fingerprint from a loopback discovery signature,
 then uses the same node's loopback decrypt port for independently addressed
-policy ciphertext. Authenticated HTTPS ingress, owner authorization, and sealed
-rollback/recovery remain mandatory before this local boundary becomes live.
+policy ciphertext. Owner-authorized ingress is implemented and locally tested;
+authenticated HTTPS deployment and sealed rollback/recovery remain mandatory
+before this local boundary becomes live.
 
 ### PolicyRegistry
 

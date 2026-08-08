@@ -22,6 +22,8 @@ Implementation requirements:
 - start from the supported scaffold and pin its exact revision;
 - use stable registered HTTPS machine/proxy endpoints;
 - bind extension, machine, code/image version, public key, chain, and contracts;
+- require canonical owner authorization over the full binding, independently
+  encrypted ciphertext, exact machine/key, nonce, and bounded time window;
 - verify current manager/registry/result-signing semantics from supported sources;
 - use replacement registration rather than claiming unsupported key/identity restore.
 

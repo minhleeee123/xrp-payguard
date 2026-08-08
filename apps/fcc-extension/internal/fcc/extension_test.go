@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/flare-foundation/go-flare-common/pkg/tee/instruction"
@@ -80,6 +81,12 @@ func TestEvaluateActionUsesPrivateMachineState(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	ownerKey, err := crypto.GenerateKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	policy.Owner = crypto.PubkeyToAddress(ownerKey.PublicKey)
+	policy.AllowRequesters = []common.Address{policy.Owner}
 	machineID, fingerprint := fccHash("machine"), fccHash("fingerprint")
 	machine, err := ingress.NewMachine(machineID, fingerprint, key, func(received []byte) (protocol.PolicyV1, error) {
 		if !bytes.Equal(received, ciphertext) {
@@ -92,7 +99,17 @@ func TestEvaluateActionUsesPrivateMachineState(t *testing.T) {
 	}
 	commitment, _ := protocol.PolicyCommitment(policy)
 	binding := protocol.PolicyBindingV1{ChainID: policy.ChainID, Registry: policy.Registry, Vault: policy.Vault, Router: policy.Router, Owner: policy.Owner, PolicyID: policy.PolicyID, PolicyVersion: 1, PolicyCommitment: commitment, Schema: protocol.PolicySchemaV1, ExtensionID: fccHash("extension"), CodeVersion: fccHash("code"), MachineIDs: [3]common.Hash{machineID, fccHash("m2"), fccHash("m3")}, KeyFingerprints: [3]common.Hash{fingerprint, fccHash("k2"), fccHash("k3")}, CustodyThreshold: 3, ResultThreshold: 2, PolicyNonce: 1}
-	if _, err := machine.Submit(binding, policy.SubmissionNonce, 1000, 2000, ciphertext); err != nil {
+	authorizationDigest, err := protocol.PolicyIngressAuthorizationDigest(
+		binding, policy.SubmissionNonce, 1000, 2000, crypto.Keccak256Hash(ciphertext), machineID, fingerprint,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	authorization, err := crypto.Sign(accounts.TextHash(authorizationDigest.Bytes()), ownerKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := machine.SubmitAuthorized(binding, policy.SubmissionNonce, 1000, 2000, ciphertext, authorization); err != nil {
 		t.Fatal(err)
 	}
 	extension := New(0, 0, machine)

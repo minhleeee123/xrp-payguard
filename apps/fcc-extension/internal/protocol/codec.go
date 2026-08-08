@@ -20,6 +20,7 @@ var (
 	ActionFTestXRPTransfer   = crypto.Keccak256Hash([]byte("FTESTXRP_TRANSFER_V1"))
 	FCCPolicyReceiptPrefix   = stringBytes32("PAYGUARD_POLICY_RECEIPT_V1")
 	FCCEvaluationPrefix      = stringBytes32("PAYGUARD_EVALUATION_V1")
+	FCCPolicyIngressPrefix   = stringBytes32("PAYGUARD_POLICY_INGRESS_V1")
 )
 
 var maxUint256 = new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(1))
@@ -303,6 +304,14 @@ func EncodePolicyBinding(binding PolicyBindingV1) ([]byte, error) {
 	return pack(bindingTypes(), bindingValues(binding)...)
 }
 
+func PolicyBindingDigest(binding PolicyBindingV1) (common.Hash, error) {
+	encoded, err := EncodePolicyBinding(binding)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	return crypto.Keccak256Hash(encoded), nil
+}
+
 func PolicyReceiptDigest(receipt PolicyReceiptV1) (common.Hash, error) {
 	types := append(bindingTypes(), "bytes32", "bytes32", "bytes32", "uint64", "uint64", "uint64")
 	values := append(bindingValues(receipt.Binding), receipt.MachineID, receipt.KeyFingerprint, receipt.SubmissionNonce, receipt.ReceiptNonce, receipt.IssuedAt, receipt.Expiry)
@@ -344,6 +353,21 @@ func PolicyReceiptAttestationDigest(receipt PolicyReceiptV1) (common.Hash, error
 		return common.Hash{}, err
 	}
 	return crypto.Keccak256Hash(message), nil
+}
+
+func PolicyIngressAuthorizationDigest(binding PolicyBindingV1, submissionNonce common.Hash, issuedAt, expiry uint64, ciphertextHash, machineID, keyFingerprint common.Hash) (common.Hash, error) {
+	if binding.ChainID == nil || binding.ChainID.Sign() <= 0 || binding.Registry == (common.Address{}) || binding.Vault == (common.Address{}) || binding.Router == (common.Address{}) || binding.Owner == (common.Address{}) || binding.PolicyID == (common.Hash{}) || binding.PolicyCommitment == (common.Hash{}) || submissionNonce == (common.Hash{}) || ciphertextHash == (common.Hash{}) || machineID == (common.Hash{}) || keyFingerprint == (common.Hash{}) || issuedAt == 0 || expiry <= issuedAt {
+		return common.Hash{}, errors.New("policy ingress authorization domain is incomplete")
+	}
+	bindingDigest, err := PolicyBindingDigest(binding)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	return digest(
+		[]string{"bytes32", "bytes32", "bytes32", "uint64", "uint64", "bytes32", "bytes32", "bytes32"},
+		FCCPolicyIngressPrefix, bindingDigest, submissionNonce, issuedAt, expiry,
+		ciphertextHash, machineID, keyFingerprint,
+	)
 }
 
 func requestTypes() []string {

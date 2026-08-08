@@ -1,7 +1,8 @@
 # FCC private policy wire and TEE identity
 
-Status: local cross-language/ECIES gate. No private Coston2 ingress, registered
-PayGuard machine, custody receipt, or live evaluation is claimed yet.
+Status: local cross-language ECIES and authenticated-ingress gate. No private
+Coston2 ingress, registered PayGuard machine, custody receipt, or live
+evaluation is claimed yet.
 
 ## Machine identity
 
@@ -47,7 +48,45 @@ identity. Inside the TEE boundary, PayGuard sends that ciphertext only to the
 credential-free loopback `POST /decrypt` port, bounds both request and response,
 strictly decodes the policy, and clears the plaintext byte buffer after parsing.
 
+The TypeScript implementation is covered by a deterministic ciphertext vector
+that the Go/tee-node ECIES primitive decrypts to the exact expected bytes.
+Production encryption does not expose the deterministic test entropy hook.
+
+## Owner-authorized per-machine ingress
+
+Each machine exposes `POST /private/ingress` on its internal ingress port. The
+TLS proxy/origin is a deployment boundary; the container port must not be
+published directly to an untrusted network. The request carries the full public
+binding, submission nonce, quoted `issuedAt`/`expiry`, base64 ciphertext, and a
+65-byte hex owner authorization. Unknown fields, trailing JSON, oversized or
+invalid ciphertext, a future issue time beyond 30 seconds, and a validity window
+longer than 15 minutes fail closed.
+
+The client signs the Ethereum signed-message form of this digest:
+
+```text
+keccak256(abi.encode(
+  bytes32("PAYGUARD_POLICY_INGRESS_V1"),
+  keccak256(encodePolicyBinding(fullBinding)),
+  submissionNonce,
+  issuedAt,
+  expiry,
+  keccak256(ciphertext),
+  machineId,
+  keyFingerprint
+))
+```
+
+The full binding digest includes chain, registry, vault, router, owner, policy
+ID/version/commitment, schema, extension/code version, all three ordered machine
+IDs and key fingerprints, both thresholds, and the policy nonce. Thus a valid
+authorization cannot be moved to another ciphertext, machine, deployment,
+policy version, time window, or custody set. The TEE verifies the canonical
+low-S owner signature before decryption and returns only its public signed
+receipt. Exact retries are idempotent; the removed coordinator HTTP path cannot
+bypass owner authorization.
+
 The current machine store is in-memory and deliberately fails closed after
-identity restart. Authenticated per-machine HTTPS ingress, owner authorization,
-sealed rollback/recovery state, three stable origins, and live replacement
-evidence are separate gates and must be completed before custody is called live.
+identity restart. A stable authenticated HTTPS origin, rate limiting at the
+proxy, sealed rollback/recovery state, three independent registrations, and live
+replacement evidence remain separate gates before custody is called live.

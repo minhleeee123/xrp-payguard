@@ -10,15 +10,32 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/crypto/ecies"
 	teetypes "github.com/flare-foundation/tee-node/pkg/types"
 	teeutils "github.com/flare-foundation/tee-node/pkg/utils"
 	"github.com/minhleeee123/xrp-payguard/apps/fcc-extension/internal/protocol"
 )
+
+func TestTypeScriptECIESVectorDecryptsWithTeeNodePrimitive(t *testing.T) {
+	recipientKey, err := crypto.HexToECDSA(strings.Repeat("44", 32))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ciphertext := common.FromHex("0x044f355bdcb7cc0af728ef3cceb9615d90684bb5b2ca5f859ab0f0b704075871aa385b6b1b8ead809ca67454d9683fcf2ba03456d6fe2c4abe2b07f0fbdbb2f1c122222222222222222222222222222222d168106798015fbeef771d89595c0440971d3d299f0e4c0ed341750161c273a472fb78ba1cd6f13d3503223f704bc95735a705f095cd0662")
+	plaintext, err := ecies.ImportECDSA(recipientKey).Decrypt(ciphertext, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(plaintext) != "PAYGUARD_ECIES_VECTOR_V1" {
+		t.Fatalf("cross-language ECIES plaintext mismatch: %q", plaintext)
+	}
+}
 
 func TestTeeSignPortSignerUsesBase64WireAndVerifiesIdentity(t *testing.T) {
 	key, err := crypto.GenerateKey()
@@ -188,7 +205,7 @@ func TestDiscoverTeeMachineDecryptsCanonicalPolicyAndSignsReceipt(t *testing.T) 
 		KeyFingerprints:  [3]common.Hash{identity.KeyFingerprint, crypto.Keccak256Hash([]byte("key-b")), crypto.Keccak256Hash([]byte("key-c"))},
 		CustodyThreshold: 3, ResultThreshold: 2, PolicyNonce: 1,
 	}
-	receipt, err := machine.Submit(binding, policy.SubmissionNonce, 1_000, 2_000, ciphertext)
+	receipt, err := machine.submit(binding, policy.SubmissionNonce, 1_000, 2_000, ciphertext)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -198,7 +215,7 @@ func TestDiscoverTeeMachineDecryptsCanonicalPolicyAndSignsReceipt(t *testing.T) 
 	}
 	wrongKey, _ := crypto.GenerateKey()
 	wrongCiphertext, _ := teeutils.Encrypt(plaintext, &wrongKey.PublicKey)
-	if _, err := machine.Submit(binding, policy.SubmissionNonce, 1_000, 2_000, wrongCiphertext); err == nil {
+	if _, err := machine.submit(binding, policy.SubmissionNonce, 1_000, 2_000, wrongCiphertext); err == nil {
 		t.Fatal("ciphertext for a different TEE key was accepted")
 	}
 }

@@ -38,7 +38,13 @@ Read-only source workspaces:
 - Hosted deployment state without a new deploy and production smoke against the
   exact PayGuard source commit.
 
-## 4. Reuse acceptance checklist
+## 4. Accepted adaptation record
+
+| PayGuard component | Read-only source provenance | License | Adaptation and independent verification |
+|---|---|---|---|
+| Browser-to-tee-node ECIES | VeilBid workspace HEAD `d28b2d448e8f08f684b55162453dd69b5ba46964`; last source commit `fcc61b731ddb1a2818fa447ad797c328fd8f5cfe`; `packages/flare-bindings/src/private-bid.ts` | MIT, Copyright 2026 Hữu Trung | Adapted only the secp256k1 / AES-128-CTR / SHA-256 / HMAC-SHA-256 interoperability pattern. PayGuard adds its own strict policy wire, 64 KiB bound, key wiping, machine descriptor, owner-authorized ingress domain, and deterministic TypeScript-to-Go decrypt vector. No VeilBid key, ciphertext, environment, identity, deployment, or evidence was copied. |
+
+## 5. Reuse acceptance checklist
 
 Before adapting a component:
 

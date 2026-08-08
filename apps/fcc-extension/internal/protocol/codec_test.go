@@ -19,8 +19,11 @@ type vectorFile struct {
 	Result   vectorResult  `json:"result"`
 	Expected struct {
 		PolicyCommitment            string `json:"policyCommitment"`
+		BindingDigest               string `json:"bindingDigest"`
 		ReceiptDigest               string `json:"receiptDigest"`
 		ReceiptAttestationDigest    string `json:"receiptAttestationDigest"`
+		IngressCiphertextHash       string `json:"ingressCiphertextHash"`
+		IngressAuthorizationDigest  string `json:"ingressAuthorizationDigest"`
 		RequestHash                 string `json:"requestHash"`
 		EvaluationDigest            string `json:"evaluationDigest"`
 		EvaluationAttestationDigest string `json:"evaluationAttestationDigest"`
@@ -205,6 +208,13 @@ func TestGoldenVector(t *testing.T) {
 		t.Fatalf("policy commitment mismatch: %s", commitment.Hex())
 	}
 	binding := bindingFromVector(vector.Binding)
+	bindingDigest, err := PolicyBindingDigest(binding)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bindingDigest != mustHash(vector.Expected.BindingDigest) {
+		t.Fatalf("binding digest mismatch: %s", bindingDigest.Hex())
+	}
 	receipt := PolicyReceiptV1{Binding: binding, MachineID: mustHash(vector.Receipt.MachineID), KeyFingerprint: mustHash(vector.Receipt.KeyFingerprint), SubmissionNonce: mustHash(vector.Receipt.SubmissionNonce), ReceiptNonce: mustUint64(vector.Receipt.ReceiptNonce), IssuedAt: mustUint64(vector.Receipt.IssuedAt), Expiry: mustUint64(vector.Receipt.Expiry)}
 	receiptDigest, err := PolicyReceiptDigest(receipt)
 	if err != nil {
@@ -219,6 +229,16 @@ func TestGoldenVector(t *testing.T) {
 	}
 	if receiptAttestationDigest != mustHash(vector.Expected.ReceiptAttestationDigest) {
 		t.Fatalf("receipt attestation digest mismatch: %s", receiptAttestationDigest.Hex())
+	}
+	ingressDigest, err := PolicyIngressAuthorizationDigest(
+		binding, receipt.SubmissionNonce, receipt.IssuedAt, receipt.Expiry,
+		mustHash(vector.Expected.IngressCiphertextHash), receipt.MachineID, receipt.KeyFingerprint,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ingressDigest != mustHash(vector.Expected.IngressAuthorizationDigest) {
+		t.Fatalf("ingress authorization digest mismatch: %s", ingressDigest.Hex())
 	}
 	request := requestFromVector(vector.Request)
 	requestHash, err := ActionRequestHash(request)

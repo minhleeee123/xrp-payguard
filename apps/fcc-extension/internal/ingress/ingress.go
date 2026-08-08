@@ -8,17 +8,25 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"sync"
 	"time"
 
+	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/minhleeee123/xrp-payguard/apps/fcc-extension/internal/protocol"
 )
 
 const maxCiphertextBytes = 64 * 1024
+
+const (
+	maxIngressLifetimeSeconds = uint64(15 * 60)
+	maxIngressFutureSkew      = uint64(30)
+)
 
 type PolicyResolver func(ciphertext []byte) (protocol.PolicyV1, error)
 
@@ -70,12 +78,22 @@ func (m *Machine) ID() common.Hash          { return m.id }
 func (m *Machine) Fingerprint() common.Hash { return m.fingerprint }
 func (m *Machine) Signer() common.Address   { return m.signer.Address() }
 
-func (m *Machine) Submit(binding protocol.PolicyBindingV1, submissionNonce common.Hash, issuedAt, expiry uint64, ciphertext []byte) (ReceiptEnvelope, error) {
+func (m *Machine) submit(binding protocol.PolicyBindingV1, submissionNonce common.Hash, issuedAt, expiry uint64, ciphertext []byte) (ReceiptEnvelope, error) {
 	if len(ciphertext) == 0 || len(ciphertext) > maxCiphertextBytes {
 		return ReceiptEnvelope{}, errors.New("ciphertext size is invalid")
 	}
-	if binding.Schema != protocol.PolicySchemaV1 || binding.Owner == (common.Address{}) || binding.PolicyCommitment == (common.Hash{}) || submissionNonce == (common.Hash{}) {
+	if binding.ChainID == nil || binding.ChainID.Sign() <= 0 || binding.Registry == (common.Address{}) || binding.Vault == (common.Address{}) || binding.Router == (common.Address{}) || binding.Owner == (common.Address{}) || binding.PolicyID == (common.Hash{}) || binding.PolicyCommitment == (common.Hash{}) || binding.Schema != protocol.PolicySchemaV1 || binding.ExtensionID == (common.Hash{}) || binding.CodeVersion == (common.Hash{}) || binding.CustodyThreshold != 3 || binding.ResultThreshold != 2 || binding.PolicyNonce == 0 || submissionNonce == (common.Hash{}) {
 		return ReceiptEnvelope{}, errors.New("policy binding is incomplete")
+	}
+	for index := range binding.MachineIDs {
+		if binding.MachineIDs[index] == (common.Hash{}) || binding.KeyFingerprints[index] == (common.Hash{}) {
+			return ReceiptEnvelope{}, errors.New("policy binding machine set is incomplete")
+		}
+		for previous := 0; previous < index; previous++ {
+			if binding.MachineIDs[index] == binding.MachineIDs[previous] || binding.KeyFingerprints[index] == binding.KeyFingerprints[previous] {
+				return ReceiptEnvelope{}, errors.New("policy binding machine set is not distinct")
+			}
+		}
 	}
 	if expiry <= issuedAt {
 		return ReceiptEnvelope{}, errors.New("receipt expiry must be after issuedAt")
@@ -129,6 +147,29 @@ func (m *Machine) Submit(binding protocol.PolicyBindingV1, submissionNonce commo
 	return envelope, nil
 }
 
+func (m *Machine) SubmitAuthorized(binding protocol.PolicyBindingV1, submissionNonce common.Hash, issuedAt, expiry uint64, ciphertext, authorization []byte) (ReceiptEnvelope, error) {
+	ciphertextHash := crypto.Keccak256Hash(ciphertext)
+	digest, err := protocol.PolicyIngressAuthorizationDigest(
+		binding, submissionNonce, issuedAt, expiry, ciphertextHash, m.id, m.fingerprint,
+	)
+	if err != nil {
+		return ReceiptEnvelope{}, err
+	}
+	if !verifyOwnerAuthorization(digest, authorization, binding.Owner) {
+		return ReceiptEnvelope{}, errors.New("policy owner authorization is invalid")
+	}
+	return m.submit(binding, submissionNonce, issuedAt, expiry, ciphertext)
+}
+
+func verifyOwnerAuthorization(digest common.Hash, authorization []byte, owner common.Address) bool {
+	normalized, ok := normalizeCanonicalSignature(authorization)
+	if !ok || owner == (common.Address{}) {
+		return false
+	}
+	publicKey, err := crypto.SigToPub(accounts.TextHash(digest.Bytes()), normalized)
+	return err == nil && publicKey != nil && crypto.PubkeyToAddress(*publicKey) == owner
+}
+
 func (m *Machine) Evaluate(request protocol.ActionRequestV1, state protocol.SpendStateV1) (EvaluationEnvelope, error) {
 	m.mu.RLock()
 	sealed, ok := m.policies[request.PolicyCommitment]
@@ -175,13 +216,13 @@ func NewCoordinator(machines [3]*Machine) (*Coordinator, error) {
 	return &Coordinator{machines: machines}, nil
 }
 
-func (c *Coordinator) Submit(binding protocol.PolicyBindingV1, submissionNonce common.Hash, issuedAt, expiry uint64, ciphertext []byte) (CustodyBundle, error) {
+func (c *Coordinator) submit(binding protocol.PolicyBindingV1, submissionNonce common.Hash, issuedAt, expiry uint64, ciphertext []byte) (CustodyBundle, error) {
 	var bundle CustodyBundle
 	for index, machine := range c.machines {
 		if machine.ID() != binding.MachineIDs[index] || machine.Fingerprint() != binding.KeyFingerprints[index] {
 			return CustodyBundle{}, fmt.Errorf("custody machine %d does not match frozen binding", index)
 		}
-		receipt, err := machine.Submit(binding, submissionNonce, issuedAt, expiry, ciphertext)
+		receipt, err := machine.submit(binding, submissionNonce, issuedAt, expiry, ciphertext)
 		if err != nil {
 			return CustodyBundle{}, fmt.Errorf("custody machine %d: %w", index, err)
 		}
@@ -216,33 +257,37 @@ func (c *Coordinator) Evaluate(request protocol.ActionRequestV1, state protocol.
 	return nil, errors.New("evaluation results split; fail closed")
 }
 
-type IngressRequest struct {
+type MachineIngressRequest struct {
 	Binding         protocol.PolicyBindingV1 `json:"binding"`
 	SubmissionNonce common.Hash              `json:"submissionNonce"`
 	IssuedAt        uint64                   `json:"issuedAt"`
 	Expiry          uint64                   `json:"expiry"`
 	Ciphertext      string                   `json:"ciphertext"`
+	Authorization   hexutil.Bytes            `json:"authorization"`
 }
 
-type ingressRequestWire struct {
+type machineIngressRequestWire struct {
 	Binding         protocol.PolicyBindingV1 `json:"binding"`
 	SubmissionNonce common.Hash              `json:"submissionNonce"`
 	IssuedAt        string                   `json:"issuedAt"`
 	Expiry          string                   `json:"expiry"`
 	Ciphertext      string                   `json:"ciphertext"`
+	Authorization   hexutil.Bytes            `json:"authorization"`
 }
 
-func (request IngressRequest) MarshalJSON() ([]byte, error) {
-	return json.Marshal(ingressRequestWire{
+func (request MachineIngressRequest) MarshalJSON() ([]byte, error) {
+	return json.Marshal(machineIngressRequestWire{
 		Binding: request.Binding, SubmissionNonce: request.SubmissionNonce,
 		IssuedAt: strconv.FormatUint(request.IssuedAt, 10), Expiry: strconv.FormatUint(request.Expiry, 10),
-		Ciphertext: request.Ciphertext,
+		Ciphertext: request.Ciphertext, Authorization: request.Authorization,
 	})
 }
 
-func (request *IngressRequest) UnmarshalJSON(data []byte) error {
-	var wire ingressRequestWire
-	if err := json.Unmarshal(data, &wire); err != nil {
+func (request *MachineIngressRequest) UnmarshalJSON(data []byte) error {
+	var wire machineIngressRequestWire
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&wire); err != nil {
 		return err
 	}
 	issuedAt, err := strconv.ParseUint(wire.IssuedAt, 10, 64)
@@ -253,38 +298,56 @@ func (request *IngressRequest) UnmarshalJSON(data []byte) error {
 	if err != nil || strconv.FormatUint(expiry, 10) != wire.Expiry {
 		return errors.New("expiry must be a canonical uint64 decimal string")
 	}
-	*request = IngressRequest{
-		Binding: wire.Binding, SubmissionNonce: wire.SubmissionNonce,
-		IssuedAt: issuedAt, Expiry: expiry, Ciphertext: wire.Ciphertext,
+	*request = MachineIngressRequest{
+		Binding: wire.Binding, SubmissionNonce: wire.SubmissionNonce, IssuedAt: issuedAt,
+		Expiry: expiry, Ciphertext: wire.Ciphertext, Authorization: wire.Authorization,
 	}
 	return nil
 }
 
-type HTTPServer struct {
-	coordinator *Coordinator
-	now         func() uint64
+type MachineHTTPServer struct {
+	machine *Machine
+	now     func() uint64
 }
 
-func NewHTTPServer(coordinator *Coordinator) *HTTPServer {
-	return &HTTPServer{coordinator: coordinator, now: func() uint64 { return uint64(time.Now().Unix()) }}
+func NewMachineHTTPServer(machine *Machine) *MachineHTTPServer {
+	return &MachineHTTPServer{machine: machine, now: func() uint64 { return uint64(time.Now().Unix()) }}
 }
 
-func (s *HTTPServer) Handler() http.Handler {
+func (s *MachineHTTPServer) Handler() http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("POST /private/ingress", s.handleIngress)
+	mux.HandleFunc("GET /private/health", s.handleHealth)
+	mux.HandleFunc("POST /private/ingress", s.handleMachineIngress)
 	return mux
 }
 
-func (s *HTTPServer) handleIngress(w http.ResponseWriter, request *http.Request) {
-	if s.coordinator == nil {
+func (s *MachineHTTPServer) handleHealth(w http.ResponseWriter, _ *http.Request) {
+	if s.machine == nil {
 		http.Error(w, "private ingress unavailable", http.StatusServiceUnavailable)
 		return
 	}
-	request.Body = http.MaxBytesReader(w, request.Body, maxCiphertextBytes+32*1024)
-	var payload IngressRequest
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"status": "ready", "machineId": s.machine.ID(),
+		"keyFingerprint": s.machine.Fingerprint(), "signer": s.machine.Signer(),
+	})
+}
+
+func (s *MachineHTTPServer) handleMachineIngress(w http.ResponseWriter, request *http.Request) {
+	if s.machine == nil {
+		http.Error(w, "private ingress unavailable", http.StatusServiceUnavailable)
+		return
+	}
+	request.Body = http.MaxBytesReader(w, request.Body, maxCiphertextBytes*2+32*1024)
+	var payload MachineIngressRequest
 	decoder := json.NewDecoder(request.Body)
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&payload); err != nil {
+		http.Error(w, "malformed private ingress", http.StatusBadRequest)
+		return
+	}
+	var trailing any
+	if err := decoder.Decode(&trailing); err != io.EOF {
 		http.Error(w, "malformed private ingress", http.StatusBadRequest)
 		return
 	}
@@ -293,25 +356,19 @@ func (s *HTTPServer) handleIngress(w http.ResponseWriter, request *http.Request)
 		http.Error(w, "invalid ciphertext", http.StatusBadRequest)
 		return
 	}
-	if payload.IssuedAt == 0 {
-		payload.IssuedAt = s.now()
+	now := s.now()
+	if payload.IssuedAt == 0 || payload.IssuedAt > now+maxIngressFutureSkew || payload.Expiry <= now || payload.Expiry <= payload.IssuedAt || payload.Expiry-payload.IssuedAt > maxIngressLifetimeSeconds {
+		http.Error(w, "private ingress time window rejected", http.StatusUnprocessableEntity)
+		return
 	}
-	bundle, err := s.coordinator.Submit(payload.Binding, payload.SubmissionNonce, payload.IssuedAt, payload.Expiry, ciphertext)
+	receipt, err := s.machine.SubmitAuthorized(
+		payload.Binding, payload.SubmissionNonce, payload.IssuedAt, payload.Expiry,
+		ciphertext, payload.Authorization,
+	)
 	if err != nil {
 		http.Error(w, "private ingress rejected", http.StatusUnprocessableEntity)
 		return
 	}
-	// The response intentionally contains receipts only; ciphertext never crosses
-	// this public response boundary and is not included in logs or metrics.
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(bundle)
-}
-
-func ContainsBytes(body []byte, forbidden ...[]byte) bool {
-	for _, value := range forbidden {
-		if bytes.Contains(body, value) {
-			return true
-		}
-	}
-	return false
+	_ = json.NewEncoder(w).Encode(receipt)
 }

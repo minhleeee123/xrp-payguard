@@ -10,6 +10,7 @@ import {
   ACTION_REQUEST_V1,
   EVALUATION_RESULT_V1,
   FCC_EVALUATION_PREFIX,
+  FCC_POLICY_INGRESS_PREFIX,
   FCC_POLICY_RECEIPT_PREFIX,
   POLICY_RECEIPT_V1,
   POLICY_SCHEMA_V1,
@@ -56,6 +57,11 @@ const resultParameters: readonly AbiParameter[] = [
 
 const fccAttestationParameters: readonly AbiParameter[] = [
   { type: "bytes32" }, { type: "uint256" }, { type: "bytes32" },
+];
+
+const ingressAuthorizationParameters: readonly AbiParameter[] = [
+  { type: "bytes32" }, { type: "bytes32" }, { type: "bytes32" }, { type: "uint64" },
+  { type: "uint64" }, { type: "bytes32" }, { type: "bytes32" }, { type: "bytes32" },
 ];
 
 function bytes32(value: Hex, label: string): Hex {
@@ -183,6 +189,10 @@ export function encodePolicyBinding(binding: PolicyBindingV1): Hex {
   return encodeAbiParameters(policyBindingParameters, bindingValues(binding));
 }
 
+export function policyBindingDigest(binding: PolicyBindingV1): Hex {
+  return keccak256(encodePolicyBinding(binding));
+}
+
 export function policyReceiptDigest(receipt: PolicyReceiptV1): Hex {
   const binding = bindingValues(receipt.binding);
   return keccak256(encodeAbiParameters(receiptParameters, [...binding, bytes32(receipt.machineId, "machineId"), bytes32(receipt.keyFingerprint, "keyFingerprint"),
@@ -205,6 +215,26 @@ export function fccAttestationDigest(prefix: Hex, chainId: bigint, dataHash: Hex
 
 export function policyReceiptAttestationDigest(receipt: PolicyReceiptV1): Hex {
   return fccAttestationDigest(FCC_POLICY_RECEIPT_PREFIX, receipt.binding.chainId, policyReceiptDigest(receipt));
+}
+
+export interface PolicyIngressAuthorizationV1 {
+  binding: PolicyBindingV1;
+  submissionNonce: Hex;
+  issuedAt: bigint;
+  expiry: bigint;
+  ciphertextHash: Hex;
+  machineId: Hex;
+  keyFingerprint: Hex;
+}
+
+export function policyIngressAuthorizationDigest(input: PolicyIngressAuthorizationV1): Hex {
+  const binding = input.binding;
+  return keccak256(encodeAbiParameters(ingressAuthorizationParameters, [
+    FCC_POLICY_INGRESS_PREFIX, policyBindingDigest(binding), bytes32(input.submissionNonce, "submissionNonce"),
+    boundedUint(input.issuedAt, 64, "issuedAt"), boundedUint(input.expiry, 64, "expiry"),
+    bytes32(input.ciphertextHash, "ciphertextHash"), bytes32(input.machineId, "machineId"),
+    bytes32(input.keyFingerprint, "keyFingerprint"),
+  ]));
 }
 
 function requestValues(request: ActionRequestV1): readonly unknown[] {

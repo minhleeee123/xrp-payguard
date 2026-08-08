@@ -9,10 +9,112 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/minhleeee123/xrp-payguard/apps/fcc-extension/internal/protocol"
 )
+
+func TestMachinePrivateIngressRequiresExactOwnerAuthorization(t *testing.T) {
+	ownerKey, err := crypto.GenerateKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	policy := testEncryptedPolicy()
+	policy.Owner = crypto.PubkeyToAddress(ownerKey.PublicKey)
+	commitment, err := protocol.PolicyCommitment(policy)
+	if err != nil {
+		t.Fatal(err)
+	}
+	machineID := ingressHash("authorized-machine")
+	fingerprint := ingressHash("authorized-fingerprint")
+	machineKey, _ := crypto.GenerateKey()
+	machine, err := NewMachine(machineID, fingerprint, machineKey, func([]byte) (protocol.PolicyV1, error) { return policy, nil })
+	if err != nil {
+		t.Fatal(err)
+	}
+	binding := protocol.PolicyBindingV1{
+		ChainID: policy.ChainID, Registry: policy.Registry, Vault: policy.Vault, Router: policy.Router,
+		Owner: policy.Owner, PolicyID: policy.PolicyID, PolicyVersion: policy.PolicyVersion,
+		PolicyCommitment: commitment, Schema: protocol.PolicySchemaV1,
+		ExtensionID: ingressHash("extension"), CodeVersion: ingressHash("code"),
+		MachineIDs:       [3]common.Hash{machineID, ingressHash("machine-b"), ingressHash("machine-c")},
+		KeyFingerprints:  [3]common.Hash{fingerprint, ingressHash("fingerprint-b"), ingressHash("fingerprint-c")},
+		CustodyThreshold: 3, ResultThreshold: 2, PolicyNonce: 1,
+	}
+	ciphertext := []byte("independently-encrypted-policy")
+	issuedAt, expiry := uint64(1_000), uint64(1_100)
+	digest, err := protocol.PolicyIngressAuthorizationDigest(
+		binding, policy.SubmissionNonce, issuedAt, expiry, crypto.Keccak256Hash(ciphertext), machineID, fingerprint,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	authorization, err := crypto.Sign(accounts.TextHash(digest.Bytes()), ownerKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := MachineIngressRequest{
+		Binding: binding, SubmissionNonce: policy.SubmissionNonce, IssuedAt: issuedAt, Expiry: expiry,
+		Ciphertext: base64.StdEncoding.EncodeToString(ciphertext), Authorization: authorization,
+	}
+	handler := NewMachineHTTPServer(machine)
+	handler.now = func() uint64 { return 1_050 }
+
+	send := func(value MachineIngressRequest) *httptest.ResponseRecorder {
+		body, marshalErr := json.Marshal(value)
+		if marshalErr != nil {
+			t.Fatal(marshalErr)
+		}
+		recorder := httptest.NewRecorder()
+		handler.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "/private/ingress", bytes.NewReader(body)))
+		return recorder
+	}
+	accepted := send(request)
+	if accepted.Code != http.StatusOK {
+		t.Fatalf("authorized private ingress failed: %d %s", accepted.Code, accepted.Body.String())
+	}
+	if bytes.Contains(accepted.Body.Bytes(), ciphertext) || bytes.Contains(accepted.Body.Bytes(), []byte(hexutil.Encode(authorization))) {
+		t.Fatal("private ingress response leaked ciphertext or owner authorization")
+	}
+	replayed := send(request)
+	if replayed.Code != http.StatusOK || replayed.Body.String() != accepted.Body.String() {
+		t.Fatal("exact private ingress retry was not idempotent")
+	}
+
+	wrongOwner, _ := crypto.GenerateKey()
+	wrongAuthorization, _ := crypto.Sign(accounts.TextHash(digest.Bytes()), wrongOwner)
+	if response := send(MachineIngressRequest{Binding: request.Binding, SubmissionNonce: request.SubmissionNonce, IssuedAt: request.IssuedAt, Expiry: request.Expiry, Ciphertext: request.Ciphertext, Authorization: wrongAuthorization}); response.Code != http.StatusUnprocessableEntity {
+		t.Fatal("wrong owner authorization was accepted")
+	}
+	rawAuthorization, _ := crypto.Sign(digest.Bytes(), ownerKey)
+	if response := send(MachineIngressRequest{Binding: request.Binding, SubmissionNonce: request.SubmissionNonce, IssuedAt: request.IssuedAt, Expiry: request.Expiry, Ciphertext: request.Ciphertext, Authorization: rawAuthorization}); response.Code != http.StatusUnprocessableEntity {
+		t.Fatal("raw-digest owner authorization was accepted")
+	}
+	otherMachineDigest, _ := protocol.PolicyIngressAuthorizationDigest(
+		binding, policy.SubmissionNonce, issuedAt, expiry, crypto.Keccak256Hash(ciphertext), ingressHash("other-machine"), fingerprint,
+	)
+	otherMachineAuthorization, _ := crypto.Sign(accounts.TextHash(otherMachineDigest.Bytes()), ownerKey)
+	if response := send(MachineIngressRequest{Binding: request.Binding, SubmissionNonce: request.SubmissionNonce, IssuedAt: request.IssuedAt, Expiry: request.Expiry, Ciphertext: request.Ciphertext, Authorization: otherMachineAuthorization}); response.Code != http.StatusUnprocessableEntity {
+		t.Fatal("authorization for a different machine was accepted")
+	}
+	substitutedBinding := request
+	substitutedBinding.Binding.CodeVersion = ingressHash("substituted-code")
+	if response := send(substitutedBinding); response.Code != http.StatusUnprocessableEntity {
+		t.Fatal("authorization was moved to a different full policy binding")
+	}
+	expired := request
+	expired.Expiry = 1_049
+	if response := send(expired); response.Code != http.StatusUnprocessableEntity {
+		t.Fatal("expired owner authorization was accepted")
+	}
+	expiresNow := request
+	expiresNow.Expiry = 1_050
+	if response := send(expiresNow); response.Code != http.StatusUnprocessableEntity {
+		t.Fatal("authorization expiring at the current second was accepted")
+	}
+}
 
 func ingressHash(value string) common.Hash { return common.BytesToHash([]byte(value)) }
 
@@ -93,7 +195,7 @@ func TestCiphertextOnlyCustodyAndSignedReceipts(t *testing.T) {
 	policy := testPolicy()
 	coordinator, machines, binding := newTestCoordinator(t, policy)
 	ciphertext := []byte("opaque-ciphertext")
-	bundle, err := coordinator.Submit(binding, policy.SubmissionNonce, 1000, 2000, ciphertext)
+	bundle, err := coordinator.submit(binding, policy.SubmissionNonce, 1000, 2000, ciphertext)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -110,32 +212,16 @@ func TestCiphertextOnlyCustodyAndSignedReceipts(t *testing.T) {
 	if bundle.Receipts[0].Receipt.MachineID == bundle.Receipts[1].Receipt.MachineID {
 		t.Fatal("custody identities are not distinct")
 	}
-	if _, err := coordinator.Submit(binding, policy.SubmissionNonce, 1000, 2000, []byte("changed-ciphertext")); err == nil {
+	if _, err := coordinator.submit(binding, policy.SubmissionNonce, 1000, 2000, []byte("changed-ciphertext")); err == nil {
 		t.Fatal("changed ciphertext replay was accepted")
 	}
 
-	server := NewHTTPServer(coordinator)
-	payload, err := json.Marshal(IngressRequest{Binding: binding, SubmissionNonce: policy.SubmissionNonce, IssuedAt: 1000, Expiry: 2000, Ciphertext: base64.StdEncoding.EncodeToString(ciphertext)})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !bytes.Contains(payload, []byte(`"issuedAt":"1000"`)) || !bytes.Contains(payload, []byte(`"policyNonce":"1"`)) {
-		t.Fatalf("private ingress wire is not decimal-string/lower-camel: %s", payload)
-	}
-	recorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "/private/ingress", bytes.NewReader(payload)))
-	if recorder.Code != http.StatusOK {
-		t.Fatalf("HTTP ingress status: %d", recorder.Code)
-	}
-	if ContainsBytes(recorder.Body.Bytes(), ciphertext, []byte(policy.PrivateSalt.Hex())) {
-		t.Fatal("private material crossed the receipt response")
-	}
 }
 
 func TestThresholdEvaluationFailsClosed(t *testing.T) {
 	policy := testPolicy()
 	coordinator, machines, binding := newTestCoordinator(t, policy)
-	if _, err := coordinator.Submit(binding, policy.SubmissionNonce, 1000, 2000, []byte("opaque-ciphertext")); err != nil {
+	if _, err := coordinator.submit(binding, policy.SubmissionNonce, 1000, 2000, []byte("opaque-ciphertext")); err != nil {
 		t.Fatal(err)
 	}
 	request := testRequest(policy)
@@ -178,10 +264,10 @@ func TestCoordinatorBindsFrozenOrderAndSubmissionNonce(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := shuffled.Submit(binding, policy.SubmissionNonce, 1000, 2000, []byte("opaque-ciphertext")); err == nil {
+	if _, err := shuffled.submit(binding, policy.SubmissionNonce, 1000, 2000, []byte("opaque-ciphertext")); err == nil {
 		t.Fatal("shuffled machines bypassed frozen receipt order")
 	}
-	if _, err := coordinator.Submit(binding, ingressHash("different-submission"), 1000, 2000, []byte("opaque-ciphertext")); err == nil {
+	if _, err := coordinator.submit(binding, ingressHash("different-submission"), 1000, 2000, []byte("opaque-ciphertext")); err == nil {
 		t.Fatal("policy was accepted under a different submission nonce")
 	}
 }
@@ -189,7 +275,7 @@ func TestCoordinatorBindsFrozenOrderAndSubmissionNonce(t *testing.T) {
 func TestReplacementCustodyIsLimitedToNewPolicyVersion(t *testing.T) {
 	oldPolicy := testPolicy()
 	oldCoordinator, oldMachines, oldBinding := newTestCoordinator(t, oldPolicy)
-	if _, err := oldCoordinator.Submit(oldBinding, oldPolicy.SubmissionNonce, 1000, 2000, []byte("opaque-ciphertext")); err != nil {
+	if _, err := oldCoordinator.submit(oldBinding, oldPolicy.SubmissionNonce, 1000, 2000, []byte("opaque-ciphertext")); err != nil {
 		t.Fatal(err)
 	}
 
@@ -199,7 +285,7 @@ func TestReplacementCustodyIsLimitedToNewPolicyVersion(t *testing.T) {
 	replacementPolicy.SubmissionNonce = ingressHash("replacement-submit")
 	replacementCoordinator, _, replacementBinding := newTestCoordinatorSet(t, replacementPolicy, "replacement-machine", "replacement-fingerprint")
 	replacementBinding.PolicyNonce = 2
-	if _, err := replacementCoordinator.Submit(replacementBinding, replacementPolicy.SubmissionNonce, 1000, 2000, []byte("opaque-ciphertext")); err != nil {
+	if _, err := replacementCoordinator.submit(replacementBinding, replacementPolicy.SubmissionNonce, 1000, 2000, []byte("opaque-ciphertext")); err != nil {
 		t.Fatal(err)
 	}
 

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"strconv"
@@ -17,14 +19,18 @@ func main() {
 	configPort := intEnv("CONFIG_PORT", 5501)
 	signPort := intEnv("SIGN_PORT", 7701)
 	extensionPort := intEnv("EXTENSION_PORT", 7702)
+	ingressPort := intEnv("PRIVATE_INGRESS_PORT", 7703)
 	go teeServer.StartServerExtension(configPort, signPort, extensionPort)
 	machine, err := waitForMachine(signPort, 15*time.Second)
 	if err != nil {
 		panic(err)
 	}
 	errCh := server.StartExtension(extensionPort, signPort, machine)
+	ingressServer, ingressErrCh := server.StartMachineIngress(ingressPort, machine)
 	select {
 	case err := <-errCh:
+		panic(err)
+	case err := <-ingressErrCh:
 		panic(err)
 	default:
 	}
@@ -32,8 +38,15 @@ func main() {
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
 	select {
 	case <-signals:
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		_ = ingressServer.Shutdown(ctx)
+		cancel()
 	case err := <-errCh:
 		if err != nil && err.Error() != "http: Server closed" {
+			panic(err)
+		}
+	case err := <-ingressErrCh:
+		if err != nil && err != http.ErrServerClosed {
 			panic(err)
 		}
 	}
