@@ -78,3 +78,48 @@ A successful broadcast writes public-safe evidence to
 registered and configured foundation sender. It keeps explicit blockers for
 code-version allowance, a production machine, and a live signed `PING_V1`
 result. It cannot pass Gate A by itself.
+
+## Production machine admission preflight
+
+Before any code-version allowance or machine-registration transaction, run the
+read-only production preflight against the exact public proxy origin and the
+expected reproducible image ID:
+
+```bash
+pnpm fcc:machine:preflight -- \
+  -url https://machine.example \
+  -image-id sha256:<64-lowercase-hex>
+```
+
+The defaults bind Coston2 chain `114`, PayGuard extension `66037`, and the
+verified PayGuard deployer/initial owner. Override flags exist for explicit
+testing, but every supplied value remains part of the admission checks. The
+tool accepts only a credential-free HTTPS origin, disables environment proxy
+routing and redirects, rejects literal or DNS-resolved internal addresses,
+bounds and strictly decodes `/info`, and never emits the raw attestation token
+or either signature.
+
+Admission verifies the signed machine-data domain and the proxy TEE-info
+domain, freshness, public-key agreement, nonzero governance, exact owner,
+extension, chain, and expected image ID. `TEST_PLATFORM`, the scaffold test
+code hash, `magic_pass`, debug-enabled workloads, missing secure boot, and
+unsupported hardware all fail closed. The Google PKI token must use RS256,
+the expected issuer and `https://sts.google.com` audience, the exact TEE-info
+hash nonce, a valid certificate chain to the embedded root, and available CRLs
+whenever a certificate declares a distribution point. This first preflight
+does not fetch CRLs from token-controlled URLs: such a token is rejected until
+a separately trusted CRL input path is implemented and reviewed.
+
+The embedded Google Confidential Space root was taken from the pinned official
+`tee-node v0.0.24` asset and independently matched on 2026-08-09 against
+Google's discovery endpoint and root URL. Its PEM SHA-256 is
+`1e9f82db6b86371f80913f246049516a9dc333e28fb1bf3e343d3459347e0d11`
+at those sources (the embedded text has one conventional trailing newline).
+The verifier pins the certificate DER SHA-256
+`148b293821bb0c6a317f413c8ba475814091cb22d49b9e3c94198db8e8f86c39`;
+Google's documented SHA-1 fingerprint is
+`B9:51:20:74:2C:24:E3:AA:34:04:2E:1C:3B:A3:AA:D2:8B:21:23:21`.
+
+A successful preflight is only an off-chain admission result. The official
+on-chain version allowance, FDC-backed machine promotion, registry reads, and
+live signed `PING_V1` are still mandatory and remain unverified.
