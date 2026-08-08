@@ -4,6 +4,8 @@
 node_modules/
 dist/
 coverage/
+packages/contracts/cache/
+packages/contracts/out/
 .cache/
 .local/
 evidence/local/

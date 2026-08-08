@@ -1,8 +1,9 @@
 # XRP PayGuard — full product execution plan
 
-> Status: workspace and planning bootstrap. The deployer is funded on Coston2,
-> but no PayGuard code, contract, extension, deployment, or release evidence
-> exists yet. Every capability below remains planned until its phase gate passes.
+> Status: local protocol, FCC custody path, and Foundry contract state machine
+> are implemented with cross-language/unit tests. No live Coston2 deployment,
+> registered FCC result, or release evidence is verified; every live capability
+> remains planned until its phase gate passes.
 
 ## 1. Product objective
 

@@ -1,6 +1,8 @@
-# Planned protocol and contract specification
+# Protocol and contract specification
 
-> This is a design specification, not a deployed ABI.
+> The local V1 ABI/state machine now exists under `packages/contracts/src` and
+> is covered by Foundry tests. This document remains the canonical design and
+> does not assert a Coston2 deployment or production audit.
 
 ## 1. Contracts
 
@@ -44,6 +46,16 @@ V1 adapters are intentionally narrow:
 - selected static EVM targets only after independent review.
 
 No arbitrary call adapter exists in V1.
+
+## 2a. Local V1 implementation boundary
+
+`PayGuardPolicyRegistry`, `PayGuardVault`, and `PayGuardActionRouter` implement
+the receipt/binding, conservation, request, threshold, and replay rules in a
+local Foundry package. V1 uses raw `ecrecover` over the shared digest because a
+live FCC signing-prefix convention has not yet been verified; the release gate
+must verify that convention before deployment. The local token adapter accepts
+only explicitly enabled ERC-20-like assets and does not claim that any Flare
+reference address is a PayGuard release fact.
 
 ## 2. Schemas
 

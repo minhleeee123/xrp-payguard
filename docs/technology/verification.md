@@ -24,9 +24,9 @@ Forbidden evidence:
 | A — FCC result | registered extension result verified on Coston2 | NOT STARTED |
 | B — Private policy ingress | sealed policy, three receipts, replay/domain negatives | NOT STARTED |
 | C — Common custody | all-three matching policy availability and commitment | NOT STARTED |
-| D — Deterministic evaluation | cross-language vectors and private policy result | NOT STARTED |
-| E — Threshold execution | two distinct exact results authorize one atomic action | NOT STARTED |
-| F — Vault conservation | deposits/reservations/spend/refund and adversarial invariants | NOT STARTED |
+| D — Deterministic evaluation | cross-language vectors and private policy result | LOCAL PASS / LIVE NOT VERIFIED |
+| E — Threshold execution | two distinct exact results authorize one atomic action | LOCAL PASS / LIVE NOT VERIFIED |
+| F — Vault conservation | deposits/reservations/spend/refund and adversarial invariants | LOCAL PASS / LIVE NOT VERIFIED |
 | G — XRP-native funding | XRPL payment, FDC proof, Smart Account deposit | NOT STARTED |
 | H — Product release | full roles, recovery, accessibility, live deployment | NOT STARTED |
 | I — User validation | interviews, usability, and design-partner pilot | NOT STARTED |
