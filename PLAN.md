@@ -96,8 +96,11 @@ official endpoint resolution and three stable FCC origins remain open.
   periphery/FCC revisions.
 - [x] Add a local fail-closed resolver for official Coston2 protocol addresses
   through the Flare Contract Registry; live reachability remains open.
-- [ ] Resolve Coston2 FCC manager, registries, FDC, FTSO, FAssets, Smart Account,
-  verifier, DA, RPC, faucet, and explorer through supported sources.
+- [x] Resolve the Coston2 FCC manager and Contract Registry-listed FDC, FTSO,
+  FAssets, Smart Account, verifier, and DA addresses through supported sources;
+  record block/runtime observations without promoting them to release facts.
+- [ ] Verify a supported faucet, explorer/indexer path, and their current
+  reachability without committing credentials.
 - [x] Build the official FCC scaffold unchanged and run its local smoke first.
 - [x] Build a digest-pinned reproducible PayGuard FCC image and pass a
   credential-free local three-machine identity/restart/hardening smoke.
