@@ -39,5 +39,5 @@ console.log(JSON.stringify({
   evidenceFiles: files.length,
   suites,
   testnetOnly: true,
-  note: "bootstrap evidence is not a PayGuard release manifest",
+  note: "public testnet evidence files do not individually constitute a verified PayGuard release",
 }));

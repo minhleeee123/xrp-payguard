@@ -20,15 +20,15 @@ Forbidden evidence:
 
 | Gate | Required proof | Status |
 |---|---|---|
-| 0 — Foundations | pinned supported tools, registries, services, three machine capacity | PARTIAL — COSTON2 FUNDING VERIFIED / THREE MACHINE CAPACITY OPEN |
+| 0 — Foundations | pinned supported tools, registries, services, three machine capacity | PARTIAL — FUNDING + CONTRACT DEPLOYMENT VERIFIED / THREE MACHINE CAPACITY OPEN |
 | A — FCC result | registered extension result verified on Coston2 | NOT STARTED |
 | B — Private policy ingress | sealed policy, three receipts, replay/domain negatives | NOT STARTED |
 | C — Common custody | all-three matching policy availability and commitment | NOT STARTED |
 | D — Deterministic evaluation | cross-language vectors and private policy result | LOCAL PASS / LIVE NOT VERIFIED |
-| E — Threshold execution | two distinct exact results authorize one atomic action | LOCAL PASS / LIVE NOT VERIFIED |
-| F — Vault conservation | deposits/reservations/spend/refund and adversarial invariants | LOCAL PASS / LIVE NOT VERIFIED |
+| E — Threshold execution | two distinct exact results authorize one atomic action | LOCAL PASS / CONTRACTS DEPLOYED / FCC EXECUTION OPEN |
+| F — Vault conservation | deposits/reservations/spend/refund and adversarial invariants | LOCAL PASS / VAULT DEPLOYED / LIVE ASSET LIFECYCLE OPEN |
 | G — XRP-native funding | XRPL payment, FDC proof, Smart Account deposit | LOCAL GATES / LIVE NOT VERIFIED |
-| H — Product release | full roles, recovery, accessibility, live deployment | LOCAL SHELL / LIVE NOT VERIFIED |
+| H — Product release | full roles, recovery, accessibility, live deployment | LOCAL SHELL + CONTRACT DEPLOYMENT / HOSTED PRIVATE LIFECYCLE OPEN |
 | I — User validation | interviews, usability, and design-partner pilot | NOT STARTED |
 
 ## 3. Test matrix

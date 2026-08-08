@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "suite": "payguard-coston2-contract-deployment",
+  "recordedAt": "2026-08-08T19:08:00.267Z",
+  "network": {
+    "name": "flare-coston2",
+    "chainId": 114,
+    "observedBlock": "33792965"
+  },
+  "publicIdentifiers": {
+    "sourceCommit": "17ff0bc1eb135195a94d0d261bc491f006730720",
+    "deployer": "0xDC1cc527423C882156a632C250528D1922d18Fc7",
+    "flareContractRegistry": "0xaD67FE66660Fb8dFE9d6b1b4240d8650e30F6019",
+    "assetManagerFxrp": "0xc1Ca88b937d0b528842F95d5731ffB586f4fbDFA",
+    "fTestXrp": "0x0b6A3645c240605887a5532109323A3E12273dc7",
+    "contracts": {
+      "registry": {
+        "name": "PayGuardPolicyRegistry",
+        "address": "0x8DFb2D7D7a2608Ee7Cd78983fbe28cCE00e1D4A4",
+        "transactionHash": "0x22ea860073755ae58c75fa02c908aa9cc57b9265e32c95e9047b3a6e5e6119e1",
+        "blockNumber": "33792913",
+        "runtimeCodeHash": "0x9039caae6a89275071518b45a6261d8441699ac880c505a06ca44f30a7c89824"
+      },
+      "vault": {
+        "name": "PayGuardVault",
+        "address": "0xFFe7522075412B2eBA5b8B91c9aA4E1c2c6f84dB",
+        "transactionHash": "0xf5676e912eb1e6e02b7f1eb4e2373035bc5466471e5c0c5a16e0ece1a87aac19",
+        "blockNumber": "33792918",
+        "runtimeCodeHash": "0x5971e2ef67c18d4c9365aec05e063c65a484617f70a5e7ffde792e0dcd7cc006"
+      },
+      "router": {
+        "name": "PayGuardActionRouter",
+        "address": "0x28A969018975Fb40aEd0BfA98f6d1c3023B6a7Da",
+        "transactionHash": "0x04567b98cd257de31e1b2ac0733d31fb5f60a96199e20ae0e58a4677d6c5e6c4",
+        "blockNumber": "33792922",
+        "runtimeCodeHash": "0x52045b152d1f6e9c2818712faea445969f6a3a3d87470f432abd2c23e882e0bb"
+      }
+    },
+    "wiring": {
+      "vaultRouter": {
+        "nonce": "3",
+        "functionName": "setRouter",
+        "transactionHash": "0xc819ef2f98020a4663bbed08f2b92eb0599121a8044204be51803ec10105946d",
+        "blockNumber": "33792933",
+        "receiptStatus": "success",
+        "verified": true
+      },
+      "supportedFTestXrp": {
+        "nonce": "4",
+        "functionName": "setSupportedAsset",
+        "transactionHash": "0xf1bdd261d8c3fd5553cb3ec0e677129bf7980351f4aca87cce4b02d92a925c91",
+        "blockNumber": "33792937",
+        "receiptStatus": "success",
+        "verified": true
+      }
+    }
+  },
+  "assertions": {
+    "chainIdVerified": true,
+    "officialAssetResolutionVerified": true,
+    "sourceCommitCleanAtBroadcast": true,
+    "deploymentReceiptsSuccessful": true,
+    "runtimeCodeVerified": true,
+    "constructorBindingsVerified": true,
+    "vaultRouterVerified": true,
+    "supportedAssetVerified": true,
+    "testnetOnly": true,
+    "noPrivateKeyRecorded": true,
+    "noFccReleaseClaimed": true
+  },
+  "notes": [
+    "This proves the three PayGuard contracts and their vault wiring on Coston2.",
+    "It does not prove FCC registration, custody, evaluation, FDC, Smart Account, FAssets mint, XRP movement, or a complete PayGuard release."
+  ]
+}

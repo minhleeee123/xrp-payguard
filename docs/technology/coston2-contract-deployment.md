@@ -1,8 +1,25 @@
 # Coston2 contract deployment runbook
 
-Status: tooling implemented and locally tested. No PayGuard contract deployment
-is claimed until the public Coston2 evidence file exists and passes repository
-checks.
+Status: verified public contract deployment, not a verified PayGuard release.
+The public evidence file passes repository checks; registered FCC and private
+policy lifecycle gates remain open.
+
+## Verified deployment
+
+Source commit `17ff0bc1eb135195a94d0d261bc491f006730720` produced:
+
+| Contract | Coston2 address | Deployment block |
+|---|---|---:|
+| `PayGuardPolicyRegistry` | `0x8DFb2D7D7a2608Ee7Cd78983fbe28cCE00e1D4A4` | `33792913` |
+| `PayGuardVault` | `0xFFe7522075412B2eBA5b8B91c9aA4E1c2c6f84dB` | `33792918` |
+| `PayGuardActionRouter` | `0x28A969018975Fb40aEd0BfA98f6d1c3023B6a7Da` | `33792922` |
+
+The vault was wired once to that router at block `33792933`, and FTestXRP
+support was enabled at block `33792937`. A fresh verification at observed block
+`33792965` re-resolved the official asset path, reread all five successful
+receipts, compared runtime to the committed Foundry artifacts, and checked all
+constructor/admin/wiring getters. Exact transaction and runtime hashes are in
+[`evidence/coston2/contracts-deployment.json`](../../evidence/coston2/contracts-deployment.json).
 
 ## Safety model
 

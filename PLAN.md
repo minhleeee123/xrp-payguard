@@ -1,9 +1,9 @@
 # XRP PayGuard — full product execution plan
 
 > Status: local protocol, FCC custody path, and Foundry contract state machine
-> are implemented with cross-language/unit tests. No live Coston2 deployment,
-> registered FCC result, or release evidence is verified; every live capability
-> remains planned until its phase gate passes.
+> are implemented with cross-language/unit tests. The three contracts and vault
+> wiring are deployed and runtime/constructor-verified on Coston2; no registered
+> FCC result, private live lifecycle, or complete release is verified.
 
 ## 1. Product objective
 
@@ -166,8 +166,9 @@ branch exists.
 
 ### Phase 4 — contracts, vault, and atomic execution
 
-The checked items are the local Foundry state-machine gate. Deployment,
-external review, and live protocol wiring remain open.
+The checked items cover the local Foundry state-machine and public Coston2
+contract-deployment gates. External review and live FCC protocol wiring remain
+open.
 
 - [x] Implement non-upgradeable `PayGuardPolicyRegistry`, `PayGuardVault`, and
   `PayGuardActionRouter` contracts with minimal immutable authority.
@@ -189,9 +190,13 @@ external review, and live protocol wiring remain open.
 - [x] Add unit, reentrancy, fee/false-return token failure, 256-run fuzz, and
   128-run/64-depth stateful conservation/reservation invariant tests. External
   review remains open.
+- [x] Deploy registry, vault, and router from committed source on Coston2;
+  independently verify successful receipts, artifact runtime outside immutable
+  ranges, constructor getters, one-time router wiring, and FTestXRP support.
 
-Exit: a local multi-policy state machine cannot overspend, replay, partially
-execute, or bypass FCC authorization.
+Exit: the local multi-policy state machine cannot overspend, replay, partially
+execute, or bypass FCC authorization, and its exact public contract layer is
+verified on Coston2. External review and registered FCC execution remain open.
 
 ### Phase 5 — XRP-native funding and external triggers
 

@@ -14,10 +14,12 @@ ordinary asset, amount, recipient, timing, and transaction graph remain public.
 ## Current status
 
 Foundation pins and source checks, the deterministic TypeScript/Go protocol,
-the local ciphertext-only FCC path, and a local Foundry registry/vault/router
-state machine are implemented and tested. No Coston2 deployment, registered
-FCC machine result, mainnet integration, user traction, or production-security
-claim exists yet; Coston2 remains the development target.
+the local ciphertext-only FCC path, and the Foundry registry/vault/router state
+machine are implemented and tested. The three non-upgradeable contracts and
+their FTestXRP vault wiring are deployed and independently re-verified on
+Coston2 from source commit `17ff0bc1eb135195a94d0d261bc491f006730720`.
+No registered PayGuard FCC result, private live lifecycle, mainnet integration,
+user traction, production audit, or complete release claim exists yet.
 
 ## Start here
 

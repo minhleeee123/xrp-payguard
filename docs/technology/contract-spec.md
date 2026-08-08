@@ -1,8 +1,9 @@
 # Protocol and contract specification
 
 > The local V1 ABI/state machine now exists under `packages/contracts/src` and
-> is covered by Foundry tests. This document remains the canonical design and
-> does not assert a Coston2 deployment or production audit.
+> is covered by Foundry tests. Its three contracts and vault wiring are verified
+> on Coston2 in `evidence/coston2/contracts-deployment.json`. This document does
+> not assert registered FCC execution, a complete release, or a production audit.
 
 ## 1. Contracts
 
