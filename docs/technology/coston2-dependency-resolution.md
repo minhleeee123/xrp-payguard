@@ -23,6 +23,14 @@ following non-zero addresses and non-empty runtime bytecode:
 
 The same public observation is recorded in
 [`evidence/coston2/coston2-dependency-resolution.json`](../../evidence/coston2/coston2-dependency-resolution.json).
+Refresh it with the read-only pinned command (add `--write` only when a new
+public observation is intended):
+
+```sh
+pnpm coston2:dependencies:observe
+pnpm coston2:dependencies:record
+```
+
 The source-of-truth rule is the registry lookup, not this table. A future
 release check must resolve the registry again, record the block and runtime
 code hash, verify ABI/constructor or proxy wiring, and bind the result to the
