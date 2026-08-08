@@ -154,8 +154,9 @@ fields; live machine-domain verification remains open.
   both Go and TypeScript before deriving cap totals.
 - [x] Freeze the Go/TypeScript HTTP wire to lower-camel fields, named enums, and
   quoted decimal bigint/uint64 values with digest-preserving round-trip tests.
-- [ ] Define deterministic tie/conflict rules: explicit deny outranks allow;
-  malformed, unknown, stale, or unavailable input denies.
+- [x] Define deterministic tie/conflict rules: explicit deny outranks allow;
+  malformed/unknown masks, stale checkpoints, and unavailable dependencies fail
+  closed; shared Go/TypeScript/Solidity vectors cover the priority order.
 - [x] Add range, rounding, overflow, time-boundary, timezone-independent,
   permutation, and concurrency suites.
 
@@ -227,17 +228,23 @@ evidence, and live role journeys remain open.
 
 - [x] Build the local laptop-first application shell; a standalone hosted
   landing page remains open.
-- [ ] Build Policy Studio with templates, exact public/private preview, local
-  validation, receipt progress, and activation evidence.
-- [ ] Build Accounts/Vaults with public balances, deposits, withdrawals, caps,
-  and emergency state.
-- [ ] Build Schedule/Requests with occurrence readiness, executor actions,
-  decisions, expiry, and recovery.
-- [ ] Build Payee view with expected public amount/timing and receipt status,
-  but no policy reveal.
-- [ ] Build wallet-free Auditor view with policy commitment, machine/code
-  binding, FTSO/FDC facts, decision digest, and execution conservation.
-- [ ] Build Team/Treasury workspace and role-aware permissions.
+- [x] Build the local Policy Studio with templates, exact public/private
+  preview, local validation, schema-checked custody receipt progress, and an
+  activation block; live ingress and activation evidence remain open.
+- [x] Build the local Accounts/Vaults surface with public balances,
+  conservation, emergency state, and recovery copy; wallet deposits and
+  withdrawals remain open until a verified provider exists.
+- [x] Build the local Schedule/Requests surface with occurrence readiness,
+  public threshold decisions, expiry, and recovery; live executor actions
+  remain open.
+- [x] Build the local Payee view with expected public amount/timing and
+  schema-checked receipt status, without policy reveal; live settlement remains
+  open.
+- [x] Build the local wallet-free Auditor view with policy commitment,
+  machine/code binding, FTSO/FDC facts, decision digest, and conservation
+  verification; live finalized evidence remains open.
+- [x] Build the local Team/Treasury workspace and role-aware public controls;
+  no client role can authorize, and live governance remains open.
 - [x] Build a strict public notification feed and export with finalized block/time
   facts, domain-separated hashes, and an unavailable UI/report path; hosted feed
   delivery remains open until a verified Coston2 provider exists.
