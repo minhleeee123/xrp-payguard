@@ -200,8 +200,13 @@ execute, or bypass FCC authorization.
   proof commitment, and requires an exact public direct-mint receipt.
 - [ ] Prove public-safe delayed-mint checkpoint/resume and quote, address, nonce,
   proof, operation, or receipt drift rejection against live supported services.
-- [ ] Add `EVMTransaction` and XRPL Payment trigger adapters. Add Web2Json only
-  after source allowlisting and semantic trust are explicit.
+- [x] Add local fail-closed `EVMTransaction` and `XRPPayment` trigger adapters
+  over the official request/response fields, with freshness, replay, bounded
+  bytes, async-drift, exact-event/payment, and injected-verifier tests.
+- [ ] Consume a verified live FDC trigger commitment while atomically advancing
+  one canonical PayGuard request on Coston2.
+- [ ] Add Web2Json only after source allowlisting, transform/schema pinning, and
+  semantic trust are explicit.
 - [ ] Implement official FAssets redemption as an exit, without claiming an
   instant underlying XRP payout.
 

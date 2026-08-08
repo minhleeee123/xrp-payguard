@@ -13,10 +13,19 @@ executor fee, nonce, operation hash, and a non-zero transaction hash. Delayed
 resume revalidates the same immutable fields and the accepted FDC proof
 commitment, so a mutated in-memory checkpoint fails closed.
 
+The external-trigger adapters model the official `EVMTransaction` and
+`XRPPayment` request/response fields. They require an injected verifier to
+return a canonical proof commitment, bind exact transaction, owner/address,
+amount/value, memo/input/event, status, round, block, and freshness fields, cap
+dynamic byte inputs, and recompute the public input commitment after the async
+verification call. The replay sets are preflight guards only: a live consumer
+must atomically consume the transaction and input commitment in canonical
+on-chain state. Web2Json is intentionally absent.
+
 The FDC verifier and Smart Account client are injected interfaces. An absent or
 negative verifier, stale/mismatched payment, missing proof, or unavailable mint
 client cannot become success. `DELAYED` is an explicit checkpoint that resumes
 only at the client-provided public `executionAllowedAt` time.
 
-No live XRPL Testnet payment, FDC proof, Smart Account transaction, FTSO feed,
-FAssets mint, or redemption is claimed by these local tests.
+No live XRPL Testnet payment, FDC proof or trigger, Smart Account transaction,
+FTSO feed, FAssets mint, or redemption is claimed by these local tests.

@@ -181,6 +181,19 @@ The private policy fixes a UTC interval and non-overlapping grace duration.
 Occurrence one starts at `startAt`; every later slot is derived with checked
 integer arithmetic. Ad-hoc policies explicitly use interval/grace/slot zero.
 
+### FDC external triggers
+
+Local `EVMTransaction` and `XRPPayment` adapters mirror the official public
+request/response fields and accept a trigger only after an injected verifier
+returns a non-zero canonical proof commitment. Exact request, success status,
+addresses/hashes, amount or value, memo/input/events, voting round, block, and
+freshness are sealed into a domain-separated input commitment. Dynamic bytes
+are bounded and that commitment is recomputed after the asynchronous verifier
+call to reject in-memory proof drift. Local replay sets are preflight guards;
+the Coston2 consumer must atomically consume the transaction and commitment in
+canonical state. That live path is not yet verified, and Web2Json is not
+implemented.
+
 ## 7. Recovery
 
 - Browser loss: recover public state; re-enter unpublished private drafts.
