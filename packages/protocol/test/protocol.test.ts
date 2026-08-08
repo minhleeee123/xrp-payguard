@@ -56,7 +56,7 @@ describe("ACTION_REQUEST_V1 and result domains", () => {
     const base = { request: request(), decision: "ALLOW" as const, publicReasonClass: "OK" as const, reservedAmount: 75n,
       resultingCheckpoint: id("next"), resultNonce: id("result"), attempt: 0, issuedAt: 1_050n, expiry: 1_200n,
       machineId: id("machine-a"), keyFingerprint: id("key-a") };
-    expect(evaluationDigest(base)).not.toBe(evaluationDigest({ ...base, machineId: id("machine-b") }));
+    expect(evaluationDigest(base)).toBe(evaluationDigest({ ...base, machineId: id("machine-b") }));
     expect(evaluationDigest(base)).not.toBe(evaluationDigest({ ...base, decision: "DENY", publicReasonClass: "POLICY_DENIED", reservedAmount: 0n }));
   });
 

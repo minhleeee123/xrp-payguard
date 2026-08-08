@@ -48,7 +48,6 @@ const requestParameters: readonly AbiParameter[] = [
 const resultParameters: readonly AbiParameter[] = [
   { type: "bytes32" }, ...requestParameters, { type: "bytes32" }, { type: "uint8" }, { type: "uint8" }, { type: "uint256" },
   { type: "bytes32" }, { type: "bytes32" }, { type: "uint32" }, { type: "uint64" }, { type: "uint64" },
-  { type: "bytes32" }, { type: "bytes32" },
 ];
 
 function bytes32(value: Hex, label: string): Hex {
@@ -163,8 +162,7 @@ export function evaluationDigest(result: Omit<import("./types.js").EvaluationRes
   const decision = result.decision === "ALLOW" ? 1 : 0;
   return keccak256(encodeAbiParameters(resultParameters, [EVALUATION_RESULT_V1, ...request, bytes32(actionRequestHash(result.request), "requestHash"), decision,
     REASON_CODE[result.publicReasonClass], uint(result.reservedAmount, "reservedAmount"), bytes32(result.resultingCheckpoint, "resultingCheckpoint"),
-    bytes32(result.resultNonce, "resultNonce"), result.attempt, uint(result.issuedAt, "issuedAt"), uint(result.expiry, "expiry"),
-    bytes32(result.machineId, "machineId"), bytes32(result.keyFingerprint, "keyFingerprint")]));
+    bytes32(result.resultNonce, "resultNonce"), result.attempt, uint(result.issuedAt, "issuedAt"), uint(result.expiry, "expiry")]));
 }
 
 export function publicReasonCode(reason: import("./types.js").PublicReasonClass): number {

@@ -296,12 +296,12 @@ func EvaluationDigest(result EvaluationResultV1) (common.Hash, error) {
 		return common.Hash{}, err
 	}
 	types := append([]string{"bytes32"}, requestTypes()...)
-	types = append(types, "bytes32", "uint8", "uint8", "uint256", "bytes32", "bytes32", "uint32", "uint64", "uint64", "bytes32", "bytes32")
+	types = append(types, "bytes32", "uint8", "uint8", "uint256", "bytes32", "bytes32", "uint32", "uint64", "uint64")
 	values := []interface{}{EvaluationResultTypeHash, ActionRequestTypeHash, result.Request.ChainID, result.Request.Registry, result.Request.Vault, result.Request.Router,
 		result.Request.PolicyID, result.Request.PolicyVersion, result.Request.PolicyCommitment, result.Request.RequestID, result.Request.RequestNonce, result.Request.Attempt,
 		result.Request.Requester, result.Request.Target, result.Request.Asset, result.Request.ActionType, result.Request.Amount, result.Request.ScheduleSlot,
 		result.Request.Occurrence, result.Request.SpendCheckpoint, result.Request.BalanceCheckpoint, result.Request.InputCommitment, result.Request.CreatedAt,
 		result.Request.GraceDeadline, result.Request.Expiry, requestHash, result.Decision, result.PublicReasonClass, result.ReservedAmount, result.ResultingCheckpoint,
-		result.ResultNonce, result.Attempt, result.IssuedAt, result.Expiry, result.MachineID, result.KeyFingerprint}
+		result.ResultNonce, result.Attempt, result.IssuedAt, result.Expiry}
 	return digest(types, values...)
 }

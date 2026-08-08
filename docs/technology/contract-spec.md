@@ -168,6 +168,12 @@ expiry
 Signatures use the current FCC-supported prefix/domain and registered signer
 mapping. A generic EIP-191 assumption is not accepted without live verification.
 
+Machine identity and key fingerprint are verified signer metadata, but are not
+included in the shared evaluation digest. This is intentional: two distinct
+registered machines must sign one identical decision digest for a threshold
+result. The router verifies each signature against the frozen machine/key
+mapping before counting distinct signers.
+
 ## 6. Deterministic policy evaluation
 
 - Checked integer/fixed-point math only.
