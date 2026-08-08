@@ -152,7 +152,7 @@ fields; live machine-domain verification remains open.
   quoted decimal bigint/uint64 values with digest-preserving round-trip tests.
 - [ ] Define deterministic tie/conflict rules: explicit deny outranks allow;
   malformed, unknown, stale, or unavailable input denies.
-- [ ] Add range, rounding, overflow, time-boundary, timezone-independent,
+- [x] Add range, rounding, overflow, time-boundary, timezone-independent,
   permutation, and concurrency suites.
 
 Exit: all implementations agree for every golden vector and no subjective/AI

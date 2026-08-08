@@ -247,3 +247,24 @@ func TestPolicyNormalizationRejectsDuplicate(t *testing.T) {
 		t.Fatal("expected schedule past policy end rejection")
 	}
 }
+
+func TestPolicyCommitmentIsRulePermutationIndependent(t *testing.T) {
+	vector := readVector(t)
+	policy := policyFromVector(vector.Policy)
+	permuted := policy
+	permuted.AllowTargets = append([]common.Address(nil), policy.AllowTargets...)
+	for left, right := 0, len(permuted.AllowTargets)-1; left < right; left, right = left+1, right-1 {
+		permuted.AllowTargets[left], permuted.AllowTargets[right] = permuted.AllowTargets[right], permuted.AllowTargets[left]
+	}
+	original, err := PolicyCommitment(policy)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reordered, err := PolicyCommitment(permuted)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if original != reordered {
+		t.Fatalf("rule permutation changed commitment: %s != %s", original, reordered)
+	}
+}

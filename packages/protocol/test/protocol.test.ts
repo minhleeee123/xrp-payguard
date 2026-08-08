@@ -261,4 +261,80 @@ describe("deterministic evaluator", () => {
       { ...historicalState, history: [{ request: first, accountedAt: 1_050n }] },
     ).publicReasonClass).toBe("FTSO_INVALID");
   });
+
+  it("denies uint256 range and accumulated-cap overflow", () => {
+    const maxUint256 = (1n << 256n) - 1n;
+    expect(evaluatePolicy(policy, request(), { ...state(), availableBalance: maxUint256 + 1n }).publicReasonClass).toBe("MALFORMED");
+    expect(evaluatePolicy(policy, { ...request(), amount: maxUint256 + 1n }, state()).publicReasonClass).toBe("MALFORMED");
+
+    const cappedPolicy = { ...policy, maxPerAction: 0n, dailyCap: maxUint256, rollingCap: maxUint256 };
+    const first = { ...requestForPolicy(cappedPolicy), amount: maxUint256 };
+    const firstResult = evaluatePolicy(cappedPolicy, first, { ...stateForRequest(first), availableBalance: maxUint256 });
+    expect(firstResult.decision).toBe("ALLOW");
+    const second: ActionRequestV1 = {
+      ...first,
+      requestId: id("overflow-request-2"),
+      requestNonce: 2n,
+      amount: 1n,
+      occurrence: 2,
+      scheduleSlot: 4_600n,
+      spendCheckpoint: firstResult.resultingCheckpoint,
+      createdAt: 4_601n,
+      graceDeadline: 4_700n,
+      expiry: 4_700n,
+    };
+    const overflowState: SpendStateV1 = {
+      availableBalance: 1n,
+      history: [{ request: first, accountedAt: 1_050n }],
+      occurrenceCount: 1,
+      lastAccountingAt: 1_050n,
+      spendCheckpoint: firstResult.resultingCheckpoint,
+      balanceCheckpoint: second.balanceCheckpoint,
+      now: 4_650n,
+    };
+    expect(evaluatePolicy(cappedPolicy, second, overflowState).publicReasonClass).toBe("CAP_EXCEEDED");
+  });
+
+  it("treats uint64 cooldown overflow as an active cooldown", () => {
+    const maxUint64 = (1n << 64n) - 1n;
+    const cooldownPolicy = {
+      ...policy,
+      maxPerAction: 0n,
+      dailyCap: 0n,
+      rollingCap: 0n,
+      startAt: 0n,
+      endAt: 0n,
+      scheduleIntervalSeconds: 0n,
+      scheduleGraceSeconds: 0n,
+      cooldownSeconds: 10n,
+    };
+    const first: ActionRequestV1 = {
+      ...requestForPolicy(cooldownPolicy),
+      scheduleSlot: 0n,
+      createdAt: maxUint64 - 10n,
+      graceDeadline: maxUint64,
+      expiry: maxUint64,
+    };
+    const firstState = { ...stateForRequest(first), now: maxUint64 - 5n };
+    const firstResult = evaluatePolicy(cooldownPolicy, first, firstState);
+    expect(firstResult.decision).toBe("ALLOW");
+    const second: ActionRequestV1 = {
+      ...first,
+      requestId: id("cooldown-request-2"),
+      requestNonce: 2n,
+      occurrence: 2,
+      spendCheckpoint: firstResult.resultingCheckpoint,
+      createdAt: maxUint64 - 1n,
+    };
+    const cooldownState: SpendStateV1 = {
+      availableBalance: 100n,
+      history: [{ request: first, accountedAt: maxUint64 - 5n }],
+      occurrenceCount: 1,
+      lastAccountingAt: maxUint64 - 5n,
+      spendCheckpoint: firstResult.resultingCheckpoint,
+      balanceCheckpoint: second.balanceCheckpoint,
+      now: maxUint64 - 1n,
+    };
+    expect(evaluatePolicy(cooldownPolicy, second, cooldownState).publicReasonClass).toBe("COOLDOWN");
+  });
 });

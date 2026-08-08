@@ -2,6 +2,7 @@ package protocol
 
 import (
 	"math/big"
+	"sync"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -327,3 +328,130 @@ func TestEvaluatorReplaysHistoricalFTSOValues(t *testing.T) {
 		t.Fatalf("missing historical FTSO snapshot accepted: result=%+v err=%v", result, err)
 	}
 }
+
+func TestEvaluatorDeniesUint256AndAccumulatedCapOverflow(t *testing.T) {
+	vector := readVector(t)
+	policy := policyFromVector(vector.Policy)
+	request := requestFromVector(vector.Request)
+	state := stateFromVector(request)
+	overflow := new(big.Int).Add(new(big.Int).Set(maxUint256), big.NewInt(1))
+	state.AvailableBalance = overflow
+	result, err := EvaluatePolicy(policy, request, state)
+	if err != nil || result.PublicReasonClass != ReasonMalformed {
+		t.Fatalf("oversized balance accepted: result=%+v err=%v", result, err)
+	}
+	state = stateFromVector(request)
+	request.Amount = overflow
+	if result, err = EvaluatePolicy(policy, request, state); err != nil || result.PublicReasonClass != ReasonMalformed {
+		t.Fatalf("oversized amount accepted: result=%+v err=%v", result, err)
+	}
+
+	policy = policyFromVector(vector.Policy)
+	policy.MaxPerAction = new(big.Int)
+	policy.DailyCap = new(big.Int).Set(maxUint256)
+	policy.RollingCap = new(big.Int).Set(maxUint256)
+	first, firstState := rebindPolicyRequest(t, policy, requestFromVector(vector.Request))
+	first.Amount = new(big.Int).Set(maxUint256)
+	firstState.AvailableBalance = new(big.Int).Set(maxUint256)
+	firstResult, err := EvaluatePolicy(policy, first, firstState)
+	if err != nil || firstResult.Decision != DecisionAllow {
+		t.Fatalf("max uint256 first request denied: result=%+v err=%v", firstResult, err)
+	}
+	second := first
+	second.RequestID = common.BytesToHash([]byte("overflow-request-2"))
+	second.RequestNonce = 2
+	second.Amount = big.NewInt(1)
+	second.Occurrence = 2
+	second.ScheduleSlot = 4600
+	second.SpendCheckpoint = firstResult.ResultingCheckpoint
+	second.CreatedAt = 4601
+	second.GraceDeadline = 4700
+	second.Expiry = 4700
+	overflowState := SpendStateV1{AvailableBalance: big.NewInt(1), History: []SpendHistoryEntryV1{{Request: first, AccountedAt: 1050}}, OccurrenceCount: 1, LastAccountingAt: 1050, SpendCheckpoint: firstResult.ResultingCheckpoint, BalanceCheckpoint: second.BalanceCheckpoint, Now: 4650}
+	if result, err = EvaluatePolicy(policy, second, overflowState); err != nil || result.PublicReasonClass != ReasonCapExceeded {
+		t.Fatalf("accumulated cap overflow accepted: result=%+v err=%v", result, err)
+	}
+}
+
+func TestEvaluatorTreatsCooldownOverflowAsActive(t *testing.T) {
+	vector := readVector(t)
+	policy := policyFromVector(vector.Policy)
+	policy.MaxPerAction = new(big.Int)
+	policy.DailyCap = new(big.Int)
+	policy.RollingCap = new(big.Int)
+	policy.StartAt = 0
+	policy.EndAt = 0
+	policy.ScheduleIntervalSecs = 0
+	policy.ScheduleGraceSecs = 0
+	policy.CooldownSecs = 10
+	first, firstState := rebindPolicyRequest(t, policy, requestFromVector(vector.Request))
+	first.ScheduleSlot = 0
+	first.CreatedAt = ^uint64(0) - 10
+	first.GraceDeadline = ^uint64(0)
+	first.Expiry = ^uint64(0)
+	firstState.Now = ^uint64(0) - 5
+	firstResult, err := EvaluatePolicy(policy, first, firstState)
+	if err != nil || firstResult.Decision != DecisionAllow {
+		t.Fatalf("first cooldown request denied: result=%+v err=%v", firstResult, err)
+	}
+	second := first
+	second.RequestID = common.BytesToHash([]byte("cooldown-request-2"))
+	second.RequestNonce = 2
+	second.Occurrence = 2
+	second.SpendCheckpoint = firstResult.ResultingCheckpoint
+	second.CreatedAt = ^uint64(0) - 1
+	state := SpendStateV1{AvailableBalance: big.NewInt(100), History: []SpendHistoryEntryV1{{Request: first, AccountedAt: ^uint64(0) - 5}}, OccurrenceCount: 1, LastAccountingAt: ^uint64(0) - 5, SpendCheckpoint: firstResult.ResultingCheckpoint, BalanceCheckpoint: second.BalanceCheckpoint, Now: ^uint64(0) - 1}
+	result, err := EvaluatePolicy(policy, second, state)
+	if err != nil || result.PublicReasonClass != ReasonCooldown {
+		t.Fatalf("cooldown overflow allowed: result=%+v err=%v", result, err)
+	}
+}
+
+func TestEvaluatorIsDeterministicUnderConcurrency(t *testing.T) {
+	vector := readVector(t)
+	policy := policyFromVector(vector.Policy)
+	request := requestFromVector(vector.Request)
+	state := stateFromVector(request)
+	expected, err := EvaluatePolicy(policy, request, state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expectedDigest, err := EvaluationDigest(expected)
+	if err != nil {
+		t.Fatal(err)
+	}
+	const workers = 64
+	start := make(chan struct{})
+	errors := make(chan error, workers)
+	var wait sync.WaitGroup
+	for range workers {
+		wait.Add(1)
+		go func() {
+			defer wait.Done()
+			<-start
+			result, evaluateErr := EvaluatePolicy(policy, request, state)
+			if evaluateErr != nil {
+				errors <- evaluateErr
+				return
+			}
+			digest, digestErr := EvaluationDigest(result)
+			if digestErr != nil {
+				errors <- digestErr
+				return
+			}
+			if digest != expectedDigest {
+				errors <- &determinismError{}
+			}
+		}()
+	}
+	close(start)
+	wait.Wait()
+	close(errors)
+	for err := range errors {
+		t.Fatal(err)
+	}
+}
+
+type determinismError struct{}
+
+func (*determinismError) Error() string { return "concurrent evaluation digest drift" }

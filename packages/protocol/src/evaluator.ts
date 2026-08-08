@@ -133,7 +133,8 @@ function replaySpendHistoryV1(
 export function evaluatePolicy(policyInput: PolicyV1, request: ActionRequestV1, state: SpendStateV1): EvaluationResultV1 {
   const policy = normalizePolicy(policyInput);
   const now = state.now;
-  if (state.availableBalance < 0n || state.lastAccountingAt < 0n
+  if (state.availableBalance < 0n || state.availableBalance > MAX_UINT256 || state.lastAccountingAt < 0n
+    || request.amount < 0n || request.amount > MAX_UINT256
     || !Number.isInteger(state.occurrenceCount) || state.occurrenceCount < 0 || state.occurrenceCount > MAX_UINT32) {
     return deny(request, "MALFORMED", now);
   }

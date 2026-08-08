@@ -249,6 +249,10 @@ mapping before counting distinct signers.
   Zero allows; any unknown bit fails closed as `MALFORMED`. Solidity contains only this
   bitmask reference, never policy fields or intermediate values.
 - Unknown schema/rule/action/input denies.
+- Available balance and action amount must fit `uint256`. Cap accumulation uses
+  unbounded intermediate math followed by the exact cap comparison, so
+  `maxUint256 + 1` cannot wrap into an allowance. Cooldown addition is checked
+  in the `uint64` time domain; overflow remains an active cooldown and denies.
 - Missing, stale, negative, zero, overflowed, or inconsistent oracle/proof input
   denies or pauses; never falls back.
 - Calendar and rolling windows use canonical history/checkpoint data.

@@ -171,7 +171,7 @@ func EvaluatePolicy(policy PolicyV1, request ActionRequestV1, state SpendStateV1
 	if err != nil {
 		return EvaluationResultV1{}, err
 	}
-	if state.AvailableBalance == nil || state.AvailableBalance.Sign() < 0 || request.Amount == nil || request.Amount.Sign() < 0 {
+	if state.AvailableBalance == nil || state.AvailableBalance.Sign() < 0 || state.AvailableBalance.Cmp(maxUint256) > 0 || request.Amount == nil || request.Amount.Sign() < 0 || request.Amount.Cmp(maxUint256) > 0 {
 		return denied(request, ReasonMalformed, state.Now), nil
 	}
 	if request.ChainID == nil || request.ChainID.Cmp(normalized.ChainID) != 0 || request.Registry != normalized.Registry || request.Vault != normalized.Vault || request.Router != normalized.Router || request.PolicyID != normalized.PolicyID || request.PolicyVersion != normalized.PolicyVersion || request.PolicyCommitment != commitment {
@@ -220,8 +220,10 @@ func EvaluatePolicy(policy PolicyV1, request ActionRequestV1, state SpendStateV1
 	if normalized.MaxOccurrences != 0 && state.OccurrenceCount >= normalized.MaxOccurrences {
 		violations |= ViolationOccurrenceExceeded
 	}
-	if normalized.CooldownSecs != 0 && state.LastAccountingAt != 0 && state.Now < state.LastAccountingAt+normalized.CooldownSecs {
-		violations |= ViolationCooldown
+	if normalized.CooldownSecs != 0 && state.LastAccountingAt != 0 {
+		if state.LastAccountingAt > ^uint64(0)-normalized.CooldownSecs || state.Now < state.LastAccountingAt+normalized.CooldownSecs {
+			violations |= ViolationCooldown
+		}
 	}
 	if state.AvailableBalance.Cmp(request.Amount) < 0 {
 		violations |= ViolationInsufficientBalance
