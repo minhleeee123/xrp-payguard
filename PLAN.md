@@ -88,29 +88,35 @@ Exit: one validated policy journey and one real design partner target exist.
 
 ### Phase 1 — pinned official foundations
 
-- [ ] Pin Node 24, pnpm, Go, Foundry, Solidity, viem, XRPL, and official Flare
+The checked items below are local reproducibility gates. Official endpoint
+resolution, three stable FCC origins, and funded live access remain open.
+
+- [x] Pin Node 24, pnpm, Go, Foundry, Solidity, viem, XRPL, and official Flare
   periphery/FCC revisions.
 - [ ] Resolve Coston2 FCC manager, registries, FDC, FTSO, FAssets, Smart Account,
   verifier, DA, RPC, faucet, and explorer through supported sources.
-- [ ] Build the official FCC scaffold unchanged and run its local smoke first.
+- [x] Build the official FCC scaffold unchanged and run its local smoke first.
 - [ ] Obtain three stable HTTPS FCC machine origins and an indexer path without
   committing credentials.
-- [ ] Add secret, dependency, source-provenance, and release-doc checks.
+- [x] Add secret, dependency, source-provenance, and release-doc checks.
 
 Exit: every mandatory dependency is pinned and reachable, or product work pauses.
 
 ### Phase 2 — FCC private-policy feasibility
 
+The checked items below cover the local ciphertext-only/reference adapter. The
+registered Coston2 `PING_V1`, receipt, and evaluation proofs remain open.
+
 - [ ] Implement a minimal `PING_V1` foundation and verify one registered Coston2
   result before policy code.
-- [ ] Implement ciphertext-only policy ingress and a sealed local policy store.
-- [ ] Return machine-signed `POLICY_RECEIPT_V1` values bound to policy owner,
+- [x] Implement ciphertext-only policy ingress and a sealed local policy store.
+- [x] Return machine-signed `POLICY_RECEIPT_V1` values bound to policy owner,
   commitment, schema, code version, chain, contracts, machine, and nonce.
 - [ ] Register three distinct machines and require all-three custody receipts.
-- [ ] Implement deterministic `EVALUATE_V1` returning only public-safe decision
-  fields; prove two matching result signatures on Coston2.
-- [ ] Prove replay, wrong owner, wrong commitment, wrong request, wrong code,
-  and wrong machine failure.
+- [x] Implement deterministic `EVALUATE_V1` returning only public-safe decision
+  fields; prove two matching result signatures in the local adapter.
+- [x] Prove replay, wrong owner, wrong commitment, wrong request, wrong code,
+  and wrong machine failure locally.
 - [ ] Prove supported replacement registration and document that an active
   policy never silently swaps a frozen identity.
 
@@ -119,7 +125,10 @@ machines authorize one domain-bound test action.
 
 ### Phase 3 — deterministic policy protocol
 
-- [ ] Freeze `POLICY_SCHEMA_V1`, `POLICY_RECEIPT_V1`, `ACTION_REQUEST_V1`,
+Codec/evaluator checks marked here are local cross-language coverage; full
+Solidity policy composition and live machine-domain verification remain open.
+
+- [x] Freeze `POLICY_SCHEMA_V1`, `POLICY_RECEIPT_V1`, `ACTION_REQUEST_V1`,
   `SPEND_CHECKPOINT_V1`, and `EVALUATION_RESULT_V1`.
 - [ ] Implement fixed-point value conversion and policy composition with shared
   Go/Solidity/TypeScript golden vectors.
@@ -135,18 +144,22 @@ branch exists.
 
 ### Phase 4 — contracts, vault, and atomic execution
 
-- [ ] Implement non-upgradeable `PayGuardPolicyRegistry`, `PayGuardVault`, and
+The checked items are the local Foundry state-machine gate. Deployment,
+external review, and live protocol wiring remain open.
+
+- [x] Implement non-upgradeable `PayGuardPolicyRegistry`, `PayGuardVault`, and
   `PayGuardActionRouter` contracts with minimal immutable authority.
-- [ ] Commit policy hash plus frozen machine/key/code policy after all-three
+- [x] Commit policy hash plus frozen machine/key/code policy after all-three
   receipts; never publish ciphertext.
-- [ ] Implement deposit, request, evaluate, execute, deny, expire, revoke,
+- [x] Implement deposit, request, evaluate, execute, deny, expire, revoke,
   emergency stop, and withdrawal state transitions.
-- [ ] Require two distinct registered signers over one exact evaluation digest.
-- [ ] Advance spend checkpoint, occurrence count, request nonce, and transfer in
+- [x] Require two distinct registered signers over one exact evaluation digest.
+- [x] Advance spend checkpoint, occurrence count, request nonce, and transfer in
   one atomic transaction; reject duplicate or partial execution.
-- [ ] Restrict V1 actions to FTestXRP transfer and a small audited target adapter
-  list; arbitrary calls remain disabled until separately reviewed.
-- [ ] Add unit, fuzz, invariant, reentrancy, token-failure, and conservation tests.
+- [x] Restrict V1 actions to an explicitly supported FTestXRP-like transfer;
+  arbitrary calls remain disabled and the adapter still needs independent audit.
+- [x] Add unit, reentrancy, token-failure, and conservation tests. Fuzz/invariant
+  and external review remain open.
 
 Exit: a local multi-policy state machine cannot overspend, replay, partially
 execute, or bypass FCC authorization.
@@ -171,7 +184,11 @@ FDC-attested trigger safely advances one request.
 
 ### Phase 6 — full application
 
-- [ ] Build a standalone product landing page and a separate application shell.
+The checked items describe the local public-safe shell. Wallet flows, hosted
+evidence, and live role journeys remain open.
+
+- [x] Build the local laptop-first application shell; a standalone hosted
+  landing page remains open.
 - [ ] Build Policy Studio with templates, exact public/private preview, local
   validation, receipt progress, and activation evidence.
 - [ ] Build Accounts/Vaults with public balances, deposits, withdrawals, caps,
@@ -184,18 +201,22 @@ FDC-attested trigger safely advances one request.
   binding, FTSO/FDC facts, decision digest, and execution conservation.
 - [ ] Build Team/Treasury workspace and role-aware permissions.
 - [ ] Build notifications and export without confidential payloads.
-- [ ] Make laptop UX primary, then complete mobile, keyboard, reduced-motion,
-  error, loading, and recovery reviews.
+- [x] Make laptop UX primary with responsive/mobile layout, focus states, and
+  explicit loading/error/recovery copy; full accessibility and reduced-motion
+  review remains open.
 
 Exit: every user role can complete its canonical journey without a mock or
 manual database edit.
 
 ### Phase 7 — reliability, privacy, and operational hardening
 
-- [ ] Make relay/executor orchestration stateless and recoverable from public
+The checked items are automated local gates; live outage drills and external
+review remain open.
+
+- [x] Make relay/executor orchestration stateless and recoverable from public
   checkpoints.
 - [ ] Run proxy, RPC, FDC, FTSO, indexer, one-machine, and executor outage drills.
-- [ ] Run full-history secret scans plus browser/network/log/evidence privacy scans.
+- [x] Run full-history secret scans plus browser/network/log/evidence privacy scans.
 - [ ] Add rate limits, idempotency, health bindings, timeout budgets, and
   competing-executor tests.
 - [ ] Verify machine replacement for new policies and fail-closed behavior for

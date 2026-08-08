@@ -1,8 +1,8 @@
 # Gate 0/1 foundations
 
-Status: foundation pins and source map are committed; PayGuard contracts, FCC
-registration, machine identities, and Coston2 deployment remain planned and not
-yet verified.
+Status: foundation pins, source map, local protocol, contracts, bindings, and
+FCC adapter scaffolding are committed. FCC registration, machine identities,
+and Coston2 deployment remain planned and not yet verified.
 
 ## Pinned local toolchain
 

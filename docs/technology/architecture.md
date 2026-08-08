@@ -1,7 +1,9 @@
 # Target architecture
 
-> Status: planned. Names and interfaces remain design targets until implemented,
-> tested, deployed, and recorded in a verified PayGuard release.
+> Status: the local protocol, FCC custody/adapter, relay, web shell, and
+> registry/vault/router interfaces are implemented and tested. Live addresses,
+> registered machines, and deployment wiring remain design targets until a
+> verified PayGuard release.
 
 ## 1. System model
 

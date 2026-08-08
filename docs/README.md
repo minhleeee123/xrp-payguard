@@ -18,8 +18,8 @@
   public-only XRP/FDC/FTSO/Smart Account checkpoint boundaries.
 - [`technology/architecture.md`](technology/architecture.md): component model,
   public/private data, trust, and recovery.
-- [`technology/contract-spec.md`](technology/contract-spec.md): planned schemas,
-  state machines, and signature domains.
+- [`technology/contract-spec.md`](technology/contract-spec.md): V1 schemas,
+  local state machines, and live signature-domain requirements.
 - [`technology/threat-model.md`](technology/threat-model.md): attacker model,
   mitigations, residual risk, and non-claims.
 - [`technology/verification.md`](technology/verification.md): evidence gates and
