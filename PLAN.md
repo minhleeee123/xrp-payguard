@@ -231,48 +231,55 @@ verified on Coston2. External review and registered FCC execution remain open.
 ### Phase 5 — XRP-native funding and external triggers
 
 - [x] Add a public-only resolver for the XRPL owner's deterministic Flare
-  PersonalAccount and memo nonce; live reads remain unverified.
+  PersonalAccount and memo nonce; live reads are covered by the Coston2
+  funding evidence.
 - [x] Encode a bounded `0xFE` `PackedUserOperation` that can target a PayGuard
-  vault without accepting a custodial XRPL signer; live Payment/activation
-  remains open.
+  vault without accepting a custodial XRPL signer; tuple encoding and live
+  activation/deposit are covered by the Coston2 funding evidence.
 - [x] Build the exact public FDC `XRPPayment` prepare request and ABI encoding
   with source ID, verifier-supplied MIC, and executor `proofOwner`; live
-  verifier/MIC/proof submission remains open.
+  verifier/MIC/proof submission is covered by the Coston2 funding evidence.
 - [x] Add a Coston2-only fail-closed authenticated verifier prepare client with
-  strict origin, response bounds, and ABI binding checks; live API credentials,
-  request submission, and proof retrieval remain open.
+  strict origin, response bounds, and ABI binding checks; live request and
+  proof retrieval are covered without recording the API credential.
 - [x] Add a bounded Coston2 DA reader/parser for the public XRPPayment envelope;
-  it binds request/response fields and Merkle-node shape without claiming
-  on-chain round finality or cryptographic proof verification.
+  it binds request/response fields and Merkle-node shape; the live run also
+  verifies the finalized round and on-chain proof commitment.
 - [x] Add a runtime-bound Coston2 FDC finality checkpoint for protocol ID,
-  relay, finalized state, and non-zero Merkle root; leaf verification remains
-  a separate live gate.
+  relay, finalized state, and non-zero Merkle root; the live run verifies the
+  corresponding XRPPayment proof on-chain.
 - [x] Derive the FDC voting round from the mined request-block timestamp via
   the runtime Relay `getVotingRoundId` calculator; wall-clock and hard-coded
   epoch formulas remain unsupported.
 - [x] Add a runtime fee quote and exact `requestAttestation(bytes)` submission
-  intent codec; signing, broadcast, receipts, and live request state remain
-  open.
+  intent codec; a caller-owned testnet executor broadcast and successful receipt
+  are covered by the Coston2 funding evidence.
 - [x] Add an exact direct-mint/`0xFE` with-data call codec bound to parsed
-  successful XRPPayment and finalized-round checkpoints; Merkle verification,
-  signing, broadcast, and receipt matching remain open.
+  successful XRPPayment and finalized-round checkpoints; live Merkle
+  verification, broadcast, receipt matching, and vault accounting are covered
+  by the Coston2 funding evidence.
 - [x] Add a runtime-bound `IFdcVerification.verifyXRPPayment` proof boundary
-  that accepts only a finalized round and a successful `testXRP` envelope;
-  live request/proof data and execution remain open.
+  that accepts only a finalized round and a successful `testXRP` envelope; the
+  live run exercises this boundary before direct mint.
 - [x] Compose the public FDC preparation flow from fee intent, mined receipt
   timestamp, Relay round, finality, DA envelope, proof verification, and
   direct-mint intent; no signer, broadcast, or private credential is retained.
 - [x] Resolve the official runtime `directMintingPaymentAddress()` and reject
-  malformed/unavailable Core Vault addresses; live payment remains open.
+  malformed/unavailable Core Vault addresses; the live XRPL payment to the
+  resolved Core Vault is covered by the Coston2 funding evidence.
 - [x] Add an integer-only official-field FAssets direct-mint quote calculator
-  and injected settings reader; live quote drift, payment, and mint execution
-  remain open.
+  and injected settings reader; the live quote, payment, and mint execution are
+  covered, while quote-drift/recovery drills remain open.
 - [x] Add an injected, read-only XRPL API v2 checkpoint reader for validated
-  account, ledger, and native-XRP Payment state; wallet signing and live
-  funding remain open.
-- [ ] Request, retrieve, and verify a real FDC `XRPPayment` proof.
-- [ ] Execute Smart Account direct mint/funding and bind payment, user-op hash,
-  owner, nonce, asset, amount, executor fee, and PayGuard destination.
+  account, ledger, and native-XRP Payment state; wallet signing remains outside
+  the production reader boundary, while one live funding run is evidenced.
+- [x] Request, retrieve, and verify a real FDC `XRPPayment` proof on Coston2;
+  sanitized public identifiers and the proof commitment are recorded in
+  `evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json`.
+- [x] Execute Smart Account direct mint/funding and bind payment, tuple-encoded
+  user-op hash, owner, nonce, asset, amount, executor fee, and PayGuard
+  destination; the live receipt and vault accounting are recorded in the same
+  testnet-only evidence file.
 - [x] Implement a local fail-closed funding state machine that revalidates the
   operation and expected-payment hashes at every transition, binds accepted FDC
   proof commitment, and requires an exact public direct-mint receipt.
@@ -292,7 +299,9 @@ verified on Coston2. External review and registered FCC execution remain open.
   Coston2, including partial fulfillment and destination-tag behavior.
 
 Exit: one XRPL Testnet payment funds a canonical Coston2 PayGuard vault and an
-FDC-attested trigger safely advances one request.
+FDC-attested trigger safely advances one request. A single live testnet run
+passes this funding exit; FCC custody/evaluation, hosted deployment, and
+redemption remain separate release gates.
 
 ### Phase 6 — full application
 

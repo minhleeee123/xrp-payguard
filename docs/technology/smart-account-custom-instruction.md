@@ -94,10 +94,15 @@ The package also has an injected, read-only XRPL API v2 boundary for validated
 checkpoints, checks ledger/hash/account/payment consistency, caps memo data and
 search ranges, and never accepts a seed or submit/signing method.
 
-The local tests cover deterministic encoding, malformed/overflow rejection,
-PersonalAccount/nonce read failures, exact memo length, and strict FDC request
-fields. A live PersonalAccount lookup, XRPL Payment, FDC request/proof,
-executor submission, and PayGuard vault funding remain unverified.
+The local tests cover deterministic tuple encoding, malformed/overflow
+rejection, PersonalAccount/nonce read failures, exact memo length, and strict
+FDC request fields. A PayGuard-owned Coston2 testnet run now also covers the
+live PersonalAccount/nonce lookup, validated XRPL Payment, FDC request and
+finalized proof, executor submission, direct mint, and PayGuard vault funding;
+the sanitized public identifiers and assertions are recorded in
+[`evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json`](../../evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json).
+The production integration remains signerless: signing/broadcast authority is
+held by the caller, and FCC/private-policy/hosted-release gates are separate.
 
 Official references:
 

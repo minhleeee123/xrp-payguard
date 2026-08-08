@@ -22,7 +22,11 @@ A foundation-only FCC sender is deployed, extension-registered, explicitly
 bound, and runtime/configuration-verified on Coston2 as extension `66037`; its
 typed `PING_V1` handler passes local cross-language tests. No registered TEE
 machine/result, private live lifecycle, mainnet integration, user traction,
-production audit, or complete release claim exists yet.
+production audit, or complete release claim exists yet. A single PayGuard-owned
+Coston2 testnet funding run has passed validated XRPL payment → FDC
+`XRPPayment` proof → Smart Account tuple operation → direct mint → PayGuardVault
+accounting; see the sanitized
+[`xrp-fdc-smart-account-funding-2026-08-09.json`](evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json).
 
 ## Start here
 

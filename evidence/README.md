@@ -12,6 +12,12 @@ and cannot satisfy the release gate.
 wiring transactions plus runtime/constructor assertions. It does not prove FCC,
 private policy, XRP-native funding, execution, hosted UI, or a complete release.
 
+`coston2/xrp-fdc-smart-account-funding-2026-08-09.json` records one
+successful PayGuard-owned Coston2 testnet flow: a validated XRPL Testnet
+payment, FDC request/finalized round/proof commitment, direct mint receipt, and
+verified FTestXRP deposit accounting. It contains no raw proof, memo payload,
+wallet seed, API key, or private policy, and it is not a complete release claim.
+
 `coston2/coston2-public-endpoint-reachability.json` records only
 credential-free Coston2 RPC, Explorer/API, and faucet page reachability. It
 does not represent a faucet grant, FCC indexer access, or a PayGuard release.

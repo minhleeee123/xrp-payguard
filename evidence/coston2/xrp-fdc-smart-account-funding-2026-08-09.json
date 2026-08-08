@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "suite": "payguard-coston2-xrp-fdc-smart-account-funding",
+  "recordedAt": "2026-08-08T23:42:00Z",
+  "network": {
+    "name": "flare-coston2",
+    "chainId": 114,
+    "observedBlock": "33800461"
+  },
+  "publicIdentifiers": {
+    "xrpl": {
+      "network": "xrpl-testnet",
+      "transactionHash": "0xe4166ad4cb7da1727195c5fdf1402f592163a1b31f3dda40c33bcfe3c6b24525",
+      "ledgerIndex": "19749091",
+      "destination": "rDhpmiPq4BVBDWMVdSrmkgt8thKyRzGV1p",
+      "receivedAmountDrops": "1200000",
+      "validatedResult": "tesSUCCESS"
+    },
+    "fdc": {
+      "verifierPrepareUrl": "https://fdc-verifiers-testnet.flare.network/verifier/xrp/XRPPayment/prepareRequest",
+      "requestTransactionHash": "0xe8171ebe5072ed2778dbf02c233a8d2b6f5ba48fd865faac87fee7cce72e1716",
+      "requestBlock": "33800413",
+      "votingRound": "1420027",
+      "proofCommitment": "0xf4f6135d0af13015ef8cb13a7b57068f45d895032304ab29c3b75f77668e7d2d"
+    },
+    "directMint": {
+      "transactionHash": "0x0524497bd1952d411ff5d7413199ed3148e36442e176a003dc2d3e1e0c2a9c88",
+      "block": "33800461",
+      "status": "success",
+      "gasUsed": "1039423",
+      "executor": "0xA5B4Fa983Df9564B49a69606C96b92aA7c1b9Acd",
+      "assetManager": "0xc1Ca88b937d0b528842F95d5731ffB586f4fbDFA",
+      "fTestXrp": "0x0b6A3645c240605887a5532109323A3E12273dc7",
+      "payGuardVault": "0xFFe7522075412B2eBA5b8B91c9aA4E1c2c6f84dB",
+      "depositedUBA": "1000000"
+    }
+  },
+  "assertions": {
+    "xrplPaymentValidated": true,
+    "fdcPrepareValidated": true,
+    "fdcRequestMined": true,
+    "fdcRoundFinalized": true,
+    "fdcProofVerifiedOnChain": true,
+    "directMintSimulationSucceeded": true,
+    "directMintReceiptSuccessful": true,
+    "smartAccountDepositVerified": true,
+    "vaultAccountingVerified": true,
+    "testnetOnly": true,
+    "noPrivateKeyRecorded": true,
+    "noApiKeyRecorded": true,
+    "noPolicyPlaintextOrCiphertextRecorded": true,
+    "noFccReleaseClaimed": true
+  },
+  "notes": [
+    "A fresh disposable XRPL Testnet account and EVM executor were generated in memory; only public identifiers and assertions are recorded here.",
+    "The flow used the official testXRP XRPPayment verifier, finalized FDC round, on-chain proof verification, Smart Account tuple encoding, and executeDirectMintingWithData.",
+    "The successful deposit is 1,000,000 UBA of official Coston2 FTestXRP to the PayGuard vault for the PayGuard deployer beneficiary.",
+    "This is a single public Coston2 funding evidence run. It does not prove FCC registration/custody, private-policy evaluation, hosted deployment, redemption, or a complete PayGuard release."
+  ]
+}
