@@ -259,6 +259,9 @@ verified on Coston2. External review and registered FCC execution remain open.
 - [x] Add a runtime-bound `IFdcVerification.verifyXRPPayment` proof boundary
   that accepts only a finalized round and a successful `testXRP` envelope;
   live request/proof data and execution remain open.
+- [x] Compose the public FDC preparation flow from fee intent, mined receipt
+  timestamp, Relay round, finality, DA envelope, proof verification, and
+  direct-mint intent; no signer, broadcast, or private credential is retained.
 - [x] Resolve the official runtime `directMintingPaymentAddress()` and reject
   malformed/unavailable Core Vault addresses; live payment remains open.
 - [x] Add an integer-only official-field FAssets direct-mint quote calculator

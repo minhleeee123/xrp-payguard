@@ -52,6 +52,11 @@ runtime registry-resolved address. It accepts only an explicit `true` result
 with a matching finalized round, `testXRP` source, non-zero proof owner, and
 successful payment status; a DA envelope by itself is never a proof.
 
+The public flow composer then links the fee intent, mined request receipt,
+Relay-derived round, finality checkpoint, DA envelope, verifier result, and
+direct-mint calldata. It accepts the receipt as an external checkpoint and
+does not sign, broadcast, retry, or persist an FDC credential.
+
 The submission boundary reads the current request fee via the runtime
 `FdcHub.fdcRequestFeeConfigurations()` address and builds exact
 `requestAttestation(bytes)` calldata plus the payable wei value. It is an

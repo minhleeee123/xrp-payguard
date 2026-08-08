@@ -102,6 +102,13 @@ owner, and successful status, then calls the runtime
 `IFdcVerification.verifyXRPPayment` view. Only an explicit `true` result yields
 a public proof commitment; a DA response alone never does.
 
+`prepareCoston2FdcFundingFlow` composes those boundaries after an external
+writer supplies a public mined-request receipt. It derives the round from that
+receipt timestamp, checks runtime finality/Relay binding, retrieves and
+verifies the DA proof, and builds the exact direct-mint call. The returned
+checkpoint contains only public request/receipt/round/proof commitments and
+call intent; it never signs, broadcasts, retries, or stores the runtime DA key.
+
 `prepareCoston2FdcSubmission` reads the current `getRequestFee` through the
 runtime `FdcHub.fdcRequestFeeConfigurations()` address and returns a bounded,
 public submission intent for `requestAttestation(bytes)`: exact calldata,
