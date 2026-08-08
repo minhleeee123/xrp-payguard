@@ -78,7 +78,12 @@ nonce/history/conservation with the action. No client-supplied decision exists.
 
 Permissionlessly advances public asynchronous checkpoints. It has no policy
 decryption key or authorization override. A fresh process must reconstruct work
-from finalized state.
+from finalized state. The HTTP surface is bound to one exact public
+chain/registry/vault/router domain, applies bounded per-socket rate and
+concurrency budgets, and coalesces only identical in-flight public work. These
+ephemeral controls are not replay authority and never replace canonical chain
+state. Liveness health reports dependency readiness as unprobed until a live
+checker verifies the registered machines.
 
 ### Public reader and Auditor
 

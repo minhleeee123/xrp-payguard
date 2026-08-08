@@ -58,6 +58,13 @@ Forbidden evidence:
 - Replacement registration and frozen-policy failure/recovery.
 - Split decisions and wrong result field rejection.
 
+### Relay/executor
+
+- Exact chain/registry/vault/router health and request-domain binding.
+- Direct-client rate limits, bounded concurrency/body sizes, and owned timeout budgets.
+- Identical in-flight evaluation/submission coalescing without durable private state.
+- Competing executor, split-result, one-/two-machine outage, and restart-safe retry behavior.
+
 ### FDC/FTSO/Smart Account/FAssets
 
 - Correct and wrong XRPL payment, destination, memo, owner, amount, fee, nonce.

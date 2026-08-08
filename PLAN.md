@@ -217,7 +217,7 @@ review remain open.
   checkpoints.
 - [ ] Run proxy, RPC, FDC, FTSO, indexer, one-machine, and executor outage drills.
 - [x] Run full-history secret scans plus browser/network/log/evidence privacy scans.
-- [ ] Add rate limits, idempotency, health bindings, timeout budgets, and
+- [x] Add rate limits, idempotency, health bindings, timeout budgets, and
   competing-executor tests.
 - [ ] Verify machine replacement for new policies and fail-closed behavior for
   policies bound to unavailable frozen machines.
