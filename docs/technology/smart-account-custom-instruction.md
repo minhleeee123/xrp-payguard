@@ -40,6 +40,12 @@ from the runtime `FdcVerification` address, then reads
 Merkle root. A pending round remains an explicit checkpoint; no proof leaf is
 accepted until a later verifier binds the DA envelope to that root.
 
+The submission boundary reads the current request fee via the runtime
+`FdcHub.fdcRequestFeeConfigurations()` address and builds exact
+`requestAttestation(bytes)` calldata plus the payable wei value. It is an
+intent codec only: no EVM key, signing, broadcast, retry, or submitted-state
+claim is present.
+
 The codec validates non-zero EVM addresses, uint bounds, call/data limits,
 wallet ID, and executor fee. It returns only public bytes, hashes, nonce, and
 the sum of call values. It never accepts an XRPL seed, signs a Payment, calls
@@ -77,3 +83,5 @@ Official references:
 - [FDC getting started](https://dev.flare.network/fdc/getting-started)
 - [FDC `IXRPPayment` reference](https://dev.flare.network/fdc/reference/IXRPPayment)
 - [FDC `IFdcVerification` reference](https://dev.flare.network/fdc/reference/IFdcVerification)
+- [FDC `IFdcHub` reference](https://dev.flare.network/fdc/reference/IFdcHub)
+- [FDC request fee configuration reference](https://dev.flare.network/fdc/reference/IFdcRequestFeeConfigurations/)

@@ -90,6 +90,12 @@ reads a non-zero `merkleRoots` value only after finality is reported. A pending
 round returns `merkleRoot: null`; the reader does not submit, verify a proof
 leaf, or treat a DA envelope as authorized payment evidence.
 
+`prepareCoston2FdcSubmission` reads the current `getRequestFee` through the
+runtime `FdcHub.fdcRequestFeeConfigurations()` address and returns a bounded,
+public submission intent for `requestAttestation(bytes)`: exact calldata,
+request bytes, and payable fee in wei. It never signs, broadcasts, retries a
+request, or treats a prepared call as a submitted attestation.
+
 `computeDirectMintingPaymentQuote` and `readDirectMintingPaymentQuote` cover the
 official FAssets direct-mint amount boundary. They use integer UBA values and
 the AssetManager getters `getDirectMintingFeeBIPS`,
