@@ -241,7 +241,8 @@ function validateReceipt(receipt: PublicPolicyReceiptV1, binding: PolicyBindingV
   const submissionNonce = nonZeroBytes32(receipt.submissionNonce, `receipts[${index}].submissionNonce`);
   const protocolReceipt: PolicyReceiptV1 = { binding, machineId, keyFingerprint, submissionNonce, receiptNonce: receipt.receiptNonce, issuedAt: receipt.issuedAt, expiry: receipt.expiry };
   const digest = policyReceiptDigest(protocolReceipt);
-  if (receipt.digest !== digest) throw new Error(`receipt ${index} digest mismatch`);
+  const providedDigest = nonZeroBytes32(receipt.digest, `receipts[${index}].digest`);
+  if (providedDigest !== digest) throw new Error(`receipt ${index} digest mismatch`);
   return { ...receipt, machineId, keyFingerprint, submissionNonce, digest, signer: getAddress(receipt.signer) as Hex };
 }
 

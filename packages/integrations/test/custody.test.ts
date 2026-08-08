@@ -61,6 +61,8 @@ describe("three-machine public policy custody receipts", () => {
     expect(await publicPolicyCustodyReadState(value)).toMatchObject({ status: "READY", publicFacts: true });
     expect(wire.binding.schema).toBe(POLICY_SCHEMA_V1);
     expect(wire.bundleHash).not.toBe(POLICY_CUSTODY_BUNDLE_V1);
+    const upperCaseDigests = value.receipts.map((receipt) => ({ ...receipt, digest: `0x${receipt.digest.slice(2).toUpperCase()}` as Hex })) as [PublicPolicyReceiptV1, PublicPolicyReceiptV1, PublicPolicyReceiptV1];
+    expect(policyCustodyBundleHash({ binding: value.binding, receipts: upperCaseDigests })).toBe(value.bundleHash);
     const publicJson = JSON.stringify(wire);
     expect(publicJson).not.toContain("policyPlaintext");
     expect(publicJson).not.toContain("ciphertext");
