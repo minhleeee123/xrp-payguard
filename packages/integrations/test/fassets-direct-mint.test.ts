@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import { getAddress } from "viem";
 import {
   DIRECT_MINTING_BIPS_DENOMINATOR,
+  DIRECT_MINTING_PAYMENT_ADDRESS_ABI,
   DIRECT_MINTING_SETTINGS_ABI,
   computeDirectMintingPaymentAmountUBA,
   computeDirectMintingPaymentQuote,
+  readDirectMintingPaymentAddress,
   readDirectMintingPaymentQuote,
   readDirectMintingSettings,
 } from "../src/fassets-direct-mint.js";
@@ -89,5 +91,30 @@ describe("FAssets direct-mint settings reader", () => {
     await expect(readDirectMintingSettings({ async readContract() { return 1n; } }, "0x0")).rejects.toThrow(/address/);
     await expect(readDirectMintingSettings({ async readContract() { return 1; } }, assetManager)).rejects.toThrow(/setting/);
     await expect(readDirectMintingSettings({ async readContract() { throw new Error("offline"); } }, assetManager)).rejects.toThrow("offline");
+  });
+});
+
+describe("FAssets direct-mint XRPL payment-address reader", () => {
+  it("reads the official runtime Core Vault address and validates its XRPL shape", async () => {
+    const paymentAddress = "rG1QQv2nh2gr7RCZ1P8YYcBUKCCN633jCn";
+    const result = await readDirectMintingPaymentAddress({
+      async readContract(args) {
+        expect(args.address).toBe(getAddress(assetManager));
+        expect(args.abi).toBe(DIRECT_MINTING_PAYMENT_ADDRESS_ABI);
+        expect(args.functionName).toBe("directMintingPaymentAddress");
+        expect(args.args).toEqual([]);
+        return paymentAddress;
+      },
+    }, assetManager);
+    expect(result).toBe(paymentAddress);
+  });
+
+  it("fails closed for invalid address, unavailable reader, and malformed result", async () => {
+    await expect(readDirectMintingPaymentAddress({ async readContract() { return "rG1QQv2nh2gr7RCZ1P8YYcBUKCCN633jCn"; } }, "0x0"))
+      .rejects.toThrow(/AssetManager address/);
+    await expect(readDirectMintingPaymentAddress({ async readContract() { throw new Error("offline"); } }, assetManager))
+      .rejects.toThrow(/unavailable/);
+    await expect(readDirectMintingPaymentAddress({ async readContract() { return "not-an-xrpl-address"; } }, assetManager))
+      .rejects.toThrow(/malformed/);
   });
 });

@@ -67,6 +67,11 @@ fee (floor division by 10,000 BIPS) and minimum fee, plus the direct executor
 fee. It is a quote/checkpoint helper only: settings can drift, and no quote is
 treated as a payment, proof, or mint receipt.
 
+It also resolves the official `directMintingPaymentAddress()` getter at runtime
+and validates the returned Core Vault address as an XRPL classic address. The
+address is never copied from a reference deployment or promoted to a release
+fact.
+
 The package also has an injected, read-only XRPL API v2 boundary for validated
 `account_info`, `ledger`, and native-XRP `tx` responses. It is limited to public
 checkpoints, checks ledger/hash/account/payment consistency, caps memo data and

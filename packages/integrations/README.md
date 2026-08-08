@@ -113,6 +113,11 @@ The reader is injected and the calculator performs no RPC, signing, XRPL
 payment, FDC proof retrieval, or mint execution. A live quote can drift before
 execution and must be re-read and bound to the eventual public receipt.
 
+`readDirectMintingPaymentAddress` reads the official
+`directMintingPaymentAddress()` getter at runtime and accepts only a valid XRPL
+classic address. It never hard-codes or copies a Core Vault address; an
+unavailable or malformed result fails closed.
+
 `readValidatedXrplAccountInfo`, `readValidatedXrplLedger`, and
 `readValidatedXrplPayment` expose a narrow XRPL JSON-RPC API v2 read boundary.
 They request only validated public state, reject unvalidated/RPC-error

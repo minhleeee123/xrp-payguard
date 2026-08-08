@@ -1,4 +1,5 @@
 import { getAddress, isAddress, zeroAddress, type Hex } from "viem";
+import { isValidClassicAddress } from "xrpl";
 
 const MAX_UINT256 = (1n << 256n) - 1n;
 
@@ -29,6 +30,14 @@ export const DIRECT_MINTING_SETTINGS_ABI = [
   },
 ] as const;
 
+export const DIRECT_MINTING_PAYMENT_ADDRESS_ABI = [{
+  type: "function",
+  name: "directMintingPaymentAddress",
+  stateMutability: "view",
+  inputs: [],
+  outputs: [{ name: "paymentAddress", type: "string" }],
+}] as const;
+
 export type DirectMintingSettingsFunction =
   | "getDirectMintingExecutorFeeUBA"
   | "getDirectMintingFeeBIPS"
@@ -52,6 +61,15 @@ export interface DirectMintingSettingsReader {
     address: Hex;
     abi: typeof DIRECT_MINTING_SETTINGS_ABI;
     functionName: DirectMintingSettingsFunction;
+    args: readonly [];
+  }): Promise<unknown>;
+}
+
+export interface DirectMintingPaymentAddressReader {
+  readContract(args: {
+    address: Hex;
+    abi: typeof DIRECT_MINTING_PAYMENT_ADDRESS_ABI;
+    functionName: "directMintingPaymentAddress";
     args: readonly [];
   }): Promise<unknown>;
 }
@@ -136,6 +154,31 @@ export async function readDirectMintingSettings(
     feeBIPS: normalizeSetting(feeBIPS, "getDirectMintingFeeBIPS"),
     minimumFeeUBA: normalizeSetting(minimumFeeUBA, "getDirectMintingMinimumFeeUBA"),
   };
+}
+
+export async function readDirectMintingPaymentAddress(
+  reader: DirectMintingPaymentAddressReader,
+  assetManager: string,
+): Promise<string> {
+  if (!isAddress(assetManager) || getAddress(assetManager) === zeroAddress) {
+    throw new Error("AssetManager address invalid");
+  }
+  const address = getAddress(assetManager) as Hex;
+  let value: unknown;
+  try {
+    value = await reader.readContract({
+      address,
+      abi: DIRECT_MINTING_PAYMENT_ADDRESS_ABI,
+      functionName: "directMintingPaymentAddress",
+      args: [],
+    });
+  } catch {
+    throw new Error("direct minting payment address unavailable");
+  }
+  if (typeof value !== "string" || !isValidClassicAddress(value)) {
+    throw new Error("direct minting payment address malformed");
+  }
+  return value;
 }
 
 export async function readDirectMintingPaymentQuote(
