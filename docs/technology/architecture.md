@@ -172,6 +172,18 @@ direct-mint success is accepted only from an exact public receipt matching all
 owner/account/destination/asset/value/fee/nonce/operation fields. Live supported
 service execution remains unverified.
 
+### FAssets exit
+
+The local exit model hashes the exact `redeemAmount` or `redeemWithTag` intent,
+then validates the Asset Manager transaction receipt and each public
+`RedemptionRequested` obligation. A partial redemption retains the unredeemed
+amount, and multiple agents remain separate request legs. A request is only
+pending: underlying payment requires a verifier-backed `RedemptionPerformed`
+event, while timeout compensation is recorded separately from a verifier-backed
+`RedemptionDefault` event. Both terminal paths bind their public receipt
+commitment and fail closed on replay or asynchronous drift. Live Coston2
+redemption remains unverified.
+
 ### Recurring execution
 
 The owner pre-funds a PayGuard vault. A permissionless executor may request an

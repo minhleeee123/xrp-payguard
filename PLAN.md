@@ -207,8 +207,11 @@ execute, or bypass FCC authorization.
   one canonical PayGuard request on Coston2.
 - [ ] Add Web2Json only after source allowlisting, transform/schema pinning, and
   semantic trust are explicit.
-- [ ] Implement official FAssets redemption as an exit, without claiming an
-  instant underlying XRP payout.
+- [x] Implement a local official-field FAssets redemption checkpoint model that
+  distinguishes request, partial/multi-agent obligations, verified underlying
+  payment, and verified collateral default without claiming instant XRP.
+- [ ] Execute and verify an official live FAssets redemption/default exit on
+  Coston2, including partial fulfillment and destination-tag behavior.
 
 Exit: one XRPL Testnet payment funds a canonical Coston2 PayGuard vault and an
 FDC-attested trigger safely advances one request.

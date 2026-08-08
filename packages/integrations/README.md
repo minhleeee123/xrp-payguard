@@ -22,6 +22,13 @@ verification call. The replay sets are preflight guards only: a live consumer
 must atomically consume the transaction and input commitment in canonical
 on-chain state. Web2Json is intentionally absent.
 
+The FAssets exit model binds `redeemAmount`/`redeemWithTag` intent to the exact
+Asset Manager receipt and every public `RedemptionRequested` leg. It preserves
+partial fulfillment and multi-agent obligations, and labels a leg as underlying
+paid or collateral-defaulted only after an injected canonical-event verifier
+returns a non-zero receipt commitment. Request creation alone remains pending;
+it is never described as an XRP payout.
+
 The FDC verifier and Smart Account client are injected interfaces. An absent or
 negative verifier, stale/mismatched payment, missing proof, or unavailable mint
 client cannot become success. `DELAYED` is an explicit checkpoint that resumes
