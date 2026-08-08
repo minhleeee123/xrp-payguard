@@ -96,6 +96,14 @@ public submission intent for `requestAttestation(bytes)`: exact calldata,
 request bytes, and payable fee in wei. It never signs, broadcasts, retries a
 request, or treats a prepared call as a submitted attestation.
 
+`buildCoston2DirectMintCall` turns a parsed, successful Coston2 `XRPPayment`
+envelope plus a finalized-round checkpoint into exact
+`executeDirectMinting` or `executeDirectMintingWithData` calldata. It checks
+the testXRP/type/round/proof-owner/status bindings and exposes the caller's
+explicit `msg.value`; it does not compute a Merkle leaf, verify the proof,
+sign, broadcast, or claim that FXRP was minted. The with-data value must be
+bound by the caller to the Smart Account operation's public call-value sum.
+
 `computeDirectMintingPaymentQuote` and `readDirectMintingPaymentQuote` cover the
 official FAssets direct-mint amount boundary. They use integer UBA values and
 the AssetManager getters `getDirectMintingFeeBIPS`,

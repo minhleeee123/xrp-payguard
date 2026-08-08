@@ -250,6 +250,9 @@ verified on Coston2. External review and registered FCC execution remain open.
 - [x] Add a runtime fee quote and exact `requestAttestation(bytes)` submission
   intent codec; signing, broadcast, receipts, and live request state remain
   open.
+- [x] Add an exact direct-mint/`0xFE` with-data call codec bound to parsed
+  successful XRPPayment and finalized-round checkpoints; Merkle verification,
+  signing, broadcast, and receipt matching remain open.
 - [x] Add an integer-only official-field FAssets direct-mint quote calculator
   and injected settings reader; live quote drift, payment, and mint execution
   remain open.

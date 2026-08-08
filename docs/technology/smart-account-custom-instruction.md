@@ -46,6 +46,13 @@ The submission boundary reads the current request fee via the runtime
 intent codec only: no EVM key, signing, broadcast, retry, or submitted-state
 claim is present.
 
+The direct-mint boundary then encodes a parsed successful XRPPayment and a
+finalized round into `executeDirectMinting` or the `0xFE`
+`executeDirectMintingWithData` call. It checks public type/source/round/owner
+and status bindings, but deliberately leaves Merkle verification, signing,
+broadcast, receipt matching, and the with-data `msg.value` relationship to the
+caller/executor checkpoint.
+
 The codec validates non-zero EVM addresses, uint bounds, call/data limits,
 wallet ID, and executor fee. It returns only public bytes, hashes, nonce, and
 the sum of call values. It never accepts an XRPL seed, signs a Payment, calls
@@ -85,3 +92,4 @@ Official references:
 - [FDC `IFdcVerification` reference](https://dev.flare.network/fdc/reference/IFdcVerification)
 - [FDC `IFdcHub` reference](https://dev.flare.network/fdc/reference/IFdcHub)
 - [FDC request fee configuration reference](https://dev.flare.network/fdc/reference/IFdcRequestFeeConfigurations/)
+- [FAssets direct minting guide](https://dev.flare.network/fassets/developer-guides/fassets-direct-minting)

@@ -19,3 +19,4 @@ export * from "./fdc-verifier.js";
 export * from "./fdc-proof.js";
 export * from "./fdc-finality.js";
 export * from "./fdc-submit.js";
+export * from "./fassets-direct-mint-call.js";
