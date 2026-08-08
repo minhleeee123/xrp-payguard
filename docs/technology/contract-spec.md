@@ -1,0 +1,192 @@
+# Planned protocol and contract specification
+
+> This is a design specification, not a deployed ABI.
+
+## 1. Contracts
+
+### `PayGuardPolicyRegistry`
+
+Responsibilities:
+
+- register policy commitments after verifying three machine receipts;
+- freeze owner, version, schema, extension, code, machine IDs/key fingerprints,
+  custody threshold, result threshold, and policy nonce;
+- activate, stop, revoke, and supersede versions under explicit authority;
+- expose no ciphertext or policy fields.
+
+### `PayGuardVault`
+
+Responsibilities:
+
+- accept supported public assets;
+- account for deposited, available, reserved, spent, withdrawn, and refunded;
+- reserve/release exact request amounts under router authority;
+- prevent unsupported, rebasing, fee-on-transfer, or callback behavior;
+- conserve each asset exactly once across every terminal path.
+
+### `PayGuardActionRouter`
+
+Responsibilities:
+
+- create and freeze canonical action requests;
+- capture spend/root/occurrence state and optional FTSO/FDC input;
+- dispatch evaluation and track attempt/expiry;
+- verify registered distinct threshold signatures;
+- execute one supported adapter call atomically with state advancement;
+- expose explicit denial, expiry, cancellation, stop, and recovery state.
+
+### Adapter interfaces
+
+V1 adapters are intentionally narrow:
+
+- FTestXRP/FXRP transfer;
+- supported FAssets approval/redeem request, if policy permits;
+- selected static EVM targets only after independent review.
+
+No arbitrary call adapter exists in V1.
+
+## 2. Schemas
+
+### `POLICY_SCHEMA_V1` — private
+
+Conceptual fields:
+
+- schema/domain version;
+- chain, registry, vault, router, owner, policy ID/version;
+- asset and reference currency;
+- target/action rules;
+- fixed, rolling, and calendar caps;
+- schedule slots, occurrence limits, cooldown/grace;
+- start/end/expiry;
+- delegated requester rules;
+- FTSO/FDC requirement descriptors;
+- private salt and one-time submission nonce.
+
+The exact encoding must be canonical, fixed-width where practical, bounded, and
+shared by Go/TypeScript fixtures. Plaintext/ciphertext never appears in Solidity.
+
+### `POLICY_RECEIPT_V1` — public
+
+Fields include:
+
+- chain, registry, vault, router, owner;
+- policy ID/version/schema and policy commitment;
+- extension ID, code version, machine identity/key fingerprint;
+- submission nonce, receipt nonce, issued-at, expiry;
+- receipt signature.
+
+### `ACTION_REQUEST_V1` — public
+
+Fields include:
+
+- chain, registry, vault, router, policy ID/version;
+- request ID/nonce/attempt;
+- requester, target, action type, asset, amount;
+- schedule slot/occurrence;
+- spend checkpoint/root and balance checkpoint;
+- optional FTSO/FDC descriptor/input commitment;
+- created-at, fixed grace deadline, result expiry.
+
+### `EVALUATION_RESULT_V1` — public
+
+Fields include:
+
+- every request-domain field necessary to prevent substitution;
+- decision: `ALLOW` or `DENY`;
+- public reason class only (`POLICY_DENIED`, `STALE_INPUT`, `MALFORMED`, etc.);
+- reserved/execution amount and resulting checkpoint commitment for `ALLOW`;
+- result nonce, attempt, issued-at, expiry;
+- machine identity and signature.
+
+No private rule, intermediate value, alternate target, or private reason appears.
+
+## 3. Policy lifecycle
+
+```text
+None -> Receipted -> Active -> Stopped -> Active
+                         |          |
+                         v          v
+                    Superseded   Revoked
+                         \          /
+                          -> Closed
+```
+
+- `Receipted` requires the exact all-three custody bitmap.
+- `Active` accepts requests.
+- `Stopped` prevents new requests but permits safe settlement/recovery rules.
+- `Superseded` points to a separately receipted version.
+- `Revoked/Closed` never reactivates without a new version.
+
+## 4. Request lifecycle
+
+```text
+Created -> Frozen -> EvaluationPending -> Allowed -> Executed
+                          |                 |
+                          +-> Denied        +-> Expired/Recovered (only before execute)
+                          +-> Expired
+```
+
+Terminal states are unique. `Executed` cannot transition. A denied/expired
+request cannot reuse the same nonce. Retry uses a new attempt under the fixed
+grace rules and identical frozen inputs where required.
+
+## 5. Result digest
+
+The exact hash must cover at minimum:
+
+```text
+chainId
+policyRegistry
+vault
+actionRouter
+extensionId
+codeVersion
+policyId
+policyVersion
+policyCommitment
+requestId
+requestNonce
+requestHash
+requester
+target
+actionType
+asset
+amount
+scheduleSlot
+occurrence
+spendCheckpoint
+balanceCheckpoint
+ftsoOrFdcInputCommitment
+decision
+publicReasonClass
+resultNonce
+attempt
+fixedGraceDeadline
+expiry
+```
+
+Signatures use the current FCC-supported prefix/domain and registered signer
+mapping. A generic EIP-191 assumption is not accepted without live verification.
+
+## 6. Deterministic policy evaluation
+
+- Checked integer/fixed-point math only.
+- UTC timestamps/slots from canonical chain state; no local timezone.
+- Explicit inclusive/exclusive boundary definitions.
+- Reference-value conversion binds feed, decimals, timestamp, freshness, and
+  documented rounding direction.
+- Deny overrides allow when multiple rules conflict.
+- Unknown schema/rule/action/input denies.
+- Missing, stale, negative, zero, overflowed, or inconsistent oracle/proof input
+  denies or pauses; never falls back.
+- Calendar and rolling windows use canonical history/checkpoint data.
+
+## 7. Conservation and authorization invariants
+
+- `deposited = available + reserved + spent + withdrawn + refunded` per vault/asset.
+- One request reserves/executed amount at most once.
+- Only the frozen policy owner/governance can stop/revoke/supersede.
+- Owner authority cannot manufacture `ALLOW` or bypass result threshold.
+- Router cannot transfer an unsupported asset/target/action.
+- Executor receives no policy or key and cannot choose decision fields.
+- Reentrancy/token failure reverts state and transfer together.

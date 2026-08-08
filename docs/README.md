@@ -1,0 +1,41 @@
+# XRP PayGuard documentation
+
+## Canonical documents
+
+- [`competition.md`](competition.md): supplied competition requirements and
+  claim boundaries.
+- [`product/product-plan.md`](product/product-plan.md): complete product vision,
+  users, capabilities, and acceptance criteria.
+- [`product/user-journeys.md`](product/user-journeys.md): end-to-end journeys
+  for policy owner, payee, executor, and auditor.
+- [`technology/requirements.md`](technology/requirements.md): required Flare
+  primitives and current official sources.
+- [`technology/architecture.md`](technology/architecture.md): component model,
+  public/private data, trust, and recovery.
+- [`technology/contract-spec.md`](technology/contract-spec.md): planned schemas,
+  state machines, and signature domains.
+- [`technology/threat-model.md`](technology/threat-model.md): attacker model,
+  mitigations, residual risk, and non-claims.
+- [`technology/verification.md`](technology/verification.md): evidence gates and
+  release acceptance.
+- [`technology/reuse-inventory.md`](technology/reuse-inventory.md): what may and
+  may not be adapted from VeilBid.
+- [`technology/repository-layout.md`](technology/repository-layout.md): planned
+  workspace ownership and boundaries.
+- [`lessons/veilbid-build-lessons.md`](lessons/veilbid-build-lessons.md): failure
+  modes and implementation lessons.
+
+## Supplied and reference material
+
+- `reference/original/` is a byte-for-byte working copy of the owner-supplied
+  Summer Signal source material from the VeilBid workspace.
+- `reference/hackathon-brief.supplied.md` is the prior project's translation of
+  that supplied brief. Dates and prize figures must be reconfirmed externally.
+- [`reference/SOURCE-PROVENANCE.md`](reference/SOURCE-PROVENANCE.md) records the
+  source commit and hashes of copied owner-supplied material.
+- Files ending in `.reference.md` under `technology/` are read-only VeilBid
+  references. They are not PayGuard architecture or deployment claims.
+
+When canonical PayGuard docs disagree with a copied reference, canonical
+PayGuard docs control the product direction; official Flare sources and a
+future verified PayGuard release control live protocol facts.

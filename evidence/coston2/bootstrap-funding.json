@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "suite": "payguard-workspace-bootstrap-funding",
+  "recordedAt": "2026-08-08T12:41:45Z",
+  "network": {
+    "name": "flare-coston2",
+    "chainId": 114,
+    "observedBlock": "33780860"
+  },
+  "publicIdentifiers": {
+    "source": "0xE412d04DA2A211F7ADC80311CC0FF9F03440B64E",
+    "destination": "0xDC1cc527423C882156a632C250528D1922d18Fc7",
+    "fTestXrp": "0x0b6A3645c240605887a5532109323A3E12273dc7",
+    "nativeTransferAmountC2FLR": "733.725948360214787068",
+    "fTestXrpTransferAmount": "75.316212",
+    "nativeTransactionHash": "0xc494d935a1bd47894084bed3e808c2e611b74012719621fc31dd9012e31ba7b7",
+    "fTestXrpTransactionHash": "0x24e6b9ecfdc9c159951bb6227f09b859bac2e8533d3db8e44195c4e18fc7d604",
+    "destinationNativeBalanceC2FLR": "733.725948360214787068",
+    "destinationFTestXrpBalance": "75.316212"
+  },
+  "assertions": {
+    "nativeTransferConfirmed": true,
+    "fTestXrpTransferConfirmed": true,
+    "destinationBalanceReread": true,
+    "testnetOnly": true,
+    "noPrivateKeyRecorded": true,
+    "noXrplAssetMoved": true
+  },
+  "notes": [
+    "The destination is the dedicated XRP PayGuard Coston2 development wallet.",
+    "The source credential was not copied into the PayGuard workspace.",
+    "This public-safe evidence contains testnet addresses, amounts, transactions, and assertion booleans only."
+  ]
+}

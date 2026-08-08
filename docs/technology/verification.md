@@ -1,0 +1,97 @@
+# Verification and evidence plan
+
+## 1. Evidence policy
+
+Allowed public evidence:
+
+- public addresses, extension IDs, code/image hashes, key fingerprints;
+- transactions, blocks, statuses, gas, timings, checkpoint/result commitments;
+- public policy/request fields and assertion booleans;
+- sanitized dependency/version/source mappings.
+
+Forbidden evidence:
+
+- private policy plaintext or ciphertext;
+- wallet/XRPL/FCC keys, seeds, signatures forbidden by policy, API credentials;
+- proxy/indexer tokens, authenticated raw responses, private denial reasons;
+- browser storage/network captures containing confidential payloads.
+
+## 2. Gates
+
+| Gate | Required proof | Status |
+|---|---|---|
+| 0 — Foundations | pinned supported tools, registries, services, three machine capacity | NOT STARTED |
+| A — FCC result | registered extension result verified on Coston2 | NOT STARTED |
+| B — Private policy ingress | sealed policy, three receipts, replay/domain negatives | NOT STARTED |
+| C — Common custody | all-three matching policy availability and commitment | NOT STARTED |
+| D — Deterministic evaluation | cross-language vectors and private policy result | NOT STARTED |
+| E — Threshold execution | two distinct exact results authorize one atomic action | NOT STARTED |
+| F — Vault conservation | deposits/reservations/spend/refund and adversarial invariants | NOT STARTED |
+| G — XRP-native funding | XRPL payment, FDC proof, Smart Account deposit | NOT STARTED |
+| H — Product release | full roles, recovery, accessibility, live deployment | NOT STARTED |
+| I — User validation | interviews, usability, and design-partner pilot | NOT STARTED |
+
+## 3. Test matrix
+
+### Protocol/model
+
+- Golden vectors in Go, Solidity, and TypeScript.
+- Schema malformed/unknown/oversized/boundary cases.
+- Fixed/rolling/calendar cap boundaries and deterministic UTC slots.
+- Reference conversion decimals, rounding, zero, overflow, and stale feed.
+- Allow/deny precedence, action/target classes, delegated allowances.
+
+### Contracts
+
+- Unit/fuzz/invariant/stateful tests.
+- Receipt/signature/domain/machine/code/threshold negatives.
+- Request replay, duplicate occurrence, attempt/expiry/grace behavior.
+- Conservation across execute, deny, expire, stop, revoke, withdraw, refund.
+- Reentrancy, malicious token, callback, adapter, and partial failure.
+- Competing executors/finalizers and transaction-order races.
+
+### FCC/private path
+
+- Wrong key/owner/policy/request/nonce/commitment/schema/code/machine rejection.
+- No plaintext/ciphertext in chain, logs, browser persistence, evidence, or output.
+- Sealed restart behavior, rollback check, one-machine result outage.
+- Replacement registration and frozen-policy failure/recovery.
+- Split decisions and wrong result field rejection.
+
+### FDC/FTSO/Smart Account/FAssets
+
+- Correct and wrong XRPL payment, destination, memo, owner, amount, fee, nonce.
+- FDC request/finalization/DA proof/checkpoint resume and duplicate transaction.
+- Fresh/stale/unavailable/negative FTSO value.
+- Direct mint success, delayed mint, callback/event mismatch, quote drift.
+- FAssets approve/transfer/redeem request and non-instant exit semantics.
+
+### Product
+
+- Wallet-free public evidence.
+- Owner, team, payee, executor, and auditor journeys.
+- Laptop/mobile, keyboard, screen-reader names, reduced motion.
+- Refresh/reload/fresh-process recovery at every asynchronous checkpoint.
+- Explicit dependency-unavailable and no-provider states.
+- Production deploy smoke tied to exact source commit.
+
+## 4. Release manifest
+
+A future `coston2.release.json` becomes authoritative only after it records and
+verifies:
+
+- network/chain and deployment block;
+- contract addresses, runtime hashes, constructor/wiring, ownership/governance;
+- extension ID, code/image version/hash;
+- machine IDs, URLs, key fingerprints, status, and signer mapping;
+- official protocol discovery sources/addresses;
+- deployment and verification transactions;
+- source commit and generated binding digest;
+- evidence files and pass/fail assertions.
+
+## 5. Release acceptance
+
+Do not call PayGuard complete when only a local demo works. Release requires a
+real Coston2 lifecycle, live failure/recovery evidence, generated bindings,
+public-safe hosted smoke, secret/privacy scans, user testing, and documentation
+whose claims exactly match the deployed state.
