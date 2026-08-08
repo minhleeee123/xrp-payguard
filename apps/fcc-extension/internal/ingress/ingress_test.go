@@ -118,6 +118,9 @@ func TestCiphertextOnlyCustodyAndSignedReceipts(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if !bytes.Contains(payload, []byte(`"issuedAt":"1000"`)) || !bytes.Contains(payload, []byte(`"policyNonce":"1"`)) {
+		t.Fatalf("private ingress wire is not decimal-string/lower-camel: %s", payload)
+	}
 	recorder := httptest.NewRecorder()
 	server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "/private/ingress", bytes.NewReader(payload)))
 	if recorder.Code != http.StatusOK {

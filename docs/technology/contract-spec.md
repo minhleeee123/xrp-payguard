@@ -118,6 +118,14 @@ Fields include:
 
 No private rule, intermediate value, alternate target, or private reason appears.
 
+The public JSON transport for receipts, requests, spend state, FTSO snapshots,
+and evaluation results uses lower-camel field names. Every `uint256`, bigint,
+and `uint64` is an unsigned quoted decimal string so JavaScript never rounds a
+digest input through IEEE-754. Decisions and public reason classes use the
+canonical names above, not implementation-specific integer codes. Go rejects
+numeric JSON bigints, invalid decimal strings, and unknown enums; round trips
+must preserve the receipt/request/evaluation digest.
+
 ## 3. Policy lifecycle
 
 ```text

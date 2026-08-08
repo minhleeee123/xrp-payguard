@@ -148,6 +148,8 @@ fields; live machine-domain verification remains open.
 - [x] Remove caller-declared spend aggregates; replay ordered public requests,
   accounting times, and request-bound FTSO snapshots from canonical genesis in
   both Go and TypeScript before deriving cap totals.
+- [x] Freeze the Go/TypeScript HTTP wire to lower-camel fields, named enums, and
+  quoted decimal bigint/uint64 values with digest-preserving round-trip tests.
 - [ ] Define deterministic tie/conflict rules: explicit deny outranks allow;
   malformed, unknown, stale, or unavailable input denies.
 - [ ] Add range, rounding, overflow, time-boundary, timezone-independent,

@@ -105,4 +105,35 @@ describe("relay HTTP boundary", () => {
     const transport = new HttpMachineTransport(fetcher as typeof fetch);
     await expect(transport.evaluate(machines[0]!, request, state, new AbortController().signal)).rejects.toThrow(/too large/);
   });
+
+  it("round-trips the Go decimal-string evaluation wire without precision loss", async () => {
+    const result = {
+      request,
+      decision: "ALLOW",
+      publicReasonClass: "OK",
+      reservedAmount: request.amount,
+      resultingCheckpoint: id("next"),
+      resultNonce: request.requestId,
+      attempt: request.attempt,
+      issuedAt: 1_050n,
+      expiry: request.expiry,
+      machineId: machines[0]!.machineId,
+      keyFingerprint: machines[0]!.keyFingerprint,
+    };
+    const fetcher = async (_input: URL | RequestInfo, init?: RequestInit) => {
+      expect(String(init?.body)).toContain(`"availableBalance":"100"`);
+      return new Response(stringify({
+        result,
+        digest: id("digest"),
+        signer: machines[0]!.signer,
+        signature: "0x01",
+      }), { status: 200, headers: { "content-type": "application/json" } });
+    };
+    const transport = new HttpMachineTransport(fetcher as typeof fetch);
+    const decoded = await transport.evaluate(machines[0]!, request, state, new AbortController().signal);
+    expect(decoded.result.decision).toBe("ALLOW");
+    expect(decoded.result.reservedAmount).toBe(75n);
+    expect(decoded.result.issuedAt).toBe(1_050n);
+    expect(decoded.result.request.requestNonce).toBe(1n);
+  });
 });

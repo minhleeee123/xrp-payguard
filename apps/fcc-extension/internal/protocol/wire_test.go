@@ -1,0 +1,136 @@
+package protocol
+
+import (
+	"bytes"
+	"encoding/json"
+	"math/big"
+	"testing"
+)
+
+func TestEvaluationWireUsesSharedLowerCamelDecimalSchema(t *testing.T) {
+	vector := readVector(t)
+	policy := policyFromVector(vector.Policy)
+	request := requestFromVector(vector.Request)
+	result, err := EvaluatePolicy(policy, request, stateFromVector(request))
+	if err != nil {
+		t.Fatal(err)
+	}
+	result.MachineID = mustHash(vector.Result.MachineID)
+	result.KeyFingerprint = mustHash(vector.Result.KeyFingerprint)
+	wire, err := json.Marshal(result)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, expected := range [][]byte{
+		[]byte(`"requestNonce":"1"`), []byte(`"amount":"75"`),
+		[]byte(`"decision":"ALLOW"`), []byte(`"publicReasonClass":"OK"`),
+		[]byte(`"reservedAmount":"75"`), []byte(`"issuedAt":"1050"`),
+	} {
+		if !bytes.Contains(wire, expected) {
+			t.Fatalf("wire missing %s: %s", expected, wire)
+		}
+	}
+	for _, forbidden := range [][]byte{[]byte(`"Request"`), []byte(`"Decision"`), []byte(`"Amount"`)} {
+		if bytes.Contains(wire, forbidden) {
+			t.Fatalf("wire contains non-canonical field %s: %s", forbidden, wire)
+		}
+	}
+	var decoded EvaluationResultV1
+	if err := json.Unmarshal(wire, &decoded); err != nil {
+		t.Fatal(err)
+	}
+	originalDigest, err := EvaluationDigest(result)
+	if err != nil {
+		t.Fatal(err)
+	}
+	decodedDigest, err := EvaluationDigest(decoded)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decodedDigest != originalDigest {
+		t.Fatalf("wire round trip changed digest: %s != %s", decodedDigest, originalDigest)
+	}
+}
+
+func TestSpendStateWireRoundTripPreservesHistory(t *testing.T) {
+	vector := readVector(t)
+	request := requestFromVector(vector.Request)
+	state := SpendStateV1{
+		AvailableBalance:  big.NewInt(100),
+		History:           []SpendHistoryEntryV1{{Request: request, AccountedAt: 1050}},
+		OccurrenceCount:   1,
+		LastAccountingAt:  1050,
+		SpendCheckpoint:   mustHash(vector.Result.ResultingCheckpoint),
+		BalanceCheckpoint: request.BalanceCheckpoint,
+		Now:               1060,
+	}
+	wire, err := json.Marshal(state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, expected := range [][]byte{[]byte(`"availableBalance":"100"`), []byte(`"accountedAt":"1050"`), []byte(`"lastAccountingAt":"1050"`), []byte(`"now":"1060"`)} {
+		if !bytes.Contains(wire, expected) {
+			t.Fatalf("state wire missing %s: %s", expected, wire)
+		}
+	}
+	var decoded SpendStateV1
+	if err := json.Unmarshal(wire, &decoded); err != nil {
+		t.Fatal(err)
+	}
+	if decoded.AvailableBalance.Cmp(state.AvailableBalance) != 0 || len(decoded.History) != 1 || decoded.History[0].AccountedAt != 1050 || decoded.History[0].Request.RequestID != request.RequestID {
+		t.Fatalf("state wire round trip changed history: %+v", decoded)
+	}
+}
+
+func TestReceiptWireRoundTripPreservesDigest(t *testing.T) {
+	vector := readVector(t)
+	binding := bindingFromVector(vector.Binding)
+	receipt := PolicyReceiptV1{
+		Binding: binding, MachineID: mustHash(vector.Receipt.MachineID),
+		KeyFingerprint:  mustHash(vector.Receipt.KeyFingerprint),
+		SubmissionNonce: mustHash(vector.Receipt.SubmissionNonce),
+		ReceiptNonce:    mustUint64(vector.Receipt.ReceiptNonce),
+		IssuedAt:        mustUint64(vector.Receipt.IssuedAt), Expiry: mustUint64(vector.Receipt.Expiry),
+	}
+	wire, err := json.Marshal(receipt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, expected := range [][]byte{[]byte(`"chainId":"114"`), []byte(`"policyNonce":"1"`), []byte(`"receiptNonce":"1"`), []byte(`"issuedAt":"1000"`)} {
+		if !bytes.Contains(wire, expected) {
+			t.Fatalf("receipt wire missing %s: %s", expected, wire)
+		}
+	}
+	var decoded PolicyReceiptV1
+	if err := json.Unmarshal(wire, &decoded); err != nil {
+		t.Fatal(err)
+	}
+	originalDigest, err := PolicyReceiptDigest(receipt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	decodedDigest, err := PolicyReceiptDigest(decoded)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decodedDigest != originalDigest {
+		t.Fatalf("receipt wire round trip changed digest: %s != %s", decodedDigest, originalDigest)
+	}
+}
+
+func TestWireRejectsNumericBigIntsAndUnknownDecision(t *testing.T) {
+	vector := readVector(t)
+	request := requestFromVector(vector.Request)
+	wire, err := json.Marshal(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	numericNonce := bytes.Replace(wire, []byte(`"requestNonce":"1"`), []byte(`"requestNonce":1`), 1)
+	if err := json.Unmarshal(numericNonce, new(ActionRequestV1)); err == nil {
+		t.Fatal("numeric bigint bypassed the decimal-string wire contract")
+	}
+	invalidResult := []byte(`{"request":` + string(wire) + `,"decision":"APPROVE","publicReasonClass":"OK","reservedAmount":"0","resultingCheckpoint":"0x0000000000000000000000000000000000000000000000000000000000000000","resultNonce":"0x0000000000000000000000000000000000000000000000000000000000000000","attempt":0,"issuedAt":"1","expiry":"2","machineId":"0x0000000000000000000000000000000000000000000000000000000000000000","keyFingerprint":"0x0000000000000000000000000000000000000000000000000000000000000000"}`)
+	if err := json.Unmarshal(invalidResult, new(EvaluationResultV1)); err == nil {
+		t.Fatal("unknown decision accepted")
+	}
+}

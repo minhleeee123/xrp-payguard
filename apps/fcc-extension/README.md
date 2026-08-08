@@ -5,6 +5,9 @@ The Go module contains the PayGuard-specific deterministic protocol codec in
 `internal/ingress`. It matches the TypeScript `POLICY_SCHEMA_V1`, receipt,
 request, and evaluation golden vector, signs receipts/results with ephemeral
 machine keys in tests, and fails closed on replay/domain/threshold errors.
+The public Go/TypeScript HTTP boundary uses lower-camel field names, named
+decision/reason enums, and quoted unsigned decimal strings for every bigint or
+`uint64`; numeric JSON bigints and unknown enums are rejected before hashing.
 Local replacement tests prove that a new machine set can custody only a new
 policy version: replacement machines cannot evaluate an old commitment, old
 machines cannot evaluate the replacement commitment, and loss of the old

@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -206,6 +207,42 @@ type IngressRequest struct {
 	IssuedAt        uint64                   `json:"issuedAt"`
 	Expiry          uint64                   `json:"expiry"`
 	Ciphertext      string                   `json:"ciphertext"`
+}
+
+type ingressRequestWire struct {
+	Binding         protocol.PolicyBindingV1 `json:"binding"`
+	SubmissionNonce common.Hash              `json:"submissionNonce"`
+	IssuedAt        string                   `json:"issuedAt"`
+	Expiry          string                   `json:"expiry"`
+	Ciphertext      string                   `json:"ciphertext"`
+}
+
+func (request IngressRequest) MarshalJSON() ([]byte, error) {
+	return json.Marshal(ingressRequestWire{
+		Binding: request.Binding, SubmissionNonce: request.SubmissionNonce,
+		IssuedAt: strconv.FormatUint(request.IssuedAt, 10), Expiry: strconv.FormatUint(request.Expiry, 10),
+		Ciphertext: request.Ciphertext,
+	})
+}
+
+func (request *IngressRequest) UnmarshalJSON(data []byte) error {
+	var wire ingressRequestWire
+	if err := json.Unmarshal(data, &wire); err != nil {
+		return err
+	}
+	issuedAt, err := strconv.ParseUint(wire.IssuedAt, 10, 64)
+	if err != nil || strconv.FormatUint(issuedAt, 10) != wire.IssuedAt {
+		return errors.New("issuedAt must be a canonical uint64 decimal string")
+	}
+	expiry, err := strconv.ParseUint(wire.Expiry, 10, 64)
+	if err != nil || strconv.FormatUint(expiry, 10) != wire.Expiry {
+		return errors.New("expiry must be a canonical uint64 decimal string")
+	}
+	*request = IngressRequest{
+		Binding: wire.Binding, SubmissionNonce: wire.SubmissionNonce,
+		IssuedAt: issuedAt, Expiry: expiry, Ciphertext: wire.Ciphertext,
+	}
+	return nil
 }
 
 type HTTPServer struct {
