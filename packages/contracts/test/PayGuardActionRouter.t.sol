@@ -58,7 +58,7 @@ contract PayGuardActionRouterTest is TestBase {
             policyId: policyId,
             policyVersion: 1,
             policyCommitment: commitment,
-            schema: keccak256("schema-v1"),
+            schema: PayGuardTypes.POLICY_SCHEMA_V1,
             extensionId: keccak256("extension-v1"),
             codeVersion: keccak256("code-v1"),
             machineIds: [machineA, machineB, machineC],
@@ -221,6 +221,14 @@ contract PayGuardActionRouterTest is TestBase {
         vm.expectRevert(PayGuardPolicyRegistry.MachineAlreadyRegistered.selector);
         address replacementSigner = vm.addr(_key("payguard-replacement"));
         registry.registerMachine(machineA, keccak256("replacement-key"), replacementSigner);
+    }
+
+    function testRegistryRejectsNonCanonicalSchema() public {
+        PayGuardTypes.PolicyBinding memory invalid = binding;
+        invalid.schema = keccak256("unsupported-schema");
+        PayGuardTypes.PolicyReceipt[3] memory emptyReceipts;
+        vm.expectRevert(PayGuardPolicyRegistry.InvalidBinding.selector);
+        registry.registerPolicy(invalid, emptyReceipts);
     }
 
     function testStaleCheckpointAndCancellationAreSafe() public {

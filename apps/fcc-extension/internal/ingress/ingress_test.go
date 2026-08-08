@@ -157,3 +157,18 @@ func TestThresholdEvaluationFailsClosed(t *testing.T) {
 		t.Fatal("two-machine outage produced an evaluation")
 	}
 }
+
+func TestCoordinatorBindsFrozenOrderAndSubmissionNonce(t *testing.T) {
+	policy := testPolicy()
+	coordinator, machines, binding := newTestCoordinator(t, policy)
+	shuffled, err := NewCoordinator([3]*Machine{machines[1], machines[0], machines[2]})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := shuffled.Submit(binding, policy.SubmissionNonce, 1000, 2000, []byte("opaque-ciphertext")); err == nil {
+		t.Fatal("shuffled machines bypassed frozen receipt order")
+	}
+	if _, err := coordinator.Submit(binding, ingressHash("different-submission"), 1000, 2000, []byte("opaque-ciphertext")); err == nil {
+		t.Fatal("policy was accepted under a different submission nonce")
+	}
+}

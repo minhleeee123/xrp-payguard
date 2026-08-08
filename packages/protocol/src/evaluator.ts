@@ -33,13 +33,20 @@ function nextCheckpoint(request: ActionRequestV1, amount: bigint, occurrence: nu
 export function evaluatePolicy(policyInput: PolicyV1, request: ActionRequestV1, state: SpendStateV1): EvaluationResultV1 {
   const policy = normalizePolicy(policyInput);
   const now = state.now;
+  if (state.availableBalance < 0n || state.dailySpend < 0n || state.rollingSpend < 0n || state.occurrenceCount < 0) {
+    return deny(request, "MALFORMED", now);
+  }
   const domainMatches = request.chainId === policy.chainId && request.registry.toLowerCase() === policy.registry.toLowerCase()
     && request.vault.toLowerCase() === policy.vault.toLowerCase() && request.router.toLowerCase() === policy.router.toLowerCase()
     && request.policyId.toLowerCase() === policy.policyId.toLowerCase() && request.policyVersion === policy.policyVersion
     && request.policyCommitment.toLowerCase() === policyCommitment(policy).toLowerCase();
   if (!domainMatches) return deny(request, "WRONG_DOMAIN", now);
+  if (state.spendCheckpoint.toLowerCase() !== request.spendCheckpoint.toLowerCase()
+    || state.balanceCheckpoint.toLowerCase() !== request.balanceCheckpoint.toLowerCase()) {
+    return deny(request, "STALE_INPUT", now);
+  }
   if (request.asset.toLowerCase() !== policy.asset.toLowerCase() || request.actionType.toLowerCase() !== ACTION_FTESTXRP_TRANSFER.toLowerCase()
-    || request.amount <= 0n || request.expiry < now || request.graceDeadline < request.createdAt || request.expiry < request.graceDeadline) {
+    || request.amount <= 0n || request.createdAt > now || request.expiry < now || request.graceDeadline < request.createdAt || request.expiry < request.graceDeadline) {
     return deny(request, request.expiry < now ? "EXPIRED" : "MALFORMED", now);
   }
   if (policy.startAt > now || (policy.endAt !== 0n && now > policy.endAt)) return deny(request, "POLICY_DENIED", now);
@@ -54,7 +61,7 @@ export function evaluatePolicy(policyInput: PolicyV1, request: ActionRequestV1, 
   if (policy.requireFtso) {
     const feed = state.ftso;
     if (!feed || feed.feedId.toLowerCase() !== policy.ftsoFeedId.toLowerCase() || feed.timestamp > now || now - feed.timestamp > policy.maxPriceAgeSeconds
-      || feed.checkpoint === ZERO_BYTES32) return deny(request, "FTSO_INVALID", now);
+      || feed.checkpoint === ZERO_BYTES32 || request.inputCommitment.toLowerCase() !== feed.checkpoint.toLowerCase()) return deny(request, "FTSO_INVALID", now);
     const value = checkedReferenceValue(request.amount, feed.value, feed.decimals);
     if (value === null) return deny(request, "FTSO_INVALID", now);
     referenceValue = value;

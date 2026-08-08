@@ -124,7 +124,9 @@ contract PayGuardPolicyRegistry {
             binding.registry != address(this) || binding.chainId != block.chainid
                 || binding.owner == address(0) || binding.vault == address(0)
                 || binding.router == address(0) || binding.policyId == bytes32(0)
-                || binding.policyCommitment == bytes32(0) || binding.schema == bytes32(0)
+                || binding.policyCommitment == bytes32(0)
+                || binding.schema != PayGuardTypes.POLICY_SCHEMA_V1
+                || binding.extensionId == bytes32(0) || binding.codeVersion == bytes32(0)
                 || binding.custodyThreshold != 3 || binding.resultThreshold != 2
                 || binding.policyNonce == 0
         ) {

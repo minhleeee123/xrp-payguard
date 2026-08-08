@@ -61,6 +61,13 @@ function uint(value: bigint | number, label: string): bigint {
   return result;
 }
 
+function boundedUint(value: bigint | number, bits: number, label: string): bigint {
+  const result = uint(value, label);
+  const limit = 1n << BigInt(bits);
+  if (result >= limit) throw new Error(`${label} exceeds uint${bits}`);
+  return result;
+}
+
 function address(value: Hex, label: string): Hex {
   if (!isAddress(value)) throw new Error(`${label} must be an address`);
   return getAddress(value) as Hex;
@@ -84,24 +91,43 @@ function sortedBytes32(values: Hex[], label: string): Hex[] {
 
 export function normalizePolicy(policy: PolicyV1): PolicyV1 {
   if (policy.schemaVersion !== 1) throw new Error("unsupported policy schema");
-  const endAt = uint(policy.endAt, "endAt");
-  const startAt = uint(policy.startAt, "startAt");
+  const chainId = uint(policy.chainId, "chainId");
+  if (chainId === 0n) throw new Error("chainId must be non-zero");
+  const registry = address(policy.registry, "registry");
+  const vault = address(policy.vault, "vault");
+  const router = address(policy.router, "router");
+  const owner = address(policy.owner, "owner");
+  const asset = address(policy.asset, "asset");
+  if ([registry, vault, router, owner, asset].some((value) => value === "0x0000000000000000000000000000000000000000")) {
+    throw new Error("policy addresses must be non-zero");
+  }
+  const policyId = bytes32(policy.policyId, "policyId");
+  const referenceCurrency = bytes32(policy.referenceCurrency, "referenceCurrency");
+  const privateSalt = bytes32(policy.privateSalt, "privateSalt");
+  const submissionNonce = bytes32(policy.submissionNonce, "submissionNonce");
+  if (policyId === ZERO_BYTES32 || referenceCurrency === ZERO_BYTES32 || privateSalt === ZERO_BYTES32 || submissionNonce === ZERO_BYTES32) {
+    throw new Error("policy identifiers and nonces must be non-zero");
+  }
+  const endAt = boundedUint(policy.endAt, 64, "endAt");
+  const startAt = boundedUint(policy.startAt, 64, "startAt");
   if (endAt !== 0n && endAt <= startAt) throw new Error("endAt must be after startAt");
+  const rollingWindowSeconds = boundedUint(policy.rollingWindowSeconds, 64, "rollingWindowSeconds");
+  if (policy.rollingCap !== 0n && rollingWindowSeconds === 0n) throw new Error("rolling window is required");
   if (policy.requireFtso && policy.ftsoFeedId === ZERO_BYTES32) throw new Error("FTSO feed is required");
   if (!policy.requireFtso && policy.ftsoFeedId !== ZERO_BYTES32) throw new Error("unexpected FTSO feed");
+  const maxPriceAgeSeconds = boundedUint(policy.maxPriceAgeSeconds, 64, "maxPriceAgeSeconds");
   return {
     ...policy,
-    chainId: uint(policy.chainId, "chainId"),
-    registry: address(policy.registry, "registry"), vault: address(policy.vault, "vault"), router: address(policy.router, "router"),
-    owner: address(policy.owner, "owner"), policyId: bytes32(policy.policyId, "policyId"), asset: address(policy.asset, "asset"),
-    referenceCurrency: bytes32(policy.referenceCurrency, "referenceCurrency"), policyVersion: Number(uint(policy.policyVersion, "policyVersion")),
+    chainId,
+    registry, vault, router, owner, policyId, asset,
+    referenceCurrency, policyVersion: Number(boundedUint(policy.policyVersion, 32, "policyVersion")),
     maxPerAction: uint(policy.maxPerAction, "maxPerAction"), dailyCap: uint(policy.dailyCap, "dailyCap"), rollingCap: uint(policy.rollingCap, "rollingCap"),
-    rollingWindowSeconds: uint(policy.rollingWindowSeconds, "rollingWindowSeconds"), startAt, endAt,
-    cooldownSeconds: uint(policy.cooldownSeconds, "cooldownSeconds"), maxOccurrences: Number(uint(policy.maxOccurrences, "maxOccurrences")),
+    rollingWindowSeconds, startAt, endAt,
+    cooldownSeconds: boundedUint(policy.cooldownSeconds, 64, "cooldownSeconds"), maxOccurrences: Number(boundedUint(policy.maxOccurrences, 32, "maxOccurrences")),
     allowTargets: sortedAddresses(policy.allowTargets, "allowTargets"), denyTargets: sortedAddresses(policy.denyTargets, "denyTargets"),
     allowRequesters: sortedAddresses(policy.allowRequesters, "allowRequesters"), allowActionTypes: sortedBytes32(policy.allowActionTypes, "allowActionTypes"),
-    ftsoFeedId: bytes32(policy.ftsoFeedId, "ftsoFeedId"), maxPriceAgeSeconds: uint(policy.maxPriceAgeSeconds, "maxPriceAgeSeconds"),
-    privateSalt: bytes32(policy.privateSalt, "privateSalt"), submissionNonce: bytes32(policy.submissionNonce, "submissionNonce"),
+    ftsoFeedId: bytes32(policy.ftsoFeedId, "ftsoFeedId"), maxPriceAgeSeconds,
+    privateSalt, submissionNonce,
   };
 }
 

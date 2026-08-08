@@ -127,13 +127,16 @@ func EvaluatePolicy(policy PolicyV1, request ActionRequestV1, state SpendStateV1
 	if err != nil {
 		return EvaluationResultV1{}, err
 	}
-	if state.AvailableBalance == nil || state.DailySpend == nil || state.RollingSpend == nil || request.Amount == nil || request.Amount.Sign() < 0 {
+	if state.AvailableBalance == nil || state.DailySpend == nil || state.RollingSpend == nil || state.AvailableBalance.Sign() < 0 || state.DailySpend.Sign() < 0 || state.RollingSpend.Sign() < 0 || request.Amount == nil || request.Amount.Sign() < 0 {
 		return denied(request, ReasonMalformed, state.Now), nil
 	}
 	if request.ChainID == nil || request.ChainID.Cmp(normalized.ChainID) != 0 || request.Registry != normalized.Registry || request.Vault != normalized.Vault || request.Router != normalized.Router || request.PolicyID != normalized.PolicyID || request.PolicyVersion != normalized.PolicyVersion || request.PolicyCommitment != commitment {
 		return denied(request, ReasonWrongDomain, state.Now), nil
 	}
-	if request.Asset != normalized.Asset || request.ActionType != ActionFTestXRPTransfer || request.Amount.Sign() == 0 || request.Expiry < state.Now || request.GraceDeadline < request.CreatedAt || request.Expiry < request.GraceDeadline {
+	if request.SpendCheckpoint != state.SpendCheckpoint || request.BalanceCheckpoint != state.BalanceCheckpoint {
+		return denied(request, ReasonStaleInput, state.Now), nil
+	}
+	if request.Asset != normalized.Asset || request.ActionType != ActionFTestXRPTransfer || request.Amount.Sign() == 0 || request.CreatedAt > state.Now || request.Expiry < state.Now || request.GraceDeadline < request.CreatedAt || request.Expiry < request.GraceDeadline {
 		if request.Expiry < state.Now {
 			return denied(request, ReasonExpired, state.Now), nil
 		}
@@ -162,7 +165,7 @@ func EvaluatePolicy(policy PolicyV1, request ActionRequestV1, state SpendStateV1
 	}
 	referenceValue := new(big.Int).Set(request.Amount)
 	if normalized.RequireFTSO {
-		if state.FTSO == nil || state.FTSO.Value == nil || state.FTSO.FeedID != normalized.FTSOFeedID || state.FTSO.Timestamp > state.Now || state.Now-state.FTSO.Timestamp > normalized.MaxPriceAgeSecs || state.FTSO.Checkpoint == zeroHash() {
+		if state.FTSO == nil || state.FTSO.Value == nil || state.FTSO.FeedID != normalized.FTSOFeedID || state.FTSO.Timestamp > state.Now || state.Now-state.FTSO.Timestamp > normalized.MaxPriceAgeSecs || state.FTSO.Checkpoint == zeroHash() || request.InputCommitment != state.FTSO.Checkpoint {
 			return denied(request, ReasonFTSOInvalid, state.Now), nil
 		}
 		value, valid := checkedReferenceValue(request.Amount, state.FTSO.Value, state.FTSO.Decimals)

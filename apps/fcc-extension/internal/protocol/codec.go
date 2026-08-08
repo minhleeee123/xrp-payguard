@@ -181,8 +181,17 @@ func normalizePolicy(policy PolicyV1) (PolicyV1, error) {
 	if policy.SchemaVersion != 1 {
 		return PolicyV1{}, errors.New("unsupported policy schema")
 	}
-	if policy.ChainID == nil || policy.ChainID.Sign() < 0 || policy.MaxPerAction == nil || policy.DailyCap == nil || policy.RollingCap == nil {
+	if policy.ChainID == nil || policy.ChainID.Sign() <= 0 || policy.MaxPerAction == nil || policy.DailyCap == nil || policy.RollingCap == nil {
 		return PolicyV1{}, errors.New("missing unsigned policy value")
+	}
+	if policy.Registry == (common.Address{}) || policy.Vault == (common.Address{}) || policy.Router == (common.Address{}) || policy.Owner == (common.Address{}) || policy.Asset == (common.Address{}) {
+		return PolicyV1{}, errors.New("policy addresses must be non-zero")
+	}
+	if policy.PolicyID == (common.Hash{}) || policy.ReferenceCurrency == (common.Hash{}) || policy.PrivateSalt == (common.Hash{}) || policy.SubmissionNonce == (common.Hash{}) {
+		return PolicyV1{}, errors.New("policy identifiers and nonces must be non-zero")
+	}
+	if policy.RollingCap.Sign() != 0 && policy.RollingWindowSecs == 0 {
+		return PolicyV1{}, errors.New("rolling window is required")
 	}
 	maxPerAction, err := uint256(policy.MaxPerAction, "maxPerAction")
 	if err != nil {

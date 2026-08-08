@@ -66,7 +66,7 @@ func (m *Machine) Submit(binding protocol.PolicyBindingV1, submissionNonce commo
 	if len(ciphertext) == 0 || len(ciphertext) > maxCiphertextBytes {
 		return ReceiptEnvelope{}, errors.New("ciphertext size is invalid")
 	}
-	if binding.Owner == (common.Address{}) || binding.PolicyCommitment == (common.Hash{}) || submissionNonce == (common.Hash{}) {
+	if binding.Schema != protocol.PolicySchemaV1 || binding.Owner == (common.Address{}) || binding.PolicyCommitment == (common.Hash{}) || submissionNonce == (common.Hash{}) {
 		return ReceiptEnvelope{}, errors.New("policy binding is incomplete")
 	}
 	if expiry <= issuedAt {
@@ -90,7 +90,7 @@ func (m *Machine) Submit(binding protocol.PolicyBindingV1, submissionNonce commo
 	if err != nil {
 		return ReceiptEnvelope{}, fmt.Errorf("sealed policy invalid: %w", err)
 	}
-	if commitment != binding.PolicyCommitment || policy.Owner != binding.Owner || policy.ChainID.Cmp(binding.ChainID) != 0 || policy.Registry != binding.Registry || policy.Vault != binding.Vault || policy.Router != binding.Router || policy.PolicyID != binding.PolicyID || policy.PolicyVersion != binding.PolicyVersion {
+	if commitment != binding.PolicyCommitment || policy.SubmissionNonce != submissionNonce || policy.Owner != binding.Owner || policy.ChainID.Cmp(binding.ChainID) != 0 || policy.Registry != binding.Registry || policy.Vault != binding.Vault || policy.Router != binding.Router || policy.PolicyID != binding.PolicyID || policy.PolicyVersion != binding.PolicyVersion {
 		return ReceiptEnvelope{}, errors.New("sealed policy does not match frozen binding")
 	}
 	ciphertextDigest := sha256.Sum256(ciphertext)
@@ -148,11 +148,13 @@ type Coordinator struct{ machines [3]*Machine }
 
 func NewCoordinator(machines [3]*Machine) (*Coordinator, error) {
 	seen := make(map[common.Hash]bool)
+	fingerprints := make(map[common.Hash]bool)
 	for _, machine := range machines {
-		if machine == nil || seen[machine.ID()] {
+		if machine == nil || seen[machine.ID()] || fingerprints[machine.Fingerprint()] {
 			return nil, errors.New("custody machines must be three distinct identities")
 		}
 		seen[machine.ID()] = true
+		fingerprints[machine.Fingerprint()] = true
 	}
 	return &Coordinator{machines: machines}, nil
 }
@@ -160,6 +162,9 @@ func NewCoordinator(machines [3]*Machine) (*Coordinator, error) {
 func (c *Coordinator) Submit(binding protocol.PolicyBindingV1, submissionNonce common.Hash, issuedAt, expiry uint64, ciphertext []byte) (CustodyBundle, error) {
 	var bundle CustodyBundle
 	for index, machine := range c.machines {
+		if machine.ID() != binding.MachineIDs[index] || machine.Fingerprint() != binding.KeyFingerprints[index] {
+			return CustodyBundle{}, fmt.Errorf("custody machine %d does not match frozen binding", index)
+		}
 		receipt, err := machine.Submit(binding, submissionNonce, issuedAt, expiry, ciphertext)
 		if err != nil {
 			return CustodyBundle{}, fmt.Errorf("custody machine %d: %w", index, err)

@@ -51,7 +51,10 @@ No arbitrary call adapter exists in V1.
 
 `PayGuardPolicyRegistry`, `PayGuardVault`, and `PayGuardActionRouter` implement
 the receipt/binding, conservation, request, threshold, and replay rules in a
-local Foundry package. V1 uses raw `ecrecover` over the shared digest because a
+local Foundry package. The registry rejects non-canonical schema values and
+missing extension/code bindings; the local FCC evaluator rejects a request when
+its public spend/balance checkpoints or required FTSO checkpoint do not match
+the supplied state. V1 uses raw `ecrecover` over the shared digest because a
 live FCC signing-prefix convention has not yet been verified; the release gate
 must verify that convention before deployment. The local token adapter accepts
 only explicitly enabled ERC-20-like assets and does not claim that any Flare

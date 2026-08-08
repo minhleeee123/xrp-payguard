@@ -41,6 +41,8 @@ describe("POLICY_SCHEMA_V1 deterministic codec", () => {
     expect(() => policyCommitment({ ...policy, denyTargets: [addressC, addressC] })).toThrow(/duplicates/);
     expect(() => policyCommitment({ ...policy, requireFtso: true })).toThrow(/FTSO feed/);
     expect(() => policyCommitment({ ...policy, endAt: 999n })).toThrow(/endAt/);
+    expect(() => policyCommitment({ ...policy, rollingWindowSeconds: 0n })).toThrow(/rolling window/);
+    expect(() => policyCommitment({ ...policy, owner: zeroAddress })).toThrow(/non-zero/);
   });
 });
 
@@ -104,5 +106,20 @@ describe("deterministic evaluator", () => {
     expect(result.publicReasonClass).toBe("FTSO_INVALID");
     const deniedPolicy = { ...policy, denyTargets: [addressC] };
     expect(evaluatePolicy(deniedPolicy, { ...request(), policyCommitment: policyCommitment(deniedPolicy) }, state()).publicReasonClass).toBe("TARGET_DENIED");
+  });
+
+  it("rejects stale public checkpoints and future requests", () => {
+    expect(evaluatePolicy(policy, request(), { ...state(), spendCheckpoint: id("other-spend") }).publicReasonClass).toBe("STALE_INPUT");
+    expect(evaluatePolicy(policy, { ...request(), createdAt: 1_051n }, state()).publicReasonClass).toBe("MALFORMED");
+  });
+
+  it("binds an FTSO decision to the request input commitment", () => {
+    const feedId = id("xrp-usd");
+    const feedCheckpoint = id("ftso-checkpoint");
+    const ftsoPolicy = { ...policy, requireFtso: true, ftsoFeedId: feedId, maxPriceAgeSeconds: 60n };
+    const ftsoRequest = { ...request(), policyCommitment: policyCommitment(ftsoPolicy), inputCommitment: feedCheckpoint };
+    const ftsoState = { ...state(), ftso: { feedId, value: 1n, decimals: 0, timestamp: 1_040n, checkpoint: feedCheckpoint } };
+    expect(evaluatePolicy(ftsoPolicy, ftsoRequest, ftsoState).decision).toBe("ALLOW");
+    expect(evaluatePolicy(ftsoPolicy, { ...ftsoRequest, inputCommitment: id("different") }, ftsoState).publicReasonClass).toBe("FTSO_INVALID");
   });
 });

@@ -121,3 +121,27 @@ func TestEvaluatorDeniesFailClosed(t *testing.T) {
 		t.Fatalf("FTSO reason: %d", result.PublicReasonClass)
 	}
 }
+
+func TestEvaluatorRejectsStaleStateAndFutureRequest(t *testing.T) {
+	vector := readVector(t)
+	policy := policyFromVector(vector.Policy)
+	request := requestFromVector(vector.Request)
+	state := stateFromVector(request)
+	state.SpendCheckpoint = mustHash("other-spend")
+	result, err := EvaluatePolicy(policy, request, state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.PublicReasonClass != ReasonStaleInput {
+		t.Fatalf("stale checkpoint reason: %d", result.PublicReasonClass)
+	}
+	future := request
+	future.CreatedAt = state.Now + 1
+	result, err = EvaluatePolicy(policy, future, stateFromVector(request))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.PublicReasonClass != ReasonMalformed {
+		t.Fatalf("future request reason: %d", result.PublicReasonClass)
+	}
+}
