@@ -258,8 +258,8 @@ FDC-attested trigger safely advances one request.
 The checked items describe the local public-safe shell. Wallet flows, hosted
 evidence, and live role journeys remain open.
 
-- [x] Build the local laptop-first application shell; a standalone hosted
-  landing page remains open.
+- [x] Build the local laptop-first application shell and standalone landing
+  page; hosted deployment and production smoke remain open.
 - [x] Build the local Policy Studio with templates, exact public/private
   preview, local validation, schema-checked custody receipt progress, and an
   activation block; live ingress and activation evidence remain open.

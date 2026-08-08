@@ -1,7 +1,8 @@
 # Web application
 
-Vite laptop-first shell with Overview, Policy Studio, Vaults, Requests, Payee,
-wallet-free Auditor, and Team/roles surfaces. Its visual language follows the
+Vite laptop-first shell with an editorial landing page at `#landing`, plus
+Overview, Policy Studio, Vaults, Requests, Payee, wallet-free Auditor, and
+Team/roles surfaces. Its visual language follows the
 repository-level [`DESIGN.md`](../../DESIGN.md). The Policy Studio computes a
 domain-bound commitment from an in-memory draft only. It includes three policy
 templates, structured local validation, fresh browser cryptographic entropy,
