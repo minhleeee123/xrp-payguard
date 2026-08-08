@@ -17,6 +17,10 @@ is unconfigured, unavailable, unfinalized, or invalid.
 Requests & schedules applies the same boundary to request hashes, checkpoints,
 occurrence windows, threshold-derived decisions, expiry, and recovery states;
 it never creates an approval when the public request endpoint is unavailable.
+Auditor evidence is schema-checked against the request/evaluation digest,
+frozen machine set, finalized input marker, execution status, and vault
+conservation equation; signatures and private policy material are not accepted
+by the public evidence wire.
 
 Run locally with the pinned Node toolchain:
 

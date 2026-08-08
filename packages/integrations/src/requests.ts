@@ -33,18 +33,18 @@ export type RequestUnavailableReason =
 
 export interface PublicRequestSnapshotV1 {
   chainId: bigint;
-  registry: string;
-  vault: string;
-  router: string;
+  registry: Hex;
+  vault: Hex;
+  router: Hex;
   policyId: Hex;
   policyVersion: number;
   policyCommitment: Hex;
   requestId: Hex;
   requestNonce: bigint;
   attempt: number;
-  requester: string;
-  target: string;
-  asset: string;
+  requester: Hex;
+  target: Hex;
+  asset: Hex;
   actionType: Hex;
   amount: bigint;
   scheduleSlot: bigint;
@@ -313,9 +313,9 @@ function nonZeroBytes32(value: unknown, label: string): Hex {
   return parsed;
 }
 
-function publicAddress(value: unknown, label: string): string {
+function publicAddress(value: unknown, label: string): Hex {
   if (typeof value !== "string" || !isAddress(value) || getAddress(value) === zeroAddress) throw new Error(`${label} must be a non-zero address`);
-  return getAddress(value);
+  return getAddress(value) as Hex;
 }
 
 function enumValue<T extends string>(value: unknown, allowed: Set<T>, label: string): T {

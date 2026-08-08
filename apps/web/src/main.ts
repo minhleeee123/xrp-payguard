@@ -1,8 +1,10 @@
 import "./styles.css";
 import "./studio.css";
 import {
+  unavailableAuditState,
   unavailableRequestState,
   unavailableVaultState,
+  type PublicAuditReadState,
   type PublicRequestReadState,
   type VaultReadState,
 } from "@xrp-payguard/integrations";
@@ -34,6 +36,7 @@ let studioIssues: readonly StudioIssue[] = [];
 let appNotice = "";
 let vaultState: VaultReadState = unavailableVaultState();
 let requestState: PublicRequestReadState = unavailableRequestState();
+let auditState: PublicAuditReadState = unavailableAuditState();
 
 const esc = (value: string): string => value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character] ?? character));
 const short = (value: string): string => value.length > 18 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value;
@@ -182,8 +185,22 @@ function payeeView(): string {
 }
 
 function auditorView(): string {
+  const evidence = auditState.status === "UNAVAILABLE" ? undefined : auditState.evidence;
+  const unavailableReason = auditState.status === "UNAVAILABLE" ? auditUnavailableReason(auditState.reason) : "Finalized public evidence";
+  const checklist = evidence
+    ? `<li><span class="evidence-icon">#</span><div><strong>Policy commitment</strong><small>${esc(short(evidence.policy.policyCommitment))} · schema ${esc(short(evidence.policy.schema))}</small></div><span class="state-tag green-tag">VERIFIED</span></li><li><span class="evidence-icon">♧</span><div><strong>Machine/key binding</strong><small>3 frozen identities · ${evidence.policy.resultThreshold}-of-${evidence.policy.machineIds.length} result threshold</small></div><span class="state-tag green-tag">VERIFIED</span></li><li><span class="evidence-icon">↗</span><div><strong>Decision digest</strong><small>${evidence.decision} · ${esc(short(evidence.resultDigest))} · ${evidence.executionStatus}</small></div><span class="state-tag green-tag">VERIFIED</span></li><li><span class="evidence-icon">∑</span><div><strong>Conservation</strong><small>${evidence.conservation.deposited} = ${evidence.conservation.available} + ${evidence.conservation.reserved} + ${evidence.conservation.spent} + ${evidence.conservation.withdrawn} + ${evidence.conservation.refunded}</small></div><span class="state-tag green-tag">VERIFIED</span></li><li><span class="evidence-icon">◇</span><div><strong>External input</strong><small>${evidence.inputKind} · ${evidence.inputFinalized ? "finalized" : "not required"}</small></div><span class="state-tag green-tag">VERIFIED</span></li>`
+    : `<li><span class="evidence-icon">#</span><div><strong>Policy commitment</strong><small>Hash only · no rules or ciphertext</small></div><span class="state-tag gray-tag">WAITING</span></li><li><span class="evidence-icon">♧</span><div><strong>Machine/key binding</strong><small>Three frozen identities · 2-of-3 result threshold</small></div><span class="state-tag gray-tag">WAITING</span></li><li><span class="evidence-icon">↗</span><div><strong>Decision digest</strong><small>Exact request, checkpoint, expiry, and signers</small></div><span class="state-tag gray-tag">WAITING</span></li><li><span class="evidence-icon">∑</span><div><strong>Conservation</strong><small>Deposited = available + reserved + spent + withdrawn + refunded</small></div><span class="state-tag gray-tag">WAITING</span></li><li><span class="evidence-icon">◇</span><div><strong>External input</strong><small>FTSO/FDC commitment and finalization status</small></div><span class="state-tag gray-tag">WAITING</span></li>`;
   return `${pageIntro("WALLET-FREE VERIFIER", "Auditor view", "Inspect public commitments and conservation without connecting a wallet or revealing the policy.")}
-    <div class="auditor-grid"><section class="panel verify-card"><div class="eyebrow">PUBLIC EVIDENCE</div><h2>Verify a PayGuard action</h2><p>Paste a request ID or transaction hash from a verified release. Private policy material is never requested.</p><label>Request or transaction ID<input placeholder="0x…" spellcheck="false" /></label><button class="primary-button" type="button" data-action="verify">Check finalized state</button><div class="unavailable-box"><span class="status-dot amber"></span><div><strong>Evidence endpoint not connected</strong><small>This preview cannot assert a transaction, block, proof, or signer.</small></div></div></section><section class="panel evidence-card"><div class="eyebrow">ASSERTION CHECKLIST</div><h2>What an auditor will see</h2><ul class="evidence-list"><li><span class="evidence-icon">#</span><div><strong>Policy commitment</strong><small>Hash only · no rules or ciphertext</small></div><span class="state-tag gray-tag">WAITING</span></li><li><span class="evidence-icon">♧</span><div><strong>Machine/key binding</strong><small>Three frozen identities · 2-of-3 result threshold</small></div><span class="state-tag gray-tag">WAITING</span></li><li><span class="evidence-icon">↗</span><div><strong>Decision digest</strong><small>Exact request, checkpoint, expiry, and signers</small></div><span class="state-tag gray-tag">WAITING</span></li><li><span class="evidence-icon">∑</span><div><strong>Conservation</strong><small>Deposited = available + reserved + spent + withdrawn</small></div><span class="state-tag gray-tag">WAITING</span></li></ul></section></div>`;
+    <div class="auditor-grid"><section class="panel verify-card"><div class="eyebrow">PUBLIC EVIDENCE</div><h2>Verify a PayGuard action</h2><p>Paste a request ID or transaction hash from a verified release. Private policy material is never requested.</p><label>Request or transaction ID<input placeholder="0x…" spellcheck="false" /></label><button class="primary-button" type="button" data-action="verify">Check finalized state</button><div class="unavailable-box"><span class="status-dot amber"></span><div><strong>${evidence ? "Public evidence verified" : "Evidence endpoint not connected"}</strong><small>${esc(unavailableReason)}. ${evidence ? `Block ${evidence.evidenceBlock} · ${evidence.executionStatus} · no private payload.` : "This preview cannot assert a transaction, block, proof, or signer."}</small></div></div></section><section class="panel evidence-card"><div class="eyebrow">ASSERTION CHECKLIST</div><h2>What an auditor will see</h2><ul class="evidence-list">${checklist}</ul></section></div>`;
+}
+
+function auditUnavailableReason(reason: string): string {
+  return ({
+    RPC_UNCONFIGURED: "No verified RPC provider configured",
+    RPC_UNAVAILABLE: "RPC provider unavailable",
+    EVIDENCE_UNFINALIZED: "Evidence is not finalized",
+    EVIDENCE_INVALID: "Public evidence failed validation",
+  } as Record<string, string>)[reason] ?? "Public evidence unavailable";
 }
 
 function teamView(): string {
