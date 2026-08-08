@@ -18,7 +18,7 @@ const request: ActionRequestV1 = {
   inputCommitment: id("input"), createdAt: 1_001n, graceDeadline: 1_100n, expiry: 1_200n,
 };
 const state: SpendStateV1 = {
-  availableBalance: 100n, dailySpend: 0n, rollingSpend: 0n, occurrenceCount: 1, lastExecutionAt: 0n,
+  availableBalance: 100n, history: [], occurrenceCount: 1, lastAccountingAt: 0n,
   spendCheckpoint: request.spendCheckpoint, balanceCheckpoint: request.balanceCheckpoint, now: 1_050n,
 };
 const machines: MachineDescriptor[] = ["a", "b", "c"].map((name, index) => ({

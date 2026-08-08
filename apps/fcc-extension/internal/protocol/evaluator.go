@@ -79,10 +79,9 @@ type FTSOSnapshotV1 struct {
 
 type SpendStateV1 struct {
 	AvailableBalance  *big.Int
-	DailySpend        *big.Int
-	RollingSpend      *big.Int
+	History           []SpendHistoryEntryV1
 	OccurrenceCount   uint32
-	LastExecutionAt   uint64
+	LastAccountingAt  uint64
 	SpendCheckpoint   common.Hash
 	BalanceCheckpoint common.Hash
 	Now               uint64
@@ -172,7 +171,7 @@ func EvaluatePolicy(policy PolicyV1, request ActionRequestV1, state SpendStateV1
 	if err != nil {
 		return EvaluationResultV1{}, err
 	}
-	if state.AvailableBalance == nil || state.DailySpend == nil || state.RollingSpend == nil || state.AvailableBalance.Sign() < 0 || state.DailySpend.Sign() < 0 || state.RollingSpend.Sign() < 0 || request.Amount == nil || request.Amount.Sign() < 0 {
+	if state.AvailableBalance == nil || state.AvailableBalance.Sign() < 0 || request.Amount == nil || request.Amount.Sign() < 0 {
 		return denied(request, ReasonMalformed, state.Now), nil
 	}
 	if request.ChainID == nil || request.ChainID.Cmp(normalized.ChainID) != 0 || request.Registry != normalized.Registry || request.Vault != normalized.Vault || request.Router != normalized.Router || request.PolicyID != normalized.PolicyID || request.PolicyVersion != normalized.PolicyVersion || request.PolicyCommitment != commitment {
@@ -184,6 +183,10 @@ func EvaluatePolicy(policy PolicyV1, request ActionRequestV1, state SpendStateV1
 	}
 	if request.SpendCheckpoint != state.SpendCheckpoint || request.BalanceCheckpoint != state.BalanceCheckpoint || state.OccurrenceCount == ^uint32(0) || request.Occurrence != state.OccurrenceCount+1 || (state.OccurrenceCount == 0 && request.SpendCheckpoint != genesisCheckpoint) {
 		return denied(request, ReasonStaleInput, state.Now), nil
+	}
+	historyTotals, historyReason := replaySpendHistoryV1(normalized, state, commitment)
+	if historyReason != ReasonOK {
+		return denied(request, historyReason, state.Now), nil
 	}
 	if request.Asset != normalized.Asset || request.ActionType != ActionFTestXRPTransfer || request.Amount.Sign() == 0 || request.CreatedAt > state.Now || request.Expiry < state.Now || request.GraceDeadline < request.CreatedAt || request.Expiry < request.GraceDeadline {
 		if request.Expiry < state.Now {
@@ -217,7 +220,7 @@ func EvaluatePolicy(policy PolicyV1, request ActionRequestV1, state SpendStateV1
 	if normalized.MaxOccurrences != 0 && state.OccurrenceCount >= normalized.MaxOccurrences {
 		violations |= ViolationOccurrenceExceeded
 	}
-	if normalized.CooldownSecs != 0 && state.LastExecutionAt != 0 && state.Now < state.LastExecutionAt+normalized.CooldownSecs {
+	if normalized.CooldownSecs != 0 && state.LastAccountingAt != 0 && state.Now < state.LastAccountingAt+normalized.CooldownSecs {
 		violations |= ViolationCooldown
 	}
 	if state.AvailableBalance.Cmp(request.Amount) < 0 {
@@ -236,7 +239,7 @@ func EvaluatePolicy(policy PolicyV1, request ActionRequestV1, state SpendStateV1
 			}
 		}
 	}
-	if violations&ViolationFTSOInvalid == 0 && ((normalized.MaxPerAction.Sign() != 0 && referenceValue.Cmp(normalized.MaxPerAction) > 0) || (normalized.DailyCap.Sign() != 0 && new(big.Int).Add(new(big.Int).Set(state.DailySpend), referenceValue).Cmp(normalized.DailyCap) > 0) || (normalized.RollingCap.Sign() != 0 && new(big.Int).Add(new(big.Int).Set(state.RollingSpend), referenceValue).Cmp(normalized.RollingCap) > 0)) {
+	if violations&ViolationFTSOInvalid == 0 && ((normalized.MaxPerAction.Sign() != 0 && referenceValue.Cmp(normalized.MaxPerAction) > 0) || (normalized.DailyCap.Sign() != 0 && new(big.Int).Add(new(big.Int).Set(historyTotals.DailySpend), referenceValue).Cmp(normalized.DailyCap) > 0) || (normalized.RollingCap.Sign() != 0 && new(big.Int).Add(new(big.Int).Set(historyTotals.RollingSpend), referenceValue).Cmp(normalized.RollingCap) > 0)) {
 		violations |= ViolationCapExceeded
 	}
 	decision, reason := ComposePolicyDecisionV1(violations)

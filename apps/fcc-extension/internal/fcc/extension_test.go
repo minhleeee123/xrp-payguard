@@ -97,7 +97,7 @@ func TestEvaluateActionUsesPrivateMachineState(t *testing.T) {
 	}
 	extension := New(0, 0, machine)
 	request := fccRequest(policy)
-	payload, err := json.Marshal(EvaluationPayload{Request: request, State: protocol.SpendStateV1{AvailableBalance: big.NewInt(100), DailySpend: new(big.Int), RollingSpend: new(big.Int), SpendCheckpoint: request.SpendCheckpoint, BalanceCheckpoint: request.BalanceCheckpoint, Now: 1050}})
+	payload, err := json.Marshal(EvaluationPayload{Request: request, State: protocol.SpendStateV1{AvailableBalance: big.NewInt(100), History: []protocol.SpendHistoryEntryV1{}, SpendCheckpoint: request.SpendCheckpoint, BalanceCheckpoint: request.BalanceCheckpoint, Now: 1050}})
 	if err != nil {
 		t.Fatal(err)
 	}

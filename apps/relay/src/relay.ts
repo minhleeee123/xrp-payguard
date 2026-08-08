@@ -193,10 +193,13 @@ function evaluationKey(request: ActionRequestV1, state: SpendStateV1, machines: 
   const publicState = [
     actionRequestHash(request),
     state.availableBalance.toString(),
-    state.dailySpend.toString(),
-    state.rollingSpend.toString(),
+    state.history.map((entry) => [
+      actionRequestHash(entry.request), entry.accountedAt.toString(),
+      entry.ftso ? [entry.ftso.feedId.toLowerCase(), entry.ftso.value.toString(), entry.ftso.decimals,
+        entry.ftso.timestamp.toString(), entry.ftso.checkpoint.toLowerCase()] : null,
+    ]),
     state.occurrenceCount,
-    state.lastExecutionAt.toString(),
+    state.lastAccountingAt.toString(),
     state.spendCheckpoint.toLowerCase(),
     state.balanceCheckpoint.toLowerCase(),
     state.now.toString(),

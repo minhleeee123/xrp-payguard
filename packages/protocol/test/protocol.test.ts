@@ -28,7 +28,7 @@ const request = (): ActionRequestV1 => ({
   graceDeadline: 1_100n, expiry: 1_100n,
 });
 
-const state = (): SpendStateV1 => ({ availableBalance: 100n, dailySpend: 0n, rollingSpend: 0n, occurrenceCount: 0, lastExecutionAt: 0n,
+const state = (): SpendStateV1 => ({ availableBalance: 100n, history: [], occurrenceCount: 0, lastAccountingAt: 0n,
   spendCheckpoint: request().spendCheckpoint, balanceCheckpoint: id("balance-0"), now: 1_050n });
 
 function requestForPolicy(candidate: PolicyV1): ActionRequestV1 {
@@ -176,5 +176,89 @@ describe("deterministic evaluator", () => {
     const ftsoState = { ...stateForRequest(ftsoRequest), ftso: { feedId, value: 1n, decimals: 0, timestamp: 1_040n, checkpoint: feedCheckpoint } };
     expect(evaluatePolicy(ftsoPolicy, ftsoRequest, ftsoState).decision).toBe("ALLOW");
     expect(evaluatePolicy(ftsoPolicy, { ...ftsoRequest, inputCommitment: id("different") }, ftsoState).publicReasonClass).toBe("FTSO_INVALID");
+  });
+
+  it("derives caps only from checkpoint-bound public history", () => {
+    const cappedPolicy = { ...policy, maxPerAction: 0n, dailyCap: 100n, rollingCap: 100n };
+    const first = requestForPolicy(cappedPolicy);
+    const firstState = stateForRequest(first);
+    const firstResult = evaluatePolicy(cappedPolicy, first, firstState);
+    expect(firstResult.decision).toBe("ALLOW");
+    const second: ActionRequestV1 = {
+      ...first,
+      requestId: id("request-2"),
+      requestNonce: 2n,
+      occurrence: 2,
+      scheduleSlot: 4_600n,
+      spendCheckpoint: firstResult.resultingCheckpoint,
+      createdAt: 4_601n,
+      graceDeadline: 4_700n,
+      expiry: 4_700n,
+    };
+    const canonicalState: SpendStateV1 = {
+      availableBalance: 100n,
+      history: [{ request: first, accountedAt: 1_050n }],
+      occurrenceCount: 1,
+      lastAccountingAt: 1_050n,
+      spendCheckpoint: firstResult.resultingCheckpoint,
+      balanceCheckpoint: second.balanceCheckpoint,
+      now: 4_650n,
+    };
+    expect(evaluatePolicy(cappedPolicy, second, canonicalState).publicReasonClass).toBe("CAP_EXCEEDED");
+    expect(evaluatePolicy(cappedPolicy, second, { ...canonicalState, history: [] }).publicReasonClass).toBe("STALE_INPUT");
+    const tampered = { ...first, amount: 1n };
+    expect(evaluatePolicy(
+      cappedPolicy,
+      second,
+      { ...canonicalState, history: [{ request: tampered, accountedAt: 1_050n }] },
+    ).publicReasonClass).toBe("STALE_INPUT");
+  });
+
+  it("replays historical FTSO reference values and fails closed on snapshot drift", () => {
+    const feedId = id("history-feed");
+    const firstCheckpoint = id("history-ftso-1");
+    const secondCheckpoint = id("history-ftso-2");
+    const ftsoPolicy = {
+      ...policy,
+      maxPerAction: 0n,
+      dailyCap: 250n,
+      rollingCap: 250n,
+      requireFtso: true,
+      ftsoFeedId: feedId,
+      maxPriceAgeSeconds: 60n,
+    };
+    const first = { ...requestForPolicy(ftsoPolicy), inputCommitment: firstCheckpoint };
+    const firstFeed = { feedId, value: 2n, decimals: 0, timestamp: 1_040n, checkpoint: firstCheckpoint };
+    const firstResult = evaluatePolicy(ftsoPolicy, first, { ...stateForRequest(first), ftso: firstFeed });
+    expect(firstResult.decision).toBe("ALLOW");
+    const second: ActionRequestV1 = {
+      ...first,
+      requestId: id("ftso-request-2"),
+      requestNonce: 2n,
+      occurrence: 2,
+      scheduleSlot: 4_600n,
+      spendCheckpoint: firstResult.resultingCheckpoint,
+      inputCommitment: secondCheckpoint,
+      createdAt: 4_601n,
+      graceDeadline: 4_700n,
+      expiry: 4_700n,
+    };
+    const secondFeed = { feedId, value: 2n, decimals: 0, timestamp: 4_640n, checkpoint: secondCheckpoint };
+    const historicalState: SpendStateV1 = {
+      availableBalance: 100n,
+      history: [{ request: first, accountedAt: 1_050n, ftso: firstFeed }],
+      occurrenceCount: 1,
+      lastAccountingAt: 1_050n,
+      spendCheckpoint: firstResult.resultingCheckpoint,
+      balanceCheckpoint: second.balanceCheckpoint,
+      now: 4_650n,
+      ftso: secondFeed,
+    };
+    expect(evaluatePolicy(ftsoPolicy, second, historicalState).publicReasonClass).toBe("CAP_EXCEEDED");
+    expect(evaluatePolicy(
+      ftsoPolicy,
+      second,
+      { ...historicalState, history: [{ request: first, accountedAt: 1_050n }] },
+    ).publicReasonClass).toBe("FTSO_INVALID");
   });
 });

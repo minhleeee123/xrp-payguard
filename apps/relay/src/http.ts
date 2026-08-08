@@ -10,7 +10,7 @@ const DEFAULT_RATE_LIMIT_MAX = 30;
 const DEFAULT_RATE_LIMIT_WINDOW_MS = 60_000;
 const DEFAULT_MAX_TRACKED_CLIENTS = 1_024;
 const FORBIDDEN_KEYS = new Set(["policy", "privateSalt", "ciphertext", "policyPlaintext", "allow", "decision", "publicReasonClass", "reservedAmount", "result"]);
-const BIGINT_KEYS = new Set(["chainId", "requestNonce", "amount", "scheduleSlot", "createdAt", "graceDeadline", "expiry", "availableBalance", "dailySpend", "rollingSpend", "lastExecutionAt", "now", "timestamp", "value", "maxPerAction", "dailyCap", "rollingCap"]);
+const BIGINT_KEYS = new Set(["chainId", "requestNonce", "amount", "scheduleSlot", "createdAt", "graceDeadline", "expiry", "availableBalance", "accountedAt", "lastAccountingAt", "now", "timestamp", "value", "maxPerAction", "dailyCap", "rollingCap"]);
 
 export interface RelayDomainBinding {
   chainId: bigint;

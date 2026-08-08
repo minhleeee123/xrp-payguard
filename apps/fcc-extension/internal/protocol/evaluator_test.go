@@ -8,7 +8,7 @@ import (
 )
 
 func stateFromVector(request ActionRequestV1) SpendStateV1 {
-	return SpendStateV1{AvailableBalance: big.NewInt(100), DailySpend: new(big.Int), RollingSpend: new(big.Int), OccurrenceCount: 0, LastExecutionAt: 0, SpendCheckpoint: request.SpendCheckpoint, BalanceCheckpoint: request.BalanceCheckpoint, Now: 1050}
+	return SpendStateV1{AvailableBalance: big.NewInt(100), History: []SpendHistoryEntryV1{}, OccurrenceCount: 0, LastAccountingAt: 0, SpendCheckpoint: request.SpendCheckpoint, BalanceCheckpoint: request.BalanceCheckpoint, Now: 1050}
 }
 
 func rebindPolicyRequest(t *testing.T, policy PolicyV1, request ActionRequestV1) (ActionRequestV1, SpendStateV1) {
@@ -242,5 +242,88 @@ func TestEvaluatorDefaultsDelegationToOwnerOnly(t *testing.T) {
 	result, err = EvaluatePolicy(policy, request, state)
 	if err != nil || result.Decision != DecisionAllow {
 		t.Fatalf("listed delegate denied: result=%+v err=%v", result, err)
+	}
+}
+
+func TestEvaluatorDerivesCapsFromCheckpointBoundHistory(t *testing.T) {
+	vector := readVector(t)
+	policy := policyFromVector(vector.Policy)
+	policy.MaxPerAction = new(big.Int)
+	policy.DailyCap = big.NewInt(100)
+	policy.RollingCap = big.NewInt(100)
+	first, firstState := rebindPolicyRequest(t, policy, requestFromVector(vector.Request))
+	firstResult, err := EvaluatePolicy(policy, first, firstState)
+	if err != nil || firstResult.Decision != DecisionAllow {
+		t.Fatalf("first history request denied: result=%+v err=%v", firstResult, err)
+	}
+	second := first
+	second.RequestID = common.BytesToHash([]byte("history-request-2"))
+	second.RequestNonce = 2
+	second.Occurrence = 2
+	second.ScheduleSlot = 4600
+	second.SpendCheckpoint = firstResult.ResultingCheckpoint
+	second.CreatedAt = 4601
+	second.GraceDeadline = 4700
+	second.Expiry = 4700
+	state := SpendStateV1{AvailableBalance: big.NewInt(100), History: []SpendHistoryEntryV1{{Request: first, AccountedAt: 1050}}, OccurrenceCount: 1, LastAccountingAt: 1050, SpendCheckpoint: firstResult.ResultingCheckpoint, BalanceCheckpoint: second.BalanceCheckpoint, Now: 4650}
+	result, err := EvaluatePolicy(policy, second, state)
+	if err != nil || result.PublicReasonClass != ReasonCapExceeded {
+		t.Fatalf("history cap not enforced: result=%+v err=%v", result, err)
+	}
+	missing := state
+	missing.History = []SpendHistoryEntryV1{}
+	if result, err = EvaluatePolicy(policy, second, missing); err != nil || result.PublicReasonClass != ReasonStaleInput {
+		t.Fatalf("missing history accepted: result=%+v err=%v", result, err)
+	}
+	absent := state
+	absent.History = nil
+	if result, err = EvaluatePolicy(policy, second, absent); err != nil || result.PublicReasonClass != ReasonMalformed {
+		t.Fatalf("absent history accepted: result=%+v err=%v", result, err)
+	}
+	tampered := state
+	tamperedRequest := first
+	tamperedRequest.Amount = big.NewInt(1)
+	tampered.History = []SpendHistoryEntryV1{{Request: tamperedRequest, AccountedAt: 1050}}
+	if result, err = EvaluatePolicy(policy, second, tampered); err != nil || result.PublicReasonClass != ReasonStaleInput {
+		t.Fatalf("tampered history accepted: result=%+v err=%v", result, err)
+	}
+}
+
+func TestEvaluatorReplaysHistoricalFTSOValues(t *testing.T) {
+	vector := readVector(t)
+	policy := policyFromVector(vector.Policy)
+	policy.MaxPerAction = new(big.Int)
+	policy.DailyCap = big.NewInt(250)
+	policy.RollingCap = big.NewInt(250)
+	policy.RequireFTSO = true
+	policy.FTSOFeedID = common.BytesToHash([]byte("history-feed"))
+	policy.MaxPriceAgeSecs = 60
+	first, firstState := rebindPolicyRequest(t, policy, requestFromVector(vector.Request))
+	first.InputCommitment = common.BytesToHash([]byte("history-ftso-1"))
+	firstFeed := &FTSOSnapshotV1{FeedID: policy.FTSOFeedID, Value: big.NewInt(2), Timestamp: 1040, Checkpoint: first.InputCommitment}
+	firstState.FTSO = firstFeed
+	firstResult, err := EvaluatePolicy(policy, first, firstState)
+	if err != nil || firstResult.Decision != DecisionAllow {
+		t.Fatalf("first FTSO history request denied: result=%+v err=%v", firstResult, err)
+	}
+	second := first
+	second.RequestID = common.BytesToHash([]byte("history-ftso-request-2"))
+	second.RequestNonce = 2
+	second.Occurrence = 2
+	second.ScheduleSlot = 4600
+	second.SpendCheckpoint = firstResult.ResultingCheckpoint
+	second.InputCommitment = common.BytesToHash([]byte("history-ftso-2"))
+	second.CreatedAt = 4601
+	second.GraceDeadline = 4700
+	second.Expiry = 4700
+	secondFeed := &FTSOSnapshotV1{FeedID: policy.FTSOFeedID, Value: big.NewInt(2), Timestamp: 4640, Checkpoint: second.InputCommitment}
+	state := SpendStateV1{AvailableBalance: big.NewInt(100), History: []SpendHistoryEntryV1{{Request: first, AccountedAt: 1050, FTSO: firstFeed}}, OccurrenceCount: 1, LastAccountingAt: 1050, SpendCheckpoint: firstResult.ResultingCheckpoint, BalanceCheckpoint: second.BalanceCheckpoint, Now: 4650, FTSO: secondFeed}
+	result, err := EvaluatePolicy(policy, second, state)
+	if err != nil || result.PublicReasonClass != ReasonCapExceeded {
+		t.Fatalf("historical FTSO cap not enforced: result=%+v err=%v", result, err)
+	}
+	state.History[0].FTSO = nil
+	if result, err = EvaluatePolicy(policy, second, state); err != nil || result.PublicReasonClass != ReasonFTSOInvalid {
+		t.Fatalf("missing historical FTSO snapshot accepted: result=%+v err=%v", result, err)
 	}
 }

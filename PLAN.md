@@ -135,7 +135,7 @@ fields; live machine-domain verification remains open.
   golden vectors.
 - [x] Implement deterministic policy composition with shared
   Go/Solidity/TypeScript golden vectors.
-- [ ] Implement recurring slots, rolling windows, target rules, occurrence
+- [x] Implement recurring slots, rolling windows, target rules, occurrence
   limits, delegated allowances, expiry, and deny precedence.
 - [x] Freeze checked, inclusive UTC recurring-slot arithmetic with shared
   Go/Solidity/TypeScript boundary and overflow vectors.
@@ -145,6 +145,9 @@ fields; live machine-domain verification remains open.
   non-owner to be explicitly allowlisted under the same policy caps.
 - [x] Freeze UTC calendar and exact sliding rolling-window sums with shared
   Go/Solidity/TypeScript boundary, order, range, and overflow vectors.
+- [x] Remove caller-declared spend aggregates; replay ordered public requests,
+  accounting times, and request-bound FTSO snapshots from canonical genesis in
+  both Go and TypeScript before deriving cap totals.
 - [ ] Define deterministic tie/conflict rules: explicit deny outranks allow;
   malformed, unknown, stale, or unavailable input denies.
 - [ ] Add range, rounding, overflow, time-boundary, timezone-independent,

@@ -22,7 +22,7 @@ describe("cross-language golden vector", () => {
     expect(policyCommitment(policy)).toBe(vector.expected.policyCommitment);
     expect(policyReceiptDigest(receipt)).toBe(vector.expected.receiptDigest);
     expect(actionRequestHash(request)).toBe(vector.expected.requestHash);
-    const state: SpendStateV1 = { availableBalance: 100n, dailySpend: 0n, rollingSpend: 0n, occurrenceCount: 0, lastExecutionAt: 0n,
+    const state: SpendStateV1 = { availableBalance: 100n, history: [], occurrenceCount: 0, lastAccountingAt: 0n,
       spendCheckpoint: request.spendCheckpoint, balanceCheckpoint: request.balanceCheckpoint, now: 1050n };
     const evaluated = evaluatePolicy(policy, request, state);
     const result = { ...evaluated, machineId: vector.result.machineId, keyFingerprint: vector.result.keyFingerprint } as typeof evaluated;

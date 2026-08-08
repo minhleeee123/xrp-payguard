@@ -2,7 +2,8 @@ import { encodeAbiParameters, keccak256, type Hex } from "viem";
 import { ACTION_FTESTXRP_TRANSFER, SPEND_CHECKPOINT_V1, ZERO_BYTES32 } from "./constants.js";
 import { actionRequestHash, genesisSpendCheckpoint, normalizePolicy, policyCommitment } from "./codec.js";
 import { scheduleWindowV1 } from "./schedule.js";
-import type { ActionRequestV1, Decision, EvaluationResultV1, PolicyV1, PublicReasonClass, SpendStateV1 } from "./types.js";
+import { MAX_SPEND_WINDOW_ENTRIES_V1, spendWindowTotalsV1, type SpendWindowEntryV1 } from "./spend-window.js";
+import type { ActionRequestV1, Decision, EvaluationResultV1, FtsoSnapshotV1, PolicyV1, PublicReasonClass, SpendStateV1 } from "./types.js";
 
 const MAX_UINT256 = (1n << 256n) - 1n;
 const MAX_UINT32 = 2 ** 32 - 1;
@@ -66,17 +67,78 @@ function nextCheckpoint(request: ActionRequestV1, amount: bigint, occurrence: nu
   ));
 }
 
+function matchesPolicyDomain(policy: PolicyV1, request: ActionRequestV1, commitment: Hex): boolean {
+  return request.chainId === policy.chainId && request.registry.toLowerCase() === policy.registry.toLowerCase()
+    && request.vault.toLowerCase() === policy.vault.toLowerCase() && request.router.toLowerCase() === policy.router.toLowerCase()
+    && request.policyId.toLowerCase() === policy.policyId.toLowerCase() && request.policyVersion === policy.policyVersion
+    && request.policyCommitment.toLowerCase() === commitment.toLowerCase();
+}
+
+function ftsoReferenceValue(
+  policy: PolicyV1,
+  request: ActionRequestV1,
+  feed: FtsoSnapshotV1 | undefined,
+  now: bigint,
+): bigint | null {
+  if (!feed || feed.feedId.toLowerCase() !== policy.ftsoFeedId.toLowerCase()
+    || feed.timestamp > now || now - feed.timestamp > policy.maxPriceAgeSeconds
+    || feed.checkpoint === ZERO_BYTES32 || request.inputCommitment.toLowerCase() !== feed.checkpoint.toLowerCase()) return null;
+  return referenceValueV1(request.amount, feed.value, feed.decimals);
+}
+
+function replaySpendHistoryV1(
+  policy: PolicyV1,
+  state: SpendStateV1,
+  commitment: Hex,
+): { dailySpend: bigint; rollingSpend: bigint } | PublicReasonClass {
+  if (!Array.isArray(state.history) || state.history.length > MAX_SPEND_WINDOW_ENTRIES_V1) return "MALFORMED";
+  let checkpoint = genesisSpendCheckpoint(commitment);
+  const windowEntries: SpendWindowEntryV1[] = [];
+  try {
+    for (let index = 0; index < state.history.length; index += 1) {
+      const entry = state.history[index]!;
+      const historyRequest = entry.request;
+      const occurrence = index + 1;
+      if (!historyRequest || occurrence > MAX_UINT32
+        || !matchesPolicyDomain(policy, historyRequest, commitment)
+        || historyRequest.asset.toLowerCase() !== policy.asset.toLowerCase()
+        || historyRequest.actionType.toLowerCase() !== ACTION_FTESTXRP_TRANSFER.toLowerCase()
+        || historyRequest.amount <= 0n || historyRequest.amount > MAX_UINT256
+        || historyRequest.occurrence !== occurrence
+        || historyRequest.spendCheckpoint.toLowerCase() !== checkpoint.toLowerCase()
+        || entry.accountedAt < historyRequest.createdAt || entry.accountedAt > historyRequest.expiry
+        || historyRequest.graceDeadline < historyRequest.createdAt
+        || historyRequest.expiry < historyRequest.graceDeadline || entry.accountedAt > state.now) return "MALFORMED";
+      let value = historyRequest.amount;
+      if (policy.requireFtso) {
+        const converted = ftsoReferenceValue(policy, historyRequest, entry.ftso, entry.accountedAt);
+        if (converted === null) return "FTSO_INVALID";
+        value = converted;
+      } else if (entry.ftso !== undefined) {
+        return "MALFORMED";
+      }
+      checkpoint = nextCheckpoint(historyRequest, historyRequest.amount, occurrence, entry.accountedAt);
+      windowEntries.push({ value, executedAt: entry.accountedAt });
+    }
+  } catch {
+    return "MALFORMED";
+  }
+  const lastAccountingAt = state.history.at(-1)?.accountedAt ?? 0n;
+  if (state.occurrenceCount !== state.history.length || state.lastAccountingAt !== lastAccountingAt
+    || state.spendCheckpoint.toLowerCase() !== checkpoint.toLowerCase()) return "STALE_INPUT";
+  const effectiveWindow = policy.rollingWindowSeconds === 0n ? 1n : policy.rollingWindowSeconds;
+  return spendWindowTotalsV1(windowEntries, state.now, effectiveWindow) ?? "MALFORMED";
+}
+
 export function evaluatePolicy(policyInput: PolicyV1, request: ActionRequestV1, state: SpendStateV1): EvaluationResultV1 {
   const policy = normalizePolicy(policyInput);
   const now = state.now;
-  if (state.availableBalance < 0n || state.dailySpend < 0n || state.rollingSpend < 0n
+  if (state.availableBalance < 0n || state.lastAccountingAt < 0n
     || !Number.isInteger(state.occurrenceCount) || state.occurrenceCount < 0 || state.occurrenceCount > MAX_UINT32) {
     return deny(request, "MALFORMED", now);
   }
-  const domainMatches = request.chainId === policy.chainId && request.registry.toLowerCase() === policy.registry.toLowerCase()
-    && request.vault.toLowerCase() === policy.vault.toLowerCase() && request.router.toLowerCase() === policy.router.toLowerCase()
-    && request.policyId.toLowerCase() === policy.policyId.toLowerCase() && request.policyVersion === policy.policyVersion
-    && request.policyCommitment.toLowerCase() === policyCommitment(policy).toLowerCase();
+  const commitment = policyCommitment(policy);
+  const domainMatches = matchesPolicyDomain(policy, request, commitment);
   if (!domainMatches) return deny(request, "WRONG_DOMAIN", now);
   if (state.spendCheckpoint.toLowerCase() !== request.spendCheckpoint.toLowerCase()
     || state.balanceCheckpoint.toLowerCase() !== request.balanceCheckpoint.toLowerCase()
@@ -86,6 +148,8 @@ export function evaluatePolicy(policyInput: PolicyV1, request: ActionRequestV1, 
       && request.spendCheckpoint.toLowerCase() !== genesisSpendCheckpoint(request.policyCommitment).toLowerCase())) {
     return deny(request, "STALE_INPUT", now);
   }
+  const historyTotals = replaySpendHistoryV1(policy, state, commitment);
+  if (typeof historyTotals === "string") return deny(request, historyTotals, now);
   if (request.asset.toLowerCase() !== policy.asset.toLowerCase() || request.actionType.toLowerCase() !== ACTION_FTESTXRP_TRANSFER.toLowerCase()
     || request.amount <= 0n || request.createdAt > now || request.expiry < now || request.graceDeadline < request.createdAt || request.expiry < request.graceDeadline) {
     return deny(request, request.expiry < now ? "EXPIRED" : "MALFORMED", now);
@@ -112,23 +176,17 @@ export function evaluatePolicy(policyInput: PolicyV1, request: ActionRequestV1, 
     && !containsAddress(policy.allowRequesters, request.requester)) violations |= POLICY_VIOLATION_V1.REQUESTER_DENIED;
   if (policy.allowActionTypes.length > 0 && !containsBytes32(policy.allowActionTypes, request.actionType)) violations |= POLICY_VIOLATION_V1.ACTION_DENIED;
   if (policy.maxOccurrences !== 0 && state.occurrenceCount >= policy.maxOccurrences) violations |= POLICY_VIOLATION_V1.OCCURRENCE_EXCEEDED;
-  if (policy.cooldownSeconds !== 0n && state.lastExecutionAt !== 0n && now < state.lastExecutionAt + policy.cooldownSeconds) violations |= POLICY_VIOLATION_V1.COOLDOWN;
+  if (policy.cooldownSeconds !== 0n && state.lastAccountingAt !== 0n && now < state.lastAccountingAt + policy.cooldownSeconds) violations |= POLICY_VIOLATION_V1.COOLDOWN;
   if (state.availableBalance < request.amount) violations |= POLICY_VIOLATION_V1.INSUFFICIENT_BALANCE;
   let referenceValue = request.amount;
   if (policy.requireFtso) {
-    const feed = state.ftso;
-    if (!feed || feed.feedId.toLowerCase() !== policy.ftsoFeedId.toLowerCase() || feed.timestamp > now || now - feed.timestamp > policy.maxPriceAgeSeconds
-      || feed.checkpoint === ZERO_BYTES32 || request.inputCommitment.toLowerCase() !== feed.checkpoint.toLowerCase()) {
-      violations |= POLICY_VIOLATION_V1.FTSO_INVALID;
-    } else {
-      const value = referenceValueV1(request.amount, feed.value, feed.decimals);
-      if (value === null) violations |= POLICY_VIOLATION_V1.FTSO_INVALID;
-      else referenceValue = value;
-    }
+    const value = ftsoReferenceValue(policy, request, state.ftso, now);
+    if (value === null) violations |= POLICY_VIOLATION_V1.FTSO_INVALID;
+    else referenceValue = value;
   }
   if ((violations & POLICY_VIOLATION_V1.FTSO_INVALID) === 0n && ((policy.maxPerAction !== 0n && referenceValue > policy.maxPerAction)
-    || (policy.dailyCap !== 0n && state.dailySpend + referenceValue > policy.dailyCap)
-    || (policy.rollingCap !== 0n && state.rollingSpend + referenceValue > policy.rollingCap))) violations |= POLICY_VIOLATION_V1.CAP_EXCEEDED;
+    || (policy.dailyCap !== 0n && historyTotals.dailySpend + referenceValue > policy.dailyCap)
+    || (policy.rollingCap !== 0n && historyTotals.rollingSpend + referenceValue > policy.rollingCap))) violations |= POLICY_VIOLATION_V1.CAP_EXCEEDED;
   const composed = composePolicyDecisionV1(violations);
   if (composed.decision === "DENY") return deny(request, composed.publicReasonClass, now);
   const result: EvaluationResultV1 = { request, decision: "ALLOW", publicReasonClass: "OK", reservedAmount: request.amount,

@@ -48,7 +48,7 @@ func testRequest(policy protocol.PolicyV1) protocol.ActionRequestV1 {
 }
 
 func testState(request protocol.ActionRequestV1) protocol.SpendStateV1 {
-	return protocol.SpendStateV1{AvailableBalance: big.NewInt(100), DailySpend: new(big.Int), RollingSpend: new(big.Int), SpendCheckpoint: request.SpendCheckpoint, BalanceCheckpoint: request.BalanceCheckpoint, Now: 1050}
+	return protocol.SpendStateV1{AvailableBalance: big.NewInt(100), History: []protocol.SpendHistoryEntryV1{}, SpendCheckpoint: request.SpendCheckpoint, BalanceCheckpoint: request.BalanceCheckpoint, Now: 1050}
 }
 
 func newTestCoordinator(t *testing.T, policy protocol.PolicyV1) (*Coordinator, [3]*Machine, protocol.PolicyBindingV1) {

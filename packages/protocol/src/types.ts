@@ -119,12 +119,18 @@ export interface FtsoSnapshotV1 {
   checkpoint: Hex;
 }
 
+/** Public inputs needed to replay one canonical spend-checkpoint transition. */
+export interface SpendHistoryEntryV1 {
+  request: ActionRequestV1;
+  accountedAt: bigint;
+  ftso?: FtsoSnapshotV1;
+}
+
 export interface SpendStateV1 {
   availableBalance: bigint;
-  dailySpend: bigint;
-  rollingSpend: bigint;
+  history: SpendHistoryEntryV1[];
   occurrenceCount: number;
-  lastExecutionAt: bigint;
+  lastAccountingAt: bigint;
   spendCheckpoint: Hex;
   balanceCheckpoint: Hex;
   now: bigint;

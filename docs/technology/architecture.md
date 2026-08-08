@@ -145,6 +145,11 @@ The initial root is domain-separated from the exact policy commitment and
 occurrence zero; it is never caller-selected. Execution revalidates the stored
 root/next occurrence after threshold approval, closing the race between two
 requests evaluated from the same snapshot.
+Public `SpendStateV1` carries ordered executed requests and their canonical
+accounting times, not caller-asserted aggregate totals. For FTSO-denominated
+policies, each history entry also carries the request-bound public snapshot.
+Every machine independently replays the root and derives UTC calendar/rolling
+totals; any history or snapshot drift denies.
 
 ## 6. Funding architecture
 

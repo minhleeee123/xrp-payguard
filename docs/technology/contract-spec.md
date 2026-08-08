@@ -248,6 +248,13 @@ mapping before counting distinct signers.
   sliding rolling window as `(now - rollingWindowSeconds, now]`. Ordered history
   is capped at 4,096 entries; future/unordered/non-positive entries and checked
   `uint256` sum overflow deny.
+- `SpendStateV1` never accepts caller-declared daily or rolling totals. It
+  carries ordered public requests, their canonical accounting times, and the
+  exact FTSO snapshots required by those requests. Each FCC evaluator replays
+  every transition from the policy-derived genesis, recomputes historical
+  reference values, requires the final checkpoint/count/time to equal current
+  chain state, and only then derives cap totals. Missing, reordered, altered,
+  oversized, or snapshot-drifted history fails closed.
 
 ## 7. Conservation and authorization invariants
 
