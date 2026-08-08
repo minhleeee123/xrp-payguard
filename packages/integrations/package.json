@@ -12,7 +12,8 @@
   },
   "dependencies": {
     "@xrp-payguard/protocol": "workspace:*",
-    "viem": "2.55.11"
+    "viem": "2.55.11",
+    "xrpl": "5.0.0"
   },
   "devDependencies": {
     "@types/node": "24.0.0",

@@ -16,6 +16,8 @@
   timestamped official-registry lookup observation, explicitly not a PayGuard release.
 - [`technology/coston2-public-endpoints.md`](technology/coston2-public-endpoints.md):
   credential-free Coston2 RPC, Explorer API, Explorer, and faucet reachability observation.
+- [`technology/smart-account-custom-instruction.md`](technology/smart-account-custom-instruction.md):
+  public `PersonalAccount`/nonce resolver and `0xFE` `PackedUserOperation` codec boundary.
 - [`technology/coston2-contract-deployment.md`](technology/coston2-contract-deployment.md):
   fail-closed, resumable contract deployment and independent runtime/wiring checks.
 - [`technology/fcc-attestation-domain.md`](technology/fcc-attestation-domain.md):

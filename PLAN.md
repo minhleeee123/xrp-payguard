@@ -230,9 +230,11 @@ verified on Coston2. External review and registered FCC execution remain open.
 
 ### Phase 5 — XRP-native funding and external triggers
 
-- [ ] Derive the XRPL owner's Flare PersonalAccount and nonce.
-- [ ] Build a `0xFE` operation that funds/activates a PayGuard vault without a
-  custodial XRPL signer.
+- [x] Add a public-only resolver for the XRPL owner's deterministic Flare
+  PersonalAccount and memo nonce; live reads remain unverified.
+- [x] Encode a bounded `0xFE` `PackedUserOperation` that can target a PayGuard
+  vault without accepting a custodial XRPL signer; live Payment/activation
+  remains open.
 - [ ] Request, retrieve, and verify a real FDC `XRPPayment` proof.
 - [ ] Execute Smart Account direct mint/funding and bind payment, user-op hash,
   owner, nonce, asset, amount, executor fee, and PayGuard destination.

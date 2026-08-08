@@ -20,7 +20,10 @@ await walk(root);
 
 const patterns = [
   { label: "private-key-assignment", value: /(?:PRIVATE_KEY|SECRET_KEY|DEPLOYER_KEY)\s*[=:]\s*["']?(?:0x)?[0-9a-fA-F]{64}\b/ },
-  { label: "xrpl-seed", value: /\bs[a-zA-Z0-9]{28,35}\b/ },
+  // XRPL family seeds use the Ripple Base58 alphabet; narrowing this avoids
+  // treating npm integrity strings as seeds while still catching seed-shaped
+  // values before they can enter source, evidence, or logs.
+  { label: "xrpl-seed", value: /\bs[1-9A-HJ-NP-Za-km-z]{28,35}\b/ },
   { label: "pem-material", value: /-----BEGIN (?:EC |RSA |OPENSSH )?PRIVATE KEY-----/ },
   { label: "credential-url", value: /https?:\/\/[^\s:@/]+:[^\s@/]+@/ },
   { label: "bearer-token", value: /\bBearer\s+[A-Za-z0-9._~-]{24,}/i },

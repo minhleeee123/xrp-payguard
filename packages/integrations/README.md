@@ -47,3 +47,9 @@ canonical registry address for FDC, FTSO, FAssets, Smart Account, and related
 protocol addresses. It rejects RPC failures, zero/invalid addresses, duplicate
 requests, and unsupported names. The returned addresses are a runtime lookup,
 not a PayGuard deployment manifest or release assertion.
+
+The `smart-account.ts` module resolves a registry-provided
+`MasterAccountController`, reads a public `PersonalAccount` and memo nonce, and
+encodes the official `0xFE` custom-instruction `PackedUserOperation`. It emits
+no XRPL seed, signature, Payment, FDC request, or authorization decision. Live
+Smart Account/FDC execution remains an external gate.

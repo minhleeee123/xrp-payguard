@@ -11,3 +11,4 @@ export * from "./roles.js";
 export * from "./notifications.js";
 export * from "./flare-registry.js";
 export * from "./custody.js";
+export * from "./smart-account.js";
