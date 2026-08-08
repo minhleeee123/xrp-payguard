@@ -159,6 +159,8 @@ external review, and live protocol wiring remain open.
 - [x] Require two distinct registered signers over one exact evaluation digest.
 - [x] Advance spend checkpoint, occurrence count, request nonce, and transfer in
   one atomic transaction; reject duplicate or partial execution.
+- [x] Derive a domain-separated genesis checkpoint and revalidate the current
+  checkpoint/occurrence at execution to reject competing stale approvals.
 - [x] Restrict V1 actions to an explicitly supported FTestXRP-like transfer;
   arbitrary calls remain disabled and the adapter still needs independent audit.
 - [x] Add unit, reentrancy, token-failure, and conservation tests. Fuzz/invariant

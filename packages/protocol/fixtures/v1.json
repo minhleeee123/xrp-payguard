@@ -79,8 +79,8 @@
     "actionType": "0x7724a7df37c3be471ea167687fac27a66f7665ba11b82088e76b3e132f962df1",
     "amount": "75",
     "scheduleSlot": "1000",
-    "occurrence": 0,
-    "spendCheckpoint": "0x000000000000000000000000000000000000000000000000007370656e642d30",
+    "occurrence": 1,
+    "spendCheckpoint": "0x75843121fcc0da66feb806fb1d030b835ada5fb60ee1a7fedf7c6a0c99ed7520",
     "balanceCheckpoint": "0x000000000000000000000000000000000000000000000062616c616e63652d30",
     "inputCommitment": "0x0000000000000000000000000000000000000000000000000000000000000000",
     "createdAt": "1001",
@@ -91,7 +91,7 @@
     "decision": "ALLOW",
     "publicReasonClass": "OK",
     "reservedAmount": "75",
-    "resultingCheckpoint": "0x9bb91f1d5b4144e755f4d20bf7ba7e78de1d589904a9be9d3cdb42282c56efde",
+    "resultingCheckpoint": "0x5b1d596161323137e82c3406f83488a3a990e049b4daee2cb17e864f6bfa763a",
     "resultNonce": "0x0000000000000000000000000000000000000000000000726571756573742d31",
     "attempt": 0,
     "issuedAt": "1050",
@@ -102,7 +102,7 @@
   "expected": {
     "policyCommitment": "0xb241920018ba735b00993170ea61aeafdba73de705e95f2bcae093c7528a38f1",
     "receiptDigest": "0xaf54f890d4aad11e9945c9035df1ec0e29ab29b9ee5554e09d130f0ed93fbbd9",
-    "requestHash": "0xb4bc17cf6fd24db78796ecd81a67a0b03e33e171525da5ff5406a17104e88be9",
-    "evaluationDigest": "0x04ca2499b5d6b2d645085c88094239b34df037d04fdb51c887f6fc1e816ad364"
+    "requestHash": "0xf0fbd7743fb730da980052581deeb152d9f7b340ccc620dded7451df9fbf4471",
+    "evaluationDigest": "0x4b5e7be65951c317fe270f7b3db243a1eb92a5e8bc2b581da75265e85c9d034e"
   }
 }

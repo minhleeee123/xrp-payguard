@@ -148,6 +148,14 @@ Terminal states are unique. `Executed` cannot transition. A denied/expired
 request cannot reuse the same nonce. Retry uses a new attempt under the fixed
 grace rules and identical frozen inputs where required.
 
+`SPEND_CHECKPOINT_V1` has one canonical genesis per exact policy commitment:
+`keccak256(abi.encode(SPEND_CHECKPOINT_V1, policyCommitment, uint32(0)))`.
+Each allowed transition hashes the same domain tag, prior checkpoint, request
+hash, amount, next occurrence, and canonical evaluation time. The FCC evaluator
+rejects a caller-chosen genesis or a non-sequential occurrence. The router
+rechecks the current checkpoint and occurrence at execution, so two requests
+created against one snapshot cannot both execute.
+
 ## 5. Result digest
 
 The exact hash must cover at minimum:

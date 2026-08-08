@@ -132,8 +132,8 @@ contract PayGuardActionRouterTest is TestBase {
             actionType: 0x7724a7df37c3be471ea167687fac27a66f7665ba11b82088e76b3e132f962df1,
             amount: 75,
             scheduleSlot: 1000,
-            occurrence: 0,
-            spendCheckpoint: _b(0x7370656e642d30),
+            occurrence: 1,
+            spendCheckpoint: 0x75843121fcc0da66feb806fb1d030b835ada5fb60ee1a7fedf7c6a0c99ed7520,
             balanceCheckpoint: _b(0x62616c616e63652d30),
             inputCommitment: bytes32(0),
             createdAt: 1001,
@@ -142,7 +142,7 @@ contract PayGuardActionRouterTest is TestBase {
         });
         require(
             PayGuardTypes.requestHash(request)
-                == 0xb4bc17cf6fd24db78796ecd81a67a0b03e33e171525da5ff5406a17104e88be9,
+                == 0xf0fbd7743fb730da980052581deeb152d9f7b340ccc620dded7451df9fbf4471,
             "request hash"
         );
         PayGuardTypes.EvaluationResult memory result = PayGuardTypes.EvaluationResult({
@@ -150,7 +150,7 @@ contract PayGuardActionRouterTest is TestBase {
             decision: 1,
             publicReasonClass: 0,
             reservedAmount: 75,
-            resultingCheckpoint: 0x9bb91f1d5b4144e755f4d20bf7ba7e78de1d589904a9be9d3cdb42282c56efde,
+            resultingCheckpoint: 0x5b1d596161323137e82c3406f83488a3a990e049b4daee2cb17e864f6bfa763a,
             resultNonce: _b(0x726571756573742d31),
             attempt: 0,
             issuedAt: 1050,
@@ -160,14 +160,14 @@ contract PayGuardActionRouterTest is TestBase {
         });
         require(
             PayGuardTypes.evaluationDigest(result)
-                == 0x04ca2499b5d6b2d645085c88094239b34df037d04fdb51c887f6fc1e816ad364,
+                == 0x4b5e7be65951c317fe270f7b3db243a1eb92a5e8bc2b581da75265e85c9d034e,
             "evaluation digest"
         );
     }
 
     function testTwoDistinctMatchingResultsExecuteOnceAndConserve() public {
         PayGuardTypes.ActionRequest memory request =
-            _request(keccak256("request-1"), 1, _b(0x7370656e642d31), 100);
+            _request(keccak256("request-1"), 1, _genesis(commitment), 100);
         vm.prank(owner);
         router.createRequest(request);
         PayGuardTypes.EvaluationResult memory result =
@@ -197,7 +197,7 @@ contract PayGuardActionRouterTest is TestBase {
 
     function testDenyReleasesReservationAndWrongSignerFailsClosed() public {
         PayGuardTypes.ActionRequest memory request =
-            _request(keccak256("request-deny"), 1, _b(0x7370656e642d31), 100);
+            _request(keccak256("request-deny"), 1, _genesis(commitment), 100);
         vm.prank(owner);
         router.createRequest(request);
         PayGuardTypes.EvaluationResult memory denied = _denyResult(request, 11);
@@ -270,7 +270,7 @@ contract PayGuardActionRouterTest is TestBase {
         );
 
         PayGuardTypes.ActionRequest memory oldRequest =
-            _request(keccak256("old-policy-request"), 1, _b(0x7370656e642d31), 25);
+            _request(keccak256("old-policy-request"), 1, _genesis(commitment), 25);
         vm.prank(owner);
         router.createRequest(oldRequest);
         PayGuardTypes.EvaluationResult memory oldResult =
@@ -285,7 +285,7 @@ contract PayGuardActionRouterTest is TestBase {
         router.cancel(oldRequest.requestId);
 
         PayGuardTypes.ActionRequest memory newRequest =
-            _request(keccak256("new-policy-request"), 1, _b(0x6e65772d7370656e64), 25);
+            _request(keccak256("new-policy-request"), 1, _genesis(replacementCommitment), 25);
         newRequest.policyVersion = 2;
         newRequest.policyCommitment = replacementCommitment;
         vm.prank(owner);
@@ -308,7 +308,7 @@ contract PayGuardActionRouterTest is TestBase {
 
     function testStaleCheckpointAndCancellationAreSafe() public {
         PayGuardTypes.ActionRequest memory first =
-            _request(keccak256("request-state"), 1, _b(0x7370656e642d31), 100);
+            _request(keccak256("request-state"), 1, _genesis(commitment), 100);
         vm.prank(owner);
         router.createRequest(first);
         PayGuardTypes.EvaluationResult memory allowed =
@@ -324,7 +324,7 @@ contract PayGuardActionRouterTest is TestBase {
         router.execute(first.requestId);
 
         PayGuardTypes.ActionRequest memory stale =
-            _request(keccak256("request-stale"), 2, _b(0x7370656e642d31), 50);
+            _request(keccak256("request-stale"), 2, _genesis(commitment), 50);
         vm.prank(owner);
         vm.expectRevert(PayGuardActionRouter.InvalidRequest.selector);
         router.createRequest(stale);
@@ -341,6 +341,38 @@ contract PayGuardActionRouterTest is TestBase {
         assertEq(accounting.available, 400);
         assertEq(accounting.spent, 100);
         assertEq(accounting.reserved, 0);
+    }
+
+    function testCanonicalGenesisAndCompetingExecutionsFailClosed() public {
+        PayGuardTypes.ActionRequest memory forged =
+            _request(keccak256("forged-genesis"), 1, keccak256("caller-chosen"), 25);
+        vm.prank(owner);
+        vm.expectRevert(PayGuardActionRouter.InvalidRequest.selector);
+        router.createRequest(forged);
+
+        bytes32 genesis = _genesis(commitment);
+        PayGuardTypes.ActionRequest memory first =
+            _request(keccak256("competing-first"), 1, genesis, 25);
+        PayGuardTypes.ActionRequest memory second =
+            _request(keccak256("competing-second"), 2, genesis, 25);
+        second.occurrence = 1;
+        vm.prank(owner);
+        router.createRequest(first);
+        vm.prank(owner);
+        router.createRequest(second);
+        _thresholdAllow(first, keccak256("competing-next-first"));
+        _thresholdAllow(second, keccak256("competing-next-second"));
+
+        router.execute(first.requestId);
+        vm.expectRevert(PayGuardActionRouter.InvalidState.selector);
+        router.execute(second.requestId);
+        vm.prank(owner);
+        router.cancel(second.requestId);
+
+        PayGuardVault.Accounting memory accounting = vault.accounting(owner, address(token));
+        assertEq(accounting.available, 475);
+        assertEq(accounting.reserved, 0);
+        assertEq(accounting.spent, 25);
     }
 
     function _receiptFor(
@@ -376,6 +408,13 @@ contract PayGuardActionRouterTest is TestBase {
         bytes32 checkpoint,
         uint256 amount
     ) internal view returns (PayGuardTypes.ActionRequest memory request) {
+        require(requestNonce <= type(uint32).max, "test request nonce");
+        // The fixture guard above proves both casts cannot truncate.
+        // forge-lint: disable-next-line(unsafe-typecast)
+        uint32 occurrence = uint32(requestNonce);
+        // uint32 plus this constant always fits uint64.
+        // forge-lint: disable-next-line(unsafe-typecast)
+        uint64 scheduleSlot = uint64(1000 + requestNonce);
         request = PayGuardTypes.ActionRequest({
             chainId: 114,
             registry: address(registry),
@@ -392,8 +431,8 @@ contract PayGuardActionRouterTest is TestBase {
             asset: address(token),
             actionType: PayGuardTypes.ACTION_FTESTXRP_TRANSFER,
             amount: amount,
-            scheduleSlot: uint64(1000 + requestNonce),
-            occurrence: uint32(requestNonce),
+            scheduleSlot: scheduleSlot,
+            occurrence: occurrence,
             spendCheckpoint: checkpoint,
             balanceCheckpoint: keccak256(abi.encode("balance", requestNonce)),
             inputCommitment: bytes32(0),
@@ -423,6 +462,22 @@ contract PayGuardActionRouterTest is TestBase {
         });
     }
 
+    function _thresholdAllow(
+        PayGuardTypes.ActionRequest memory request,
+        bytes32 checkpoint
+    ) internal {
+        PayGuardTypes.EvaluationResult memory result =
+            _allowResult(request, request.amount, checkpoint);
+        router.submitEvaluation(
+            result, _signature(machineAKey, PayGuardTypes.evaluationDigest(result))
+        );
+        result.machineId = machineB;
+        result.keyFingerprint = keyB;
+        router.submitEvaluation(
+            result, _signature(machineBKey, PayGuardTypes.evaluationDigest(result))
+        );
+    }
+
     function _denyResult(
         PayGuardTypes.ActionRequest memory request,
         uint8 reason
@@ -446,6 +501,12 @@ contract PayGuardActionRouterTest is TestBase {
         uint256 value
     ) internal pure returns (bytes32) {
         return bytes32(value);
+    }
+
+    function _genesis(
+        bytes32 policyCommitment
+    ) internal pure returns (bytes32) {
+        return PayGuardTypes.genesisSpendCheckpoint(policyCommitment);
     }
 
     function _key(

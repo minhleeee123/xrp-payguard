@@ -1,9 +1,10 @@
 import { encodeAbiParameters, keccak256, type Hex } from "viem";
-import { ACTION_FTESTXRP_TRANSFER, ZERO_BYTES32 } from "./constants.js";
-import { actionRequestHash, normalizePolicy, policyCommitment } from "./codec.js";
+import { ACTION_FTESTXRP_TRANSFER, SPEND_CHECKPOINT_V1, ZERO_BYTES32 } from "./constants.js";
+import { actionRequestHash, genesisSpendCheckpoint, normalizePolicy, policyCommitment } from "./codec.js";
 import type { ActionRequestV1, Decision, EvaluationResultV1, PolicyV1, PublicReasonClass, SpendStateV1 } from "./types.js";
 
 const MAX_UINT256 = (1n << 256n) - 1n;
+const MAX_UINT32 = 2 ** 32 - 1;
 
 export const POLICY_VIOLATION_V1 = {
   POLICY_DENIED: 1n << 0n,
@@ -59,15 +60,16 @@ export function referenceValueV1(amount: bigint, price: bigint, priceDecimals: n
 
 function nextCheckpoint(request: ActionRequestV1, amount: bigint, occurrence: number, now: bigint): Hex {
   return keccak256(encodeAbiParameters(
-    [{ type: "bytes32" }, { type: "bytes32" }, { type: "uint256" }, { type: "uint32" }, { type: "uint64" }],
-    [request.spendCheckpoint, actionRequestHash(request), amount, occurrence, now],
+    [{ type: "bytes32" }, { type: "bytes32" }, { type: "bytes32" }, { type: "uint256" }, { type: "uint32" }, { type: "uint64" }],
+    [SPEND_CHECKPOINT_V1, request.spendCheckpoint, actionRequestHash(request), amount, occurrence, now],
   ));
 }
 
 export function evaluatePolicy(policyInput: PolicyV1, request: ActionRequestV1, state: SpendStateV1): EvaluationResultV1 {
   const policy = normalizePolicy(policyInput);
   const now = state.now;
-  if (state.availableBalance < 0n || state.dailySpend < 0n || state.rollingSpend < 0n || state.occurrenceCount < 0) {
+  if (state.availableBalance < 0n || state.dailySpend < 0n || state.rollingSpend < 0n
+    || !Number.isInteger(state.occurrenceCount) || state.occurrenceCount < 0 || state.occurrenceCount > MAX_UINT32) {
     return deny(request, "MALFORMED", now);
   }
   const domainMatches = request.chainId === policy.chainId && request.registry.toLowerCase() === policy.registry.toLowerCase()
@@ -76,7 +78,11 @@ export function evaluatePolicy(policyInput: PolicyV1, request: ActionRequestV1, 
     && request.policyCommitment.toLowerCase() === policyCommitment(policy).toLowerCase();
   if (!domainMatches) return deny(request, "WRONG_DOMAIN", now);
   if (state.spendCheckpoint.toLowerCase() !== request.spendCheckpoint.toLowerCase()
-    || state.balanceCheckpoint.toLowerCase() !== request.balanceCheckpoint.toLowerCase()) {
+    || state.balanceCheckpoint.toLowerCase() !== request.balanceCheckpoint.toLowerCase()
+    || state.occurrenceCount === MAX_UINT32
+    || request.occurrence !== state.occurrenceCount + 1
+    || (state.occurrenceCount === 0
+      && request.spendCheckpoint.toLowerCase() !== genesisSpendCheckpoint(request.policyCommitment).toLowerCase())) {
     return deny(request, "STALE_INPUT", now);
   }
   if (request.asset.toLowerCase() !== policy.asset.toLowerCase() || request.actionType.toLowerCase() !== ACTION_FTESTXRP_TRANSFER.toLowerCase()

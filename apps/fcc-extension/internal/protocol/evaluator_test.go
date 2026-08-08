@@ -11,6 +11,21 @@ func stateFromVector(request ActionRequestV1) SpendStateV1 {
 	return SpendStateV1{AvailableBalance: big.NewInt(100), DailySpend: new(big.Int), RollingSpend: new(big.Int), OccurrenceCount: 0, LastExecutionAt: 0, SpendCheckpoint: request.SpendCheckpoint, BalanceCheckpoint: request.BalanceCheckpoint, Now: 1050}
 }
 
+func rebindPolicyRequest(t *testing.T, policy PolicyV1, request ActionRequestV1) (ActionRequestV1, SpendStateV1) {
+	t.Helper()
+	commitment, err := PolicyCommitment(policy)
+	if err != nil {
+		t.Fatal(err)
+	}
+	checkpoint, err := GenesisSpendCheckpoint(commitment)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request.PolicyCommitment = commitment
+	request.SpendCheckpoint = checkpoint
+	return request, stateFromVector(request)
+}
+
 func TestEvaluatorMatchesGoldenVector(t *testing.T) {
 	vector := readVector(t)
 	policy := policyFromVector(vector.Policy)
@@ -54,13 +69,8 @@ func TestEvaluatorDeniesFailClosed(t *testing.T) {
 
 	deniedPolicy := policy
 	deniedPolicy.DenyTargets = []common.Address{request.Target}
-	deniedCommitment, err := PolicyCommitment(deniedPolicy)
-	if err != nil {
-		t.Fatal(err)
-	}
-	deniedRequest := request
-	deniedRequest.PolicyCommitment = deniedCommitment
-	result, err = EvaluatePolicy(deniedPolicy, deniedRequest, state)
+	deniedRequest, deniedState := rebindPolicyRequest(t, deniedPolicy, request)
+	result, err = EvaluatePolicy(deniedPolicy, deniedRequest, deniedState)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,13 +79,7 @@ func TestEvaluatorDeniesFailClosed(t *testing.T) {
 	}
 	conflictingPolicy := deniedPolicy
 	conflictingPolicy.MaxPerAction = big.NewInt(1)
-	conflictingCommitment, err := PolicyCommitment(conflictingPolicy)
-	if err != nil {
-		t.Fatal(err)
-	}
-	conflictingRequest := request
-	conflictingRequest.PolicyCommitment = conflictingCommitment
-	conflictingState := state
+	conflictingRequest, conflictingState := rebindPolicyRequest(t, conflictingPolicy, request)
 	conflictingState.AvailableBalance = big.NewInt(1)
 	result, err = EvaluatePolicy(conflictingPolicy, conflictingRequest, conflictingState)
 	if err != nil {
@@ -87,13 +91,8 @@ func TestEvaluatorDeniesFailClosed(t *testing.T) {
 
 	cappedPolicy := policy
 	cappedPolicy.MaxPerAction = big.NewInt(50)
-	cappedCommitment, err := PolicyCommitment(cappedPolicy)
-	if err != nil {
-		t.Fatal(err)
-	}
-	cappedRequest := request
-	cappedRequest.PolicyCommitment = cappedCommitment
-	result, err = EvaluatePolicy(cappedPolicy, cappedRequest, state)
+	cappedRequest, cappedState := rebindPolicyRequest(t, cappedPolicy, request)
+	result, err = EvaluatePolicy(cappedPolicy, cappedRequest, cappedState)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -124,13 +123,8 @@ func TestEvaluatorDeniesFailClosed(t *testing.T) {
 	ftsoPolicy := policy
 	ftsoPolicy.RequireFTSO = true
 	ftsoPolicy.FTSOFeedID = mustHash("0x000000000000000000000000000000000000000000000000000000000066656564")
-	ftsoCommitment, err := PolicyCommitment(ftsoPolicy)
-	if err != nil {
-		t.Fatal(err)
-	}
-	ftsoRequest := request
-	ftsoRequest.PolicyCommitment = ftsoCommitment
-	result, err = EvaluatePolicy(ftsoPolicy, ftsoRequest, state)
+	ftsoRequest, ftsoState := rebindPolicyRequest(t, ftsoPolicy, request)
+	result, err = EvaluatePolicy(ftsoPolicy, ftsoRequest, ftsoState)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -160,5 +154,33 @@ func TestEvaluatorRejectsStaleStateAndFutureRequest(t *testing.T) {
 	}
 	if result.PublicReasonClass != ReasonMalformed {
 		t.Fatalf("future request reason: %d", result.PublicReasonClass)
+	}
+	wrongOccurrence := request
+	wrongOccurrence.Occurrence++
+	result, err = EvaluatePolicy(policy, wrongOccurrence, stateFromVector(request))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.PublicReasonClass != ReasonStaleInput {
+		t.Fatalf("occurrence reason: %d", result.PublicReasonClass)
+	}
+	exhaustedState := stateFromVector(request)
+	exhaustedState.OccurrenceCount = ^uint32(0)
+	result, err = EvaluatePolicy(policy, request, exhaustedState)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.PublicReasonClass != ReasonStaleInput {
+		t.Fatalf("exhausted occurrence reason: %d", result.PublicReasonClass)
+	}
+	forged := request
+	forged.SpendCheckpoint = mustHash("forged-genesis")
+	forgedState := stateFromVector(forged)
+	result, err = EvaluatePolicy(policy, forged, forgedState)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.PublicReasonClass != ReasonStaleInput {
+		t.Fatalf("genesis reason: %d", result.PublicReasonClass)
 	}
 }

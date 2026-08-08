@@ -15,6 +15,7 @@ var (
 	PolicySchemaV1           = crypto.Keccak256Hash([]byte("POLICY_SCHEMA_V1"))
 	PolicyReceiptTypeHash    = crypto.Keccak256Hash([]byte("POLICY_RECEIPT_V1"))
 	ActionRequestTypeHash    = crypto.Keccak256Hash([]byte("ACTION_REQUEST_V1"))
+	SpendCheckpointTypeHash  = crypto.Keccak256Hash([]byte("SPEND_CHECKPOINT_V1"))
 	EvaluationResultTypeHash = crypto.Keccak256Hash([]byte("EVALUATION_RESULT_V1"))
 	ActionFTestXRPTransfer   = crypto.Keccak256Hash([]byte("FTESTXRP_TRANSFER_V1"))
 )
@@ -255,6 +256,15 @@ func PolicyCommitment(policy PolicyV1) (common.Hash, error) {
 		return common.Hash{}, err
 	}
 	return crypto.Keccak256Hash(encoded), nil
+}
+
+func GenesisSpendCheckpoint(policyCommitment common.Hash) (common.Hash, error) {
+	return digest(
+		[]string{"bytes32", "bytes32", "uint32"},
+		SpendCheckpointTypeHash,
+		policyCommitment,
+		uint32(0),
+	)
 }
 
 func bindingValues(binding PolicyBindingV1) []interface{} {

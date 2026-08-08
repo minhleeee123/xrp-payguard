@@ -40,7 +40,11 @@ func testRequest(policy protocol.PolicyV1) protocol.ActionRequestV1 {
 	if err != nil {
 		panic(err)
 	}
-	return protocol.ActionRequestV1{ChainID: policy.ChainID, Registry: policy.Registry, Vault: policy.Vault, Router: policy.Router, PolicyID: policy.PolicyID, PolicyVersion: policy.PolicyVersion, PolicyCommitment: commitment, RequestID: ingressHash("request"), RequestNonce: 1, Requester: policy.Owner, Target: policy.Router, Asset: policy.Asset, ActionType: protocol.ActionFTestXRPTransfer, Amount: big.NewInt(75), ScheduleSlot: 1000, SpendCheckpoint: ingressHash("spend"), BalanceCheckpoint: ingressHash("balance"), InputCommitment: common.Hash{}, CreatedAt: 1001, GraceDeadline: 1100, Expiry: 1200}
+	checkpoint, err := protocol.GenesisSpendCheckpoint(commitment)
+	if err != nil {
+		panic(err)
+	}
+	return protocol.ActionRequestV1{ChainID: policy.ChainID, Registry: policy.Registry, Vault: policy.Vault, Router: policy.Router, PolicyID: policy.PolicyID, PolicyVersion: policy.PolicyVersion, PolicyCommitment: commitment, RequestID: ingressHash("request"), RequestNonce: 1, Requester: policy.Owner, Target: policy.Router, Asset: policy.Asset, ActionType: protocol.ActionFTestXRPTransfer, Amount: big.NewInt(75), ScheduleSlot: 1000, Occurrence: 1, SpendCheckpoint: checkpoint, BalanceCheckpoint: ingressHash("balance"), InputCommitment: common.Hash{}, CreatedAt: 1001, GraceDeadline: 1100, Expiry: 1200}
 }
 
 func testState(request protocol.ActionRequestV1) protocol.SpendStateV1 {

@@ -26,7 +26,8 @@ func fccPolicy() protocol.PolicyV1 {
 
 func fccRequest(policy protocol.PolicyV1) protocol.ActionRequestV1 {
 	commitment, _ := protocol.PolicyCommitment(policy)
-	return protocol.ActionRequestV1{ChainID: policy.ChainID, Registry: policy.Registry, Vault: policy.Vault, Router: policy.Router, PolicyID: policy.PolicyID, PolicyVersion: policy.PolicyVersion, PolicyCommitment: commitment, RequestID: fccHash("request"), RequestNonce: 1, Requester: policy.Owner, Target: policy.Router, Asset: policy.Asset, ActionType: protocol.ActionFTestXRPTransfer, Amount: big.NewInt(75), ScheduleSlot: 1000, SpendCheckpoint: fccHash("spend"), BalanceCheckpoint: fccHash("balance"), CreatedAt: 1001, GraceDeadline: 1100, Expiry: 1200}
+	checkpoint, _ := protocol.GenesisSpendCheckpoint(commitment)
+	return protocol.ActionRequestV1{ChainID: policy.ChainID, Registry: policy.Registry, Vault: policy.Vault, Router: policy.Router, PolicyID: policy.PolicyID, PolicyVersion: policy.PolicyVersion, PolicyCommitment: commitment, RequestID: fccHash("request"), RequestNonce: 1, Requester: policy.Owner, Target: policy.Router, Asset: policy.Asset, ActionType: protocol.ActionFTestXRPTransfer, Amount: big.NewInt(75), ScheduleSlot: 1000, Occurrence: 1, SpendCheckpoint: checkpoint, BalanceCheckpoint: fccHash("balance"), CreatedAt: 1001, GraceDeadline: 1100, Expiry: 1200}
 }
 
 func actionFor(opCommand common.Hash, original []byte) (teetypes.Action, *instruction.DataFixed) {

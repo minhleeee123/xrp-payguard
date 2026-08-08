@@ -1,7 +1,7 @@
 import { getAddress, keccak256, padHex, stringToHex, zeroAddress } from "viem";
 import { describe, expect, it } from "vitest";
 import { ACTION_FTESTXRP_TRANSFER, CHAIN_ID, ZERO_BYTES32 } from "../src/constants.js";
-import { actionRequestHash, encodePolicyV1, evaluationDigest, policyCommitment, policyReceiptDigest } from "../src/codec.js";
+import { actionRequestHash, encodePolicyV1, evaluationDigest, genesisSpendCheckpoint, policyCommitment, policyReceiptDigest } from "../src/codec.js";
 import { evaluatePolicy } from "../src/evaluator.js";
 import type { ActionRequestV1, PolicyBindingV1, PolicyReceiptV1, PolicyV1, SpendStateV1 } from "../src/types.js";
 
@@ -22,13 +22,22 @@ const policy: PolicyV1 = {
 const request = (): ActionRequestV1 => ({
   chainId: CHAIN_ID, registry: addressA, vault: addressB, router: addressC, policyId: policy.policyId, policyVersion: 1,
   policyCommitment: policyCommitment(policy), requestId: id("request-1"), requestNonce: 1n, attempt: 0, requester: addressA,
-  target: addressC, asset: addressB, actionType: ACTION_FTESTXRP_TRANSFER, amount: 75n, scheduleSlot: 1_000n, occurrence: 0,
-  spendCheckpoint: id("spend-0"), balanceCheckpoint: id("balance-0"), inputCommitment: ZERO_BYTES32, createdAt: 1_001n,
+  target: addressC, asset: addressB, actionType: ACTION_FTESTXRP_TRANSFER, amount: 75n, scheduleSlot: 1_000n, occurrence: 1,
+  spendCheckpoint: genesisSpendCheckpoint(policyCommitment(policy)), balanceCheckpoint: id("balance-0"), inputCommitment: ZERO_BYTES32, createdAt: 1_001n,
   graceDeadline: 1_100n, expiry: 1_200n,
 });
 
 const state = (): SpendStateV1 => ({ availableBalance: 100n, dailySpend: 0n, rollingSpend: 0n, occurrenceCount: 0, lastExecutionAt: 0n,
-  spendCheckpoint: id("spend-0"), balanceCheckpoint: id("balance-0"), now: 1_050n });
+  spendCheckpoint: request().spendCheckpoint, balanceCheckpoint: id("balance-0"), now: 1_050n });
+
+function requestForPolicy(candidate: PolicyV1): ActionRequestV1 {
+  const commitment = policyCommitment(candidate);
+  return { ...request(), policyCommitment: commitment, spendCheckpoint: genesisSpendCheckpoint(commitment) };
+}
+
+function stateForRequest(candidate: ActionRequestV1): SpendStateV1 {
+  return { ...state(), spendCheckpoint: candidate.spendCheckpoint };
+}
 
 describe("POLICY_SCHEMA_V1 deterministic codec", () => {
   it("canonicalizes unordered rule lists before hashing", () => {
@@ -95,36 +104,48 @@ describe("deterministic evaluator", () => {
 
   it("denies a request over the per-action cap", () => {
     const cappedPolicy = { ...policy, maxPerAction: 50n };
-    const result = evaluatePolicy(cappedPolicy, { ...request(), policyCommitment: policyCommitment(cappedPolicy) }, state());
+    const cappedRequest = requestForPolicy(cappedPolicy);
+    const result = evaluatePolicy(cappedPolicy, cappedRequest, stateForRequest(cappedRequest));
     expect(result.publicReasonClass).toBe("CAP_EXCEEDED");
   });
 
   it("uses deny precedence and fails closed for missing FTSO", () => {
     const ftsoPolicy = { ...policy, requireFtso: true, ftsoFeedId: id("feed"), maxPriceAgeSeconds: 60n };
-    const result = evaluatePolicy(ftsoPolicy, { ...request(), policyCommitment: policyCommitment(ftsoPolicy), inputCommitment: keccak256(stringToHex("ftso")) }, state());
+    const ftsoRequest = { ...requestForPolicy(ftsoPolicy), inputCommitment: keccak256(stringToHex("ftso")) };
+    const result = evaluatePolicy(ftsoPolicy, ftsoRequest, stateForRequest(ftsoRequest));
     expect(result.decision).toBe("DENY");
     expect(result.publicReasonClass).toBe("FTSO_INVALID");
     const deniedPolicy = { ...policy, denyTargets: [addressC] };
-    expect(evaluatePolicy(deniedPolicy, { ...request(), policyCommitment: policyCommitment(deniedPolicy) }, state()).publicReasonClass).toBe("TARGET_DENIED");
+    const deniedRequest = requestForPolicy(deniedPolicy);
+    expect(evaluatePolicy(deniedPolicy, deniedRequest, stateForRequest(deniedRequest)).publicReasonClass).toBe("TARGET_DENIED");
     const conflictingPolicy = { ...deniedPolicy, maxPerAction: 1n };
+    const conflictingRequest = requestForPolicy(conflictingPolicy);
     expect(evaluatePolicy(
       conflictingPolicy,
-      { ...request(), policyCommitment: policyCommitment(conflictingPolicy) },
-      { ...state(), availableBalance: 1n },
+      conflictingRequest,
+      { ...stateForRequest(conflictingRequest), availableBalance: 1n },
     ).publicReasonClass).toBe("TARGET_DENIED");
   });
 
   it("rejects stale public checkpoints and future requests", () => {
     expect(evaluatePolicy(policy, request(), { ...state(), spendCheckpoint: id("other-spend") }).publicReasonClass).toBe("STALE_INPUT");
     expect(evaluatePolicy(policy, { ...request(), createdAt: 1_051n }, state()).publicReasonClass).toBe("MALFORMED");
+    expect(evaluatePolicy(policy, { ...request(), occurrence: 2 }, state()).publicReasonClass).toBe("STALE_INPUT");
+    expect(evaluatePolicy(
+      policy,
+      { ...request(), occurrence: 2 ** 32 },
+      { ...state(), occurrenceCount: 2 ** 32 - 1 },
+    ).publicReasonClass).toBe("STALE_INPUT");
+    const forged = id("forged-genesis");
+    expect(evaluatePolicy(policy, { ...request(), spendCheckpoint: forged }, { ...state(), spendCheckpoint: forged }).publicReasonClass).toBe("STALE_INPUT");
   });
 
   it("binds an FTSO decision to the request input commitment", () => {
     const feedId = id("xrp-usd");
     const feedCheckpoint = id("ftso-checkpoint");
     const ftsoPolicy = { ...policy, requireFtso: true, ftsoFeedId: feedId, maxPriceAgeSeconds: 60n };
-    const ftsoRequest = { ...request(), policyCommitment: policyCommitment(ftsoPolicy), inputCommitment: feedCheckpoint };
-    const ftsoState = { ...state(), ftso: { feedId, value: 1n, decimals: 0, timestamp: 1_040n, checkpoint: feedCheckpoint } };
+    const ftsoRequest = { ...requestForPolicy(ftsoPolicy), inputCommitment: feedCheckpoint };
+    const ftsoState = { ...stateForRequest(ftsoRequest), ftso: { feedId, value: 1n, decimals: 0, timestamp: 1_040n, checkpoint: feedCheckpoint } };
     expect(evaluatePolicy(ftsoPolicy, ftsoRequest, ftsoState).decision).toBe("ALLOW");
     expect(evaluatePolicy(ftsoPolicy, { ...ftsoRequest, inputCommitment: id("different") }, ftsoState).publicReasonClass).toBe("FTSO_INVALID");
   });

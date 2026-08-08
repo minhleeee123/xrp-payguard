@@ -12,6 +12,7 @@ import {
   POLICY_RECEIPT_V1,
   POLICY_SCHEMA_V1,
   REASON_CODE,
+  SPEND_CHECKPOINT_V1,
   ZERO_BYTES32,
 } from "./constants.js";
 import type { ActionRequestV1, PolicyBindingV1, PolicyReceiptV1, PolicyV1 } from "./types.js";
@@ -145,6 +146,13 @@ export function encodePolicyV1(policy: PolicyV1): Hex {
 
 export function policyCommitment(policy: PolicyV1): Hex {
   return keccak256(encodePolicyV1(policy));
+}
+
+export function genesisSpendCheckpoint(policyCommitmentValue: Hex): Hex {
+  return keccak256(encodeAbiParameters(
+    [{ type: "bytes32" }, { type: "bytes32" }, { type: "uint32" }],
+    [SPEND_CHECKPOINT_V1, bytes32(policyCommitmentValue, "policyCommitment"), 0],
+  ));
 }
 
 function bindingValues(binding: PolicyBindingV1): readonly unknown[] {

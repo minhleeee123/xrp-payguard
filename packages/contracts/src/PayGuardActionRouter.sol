@@ -154,9 +154,14 @@ contract PayGuardActionRouter {
         if (nonceUsed[input.policyCommitment][input.requestNonce]) revert NonceAlreadyUsed();
         SpendState memory prior = spendState[input.policyCommitment];
         if (
-            prior.initialized
-                && (input.spendCheckpoint != prior.checkpoint
-                    || input.occurrence != prior.occurrence + 1)
+            (prior.initialized
+                    && (prior.occurrence == type(uint32).max
+                        || input.spendCheckpoint != prior.checkpoint
+                        || input.occurrence != prior.occurrence + 1))
+                || (!prior.initialized
+                    && (input.occurrence != 1
+                        || input.spendCheckpoint
+                            != PayGuardTypes.genesisSpendCheckpoint(input.policyCommitment)))
         ) {
             revert InvalidRequest();
         }
@@ -256,8 +261,20 @@ contract PayGuardActionRouter {
             _expire(stored, requestId);
             revert Expired();
         }
-        stored.status = RequestStatus.Executed;
         SpendState storage state = spendState[stored.request.policyCommitment];
+        if (
+            (state.initialized
+                    && (state.occurrence == type(uint32).max
+                        || stored.request.spendCheckpoint != state.checkpoint
+                        || stored.request.occurrence != state.occurrence + 1))
+                || (!state.initialized
+                    && (stored.request.occurrence != 1
+                        || stored.request.spendCheckpoint
+                            != PayGuardTypes.genesisSpendCheckpoint(
+                                stored.request.policyCommitment
+                            )))
+        ) revert InvalidState();
+        stored.status = RequestStatus.Executed;
         state.checkpoint = stored.approvedCheckpoint;
         state.occurrence = stored.request.occurrence;
         state.initialized = true;

@@ -141,6 +141,10 @@ request binds:
 FCC verifies that supplied/read state equals the frozen public checkpoint. The
 router atomically executes and advances the next root. A stale TEE snapshot can
 deny or fail, but cannot authorize against an old spend window.
+The initial root is domain-separated from the exact policy commitment and
+occurrence zero; it is never caller-selected. Execution revalidates the stored
+root/next occurrence after threshold approval, closing the race between two
+requests evaluated from the same snapshot.
 
 ## 6. Funding architecture
 

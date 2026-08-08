@@ -7,6 +7,7 @@ pragma solidity ^0.8.25;
 library PayGuardTypes {
     bytes32 internal constant POLICY_SCHEMA_V1 = keccak256("POLICY_SCHEMA_V1");
     bytes32 internal constant ACTION_REQUEST_V1 = keccak256("ACTION_REQUEST_V1");
+    bytes32 internal constant SPEND_CHECKPOINT_V1 = keccak256("SPEND_CHECKPOINT_V1");
     bytes32 internal constant EVALUATION_RESULT_V1 = keccak256("EVALUATION_RESULT_V1");
     bytes32 internal constant ACTION_FTESTXRP_TRANSFER = keccak256("FTESTXRP_TRANSFER_V1");
 
@@ -77,6 +78,12 @@ library PayGuardTypes {
         uint64 expiry;
         bytes32 machineId;
         bytes32 keyFingerprint;
+    }
+
+    function genesisSpendCheckpoint(
+        bytes32 policyCommitment
+    ) internal pure returns (bytes32) {
+        return keccak256(abi.encode(SPEND_CHECKPOINT_V1, policyCommitment, uint32(0)));
     }
 
     function receiptDigest(

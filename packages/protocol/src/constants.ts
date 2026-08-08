@@ -4,6 +4,7 @@ export const CHAIN_ID = 114n;
 export const POLICY_SCHEMA_V1 = keccak256(stringToHex("POLICY_SCHEMA_V1"));
 export const POLICY_RECEIPT_V1 = keccak256(stringToHex("POLICY_RECEIPT_V1"));
 export const ACTION_REQUEST_V1 = keccak256(stringToHex("ACTION_REQUEST_V1"));
+export const SPEND_CHECKPOINT_V1 = keccak256(stringToHex("SPEND_CHECKPOINT_V1"));
 export const EVALUATION_RESULT_V1 = keccak256(stringToHex("EVALUATION_RESULT_V1"));
 export const ACTION_FTESTXRP_TRANSFER = keccak256(stringToHex("FTESTXRP_TRANSFER_V1"));
 

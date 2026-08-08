@@ -156,7 +156,7 @@ func calculateNextCheckpoint(request ActionRequestV1, amount *big.Int, occurrenc
 	if err != nil {
 		return common.Hash{}, err
 	}
-	encoded, err := (abi.Arguments{{Type: types}, {Type: types}, {Type: types2}, {Type: types3}, {Type: types4}}).Pack(request.SpendCheckpoint, requestHash, amount, occurrence, now)
+	encoded, err := (abi.Arguments{{Type: types}, {Type: types}, {Type: types}, {Type: types2}, {Type: types3}, {Type: types4}}).Pack(SpendCheckpointTypeHash, request.SpendCheckpoint, requestHash, amount, occurrence, now)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -178,7 +178,11 @@ func EvaluatePolicy(policy PolicyV1, request ActionRequestV1, state SpendStateV1
 	if request.ChainID == nil || request.ChainID.Cmp(normalized.ChainID) != 0 || request.Registry != normalized.Registry || request.Vault != normalized.Vault || request.Router != normalized.Router || request.PolicyID != normalized.PolicyID || request.PolicyVersion != normalized.PolicyVersion || request.PolicyCommitment != commitment {
 		return denied(request, ReasonWrongDomain, state.Now), nil
 	}
-	if request.SpendCheckpoint != state.SpendCheckpoint || request.BalanceCheckpoint != state.BalanceCheckpoint {
+	genesisCheckpoint, err := GenesisSpendCheckpoint(request.PolicyCommitment)
+	if err != nil {
+		return EvaluationResultV1{}, err
+	}
+	if request.SpendCheckpoint != state.SpendCheckpoint || request.BalanceCheckpoint != state.BalanceCheckpoint || state.OccurrenceCount == ^uint32(0) || request.Occurrence != state.OccurrenceCount+1 || (state.OccurrenceCount == 0 && request.SpendCheckpoint != genesisCheckpoint) {
 		return denied(request, ReasonStaleInput, state.Now), nil
 	}
 	if request.Asset != normalized.Asset || request.ActionType != ActionFTestXRPTransfer || request.Amount.Sign() == 0 || request.CreatedAt > state.Now || request.Expiry < state.Now || request.GraceDeadline < request.CreatedAt || request.Expiry < request.GraceDeadline {
