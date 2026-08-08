@@ -129,3 +129,30 @@ Google's documented SHA-1 fingerprint is
 A successful preflight is only an off-chain admission result. The official
 on-chain version allowance, FDC-backed machine promotion, registry reads, and
 live signed `PING_V1` are still mandatory and remain unverified.
+
+### Code-version handoff
+
+The preflight output now includes the signed TEE timestamp and has an exact
+public-only JSON schema. `tooling/fcc-code-version.mjs` revalidates that schema,
+the two-minute freshness window, machine/TEE identity relation, distinct proxy,
+production platform, image hash, and all verification booleans before using any
+value in an allowance plan.
+
+The planner binds extension `66037`, version label `0.1.0-payguard`, the
+verified extension owner and foundation sender, zero state verifier, official
+manager, and the machine's single attested code-hash/platform pair. It requires
+the platform in the manager's system allowlist and rejects a disabled pair. A
+new code hash produces `add-version`; an existing hash is idempotent only when
+the supported readback has the exact bytes32 version and exactly that platform.
+Every other existing-hash condition is a conflict and fails closed.
+
+Run the pure handoff/plan regression tests with:
+
+```bash
+pnpm fcc:version:test
+```
+
+This unit does not contain a broadcast path and has not allowed a live code
+version. A later operational command must invoke the fresh preflight directly,
+reread every manager value, simulate with the extension owner, require an
+explicit broadcast capability, and independently verify the receipt/readback.

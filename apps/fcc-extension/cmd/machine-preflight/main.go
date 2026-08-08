@@ -32,6 +32,7 @@ type output struct {
 	CodeHash          string `json:"codeHash"`
 	Platform          string `json:"platform"`
 	GovernanceHash    string `json:"governanceHash"`
+	TeeTimestamp      uint64 `json:"teeTimestamp"`
 	AttestationPKI    bool   `json:"attestationPkiVerified"`
 	MachineSignature  bool   `json:"machineSignatureVerified"`
 	ProxySignature    bool   `json:"proxySignatureVerified"`
@@ -93,6 +94,7 @@ func main() {
 		CodeHash:          result.CodeHash.Hex(),
 		Platform:          result.Platform.Hex(),
 		GovernanceHash:    result.GovernanceHash.Hex(),
+		TeeTimestamp:      result.TeeTimestamp,
 		AttestationPKI:    true,
 		MachineSignature:  true,
 		ProxySignature:    true,

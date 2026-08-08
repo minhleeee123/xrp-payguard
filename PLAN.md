@@ -122,6 +122,9 @@ registered Coston2 `PING_V1`, receipt, and evaluation proofs remain open.
 - [x] Add bounded, explicit public CRL file inputs for a production Google
   certificate chain with distribution points; never fetch a URL merely because
   an unverified token supplied it.
+- [x] Add a strict Go-to-Node machine-admission handoff and deterministic,
+  idempotent code-version allowance plan with exact verified PayGuard
+  owner/sender/extension and on-chain conflict checks.
 - [ ] Register a production machine and verify one signed Coston2 `PING_V1`
   result before treating the live FCC path as available.
 - [x] Implement ciphertext-only policy ingress and a sealed local policy store.
