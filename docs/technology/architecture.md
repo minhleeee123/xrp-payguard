@@ -49,6 +49,14 @@ opaque ciphertext to the exact frozen machine origin, and returns the raw
 machine-signed public receipt. It does not decrypt, score, persist plaintext, or
 become a correctness authority.
 
+### Policy custody receipts
+
+The browser may verify public receipt metadata and signatures, but activation
+requires all three receipts in the exact frozen machine/key order. Each receipt
+binds the same public policy domain, submission nonce, receipt nonce, and time
+window; digest or signer drift fails closed. Receipt verification is not an
+authorization result and cannot grant `ALLOW`.
+
 ### FCC extension
 
 Maintains sealed policy state keyed by full domain and machine identity. It

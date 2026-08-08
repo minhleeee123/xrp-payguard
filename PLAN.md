@@ -114,6 +114,8 @@ registered Coston2 `PING_V1`, receipt, and evaluation proofs remain open.
 - [x] Implement ciphertext-only policy ingress and a sealed local policy store.
 - [x] Return machine-signed `POLICY_RECEIPT_V1` values bound to policy owner,
   commitment, schema, code version, chain, contracts, machine, and nonce.
+- [x] Add a TypeScript public custody-bundle verifier for three frozen receipt
+  digests/signatures; registered live receipt evidence remains open.
 - [ ] Register three distinct machines and require all-three custody receipts.
 - [x] Implement deterministic `EVALUATE_V1` returning only public-safe decision
   fields; prove two matching result signatures in the local adapter.

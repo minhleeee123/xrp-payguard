@@ -2,6 +2,7 @@ import "./styles.css";
 import "./studio.css";
 import {
   unavailableAuditState,
+  unavailablePolicyCustodyState,
   unavailableNotificationState,
   unavailablePayeeState,
   unavailableRequestState,
@@ -11,6 +12,7 @@ import {
   buildUnavailableNotificationExport,
   encodePublicNotificationExport,
   type PublicAuditReadState,
+  type PublicPolicyCustodyReadState,
   type PublicNotificationReadState,
   type PublicPayeeReadState,
   type PublicRequestReadState,
@@ -46,6 +48,7 @@ let appNotice = "";
 let vaultState: VaultReadState = unavailableVaultState();
 let requestState: PublicRequestReadState = unavailableRequestState();
 let auditState: PublicAuditReadState = unavailableAuditState();
+let custodyState: PublicPolicyCustodyReadState = unavailablePolicyCustodyState();
 let payeeState: PublicPayeeReadState = unavailablePayeeState();
 let workspaceState: PublicWorkspaceReadState = unavailableWorkspaceState();
 let notificationState: PublicNotificationReadState = unavailableNotificationState();
@@ -125,7 +128,25 @@ function studioView(): string {
       <div class="three-col">${studioField("scheduleIntervalSeconds", "Interval seconds", "0 selects ad-hoc mode.", "numeric")}${studioField("scheduleGraceSeconds", "Grace seconds", "0 only in ad-hoc mode.", "numeric")}${studioField("maxOccurrences", "Occurrence limit", "0 means no policy-specific limit.", "numeric")}</div>
       <details class="domain-details"><summary>Exact public contract domain <span>local example · not verified</span></summary><p>These values bind the commitment. Replace them only with addresses resolved from a future verified PayGuard release.</p><div class="two-col">${studioField("registry", "Policy registry", "Public domain field.", "text")}${studioField("vault", "Vault", "Public domain field.", "text")}${studioField("router", "Action router", "Public domain field.", "text")}${studioField("asset", "Supported asset", "Public token address.", "text")}</div></details>
       <div class="form-divider"></div><div class="private-row"><span class="lock-icon">▣</span><div><strong>Confidential draft only</strong><small>The target rule, caps, schedule and fresh cryptographic salt/nonce remain in memory. No browser storage, logs, analytics, public calldata or evidence receives them.</small></div><span class="state-tag gray-tag">IN MEMORY</span></div><div class="form-actions"><span class="form-note" id="studio-notice">${esc(studioNotice)}</span><button class="primary-button" type="submit">Validate & compute ↗</button></div></form>
-      <aside class="studio-side">${studioPreview()}<section class="panel receipt-card"><div class="eyebrow">CUSTODY RECEIPTS</div><h3>Activation progress</h3><div class="receipt-count">0 <span>/ 3 verified</span></div>${[1, 2, 3].map((number) => `<div class="receipt-row"><span class="machine-index">0${number}</span><div><strong>FCC machine ${number}</strong><small>No verified release machine configured</small></div><span class="state-tag gray-tag">UNAVAILABLE</span></div>`).join("")}<div class="activation-block"><span class="status-dot amber"></span><div><strong>Activation blocked</strong><small>All three exact machine receipts are required. This UI never substitutes a local receipt.</small></div></div></section><section class="privacy-note"><span>✦</span><div><strong>Refresh discards the draft</strong><p>Policy plaintext and ciphertext are never placed in browser persistence. A refresh intentionally cannot recover this draft.</p></div></section></aside></div>`;
+      <aside class="studio-side">${studioPreview()}${studioCustodyPanel()}<section class="privacy-note"><span>✦</span><div><strong>Refresh discards the draft</strong><p>Policy plaintext and ciphertext are never placed in browser persistence. A refresh intentionally cannot recover this draft.</p></div></section></aside></div>`;
+}
+
+function studioCustodyPanel(): string {
+  const available = custodyState.status === "READY";
+  const count = available ? custodyState.bundle.receipts.length : 0;
+  const rows = available
+    ? custodyState.bundle.receipts.map((receipt, index) => `<div class="receipt-row"><span class="machine-index">0${index + 1}</span><div><strong>${esc(short(receipt.machineId))}</strong><small>Signed receipt · ${esc(short(receipt.digest))}</small></div><span class="state-tag green-tag">VERIFIED</span></div>`).join("")
+    : [1, 2, 3].map((number) => `<div class="receipt-row"><span class="machine-index">0${number}</span><div><strong>FCC machine ${number}</strong><small>${esc(custodyUnavailableReason(custodyState.reason))}</small></div><span class="state-tag gray-tag">UNAVAILABLE</span></div>`).join("");
+  return `<section class="panel receipt-card"><div class="eyebrow">CUSTODY RECEIPTS</div><h3>Activation progress</h3><div class="receipt-count">${count} <span>/ 3 verified</span></div>${rows}<div class="activation-block"><span class="status-dot ${available ? "green" : "amber"}"></span><div><strong>${available ? "Ready for public activation" : "Activation blocked"}</strong><small>${available ? "All three machine signatures match the frozen binding. The browser still cannot supply an authorization result." : "All three exact machine receipts are required. This UI never substitutes a local receipt."}</small></div></div></section>`;
+}
+
+function custodyUnavailableReason(reason: string): string {
+  return ({
+    RPC_UNCONFIGURED: "No verified RPC provider configured",
+    RPC_UNAVAILABLE: "RPC provider unavailable",
+    CUSTODY_UNFINALIZED: "Custody receipts are not finalized",
+    CUSTODY_INVALID: "Custody receipt bundle failed validation",
+  } as Record<string, string>)[reason] ?? "Custody receipts unavailable";
 }
 
 function studioField(field: Exclude<keyof StudioDraft, "templateId">, labelText: string, hint: string, inputMode: "text" | "numeric"): string {

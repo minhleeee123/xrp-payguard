@@ -26,6 +26,10 @@ hash, settlement transaction, and resulting checkpoint; missing or drifting
 receipts remain unavailable.
 Team roles are schema-checked and hashed as public assignments; the permission
 projection covers public controls only and always returns `canAuthorize: false`.
+Policy Studio custody progress accepts only the schema-checked three-machine
+receipt bundle: each digest/signature must match the frozen binding and the
+shared submission nonce/time window. Until a verified provider supplies that
+bundle, the UI shows activation blocked and never substitutes a local receipt.
 Notifications use a strict public event feed with finalized block/time facts,
 typed status/severity, request references, and domain-separated feed/export
 hashes. The tray remains unavailable until a verified provider supplies a

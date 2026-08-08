@@ -34,6 +34,11 @@ negative verifier, stale/mismatched payment, missing proof, or unavailable mint
 client cannot become success. `DELAYED` is an explicit checkpoint that resumes
 only at the client-provided public `executionAllowedAt` time.
 
+Policy Studio custody bundles verify the exact public binding, frozen machine
+and key order, shared submission nonce/time window, three receipt digests, and
+three machine signatures. A missing, reordered, drifted, or unverifiable receipt
+cannot become activation evidence; the browser still has no authorization path.
+
 No live XRPL Testnet payment, FDC proof or trigger, Smart Account transaction,
 FTSO feed, FAssets mint, or redemption is claimed by these local tests.
 
