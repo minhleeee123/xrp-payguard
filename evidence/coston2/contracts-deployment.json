@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
   "suite": "payguard-coston2-contract-deployment",
-  "recordedAt": "2026-08-08T19:08:00.267Z",
+  "recordedAt": "2026-08-08T21:31:40.645Z",
   "network": {
     "name": "flare-coston2",
     "chainId": 114,
-    "observedBlock": "33792965"
+    "observedBlock": "33797022"
   },
   "publicIdentifiers": {
     "sourceCommit": "17ff0bc1eb135195a94d0d261bc491f006730720",

@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "suite": "payguard-coston2-fcc-foundation-registration",
   "status": "registered-bound-configuration-ready",
-  "recordedAt": "2026-08-08T20:16:12.898Z",
+  "recordedAt": "2026-08-08T21:31:53.085Z",
   "network": {
     "name": "flare-coston2",
     "chainId": 114,
-    "observedBlock": "33795084"
+    "observedBlock": "33797027"
   },
   "officialSource": {
     "repository": "https://github.com/flare-foundation/fce-extension-scaffold",
