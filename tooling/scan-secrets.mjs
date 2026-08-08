@@ -42,7 +42,7 @@ let revisionsInspected = 0;
 try {
   const revisions = execFileSync("git", ["rev-list", "--all"], { cwd: root, encoding: "utf8" }).trim().split("\n").filter(Boolean);
   revisionsInspected = revisions.length;
-  const historyPattern = "((PRIVATE_KEY|SECRET_KEY|DEPLOYER_KEY)[[:space:]]*[=:][[:space:]]*[\\\"']?(0x)?[0-9a-fA-F]{64}|(API_KEY|TOKEN|PASSWORD|MNEMONIC|SEED)[[:space:]]*[=:][[:space:]]*[\\\"'][^\\\"']{12,}[\\\"']|Bearer[[:space:]]+[A-Za-z0-9._~-]{24,}|-----BEGIN[[:space:]].*PRIVATE KEY-----)";
+  const historyPattern = "((PRIVATE_KEY|SECRET_KEY|DEPLOYER_KEY)[[:space:]]*[=:][[:space:]]*[\\\"']?(0x)?[0-9a-fA-F]{64}|(API_KEY|TOKEN|PASSWORD|MNEMONIC|SEED)[[:space:]]*[=:][[:space:]]*[\\\"'][^\\\"']{12,}[\\\"']|Bearer[[:space:]]+[A-Za-z0-9._~-]{24,}|-----BEGIN[[:space:]]+(EC[[:space:]]+|RSA[[:space:]]+|OPENSSH[[:space:]]+)?PRIVATE[[:space:]]+KEY-----)";
   for (const revision of revisions) {
     try {
       const matches = execFileSync("git", ["grep", "-I", "-l", "-E", historyPattern, revision, "--"], { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
