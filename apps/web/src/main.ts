@@ -1,5 +1,6 @@
 import "./styles.css";
 import "./studio.css";
+import { unavailableVaultState, type VaultReadState } from "@xrp-payguard/integrations";
 import {
   STUDIO_TEMPLATES,
   StudioValidationError,
@@ -26,6 +27,7 @@ let studioEntropy = createStudioEntropy();
 let studioCompilation: StudioCompilation | null = null;
 let studioIssues: readonly StudioIssue[] = [];
 let appNotice = "";
+let vaultState: VaultReadState = unavailableVaultState();
 
 const esc = (value: string): string => value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character] ?? character));
 const short = (value: string): string => value.length > 18 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value;
@@ -119,8 +121,24 @@ function previewGroup(title: string, items: readonly PreviewItem[], kind: "publi
 }
 
 function vaultsView(): string {
+  const snapshot = vaultState.status === "UNAVAILABLE" ? undefined : vaultState.snapshot;
+  const unavailable = vaultState.status === "UNAVAILABLE";
+  const reason = unavailable ? vaultUnavailableReason(vaultState.reason) : "Finalized public snapshot";
+  const balance = snapshot ? `${snapshot.available} <small>FTestXRP</small>` : "— <small>FTestXRP</small>";
+  const conservation = snapshot ? "Verified from public snapshot" : "Unavailable until finalized RPC state";
+  const emergency = snapshot ? (snapshot.emergencyStopped ? "STOPPED" : "RUNNING") : "UNAVAILABLE";
+  const checkpoint = snapshot ? short(snapshot.checkpoint) : "—";
   return `${pageIntro("PUBLIC ASSET VAULTS", "Your vaults", "Balances, reservations, and transfers are public chain facts. Funding and withdrawals need a verified wallet connection.", "deposit")}
-    <div class="vault-card panel"><div class="vault-card-top"><div class="token-symbol">X</div><div><h2>FTestXRP vault</h2><span class="muted">Public asset · Coston2 target</span></div><span class="state-tag amber-tag">NOT CONNECTED</span></div><div class="vault-balance"><span>Available balance</span><strong>— <small>FTestXRP</small></strong><span class="muted">No live RPC state</span></div><div class="vault-stats"><div><span>Deposited</span><strong>—</strong></div><div><span>Reserved</span><strong>—</strong></div><div><span>Spent</span><strong>—</strong></div><div><span>Withdrawn</span><strong>—</strong></div></div><div class="vault-actions"><button class="primary-button" type="button" data-action="connect">Connect wallet to fund</button><button class="outline-button" type="button" data-action="details">How XRPL funding works</button></div></div><div class="section-grid"><section class="panel"><div class="panel-heading"><div><div class="eyebrow">FUNDING PATH</div><h2>XRPL → Flare</h2></div><span class="state-tag amber-tag">PLANNED</span></div><div class="step-list"><div class="step-row"><span class="step-number">01</span><div><strong>Build Smart Account operation</strong><small>Owner, PersonalAccount, nonce, asset, amount, fee</small></div></div><div class="step-row"><span class="step-number">02</span><div><strong>Sign an XRPL Payment</strong><small>PayGuard never receives your XRPL seed</small></div></div><div class="step-row"><span class="step-number">03</span><div><strong>Verify an FDC proof</strong><small>Finalization is asynchronous and fail-closed</small></div></div></div></section><section class="panel"><div class="panel-heading"><div><div class="eyebrow">RECOVERY</div><h2>Safe exits</h2></div></div><p class="panel-copy">A stopped policy can release unspent reservations through the router state machine. No recovery path creates an authorization or hides the public transfer graph.</p><button class="text-button" type="button" data-action="details">Read recovery rules ↗</button></section></div>`;
+    <div class="vault-card panel"><div class="vault-card-top"><div class="token-symbol">X</div><div><h2>FTestXRP vault</h2><span class="muted">Public asset · Coston2 target</span></div><span class="state-tag ${unavailable ? "amber-tag" : "green-tag"}">${unavailable ? "UNAVAILABLE" : vaultState.status}</span></div><div class="vault-balance"><span>Available balance</span><strong>${balance}</strong><span class="muted">${reason}</span></div><div class="vault-stats"><div><span>Deposited</span><strong>${snapshot?.deposited ?? "—"}</strong></div><div><span>Reserved</span><strong>${snapshot?.reserved ?? "—"}</strong></div><div><span>Spent</span><strong>${snapshot?.spent ?? "—"}</strong></div><div><span>Withdrawn</span><strong>${snapshot?.withdrawn ?? "—"}</strong></div></div><div class="vault-public-state"><div><span>Conservation</span><strong>${conservation}</strong></div><div><span>Policy caps</span><strong>Private in FCC</strong></div><div><span>Emergency state</span><strong>${emergency}</strong></div><div><span>Checkpoint</span><strong class="mono-value">${esc(checkpoint)}</strong></div></div><div class="vault-actions"><button class="primary-button" type="button" data-action="connect">Connect wallet to fund</button><button class="outline-button" type="button" data-action="details">How XRPL funding works</button></div></div><div class="section-grid"><section class="panel"><div class="panel-heading"><div><div class="eyebrow">FUNDING PATH</div><h2>XRPL → Flare</h2></div><span class="state-tag amber-tag">PLANNED</span></div><div class="step-list"><div class="step-row"><span class="step-number">01</span><div><strong>Build Smart Account operation</strong><small>Owner, PersonalAccount, nonce, asset, amount, fee</small></div></div><div class="step-row"><span class="step-number">02</span><div><strong>Sign an XRPL Payment</strong><small>PayGuard never receives your XRPL seed</small></div></div><div class="step-row"><span class="step-number">03</span><div><strong>Verify an FDC proof</strong><small>Finalization is asynchronous and fail-closed</small></div></div></div></section><section class="panel"><div class="panel-heading"><div><div class="eyebrow">RECOVERY</div><h2>Safe exits</h2></div></div><p class="panel-copy">A stopped policy can release unspent reservations through the router state machine. No recovery path creates an authorization or hides the public transfer graph.</p><button class="text-button" type="button" data-action="details">Read recovery rules ↗</button></section></div>`;
+}
+
+function vaultUnavailableReason(reason: string): string {
+  return ({
+    RPC_UNCONFIGURED: "No verified RPC provider configured",
+    RPC_UNAVAILABLE: "RPC provider unavailable",
+    SNAPSHOT_UNFINALIZED: "Snapshot is not finalized",
+    SNAPSHOT_INVALID: "Public snapshot failed validation",
+  } as Record<string, string>)[reason] ?? "Public snapshot unavailable";
 }
 
 function requestsView(): string {

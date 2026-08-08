@@ -11,6 +11,9 @@ than substituting local receipts until a verified Coston2 machine set exists.
 It does not use browser storage, send ciphertext, or provide an authorization
 result. Other screens render explicit `planned`, `local`, and `unavailable`
 states until a verified Coston2 release is connected.
+The Vaults surface accepts only a schema-checked, finalized public snapshot;
+it verifies the conservation equation and shows no balance when the provider
+is unconfigured, unavailable, unfinalized, or invalid.
 
 Run locally with the pinned Node toolchain:
 
