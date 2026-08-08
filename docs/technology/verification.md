@@ -28,7 +28,7 @@ Forbidden evidence:
 | E — Threshold execution | two distinct exact results authorize one atomic action | LOCAL PASS / LIVE NOT VERIFIED |
 | F — Vault conservation | deposits/reservations/spend/refund and adversarial invariants | LOCAL PASS / LIVE NOT VERIFIED |
 | G — XRP-native funding | XRPL payment, FDC proof, Smart Account deposit | LOCAL GATES / LIVE NOT VERIFIED |
-| H — Product release | full roles, recovery, accessibility, live deployment | NOT STARTED |
+| H — Product release | full roles, recovery, accessibility, live deployment | LOCAL SHELL / LIVE NOT VERIFIED |
 | I — User validation | interviews, usability, and design-partner pilot | NOT STARTED |
 
 ## 3. Test matrix
