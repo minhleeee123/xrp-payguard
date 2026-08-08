@@ -858,6 +858,11 @@ export const PayGuardActionRouterAbi = [
         "internalType": "uint32"
       },
       {
+        "name": "accountedAt",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
         "name": "initialized",
         "type": "bool",
         "internalType": "bool"

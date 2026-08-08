@@ -169,6 +169,8 @@ external review, and live protocol wiring remain open.
   one atomic transaction; reject duplicate or partial execution.
 - [x] Derive a domain-separated genesis checkpoint and revalidate the current
   checkpoint/occurrence at execution to reject competing stale approvals.
+- [x] Recompute every threshold-signed checkpoint transition in the router and
+  reject checkpoint substitution or regressing canonical accounting time.
 - [x] Keep permissionless pending/deny requests unreserved and reserve funds
   atomically only when two matching registered machines reach `ALLOW`.
 - [x] Restrict V1 actions to an explicitly supported FTestXRP-like transfer;

@@ -59,6 +59,7 @@ contract PayGuardActionRouter {
     struct SpendState {
         bytes32 checkpoint;
         uint32 occurrence;
+        uint64 accountedAt;
         bool initialized;
     }
 
@@ -194,6 +195,7 @@ contract PayGuardActionRouter {
         StoredRequest storage stored = requests[input.request.requestId];
         if (stored.status != RequestStatus.Pending) revert InvalidState();
         PayGuardTypes.EvaluationResult memory result = _copyEvaluation(input);
+        SpendState memory currentState = spendState[result.request.policyCommitment];
         if (
             PayGuardTypes.requestHash(result.request) != stored.requestHash
                 || PayGuardTypes.requestHash(result.request)
@@ -205,9 +207,15 @@ contract PayGuardActionRouter {
                 || (result.decision == DECISION_ALLOW
                     && (result.publicReasonClass != 0
                         || result.reservedAmount != result.request.amount
-                        || result.resultingCheckpoint == bytes32(0)))
+                        || (currentState.initialized
+                            && result.request.spendCheckpoint == currentState.checkpoint
+                            && result.issuedAt < currentState.accountedAt)
+                        || result.resultingCheckpoint
+                            != PayGuardTypes.nextSpendCheckpoint(result.request, result.issuedAt)))
                 || (result.decision == DECISION_DENY
-                    && (result.reservedAmount != 0 || result.publicReasonClass == 0))
+                    && (result.reservedAmount != 0
+                        || result.publicReasonClass == 0
+                        || result.resultingCheckpoint != result.request.spendCheckpoint))
         ) {
             revert InvalidEvaluation();
         }
@@ -268,7 +276,8 @@ contract PayGuardActionRouter {
             (state.initialized
                     && (state.occurrence == type(uint32).max
                         || stored.request.spendCheckpoint != state.checkpoint
-                        || stored.request.occurrence != state.occurrence + 1))
+                        || stored.request.occurrence != state.occurrence + 1
+                        || stored.approvedIssuedAt < state.accountedAt))
                 || (!state.initialized
                     && (stored.request.occurrence != 1
                         || stored.request.spendCheckpoint
@@ -279,6 +288,7 @@ contract PayGuardActionRouter {
         stored.status = RequestStatus.Executed;
         state.checkpoint = stored.approvedCheckpoint;
         state.occurrence = stored.request.occurrence;
+        state.accountedAt = stored.approvedIssuedAt;
         state.initialized = true;
         vault.execute(requestId, stored.request.target);
         emit RequestExecuted(

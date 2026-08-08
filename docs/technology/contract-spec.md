@@ -159,8 +159,10 @@ permissionless `expire` transition records `Expired` and releases the reserve.
 Each allowed transition hashes the same domain tag, prior checkpoint, request
 hash, amount, next occurrence, and canonical evaluation time. The FCC evaluator
 rejects a caller-chosen genesis or a non-sequential occurrence. The router
-rechecks the current checkpoint and occurrence at execution, so two requests
-created against one snapshot cannot both execute.
+recomputes the exact signed transition, requires denied results to preserve the
+prior checkpoint, and rechecks the current checkpoint, occurrence, and
+monotonic accounting time at execution. Two requests created against one
+snapshot therefore cannot both execute.
 
 ## 5. Result digest
 

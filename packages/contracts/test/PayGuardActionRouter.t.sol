@@ -170,8 +170,7 @@ contract PayGuardActionRouterTest is TestBase {
             _request(keccak256("request-1"), 1, _genesis(commitment), 100);
         vm.prank(owner);
         router.createRequest(request);
-        PayGuardTypes.EvaluationResult memory result =
-            _allowResult(request, 100, keccak256("checkpoint-1"));
+        PayGuardTypes.EvaluationResult memory result = _allowResult(request);
         router.submitEvaluation(
             result, _signature(machineAKey, PayGuardTypes.evaluationDigest(result))
         );
@@ -273,8 +272,7 @@ contract PayGuardActionRouterTest is TestBase {
             _request(keccak256("old-policy-request"), 1, _genesis(commitment), 25);
         vm.prank(owner);
         router.createRequest(oldRequest);
-        PayGuardTypes.EvaluationResult memory oldResult =
-            _allowResult(oldRequest, 25, keccak256("old-policy-next"));
+        PayGuardTypes.EvaluationResult memory oldResult = _allowResult(oldRequest);
         oldResult.machineId = replacementMachine;
         oldResult.keyFingerprint = replacementFingerprint;
         vm.expectRevert(PayGuardActionRouter.InvalidSignature.selector);
@@ -290,8 +288,7 @@ contract PayGuardActionRouterTest is TestBase {
         newRequest.policyCommitment = replacementCommitment;
         vm.prank(owner);
         router.createRequest(newRequest);
-        PayGuardTypes.EvaluationResult memory newResult =
-            _allowResult(newRequest, 25, keccak256("new-policy-next"));
+        PayGuardTypes.EvaluationResult memory newResult = _allowResult(newRequest);
         newResult.machineId = replacementMachine;
         newResult.keyFingerprint = replacementFingerprint;
         router.submitEvaluation(
@@ -311,8 +308,7 @@ contract PayGuardActionRouterTest is TestBase {
             _request(keccak256("request-state"), 1, _genesis(commitment), 100);
         vm.prank(owner);
         router.createRequest(first);
-        PayGuardTypes.EvaluationResult memory allowed =
-            _allowResult(first, 100, keccak256("checkpoint-state"));
+        PayGuardTypes.EvaluationResult memory allowed = _allowResult(first);
         router.submitEvaluation(
             allowed, _signature(machineAKey, PayGuardTypes.evaluationDigest(allowed))
         );
@@ -330,7 +326,7 @@ contract PayGuardActionRouterTest is TestBase {
         router.createRequest(stale);
 
         PayGuardTypes.ActionRequest memory second =
-            _request(keccak256("request-cancel"), 2, keccak256("checkpoint-state"), 50);
+            _request(keccak256("request-cancel"), 2, allowed.resultingCheckpoint, 50);
         vm.prank(owner);
         router.createRequest(second);
         vm.prank(owner);
@@ -360,8 +356,8 @@ contract PayGuardActionRouterTest is TestBase {
         router.createRequest(first);
         vm.prank(owner);
         router.createRequest(second);
-        _thresholdAllow(first, keccak256("competing-next-first"));
-        _thresholdAllow(second, keccak256("competing-next-second"));
+        _thresholdAllow(first);
+        _thresholdAllow(second);
 
         router.execute(first.requestId);
         vm.expectRevert(PayGuardActionRouter.InvalidState.selector);
@@ -393,12 +389,49 @@ contract PayGuardActionRouterTest is TestBase {
         assertEq(cancelled.reserved, 0);
     }
 
+    function testCheckpointSubstitutionAndRegressingTimeFailClosed() public {
+        PayGuardTypes.ActionRequest memory first =
+            _request(keccak256("checkpoint-first"), 1, _genesis(commitment), 25);
+        vm.prank(owner);
+        router.createRequest(first);
+
+        PayGuardTypes.EvaluationResult memory forged = _allowResult(first);
+        forged.resultingCheckpoint = keccak256("forged-transition");
+        vm.expectRevert(PayGuardActionRouter.InvalidEvaluation.selector);
+        router.submitEvaluation(
+            forged, _signature(machineAKey, PayGuardTypes.evaluationDigest(forged))
+        );
+
+        PayGuardTypes.EvaluationResult memory forgedDeny = _denyResult(first, 1);
+        forgedDeny.resultingCheckpoint = keccak256("forged-deny-transition");
+        vm.expectRevert(PayGuardActionRouter.InvalidEvaluation.selector);
+        router.submitEvaluation(
+            forgedDeny, _signature(machineAKey, PayGuardTypes.evaluationDigest(forgedDeny))
+        );
+
+        _thresholdAllow(first);
+        PayGuardTypes.EvaluationResult memory accepted = _allowResult(first);
+        router.execute(first.requestId);
+
+        PayGuardTypes.ActionRequest memory second =
+            _request(keccak256("checkpoint-second"), 2, accepted.resultingCheckpoint, 25);
+        vm.prank(owner);
+        router.createRequest(second);
+        PayGuardTypes.EvaluationResult memory regressed = _allowResult(second);
+        regressed.issuedAt = 1049;
+        regressed.resultingCheckpoint = PayGuardTypes.nextSpendCheckpoint(second, 1049);
+        vm.expectRevert(PayGuardActionRouter.InvalidEvaluation.selector);
+        router.submitEvaluation(
+            regressed, _signature(machineAKey, PayGuardTypes.evaluationDigest(regressed))
+        );
+    }
+
     function testExpiredApprovalReleasesOnlyThroughExpiryTransition() public {
         PayGuardTypes.ActionRequest memory request =
             _request(keccak256("expired-approval"), 1, _genesis(commitment), 50);
         vm.prank(owner);
         router.createRequest(request);
-        _thresholdAllow(request, keccak256("expired-next"));
+        _thresholdAllow(request);
         PayGuardVault.Accounting memory allowed = vault.accounting(owner, address(token));
         assertEq(allowed.available, 450);
         assertEq(allowed.reserved, 50);
@@ -482,16 +515,14 @@ contract PayGuardActionRouterTest is TestBase {
     }
 
     function _allowResult(
-        PayGuardTypes.ActionRequest memory request,
-        uint256 amount,
-        bytes32 checkpoint
+        PayGuardTypes.ActionRequest memory request
     ) internal view returns (PayGuardTypes.EvaluationResult memory result) {
         result = PayGuardTypes.EvaluationResult({
             request: request,
             decision: 1,
             publicReasonClass: 0,
-            reservedAmount: amount,
-            resultingCheckpoint: checkpoint,
+            reservedAmount: request.amount,
+            resultingCheckpoint: PayGuardTypes.nextSpendCheckpoint(request, 1050),
             resultNonce: request.requestId,
             attempt: request.attempt,
             issuedAt: 1050,
@@ -502,11 +533,9 @@ contract PayGuardActionRouterTest is TestBase {
     }
 
     function _thresholdAllow(
-        PayGuardTypes.ActionRequest memory request,
-        bytes32 checkpoint
+        PayGuardTypes.ActionRequest memory request
     ) internal {
-        PayGuardTypes.EvaluationResult memory result =
-            _allowResult(request, request.amount, checkpoint);
+        PayGuardTypes.EvaluationResult memory result = _allowResult(request);
         router.submitEvaluation(
             result, _signature(machineAKey, PayGuardTypes.evaluationDigest(result))
         );

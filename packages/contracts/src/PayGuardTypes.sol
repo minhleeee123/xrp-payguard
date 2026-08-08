@@ -86,6 +86,22 @@ library PayGuardTypes {
         return keccak256(abi.encode(SPEND_CHECKPOINT_V1, policyCommitment, uint32(0)));
     }
 
+    function nextSpendCheckpoint(
+        ActionRequest memory request,
+        uint64 accountedAt
+    ) internal pure returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                SPEND_CHECKPOINT_V1,
+                request.spendCheckpoint,
+                requestHash(request),
+                request.amount,
+                request.occurrence,
+                accountedAt
+            )
+        );
+    }
+
     function receiptDigest(
         PolicyBinding memory binding,
         PolicyReceipt memory receipt
