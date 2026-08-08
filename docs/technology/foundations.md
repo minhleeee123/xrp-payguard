@@ -1,9 +1,9 @@
 # Gate 0/1 foundations
 
 Status: foundation pins, source map, local protocol, contracts, bindings, FCC
-sign-port domain adapter, and Coston2 testnet funding are committed. FCC
-registration, machine identities, and PayGuard Coston2 deployment remain
-planned and not yet verified.
+sign-port domain adapter, Coston2 testnet funding, and fail-closed deployment
+tooling are committed. FCC registration, machine identities, and PayGuard
+Coston2 deployment remain planned and not yet verified.
 
 ## Pinned local toolchain
 

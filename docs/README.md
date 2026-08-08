@@ -14,6 +14,8 @@
   primitives and current official sources.
 - [`technology/coston2-dependency-resolution.md`](technology/coston2-dependency-resolution.md):
   timestamped official-registry lookup observation, explicitly not a PayGuard release.
+- [`technology/coston2-contract-deployment.md`](technology/coston2-contract-deployment.md):
+  fail-closed, resumable contract deployment and independent runtime/wiring checks.
 - [`technology/fcc-attestation-domain.md`](technology/fcc-attestation-domain.md):
   pinned tee-node sign-port behavior and PayGuard cross-language signature domain.
 - [`technology/release-manifest.md`](technology/release-manifest.md): canonical

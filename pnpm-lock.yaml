@@ -6,7 +6,11 @@ settings:
 
 importers:
 
-  .: {}
+  .:
+    devDependencies:
+      viem:
+        specifier: 2.55.11
+        version: 2.55.11(typescript@7.0.2)
 
   apps/relay:
     dependencies:

@@ -7,6 +7,9 @@
   "engines": {
     "node": ">=24 <25"
   },
+  "devDependencies": {
+    "viem": "2.55.11"
+  },
   "scripts": {
     "toolchain:check": "node tooling/preflight.mjs",
     "docs:check": "node tooling/check-docs.mjs",
@@ -17,6 +20,10 @@
     "evidence:check": "node tooling/check-evidence.mjs",
     "release:check": "node tooling/check-release.mjs",
     "release:test": "node --test tooling/check-release.test.mjs",
-    "check": "pnpm toolchain:check && pnpm docs:check && pnpm secret:scan && pnpm privacy:scan && pnpm evidence:check && pnpm release:check && pnpm release:test && pnpm bindings:check"
+    "deploy:coston2:plan": "node tooling/coston2-deploy.mjs plan",
+    "deploy:coston2:test": "node --test tooling/coston2-deploy.test.mjs",
+    "deploy:coston2": "node tooling/coston2-deploy.mjs deploy --broadcast",
+    "deploy:coston2:verify": "node tooling/coston2-deploy.mjs verify",
+    "check": "pnpm toolchain:check && pnpm docs:check && pnpm secret:scan && pnpm privacy:scan && pnpm evidence:check && pnpm release:check && pnpm release:test && pnpm deploy:coston2:test && pnpm bindings:check"
   }
 }
