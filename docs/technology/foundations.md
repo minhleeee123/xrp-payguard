@@ -6,9 +6,10 @@ tooling are committed. The PayGuard registry, vault, router, and FTestXRP vault
 wiring are runtime/constructor-verified on Coston2. Fresh TEE identity discovery,
 strict private-policy wire, and loopback ECIES decryption pass locally. FCC
 foundation dispatch now has a local typed sender/handler and shared Solidity/Go
-binding vector. Sender deployment, extension registration, a registered result,
-stable machine origins, sealed recovery, and the private live lifecycle remain
-planned and not yet verified.
+binding vector. Its sender deployment, extension registration, explicit binding,
+owner permissions, and EVM key-type configuration are verified on Coston2.
+A production machine/result, stable machine origins, sealed recovery, and the
+private live lifecycle remain planned and not yet verified.
 
 ## Pinned local toolchain
 
@@ -34,8 +35,8 @@ Deployment tooling resolves the manager from the digest-pinned official
 scaffold file, verifies the live diamond interface, and journals deploy,
 register, one-shot bind, owner permissions, and EVM key-type configuration.
 `fcc-foundation-deployment.md` defines the exact runbook and evidence boundary.
-The read-only Coston2 preflight passes at the time of implementation; broadcast
-still requires the tooling source to be committed in a clean worktree.
+The committed tooling deployed and independently reverified extension `66037`;
+this registered sender is still not a Gate A FCC result.
 
 ## Official discovery sources
 

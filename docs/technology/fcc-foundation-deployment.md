@@ -1,8 +1,19 @@
 # FCC foundation deployment and registration runbook
 
-Status: local tooling and live read-only preflight are implemented. No sender
-deployment, extension registration, TEE machine, or FCC result is claimed until
-new PayGuard evidence is committed and independently reverified.
+Status: sender deployment, extension registration, explicit binding, and
+configuration are verified on Coston2. No TEE machine or FCC result is claimed.
+
+## Verified registration
+
+Source commit `f9f550d30bc924c5b5a1ea59fdf96138be7a5c24` deployed
+`PayGuardFoundationSender` at
+`0xA1e95721aD7F96D7f9bcd1d62b3A38A8625Cf8dC` in block `33795049`. The official
+manager registered it as public extension `66037` in block `33795055`. A fresh
+read at block `33795084` verified deployment/runtime, constructor manager
+bindings, registration owner/sender/zero state verifier, one-shot sender ID,
+machine and wallet-project owner permission, and the bytes32 `EVM` key type.
+Transactions and the runtime hash are recorded in
+[`evidence/coston2/fcc-foundation-registration.json`](../../evidence/coston2/fcc-foundation-registration.json).
 
 ## Official manager resolution
 

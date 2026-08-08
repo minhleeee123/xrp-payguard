@@ -114,7 +114,9 @@ registered Coston2 `PING_V1`, receipt, and evaluation proofs remain open.
 
 - [x] Implement a typed, domain-bound `PING_V1` sender/handler with a shared
   Solidity/Go golden vector and fail-closed negative coverage.
-- [ ] Deploy/register the foundation sender and verify one registered Coston2
+- [x] Deploy/register the foundation sender, bind extension ID, configure the
+  owner/key-type prerequisites, and independently verify its Coston2 runtime.
+- [ ] Register a production machine and verify one signed Coston2 `PING_V1`
   result before treating the live FCC path as available.
 - [x] Implement ciphertext-only policy ingress and a sealed local policy store.
 - [x] Return machine-signed `POLICY_RECEIPT_V1` values bound to policy owner,

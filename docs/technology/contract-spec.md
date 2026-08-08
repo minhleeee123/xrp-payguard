@@ -79,11 +79,12 @@ receipted policy version; the replacement signer is rejected for the old
 commitment, whose frozen set is unchanged and fails closed when its threshold
 is unavailable.
 
-The separately generated `PayGuardFoundationSender` ABI is a local Gate A
-artifact, not part of the verified three-contract Coston2 deployment. Its
-canonical request binding is shared with the Go extension through a hard-coded
-golden digest. Registration and live result verification remain mandatory
-before it can become a release fact.
+The separately generated `PayGuardFoundationSender` is not one of the original
+three public-state contracts. It is now deployed and extension-registered on
+Coston2 under independently checked public evidence. Its canonical request
+binding is shared with the Go extension through a hard-coded golden digest.
+Production machine registration and live result verification remain mandatory
+before Gate A can pass.
 
 ## 2. Schemas
 

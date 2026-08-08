@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "suite": "payguard-coston2-fcc-foundation-registration",
+  "status": "registered-bound-configuration-ready",
+  "recordedAt": "2026-08-08T20:16:12.898Z",
+  "network": {
+    "name": "flare-coston2",
+    "chainId": 114,
+    "observedBlock": "33795084"
+  },
+  "officialSource": {
+    "repository": "https://github.com/flare-foundation/fce-extension-scaffold",
+    "commit": "ffb6c4ca7c160c49be59e00fe537e24d2477b000",
+    "path": "config/coston2/deployed-addresses.json",
+    "url": "https://raw.githubusercontent.com/flare-foundation/fce-extension-scaffold/ffb6c4ca7c160c49be59e00fe537e24d2477b000/config/coston2/deployed-addresses.json",
+    "sha256": "c158350ea5a9bbba8c6485a680252b8f401bc2e25ea10830101eb6d0b40b022e",
+    "manager": "0x1a9C4A0f9D76c0b1D91d22E24E573a9b377618aE"
+  },
+  "publicIdentifiers": {
+    "sourceCommit": "f9f550d30bc924c5b5a1ea59fdf96138be7a5c24",
+    "deployer": "0xDC1cc527423C882156a632C250528D1922d18Fc7",
+    "manager": "0x1a9C4A0f9D76c0b1D91d22E24E573a9b377618aE",
+    "foundationSender": "0xA1e95721aD7F96D7f9bcd1d62b3A38A8625Cf8dC",
+    "extensionId": "66037",
+    "deploymentTransaction": "0xd8c4d389604f4d618491830f4fc7a04c791b95e008f33eaf4ec3de50b3ac4362",
+    "deploymentBlock": "33795049",
+    "registrationTransaction": "0x6831f31f90133e6552aa23e39e23384ccaa858fde90f1604838cf82bbe3a4a40",
+    "registrationBlock": "33795055",
+    "runtimeCodeHash": "0x19f367399de45e9327ffb03247841b25cc9d40fbdb51d8d0dbb15bdd734c796e",
+    "bindingTransaction": "0xa0acba983c6530d3ccefa87d52a4778ebcba813e03c28a4d4f887ddc747e4f68",
+    "machineOwnerTransaction": "0x29b3e10ffdfad136cf11d5e41bd00c023d93a28f3b8a15bf3f55bf3f4bd19203",
+    "walletProjectOwnerTransaction": "0x6249afab7b980c450f7aefeae6e81d0974198a5ab1f211437b1dd3c1eb8faf00",
+    "evmKeyTypeTransaction": "0x785ee5162d227fa79cb931a695b003b998a339ea2f3d993fcb95c7a7ed44ef47"
+  },
+  "assertions": {
+    "chainIdVerified": true,
+    "officialSourceVerified": true,
+    "managerRuntimePresent": true,
+    "deployerMatchesConfiguredAddress": true,
+    "deployerHadRegistrationPermission": true,
+    "senderDeploymentSucceeded": true,
+    "senderRuntimeVerified": true,
+    "constructorManagerBindingsVerified": true,
+    "extensionRegistrationSucceeded": true,
+    "extensionIdIsPublic": true,
+    "extensionOwnerVerified": true,
+    "registeredSenderVerified": true,
+    "zeroStateVerifierVerified": true,
+    "senderChainVerified": true,
+    "senderVersionVerified": true,
+    "senderOwnerVerified": true,
+    "senderRegistryVerified": true,
+    "machineRegistryBindingVerified": true,
+    "extensionIdBindingVerified": true,
+    "machineOwnerAllowed": true,
+    "walletProjectOwnerAllowed": true,
+    "evmKeyTypeSupported": true,
+    "testnetOnly": true,
+    "noMachineClaimed": true,
+    "noFccResultClaimed": true,
+    "noPrivateKeyRecorded": true,
+    "noCredentialRecorded": true
+  },
+  "blockers": [
+    "CODE_VERSION_NOT_ALLOWED",
+    "PRODUCTION_MACHINE_NOT_REGISTERED",
+    "LIVE_FCC_FOUNDATION_RESULT_NOT_VERIFIED"
+  ],
+  "notes": [
+    "This proves only sender deployment, extension registration, explicit ID binding, owner allowlists, and EVM key-type configuration.",
+    "It does not prove a production TEE machine, FCC action result, private policy custody, evaluation, or payment."
+  ]
+}

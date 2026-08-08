@@ -90,7 +90,9 @@ only a nonzero nonce and public payload hash. The handler rejects malformed,
 non-canonical, wrong-chain, wrong-version, or empty fields and returns a typed
 binding hash. This component cannot dispatch `EVALUATE_V1`, submit `ALLOW`, or
 move vault funds. Deployment, registration, and a live outer FCC signature are
-still unverified.
+separate gates. The sender and extension registration are now Coston2-verified
+as extension `66037`; a production machine and live outer FCC signature remain
+unverified.
 
 ### PolicyRegistry
 
