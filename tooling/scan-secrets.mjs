@@ -38,8 +38,10 @@ for (const file of files) {
 // Scan every reachable Git revision without printing matching content. This catches
 // a secret removed from the working tree but still present in repository history.
 let historyFindings = [];
+let revisionsInspected = 0;
 try {
   const revisions = execFileSync("git", ["rev-list", "--all"], { cwd: root, encoding: "utf8" }).trim().split("\n").filter(Boolean);
+  revisionsInspected = revisions.length;
   const historyPattern = "((PRIVATE_KEY|SECRET_KEY|DEPLOYER_KEY)[[:space:]]*[=:][[:space:]]*[\\\"']?(0x)?[0-9a-fA-F]{64}|(API_KEY|TOKEN|PASSWORD|MNEMONIC|SEED)[[:space:]]*[=:][[:space:]]*[\\\"'][^\\\"']{12,}[\\\"']|Bearer[[:space:]]+[A-Za-z0-9._~-]{24,}|-----BEGIN[[:space:]].*PRIVATE KEY-----)";
   for (const revision of revisions) {
     try {
@@ -55,4 +57,4 @@ try {
 findings.push(...historyFindings.map((item) => `git-history: ${item}`));
 if (findings.length > 0) throw new Error(`Potential secrets found:\n${findings.join("\n")}`);
 
-console.log(JSON.stringify({ status: "ok", filesInspected: files.length, revisionsInspected: historyFindings.length > 0 ? "checked" : "none-or-unavailable" }));
+console.log(JSON.stringify({ status: "ok", filesInspected: files.length, revisionsInspected, historyFindings: historyFindings.length }));
