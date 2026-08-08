@@ -2,6 +2,8 @@
 
 ## Canonical documents
 
+- [`../DESIGN.md`](../DESIGN.md): canonical visual and interaction system for
+  the landing, application, and public-safe evidence surfaces.
 - [`competition.md`](competition.md): supplied competition requirements and
   claim boundaries.
 - [`product/product-plan.md`](product/product-plan.md): complete product vision,

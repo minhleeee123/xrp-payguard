@@ -23,12 +23,13 @@ claim exists yet; Coston2 remains the development target.
 
 1. [`AGENTS.md`](AGENTS.md) — mandatory engineering and privacy rules.
 2. [`PLAN.md`](PLAN.md) — full product roadmap and phase gates.
-3. [`docs/README.md`](docs/README.md) — documentation index and provenance.
-4. [`docs/product/product-plan.md`](docs/product/product-plan.md) — users,
+3. [`DESIGN.md`](DESIGN.md) — canonical visual and interaction system.
+4. [`docs/README.md`](docs/README.md) — documentation index and provenance.
+5. [`docs/product/product-plan.md`](docs/product/product-plan.md) — users,
    product surface, and acceptance criteria.
-5. [`docs/technology/architecture.md`](docs/technology/architecture.md) —
+6. [`docs/technology/architecture.md`](docs/technology/architecture.md) —
    target architecture and trust boundaries.
-6. [`docs/lessons/veilbid-build-lessons.md`](docs/lessons/veilbid-build-lessons.md)
+7. [`docs/lessons/veilbid-build-lessons.md`](docs/lessons/veilbid-build-lessons.md)
    — concrete failure modes and lessons carried forward.
 
 ## Repository direction
