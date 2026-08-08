@@ -259,7 +259,7 @@ func TestEvaluatorDerivesCapsFromCheckpointBoundHistory(t *testing.T) {
 	}
 	second := first
 	second.RequestID = common.BytesToHash([]byte("history-request-2"))
-	second.RequestNonce = 2
+	second.RequestNonce = big.NewInt(2)
 	second.Occurrence = 2
 	second.ScheduleSlot = 4600
 	second.SpendCheckpoint = firstResult.ResultingCheckpoint
@@ -309,7 +309,7 @@ func TestEvaluatorReplaysHistoricalFTSOValues(t *testing.T) {
 	}
 	second := first
 	second.RequestID = common.BytesToHash([]byte("history-ftso-request-2"))
-	second.RequestNonce = 2
+	second.RequestNonce = big.NewInt(2)
 	second.Occurrence = 2
 	second.ScheduleSlot = 4600
 	second.SpendCheckpoint = firstResult.ResultingCheckpoint
@@ -359,7 +359,7 @@ func TestEvaluatorDeniesUint256AndAccumulatedCapOverflow(t *testing.T) {
 	}
 	second := first
 	second.RequestID = common.BytesToHash([]byte("overflow-request-2"))
-	second.RequestNonce = 2
+	second.RequestNonce = big.NewInt(2)
 	second.Amount = big.NewInt(1)
 	second.Occurrence = 2
 	second.ScheduleSlot = 4600
@@ -396,7 +396,7 @@ func TestEvaluatorTreatsCooldownOverflowAsActive(t *testing.T) {
 	}
 	second := first
 	second.RequestID = common.BytesToHash([]byte("cooldown-request-2"))
-	second.RequestNonce = 2
+	second.RequestNonce = big.NewInt(2)
 	second.Occurrence = 2
 	second.SpendCheckpoint = firstResult.ResultingCheckpoint
 	second.CreatedAt = ^uint64(0) - 1

@@ -19,6 +19,7 @@ const receipt = { ...vector.receipt, receiptNonce: BigInt(vector.receipt.receipt
 
 describe("cross-language golden vector", () => {
   it("matches policy, receipt, request, and result domains", () => {
+    expect(request.requestNonce).toBe(1n << 64n);
     expect(policyCommitment(policy)).toBe(vector.expected.policyCommitment);
     expect(policyReceiptDigest(receipt)).toBe(vector.expected.receiptDigest);
     expect(actionRequestHash(request)).toBe(vector.expected.requestHash);

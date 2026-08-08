@@ -92,7 +92,7 @@ type ActionRequestV1 struct {
 	PolicyVersion     uint32
 	PolicyCommitment  common.Hash
 	RequestID         common.Hash
-	RequestNonce      uint64
+	RequestNonce      *big.Int
 	Attempt           uint32
 	Requester         common.Address
 	Target            common.Address
@@ -299,7 +299,7 @@ func PolicyReceiptDigest(receipt PolicyReceiptV1) (common.Hash, error) {
 }
 
 func requestTypes() []string {
-	return []string{"bytes32", "uint256", "address", "address", "address", "bytes32", "uint32", "bytes32", "bytes32", "uint64", "uint32", "address", "address", "address", "bytes32", "uint256", "uint64", "uint32", "bytes32", "bytes32", "bytes32", "uint64", "uint64", "uint64"}
+	return []string{"bytes32", "uint256", "address", "address", "address", "bytes32", "uint32", "bytes32", "bytes32", "uint256", "uint32", "address", "address", "address", "bytes32", "uint256", "uint64", "uint32", "bytes32", "bytes32", "bytes32", "uint64", "uint64", "uint64"}
 }
 
 func requestValues(request ActionRequestV1) []interface{} {
@@ -309,6 +309,11 @@ func requestValues(request ActionRequestV1) []interface{} {
 }
 
 func EncodeActionRequest(request ActionRequestV1) ([]byte, error) {
+	requestNonce, err := uint256(request.RequestNonce, "requestNonce")
+	if err != nil {
+		return nil, err
+	}
+	request.RequestNonce = requestNonce
 	return pack(requestTypes(), requestValues(request)...)
 }
 

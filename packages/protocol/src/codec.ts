@@ -41,7 +41,7 @@ const receiptParameters: readonly AbiParameter[] = [
 
 const requestParameters: readonly AbiParameter[] = [
   { type: "bytes32" }, { type: "uint256" }, { type: "address" }, { type: "address" }, { type: "address" },
-  { type: "bytes32" }, { type: "uint32" }, { type: "bytes32" }, { type: "bytes32" }, { type: "uint64" },
+  { type: "bytes32" }, { type: "uint32" }, { type: "bytes32" }, { type: "bytes32" }, { type: "uint256" },
   { type: "uint32" }, { type: "address" }, { type: "address" }, { type: "address" }, { type: "bytes32" },
   { type: "uint256" }, { type: "uint64" }, { type: "uint32" }, { type: "bytes32" }, { type: "bytes32" },
   { type: "bytes32" }, { type: "uint64" }, { type: "uint64" }, { type: "uint64" },

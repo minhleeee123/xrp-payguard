@@ -98,7 +98,7 @@ Fields include:
 Fields include:
 
 - chain, registry, vault, router, policy ID/version;
-- request ID/nonce/attempt;
+- request ID, `uint256` nonce, and `uint32` attempt;
 - requester, target, action type, asset, amount;
 - schedule slot/occurrence;
 - spend checkpoint/root and balance checkpoint;

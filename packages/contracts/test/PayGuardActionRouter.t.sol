@@ -124,7 +124,7 @@ contract PayGuardActionRouterTest is TestBase {
             policyVersion: 1,
             policyCommitment: 0x318df3938877daa30fbc22e92ed0dca3610132870fd342f73dda56828eae38ca,
             requestId: _b(0x726571756573742d31),
-            requestNonce: 1,
+            requestNonce: 18_446_744_073_709_551_616,
             attempt: 0,
             requester: address(0xA1),
             target: address(0xC3),
@@ -142,7 +142,7 @@ contract PayGuardActionRouterTest is TestBase {
         });
         require(
             PayGuardTypes.requestHash(request)
-                == 0x4b06e4fea16b055f2d34dab85e34856574642c33741cc123bb68fa9809fbf2de,
+                == 0x0fc911c41dc4de74cf60f8ca504906b76f38c8381574b4200beeb32a9dd72fb6,
             "request hash"
         );
         PayGuardTypes.EvaluationResult memory result = PayGuardTypes.EvaluationResult({
@@ -150,7 +150,7 @@ contract PayGuardActionRouterTest is TestBase {
             decision: 1,
             publicReasonClass: 0,
             reservedAmount: 75,
-            resultingCheckpoint: 0x97d4f95c85e1fdda73d0c453de8bfd9b75f17b66e61b6ea8916924170e051b8a,
+            resultingCheckpoint: 0x47dfc7be9977448fce1ed39ed778cabe721a3b640a8026f9cfc3c76ce7a6a04c,
             resultNonce: _b(0x726571756573742d31),
             attempt: 0,
             issuedAt: 1050,
@@ -160,7 +160,7 @@ contract PayGuardActionRouterTest is TestBase {
         });
         require(
             PayGuardTypes.evaluationDigest(result)
-                == 0x523020281df3f5071db5a54dc4cca599084589ac02764978b6be0297159078f8,
+                == 0x4823cc4d3f36569052a569af9759bcab4e44fab890c0ed004bef7287565a19ea,
             "evaluation digest"
         );
     }

@@ -171,10 +171,14 @@ func actionRequestWire(request ActionRequestV1) (actionRequestWireV1, error) {
 	if err != nil {
 		return actionRequestWireV1{}, err
 	}
+	requestNonce, err := uint256(request.RequestNonce, "requestNonce")
+	if err != nil {
+		return actionRequestWireV1{}, err
+	}
 	return actionRequestWireV1{
 		ChainID: chainID, Registry: request.Registry, Vault: request.Vault, Router: request.Router,
 		PolicyID: request.PolicyID, PolicyVersion: request.PolicyVersion, PolicyCommitment: request.PolicyCommitment,
-		RequestID: request.RequestID, RequestNonce: strconv.FormatUint(request.RequestNonce, 10), Attempt: request.Attempt,
+		RequestID: request.RequestID, RequestNonce: requestNonce.String(), Attempt: request.Attempt,
 		Requester: request.Requester, Target: request.Target, Asset: request.Asset, ActionType: request.ActionType,
 		Amount: amount, ScheduleSlot: strconv.FormatUint(request.ScheduleSlot, 10), Occurrence: request.Occurrence,
 		SpendCheckpoint: request.SpendCheckpoint, BalanceCheckpoint: request.BalanceCheckpoint,
@@ -270,7 +274,11 @@ func (request *ActionRequestV1) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-	requestNonce, err := parseDecimalUint64(wire.RequestNonce, "requestNonce")
+	requestNonce, err := parseDecimalBig(wire.RequestNonce, "requestNonce")
+	if err != nil {
+		return err
+	}
+	requestNonce, err = uint256(requestNonce, "requestNonce")
 	if err != nil {
 		return err
 	}

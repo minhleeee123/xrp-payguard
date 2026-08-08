@@ -22,7 +22,7 @@ func TestEvaluationWireUsesSharedLowerCamelDecimalSchema(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, expected := range [][]byte{
-		[]byte(`"requestNonce":"1"`), []byte(`"amount":"75"`),
+		[]byte(`"requestNonce":"18446744073709551616"`), []byte(`"amount":"75"`),
 		[]byte(`"decision":"ALLOW"`), []byte(`"publicReasonClass":"OK"`),
 		[]byte(`"reservedAmount":"75"`), []byte(`"issuedAt":"1050"`),
 	} {
@@ -118,6 +118,31 @@ func TestReceiptWireRoundTripPreservesDigest(t *testing.T) {
 	}
 }
 
+func TestRequestNonceUsesFullUint256WireDomain(t *testing.T) {
+	request := requestFromVector(readVector(t).Request)
+	request.RequestNonce = new(big.Int).Set(maxUint256)
+	wire, err := json.Marshal(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var decoded ActionRequestV1
+	if err := json.Unmarshal(wire, &decoded); err != nil {
+		t.Fatal(err)
+	}
+	if decoded.RequestNonce.Cmp(maxUint256) != 0 {
+		t.Fatalf("uint256 request nonce changed: %s", decoded.RequestNonce)
+	}
+	overflow := new(big.Int).Add(new(big.Int).Set(maxUint256), big.NewInt(1))
+	request.RequestNonce = overflow
+	if _, err := json.Marshal(request); err == nil {
+		t.Fatal("request nonce above uint256 marshaled")
+	}
+	overflowWire := bytes.Replace(wire, []byte(`"requestNonce":"`+maxUint256.String()+`"`), []byte(`"requestNonce":"`+overflow.String()+`"`), 1)
+	if err := json.Unmarshal(overflowWire, new(ActionRequestV1)); err == nil {
+		t.Fatal("request nonce above uint256 unmarshaled")
+	}
+}
+
 func TestWireRejectsNumericBigIntsAndUnknownDecision(t *testing.T) {
 	vector := readVector(t)
 	request := requestFromVector(vector.Request)
@@ -125,7 +150,7 @@ func TestWireRejectsNumericBigIntsAndUnknownDecision(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	numericNonce := bytes.Replace(wire, []byte(`"requestNonce":"1"`), []byte(`"requestNonce":1`), 1)
+	numericNonce := bytes.Replace(wire, []byte(`"requestNonce":"18446744073709551616"`), []byte(`"requestNonce":18446744073709551616`), 1)
 	if err := json.Unmarshal(numericNonce, new(ActionRequestV1)); err == nil {
 		t.Fatal("numeric bigint bypassed the decimal-string wire contract")
 	}
