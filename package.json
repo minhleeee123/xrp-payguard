@@ -8,8 +8,9 @@
     "node": ">=24 <25"
   },
   "scripts": {
+    "toolchain:check": "node tooling/preflight.mjs",
     "docs:check": "node tooling/check-docs.mjs",
     "secret:scan": "node tooling/scan-secrets.mjs",
-    "check": "pnpm docs:check && pnpm secret:scan"
+    "check": "pnpm toolchain:check && pnpm docs:check && pnpm secret:scan"
   }
 }

@@ -13,9 +13,9 @@ ordinary asset, amount, recipient, timing, and transaction graph remain public.
 
 ## Current status
 
-Planning and workspace bootstrap only. No PayGuard contract, FCC extension,
-deployment, mainnet integration, user traction, or production-security claim
-exists yet. Coston2 is the development target.
+Foundation pins and source checks are now scaffolded. No PayGuard contract, FCC
+extension, deployment, mainnet integration, user traction, or production-security
+claim exists yet. Coston2 is the development target.
 
 ## Start here
 

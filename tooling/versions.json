@@ -1,0 +1,39 @@
+{
+  "node": "24.19.0",
+  "pnpm": "10.33.0",
+  "go": "1.25.12",
+  "foundry": "1.7.1",
+  "solidity": "0.8.25",
+  "typescript": "7.0.2",
+  "viem": "2.55.11",
+  "xrpl": "5.0.0",
+  "vite": "8.2.1",
+  "vitest": "4.1.10",
+  "fccScaffold": {
+    "repository": "https://github.com/flare-foundation/fce-extension-scaffold",
+    "commit": "ffb6c4ca7c160c49be59e00fe537e24d2477b000",
+    "go": "1.25.1",
+    "teeNode": "v0.0.24",
+    "teeProxy": "v0.0.18"
+  },
+  "officialSources": {
+    "fccGettingStarted": "https://dev.flare.network/fcc/guides/getting-started",
+    "fccOverview": "https://dev.flare.network/fcc/overview",
+    "fdcGettingStarted": "https://dev.flare.network/fdc/getting-started",
+    "ftsoOverview": "https://dev.flare.network/ftso/overview",
+    "smartAccountsOverview": "https://dev.flare.network/smart-accounts/overview",
+    "smartAccountsReference": "https://dev.flare.network/smart-accounts/reference",
+    "fassetsReference": "https://dev.flare.network/fassets/reference",
+    "fassetsRegistryGuide": "https://dev.flare.network/fassets/developer-guides/fassets-asset-manager-address-contracts-registry"
+  },
+  "networks": {
+    "coston2": {
+      "chainId": 114,
+      "rpc": "https://coston2-api.flare.network/ext/C/rpc",
+      "explorer": "https://coston2-explorer.flare.network"
+    },
+    "xrplTestnet": {
+      "rpc": "https://s.altnet.rippletest.net:51234"
+    }
+  }
+}

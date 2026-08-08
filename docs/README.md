@@ -10,6 +10,8 @@
   for policy owner, payee, executor, and auditor.
 - [`technology/requirements.md`](technology/requirements.md): required Flare
   primitives and current official sources.
+- [`technology/foundations.md`](technology/foundations.md): pinned local
+  toolchain, official source map, and external Gate 0/1 blockers.
 - [`technology/architecture.md`](technology/architecture.md): component model,
   public/private data, trust, and recovery.
 - [`technology/contract-spec.md`](technology/contract-spec.md): planned schemas,
