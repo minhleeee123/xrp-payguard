@@ -12,6 +12,10 @@ and cannot satisfy the release gate.
 wiring transactions plus runtime/constructor assertions. It does not prove FCC,
 private policy, XRP-native funding, execution, hosted UI, or a complete release.
 
+`coston2/coston2-public-endpoint-reachability.json` records only
+credential-free Coston2 RPC, Explorer/API, and faucet page reachability. It
+does not represent a faucet grant, FCC indexer access, or a PayGuard release.
+
 Never store private policies, ciphertext, wallet/XRPL/FCC keys, signatures
 forbidden by policy, proxy/indexer credentials, authenticated raw responses, or
 private denial details. See `docs/technology/verification.md`.

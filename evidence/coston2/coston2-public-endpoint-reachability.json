@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "suite": "payguard-coston2-public-endpoint-reachability",
+  "status": "observed",
+  "recordedAt": "2026-08-08T21:48:34.949Z",
+  "network": {
+    "name": "flare-coston2",
+    "chainId": 114,
+    "rpcUrl": "https://coston2-api.flare.network/ext/C/rpc",
+    "observedBlock": "33797486"
+  },
+  "publicIdentifiers": {
+    "rpc": {
+      "url": "https://coston2-api.flare.network/ext/C/rpc",
+      "statusCode": 200,
+      "chainIdHex": "0x72"
+    },
+    "explorer": {
+      "url": "https://coston2-explorer.flare.network",
+      "statusCode": 200
+    },
+    "explorerApi": {
+      "url": "https://coston2-explorer.flare.network/api",
+      "statusCode": 200,
+      "registryAbiItems": 8
+    },
+    "faucet": {
+      "url": "https://faucet.flare.network",
+      "statusCode": 200
+    }
+  },
+  "assertions": {
+    "chainIdVerified": true,
+    "rpcReachable": true,
+    "explorerReachable": true,
+    "explorerApiReachable": true,
+    "explorerApiReturnedRegistryAbi": true,
+    "faucetPageReachable": true,
+    "faucetRequestNotSubmitted": true,
+    "testnetOnly": true,
+    "noPrivateKeyRecorded": true,
+    "noCredentialRecorded": true,
+    "noPayGuardReleaseClaimed": true
+  },
+  "blockers": [
+    "THREE_STABLE_FCC_MACHINE_ORIGINS_NOT_CONFIGURED",
+    "FCC_INDEXER_CREDENTIALS_AND_ENDPOINT_NOT_CONFIGURED"
+  ],
+  "notes": [
+    "This is a credential-free HTTP/RPC reachability observation, not a faucet grant or PayGuard release.",
+    "The Explorer API observation only verifies a public registry ABI response; it is not an FCC machine/indexer path.",
+    "No wallet, faucet request, transaction, private policy, or authenticated response was recorded."
+  ]
+}

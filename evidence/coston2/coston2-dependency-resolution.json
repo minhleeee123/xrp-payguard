@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "suite": "payguard-coston2-dependency-resolution",
   "status": "observed",
-  "recordedAt": "2026-08-08T21:40:36.027Z",
+  "recordedAt": "2026-08-08T21:48:31.136Z",
   "network": {
     "name": "flare-coston2",
     "chainId": 114,
     "rpcUrl": "https://coston2-api.flare.network/ext/C/rpc",
-    "observedBlock": "33797261"
+    "observedBlock": "33797478"
   },
   "publicIdentifiers": {
     "flareContractRegistry": "0xaD67FE66660Fb8dFE9d6b1b4240d8650e30F6019",
@@ -70,8 +70,7 @@
   },
   "blockers": [
     "THREE_STABLE_FCC_MACHINE_ORIGINS_NOT_CONFIGURED",
-    "INDEXER_ENDPOINT_NOT_VERIFIED",
-    "FAUCET_ACCESS_NOT_VERIFIED"
+    "FCC_INDEXER_CREDENTIALS_AND_ENDPOINT_NOT_CONFIGURED"
   ],
   "notes": [
     "This is a read-only Contract Registry observation and does not verify a PayGuard release.",
