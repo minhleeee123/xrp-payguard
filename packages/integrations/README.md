@@ -90,6 +90,11 @@ reads a non-zero `merkleRoots` value only after finality is reported. A pending
 round returns `merkleRoot: null`; the reader does not submit, verify a proof
 leaf, or treat a DA envelope as authorized payment evidence.
 
+`deriveCoston2FdcVotingRound` derives `votingRoundId` from the timestamp of the
+mined request block by calling the runtime Relay `getVotingRoundId` method. It
+requires the receipt block timestamp, rejects zero or malformed rounds, and
+never substitutes a wall-clock timestamp or hard-coded 90-second formula.
+
 `prepareCoston2FdcSubmission` reads the current `getRequestFee` through the
 runtime `FdcHub.fdcRequestFeeConfigurations()` address and returns a bounded,
 public submission intent for `requestAttestation(bytes)`: exact calldata,

@@ -40,6 +40,12 @@ from the runtime `FdcVerification` address, then reads
 Merkle root. A pending round remains an explicit checkpoint; no proof leaf is
 accepted until a later verifier binds the DA envelope to that root.
 
+The round boundary derives `votingRoundId` from the timestamp of the mined FDC
+request block by calling the runtime Relay `getVotingRoundId` method. It does
+not use the local wall clock or a copied 90-second formula, and it rejects an
+unavailable, zero, or out-of-range round. The request receipt block timestamp
+is therefore a required public checkpoint before finality polling.
+
 The submission boundary reads the current request fee via the runtime
 `FdcHub.fdcRequestFeeConfigurations()` address and builds exact
 `requestAttestation(bytes)` calldata plus the payable wei value. It is an
@@ -93,6 +99,8 @@ Official references:
 - [XRPL `tx` method](https://xrpl.org/docs/references/http-websocket-apis/public-api-methods/transaction-methods/tx)
 - [XRPL ledger method](https://xrpl.org/docs/references/http-websocket-apis/public-api-methods/ledger-methods/ledger)
 - [FDC getting started](https://dev.flare.network/fdc/getting-started)
+- [FDC by hand](https://dev.flare.network/fdc/guides/fdc-by-hand)
+- [IRelay `getVotingRoundId`](https://dev.flare.network/network/fsp/solidity-reference/IRelay)
 - [FDC `IXRPPayment` reference](https://dev.flare.network/fdc/reference/IXRPPayment)
 - [FDC `IFdcVerification` reference](https://dev.flare.network/fdc/reference/IFdcVerification)
 - [FDC `IFdcHub` reference](https://dev.flare.network/fdc/reference/IFdcHub)

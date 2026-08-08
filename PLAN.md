@@ -247,6 +247,9 @@ verified on Coston2. External review and registered FCC execution remain open.
 - [x] Add a runtime-bound Coston2 FDC finality checkpoint for protocol ID,
   relay, finalized state, and non-zero Merkle root; leaf verification remains
   a separate live gate.
+- [x] Derive the FDC voting round from the mined request-block timestamp via
+  the runtime Relay `getVotingRoundId` calculator; wall-clock and hard-coded
+  epoch formulas remain unsupported.
 - [x] Add a runtime fee quote and exact `requestAttestation(bytes)` submission
   intent codec; signing, broadcast, receipts, and live request state remain
   open.
