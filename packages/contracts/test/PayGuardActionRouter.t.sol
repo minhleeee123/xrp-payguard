@@ -375,6 +375,45 @@ contract PayGuardActionRouterTest is TestBase {
         assertEq(accounting.spent, 25);
     }
 
+    function testPermissionlessPendingRequestCannotReserveOwnerFunds() public {
+        address outsider = vm.addr(_key("untrusted-requester"));
+        PayGuardTypes.ActionRequest memory request =
+            _request(keccak256("untrusted-pending"), 1, _genesis(commitment), 500);
+        request.requester = outsider;
+        vm.prank(outsider);
+        router.createRequest(request);
+
+        PayGuardVault.Accounting memory pending = vault.accounting(owner, address(token));
+        assertEq(pending.available, 500);
+        assertEq(pending.reserved, 0);
+        vm.prank(outsider);
+        router.cancel(request.requestId);
+        PayGuardVault.Accounting memory cancelled = vault.accounting(owner, address(token));
+        assertEq(cancelled.available, 500);
+        assertEq(cancelled.reserved, 0);
+    }
+
+    function testExpiredApprovalReleasesOnlyThroughExpiryTransition() public {
+        PayGuardTypes.ActionRequest memory request =
+            _request(keccak256("expired-approval"), 1, _genesis(commitment), 50);
+        vm.prank(owner);
+        router.createRequest(request);
+        _thresholdAllow(request, keccak256("expired-next"));
+        PayGuardVault.Accounting memory allowed = vault.accounting(owner, address(token));
+        assertEq(allowed.available, 450);
+        assertEq(allowed.reserved, 50);
+
+        vm.warp(request.expiry + 1);
+        vm.expectRevert(PayGuardActionRouter.Expired.selector);
+        router.execute(request.requestId);
+        router.expire(request.requestId);
+        PayGuardActionRouter.StoredRequest memory expired = router.getRequest(request.requestId);
+        assertEq(uint8(expired.status), uint8(PayGuardActionRouter.RequestStatus.Expired));
+        PayGuardVault.Accounting memory released = vault.accounting(owner, address(token));
+        assertEq(released.available, 500);
+        assertEq(released.reserved, 0);
+    }
+
     function _receiptFor(
         PayGuardTypes.PolicyBinding memory receiptBinding,
         bytes32 machineId,

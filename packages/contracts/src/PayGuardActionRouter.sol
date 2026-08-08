@@ -183,7 +183,6 @@ contract PayGuardActionRouter {
             approvedIssuedAt: 0,
             approvedExpiry: 0
         });
-        vault.reserve(binding.owner, input.asset, input.requestId, input.amount);
         emit RequestCreated(input.requestId, input.policyCommitment, input.requester, input.amount);
         return input.requestId;
     }
@@ -241,10 +240,14 @@ contract PayGuardActionRouter {
         stored.approvedIssuedAt = result.issuedAt;
         stored.approvedExpiry = result.expiry;
         if (result.decision == DECISION_ALLOW) {
+            (PayGuardTypes.PolicyBinding memory binding,) =
+                registry.getPolicy(result.request.policyCommitment);
+            vault.reserve(
+                binding.owner, result.request.asset, result.request.requestId, result.request.amount
+            );
             stored.status = RequestStatus.Allowed;
         } else {
             stored.status = RequestStatus.Denied;
-            vault.release(result.request.requestId);
             emit RequestDenied(result.request.requestId, result.publicReasonClass);
         }
         emit ThresholdReached(result.request.requestId, digest, result.decision);
@@ -258,7 +261,6 @@ contract PayGuardActionRouter {
             revert InvalidState();
         }
         if (block.timestamp > stored.approvedExpiry) {
-            _expire(stored, requestId);
             revert Expired();
         }
         SpendState storage state = spendState[stored.request.policyCommitment];
@@ -307,8 +309,9 @@ contract PayGuardActionRouter {
         if (msg.sender != binding.owner && msg.sender != stored.request.requester) {
             revert NotAuthorized();
         }
+        bool reserved = stored.status == RequestStatus.Allowed;
         stored.status = RequestStatus.Cancelled;
-        vault.release(requestId);
+        if (reserved) vault.release(requestId);
         emit RequestCancelled(requestId);
     }
 
@@ -316,8 +319,9 @@ contract PayGuardActionRouter {
         StoredRequest storage stored,
         bytes32 requestId
     ) private {
+        bool reserved = stored.status == RequestStatus.Allowed;
         stored.status = RequestStatus.Expired;
-        vault.release(requestId);
+        if (reserved) vault.release(requestId);
         emit RequestExpired(requestId);
     }
 

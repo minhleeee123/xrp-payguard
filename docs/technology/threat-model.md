@@ -63,6 +63,7 @@ closed. Owner recovery is time-bounded and cannot race execution.
 | Two machines sign different requests | Exact digest comparison; no threshold across split results |
 | Sealed-store rollback | Bind canonical chain spend/root/nonce and reject stale checkpoint |
 | Request replay | Per-policy nonce, request ID, occurrence, attempt, expiry, terminal-state guards |
+| Permissionless request locks owner funds | Pending/deny paths never reserve; reserve only after an exact threshold `ALLOW` |
 | Double scheduled payment | Unique schedule slot/occurrence plus atomic checkpoint advance |
 | FTSO manipulation/staleness | Official feed, freshness/bounds, deterministic rounding, fail closed |
 | FDC proof substitution | Verify type/source/response fields/MIC/domain/freshness and used transaction ID |

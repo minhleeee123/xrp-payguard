@@ -9,7 +9,8 @@ Local Foundry/Solidity V1 implementation of the public state machine:
 - `PayGuardActionRouter` freezes requests, verifies two distinct registered
   signatures over the signer-independent evaluation digest, and executes one
   transfer atomically. Genesis spend state is derived from the exact policy
-  commitment and the checkpoint/occurrence is revalidated at execution.
+  commitment, pending requests do not reserve funds, and the
+  checkpoint/occurrence is revalidated at execution.
 - `PayGuardPolicyMath` is the Solidity reference for the checked, ceiling-rounded
   FTSO value conversion shared with the Go and TypeScript policy evaluators.
 - `PayGuardPolicyComposition` is a bitmask-only precedence reference shared with

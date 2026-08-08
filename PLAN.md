@@ -161,6 +161,8 @@ external review, and live protocol wiring remain open.
   one atomic transaction; reject duplicate or partial execution.
 - [x] Derive a domain-separated genesis checkpoint and revalidate the current
   checkpoint/occurrence at execution to reject competing stale approvals.
+- [x] Keep permissionless pending/deny requests unreserved and reserve funds
+  atomically only when two matching registered machines reach `ALLOW`.
 - [x] Restrict V1 actions to an explicitly supported FTestXRP-like transfer;
   arbitrary calls remain disabled and the adapter still needs independent audit.
 - [x] Add unit, reentrancy, token-failure, and conservation tests. Fuzz/invariant

@@ -147,6 +147,12 @@ Created -> Frozen -> EvaluationPending -> Allowed -> Executed
 Terminal states are unique. `Executed` cannot transition. A denied/expired
 request cannot reuse the same nonce. Retry uses a new attempt under the fixed
 grace rules and identical frozen inputs where required.
+Request creation is permissionless and therefore never reserves owner funds.
+The router reserves the exact amount only in the same transaction that reaches
+the two-machine `ALLOW` threshold; pending and deny paths cannot lock balance.
+Cancel/expiry releases only an already allowed reservation.
+An expired `execute` reverts without pretending to finalize a payment; the
+permissionless `expire` transition records `Expired` and releases the reserve.
 
 `SPEND_CHECKPOINT_V1` has one canonical genesis per exact policy commitment:
 `keccak256(abi.encode(SPEND_CHECKPOINT_V1, policyCommitment, uint32(0)))`.
