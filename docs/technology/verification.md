@@ -28,7 +28,7 @@ Forbidden evidence:
 | E — Threshold execution | two distinct exact results authorize one atomic action | LOCAL PASS / CONTRACTS DEPLOYED / FCC EXECUTION OPEN |
 | F — Vault conservation | deposits/reservations/spend/refund and adversarial invariants | LOCAL PASS / VAULT DEPLOYED / LIVE ASSET LIFECYCLE OPEN |
 | G — XRP-native funding | XRPL payment, FDC proof, Smart Account deposit | LOCAL GATES / LIVE NOT VERIFIED |
-| H — Product release | full roles, recovery, accessibility, live deployment | LOCAL SHELL + CONTRACT DEPLOYMENT / HOSTED PRIVATE LIFECYCLE OPEN |
+| H — Product release | full roles, recovery, accessibility, live deployment | LOCAL SHELL + LANDING + RESPONSIVE BROWSER SMOKE + CONTRACT DEPLOYMENT / HOSTED PRIVATE LIFECYCLE OPEN |
 | I — User validation | interviews, usability, and design-partner pilot | NOT STARTED |
 
 ## 3. Test matrix
@@ -89,6 +89,12 @@ Forbidden evidence:
 - Refresh/reload/fresh-process recovery at every asynchronous checkpoint.
 - Explicit dependency-unavailable and no-provider states.
 - Production deploy smoke tied to exact source commit.
+
+The local Vite browser smoke run on 2026-08-09 covered the landing page and all
+seven application views at 1440px and 390px. It found no horizontal overflow;
+the mobile shell exposed five primary destinations plus a three-item secondary
+menu. This is local UX validation only, not hosted deployment or release
+evidence.
 
 ## 4. Release manifest
 
