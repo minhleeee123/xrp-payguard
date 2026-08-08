@@ -268,6 +268,9 @@ review remain open.
   competing-executor tests.
 - [x] Verify machine replacement for new policies and fail-closed behavior for
   policies bound to unavailable frozen machines.
+- [x] Exercise a local fail-closed outage matrix for RPC/registry, FDC, FTSO,
+  public-reader states, one-machine relay loss, and executor submission loss;
+  live drills remain open.
 - [ ] Commission external contract and TEE-path review before production value.
 
 Exit: failure is resumable or explicitly denied, never represented as success.
