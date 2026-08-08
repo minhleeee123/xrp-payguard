@@ -26,6 +26,14 @@ the client checks the JSON content type, `VALID` status, bounded response, and
 all static ABI words before returning the prepared request. It does not submit
 to `FdcHub` or treat a prepare response as a proof.
 
+The package also has a bounded Coston2 Data Availability reader for the
+prepared XRPPayment request. It posts only the public voting round and ABI
+request bytes to the fixed DA endpoint, checks the response/request/owner/round
+and timestamp bindings, and parses the XRPL response fields and Merkle nodes
+without logging the runtime key. Its `AVAILABLE` envelope means DA retrieval
+only; on-chain round finality and Merkle verification remain separate gates.
+It does not submit, sign, or treat a retrieved envelope as a verified payment.
+
 The codec validates non-zero EVM addresses, uint bounds, call/data limits,
 wallet ID, and executor fee. It returns only public bytes, hashes, nonce, and
 the sum of call values. It never accepts an XRPL seed, signs a Payment, calls

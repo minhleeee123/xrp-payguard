@@ -72,6 +72,17 @@ the returned `VALID` ABI words against the exact transaction/proof-owner
 binding. It never emits the key, logs the response, submits to `FdcHub`, or
 claims a proof.
 
+`fetchCoston2XrplPaymentProof` is the matching bounded Coston2 Data
+Availability read boundary. It sends only the public voting round and ABI
+request bytes to the fixed DA endpoint, accepts the API key only at runtime,
+and parses the returned `response`/`proof` envelope against the exact
+attestation, `testXRP` source, transaction, `proofOwner`, round, timestamp,
+XRPL response bounds, and Merkle-node shape. `AVAILABLE` means that the DA
+service returned an envelope; it is not an on-chain finality or Merkle
+verification claim. The helper never submits an FDC request, verifies the
+Merkle root, signs, or logs credentials. The public DA service is rate-limited;
+production must use an appropriately controlled DA service.
+
 `computeDirectMintingPaymentQuote` and `readDirectMintingPaymentQuote` cover the
 official FAssets direct-mint amount boundary. They use integer UBA values and
 the AssetManager getters `getDirectMintingFeeBIPS`,

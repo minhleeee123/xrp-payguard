@@ -16,3 +16,4 @@ export * from "./fdc-request.js";
 export * from "./fassets-direct-mint.js";
 export * from "./xrpl-public.js";
 export * from "./fdc-verifier.js";
+export * from "./fdc-proof.js";

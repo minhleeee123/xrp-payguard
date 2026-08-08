@@ -241,6 +241,9 @@ verified on Coston2. External review and registered FCC execution remain open.
 - [x] Add a Coston2-only fail-closed authenticated verifier prepare client with
   strict origin, response bounds, and ABI binding checks; live API credentials,
   request submission, and proof retrieval remain open.
+- [x] Add a bounded Coston2 DA reader/parser for the public XRPPayment envelope;
+  it binds request/response fields and Merkle-node shape without claiming
+  on-chain round finality or cryptographic proof verification.
 - [x] Add an integer-only official-field FAssets direct-mint quote calculator
   and injected settings reader; live quote drift, payment, and mint execution
   remain open.
