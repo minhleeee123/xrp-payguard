@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "suite": "payguard-coston2-dependency-resolution",
+  "status": "observed",
+  "recordedAt": "2026-08-08T21:36:03.000Z",
+  "network": {
+    "name": "flare-coston2",
+    "chainId": 114,
+    "rpcUrl": "https://coston2-api.flare.network/ext/C/rpc",
+    "observedBlock": "33797118"
+  },
+  "publicIdentifiers": {
+    "flareContractRegistry": "0xaD67FE66660Fb8dFE9d6b1b4240d8650e30F6019",
+    "dependencies": {
+      "FdcHub": { "address": "0x48aC463d7975828989331F4De43341627b9c5f1D", "runtimeBytes": 10065 },
+      "FdcVerification": { "address": "0x906507E0B64bcD494Db73bd0459d1C667e14B933", "runtimeBytes": 170 },
+      "FdcRequestFeeConfigurations": { "address": "0x191a1282Ac700edE65c5B0AaF313BAcC3eA7fC7e", "runtimeBytes": 6173 },
+      "FdcInflationConfigurations": { "address": "0x5C670a6950111D6f38B0D7cAdEB58D534fd9D209", "runtimeBytes": 7165 },
+      "FlareSystemsManager": { "address": "0xA90Db6D10F856799b10ef2A77EBCbF460aC71e52", "runtimeBytes": 24278 },
+      "Relay": { "address": "0xa10B672D1c62e5457b17af63d4302add6A99d7dE", "runtimeBytes": 12676 },
+      "FtsoV2": { "address": "0xC4e9c78EA53db782E28f28Fdf80BaF59336B304d", "runtimeBytes": 170 },
+      "AssetManagerFXRP": { "address": "0xc1Ca88b937d0b528842F95d5731ffB586f4fbDFA", "runtimeBytes": 217 },
+      "MasterAccountController": { "address": "0x434936d47503353f06750Db1A444DBDC5F0AD37c", "runtimeBytes": 250 }
+    },
+    "fccManager": {
+      "address": "0x1a9C4A0f9D76c0b1D91d22E24E573a9b377618aE",
+      "sourceRepository": "https://github.com/flare-foundation/fce-extension-scaffold",
+      "sourceCommit": "ffb6c4ca7c160c49be59e00fe537e24d2477b000",
+      "sourceSha256": "c158350ea5a9bbba8c6485a680252b8f401bc2e25ea10830101eb6d0b40b022e"
+    }
+  },
+  "assertions": {
+    "chainIdVerified": true,
+    "registryRuntimeVerified": true,
+    "dependencyAddressesNonZero": true,
+    "dependencyRuntimeVerified": true,
+    "fccManagerSourcePinned": true,
+    "testnetOnly": true,
+    "noPrivateKeyRecorded": true,
+    "noCredentialRecorded": true,
+    "noPayGuardReleaseClaimed": true
+  },
+  "blockers": [
+    "THREE_STABLE_FCC_MACHINE_ORIGINS_NOT_CONFIGURED",
+    "INDEXER_ENDPOINT_NOT_VERIFIED",
+    "FAUCET_ACCESS_NOT_VERIFIED"
+  ],
+  "notes": [
+    "This is a read-only Contract Registry observation and does not verify a PayGuard release.",
+    "Dependency ABI semantics, FDC proof credentials, Smart Account funding, XRPL payment, and live lifecycle evidence remain open."
+  ]
+}

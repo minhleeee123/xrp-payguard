@@ -3,7 +3,7 @@
 Status: `observed`, not a PayGuard deployment or release manifest.
 
 On 2026-08-09, the local read-only resolver queried the official Flare Contract
-Registry at block `33791042` using the supported Coston2 RPC
+Registry at block `33797118` using the supported Coston2 RPC
 `https://coston2-api.flare.network/ext/C/rpc`. The registry address is the
 canonical Flare registry, not a PayGuard contract. The lookup returned the
 following non-zero addresses and non-empty runtime bytecode:
@@ -21,6 +21,8 @@ following non-zero addresses and non-empty runtime bytecode:
 | `AssetManagerFXRP` | `0xc1Ca88b937d0b528842F95d5731ffB586f4fbDFA` | 217 |
 | `MasterAccountController` | `0x434936d47503353f06750Db1A444DBDC5F0AD37c` | 250 |
 
+The same public observation is recorded in
+[`evidence/coston2/coston2-dependency-resolution.json`](../../evidence/coston2/coston2-dependency-resolution.json).
 The source-of-truth rule is the registry lookup, not this table. A future
 release check must resolve the registry again, record the block and runtime
 code hash, verify ABI/constructor or proxy wiring, and bind the result to the
