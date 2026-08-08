@@ -238,6 +238,9 @@ verified on Coston2. External review and registered FCC execution remain open.
 - [x] Build the exact public FDC `XRPPayment` prepare request and ABI encoding
   with source ID, verifier-supplied MIC, and executor `proofOwner`; live
   verifier/MIC/proof submission remains open.
+- [x] Add a Coston2-only fail-closed authenticated verifier prepare client with
+  strict origin, response bounds, and ABI binding checks; live API credentials,
+  request submission, and proof retrieval remain open.
 - [x] Add an integer-only official-field FAssets direct-mint quote calculator
   and injected settings reader; live quote drift, payment, and mint execution
   remain open.

@@ -65,6 +65,13 @@ ABI-encodes the official `IXRPPayment.Request` for an eventual `FdcHub`
 submission. It still does not derive the MIC, pay the request fee, broadcast a
 transaction, or retrieve a proof.
 
+`prepareCoston2XrplPaymentRequest` is a fail-closed authenticated prepare
+client for the official Coston2 verifier origin. It accepts the API key only at
+runtime, sends the public request body, bounds the JSON response, and checks
+the returned `VALID` ABI words against the exact transaction/proof-owner
+binding. It never emits the key, logs the response, submits to `FdcHub`, or
+claims a proof.
+
 `computeDirectMintingPaymentQuote` and `readDirectMintingPaymentQuote` cover the
 official FAssets direct-mint amount boundary. They use integer UBA values and
 the AssetManager getters `getDirectMintingFeeBIPS`,

@@ -20,6 +20,12 @@ official `IXRPPayment.Request` for a future `FdcHub.requestAttestation` call.
 This is an encoding boundary only; it never derives the MIC, pays the FDC fee,
 broadcasts a transaction, or retrieves a proof.
 
+For Coston2, the package also exposes a strict prepare client pinned to
+`https://fdc-verifiers-testnet.flare.network`. The API key is runtime-only;
+the client checks the JSON content type, `VALID` status, bounded response, and
+all static ABI words before returning the prepared request. It does not submit
+to `FdcHub` or treat a prepare response as a proof.
+
 The codec validates non-zero EVM addresses, uint bounds, call/data limits,
 wallet ID, and executor fee. It returns only public bytes, hashes, nonce, and
 the sum of call values. It never accepts an XRPL seed, signs a Payment, calls
@@ -54,3 +60,5 @@ Official references:
 - [XRPL request formatting](https://xrpl.org/docs/references/http-websocket-apis/api-conventions/request-formatting)
 - [XRPL `tx` method](https://xrpl.org/docs/references/http-websocket-apis/public-api-methods/transaction-methods/tx)
 - [XRPL ledger method](https://xrpl.org/docs/references/http-websocket-apis/public-api-methods/ledger-methods/ledger)
+- [FDC getting started](https://dev.flare.network/fdc/getting-started)
+- [FDC `IXRPPayment` reference](https://dev.flare.network/fdc/reference/IXRPPayment)
