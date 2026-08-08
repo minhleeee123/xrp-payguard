@@ -21,6 +21,9 @@ Auditor evidence is schema-checked against the request/evaluation digest,
 frozen machine set, finalized input marker, execution status, and vault
 conservation equation; signatures and private policy material are not accepted
 by the public evidence wire.
+Payee receipts bind the public target, asset, amount, expected timing, request
+hash, settlement transaction, and resulting checkpoint; missing or drifting
+receipts remain unavailable.
 
 Run locally with the pinned Node toolchain:
 

@@ -2,9 +2,11 @@ import "./styles.css";
 import "./studio.css";
 import {
   unavailableAuditState,
+  unavailablePayeeState,
   unavailableRequestState,
   unavailableVaultState,
   type PublicAuditReadState,
+  type PublicPayeeReadState,
   type PublicRequestReadState,
   type VaultReadState,
 } from "@xrp-payguard/integrations";
@@ -37,6 +39,7 @@ let appNotice = "";
 let vaultState: VaultReadState = unavailableVaultState();
 let requestState: PublicRequestReadState = unavailableRequestState();
 let auditState: PublicAuditReadState = unavailableAuditState();
+let payeeState: PublicPayeeReadState = unavailablePayeeState();
 
 const esc = (value: string): string => value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character] ?? character));
 const short = (value: string): string => value.length > 18 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value;
@@ -180,8 +183,22 @@ function requestReadinessLabel(readiness: string): string {
 }
 
 function payeeView(): string {
+  const receipt = payeeState.status === "UNAVAILABLE" ? undefined : payeeState.receipt;
+  const unavailableReason = payeeState.status === "UNAVAILABLE" ? payeeUnavailableReason(payeeState.reason) : "Finalized public settlement";
+  const expectedPanel = receipt
+    ? `<h2>${receipt.status === "SETTLED" ? "Payment settled" : "Expected payment"}</h2><p class="panel-copy">The payee sees only the public amount, destination, timing window, and settlement checkpoint. Private policy rules remain outside this receipt.</p><div class="request-public-state payee-public-state"><div><span>Amount</span><strong>${receipt.expectedAmount} FTestXRP</strong></div><div><span>Target</span><strong class="mono-value">${esc(short(receipt.payee))}</strong></div><div><span>Expected at</span><strong>${receipt.expectedAt}</strong></div><div><span>Expiry</span><strong>${receipt.expiry}</strong></div></div><div class="unavailable-box"><span class="status-dot"></span><div><strong>${receipt.status}</strong><small>${receipt.status === "SETTLED" ? `Transaction ${esc(short(receipt.settlementTransactionHash))} · checkpoint ${esc(short(receipt.settlementCheckpoint))}` : unavailableReason}</small></div></div>`
+    : `<h2>No verified request yet</h2><p class="panel-copy">A payee can inspect only a finalized public request, transfer receipt, and supported redemption status. Policy rules, caps, delegates, and private denial reasons stay in FCC custody.</p><div class="unavailable-box"><span class="status-dot amber"></span><div><strong>Public request endpoint unavailable</strong><small>${esc(unavailableReason)}. No amount, recipient, timing, or transaction is asserted in this local preview.</small></div></div>`;
   return `${pageIntro("PUBLIC SETTLEMENT VIEW", "Payee status", "See the expected public amount, timing, and settlement receipt without learning the private policy behind the request.")}
-    <div class="section-grid"><section class="panel"><div class="eyebrow">EXPECTED PAYMENT</div><h2>No verified request yet</h2><p class="panel-copy">A payee can inspect only a finalized public request, transfer receipt, and supported redemption status. Policy rules, caps, delegates, and private denial reasons stay in FCC custody.</p><div class="unavailable-box"><span class="status-dot amber"></span><div><strong>Public request endpoint unavailable</strong><small>No amount, recipient, timing, or transaction is asserted in this local preview.</small></div></div></section><section class="panel"><div class="eyebrow">WHAT REMAINS PRIVATE</div><h2>Policy boundary</h2><ul class="evidence-list"><li><span class="evidence-icon">▣</span><div><strong>Target groups</strong><small>Not exposed to the payee</small></div><span class="state-tag gray-tag">PRIVATE</span></li><li><span class="evidence-icon">#</span><div><strong>Caps and schedules</strong><small>Only request timing is public</small></div><span class="state-tag gray-tag">PRIVATE</span></li><li><span class="evidence-icon">↗</span><div><strong>Settlement receipt</strong><small>Appears only after finalized public evidence</small></div><span class="state-tag gray-tag">WAITING</span></li></ul></section></div>`;
+    <div class="section-grid"><section class="panel"><div class="eyebrow">EXPECTED PAYMENT</div>${expectedPanel}</section><section class="panel"><div class="eyebrow">WHAT REMAINS PRIVATE</div><h2>Policy boundary</h2><ul class="evidence-list"><li><span class="evidence-icon">▣</span><div><strong>Target groups</strong><small>Not exposed to the payee</small></div><span class="state-tag gray-tag">PRIVATE</span></li><li><span class="evidence-icon">#</span><div><strong>Caps and schedules</strong><small>Only request timing is public</small></div><span class="state-tag gray-tag">PRIVATE</span></li><li><span class="evidence-icon">↗</span><div><strong>Settlement receipt</strong><small>Appears only after finalized public evidence</small></div><span class="state-tag gray-tag">WAITING</span></li></ul></section></div>`;
+}
+
+function payeeUnavailableReason(reason: string): string {
+  return ({
+    RPC_UNCONFIGURED: "No verified RPC provider configured",
+    RPC_UNAVAILABLE: "RPC provider unavailable",
+    RECEIPT_UNFINALIZED: "Settlement receipt is not finalized",
+    RECEIPT_INVALID: "Public settlement receipt failed validation",
+  } as Record<string, string>)[reason] ?? "Public settlement unavailable";
 }
 
 function auditorView(): string {

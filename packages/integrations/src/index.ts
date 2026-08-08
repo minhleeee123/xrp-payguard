@@ -6,3 +6,4 @@ export * from "./redemption.js";
 export * from "./vault.js";
 export * from "./requests.js";
 export * from "./evidence.js";
+export * from "./payee.js";
