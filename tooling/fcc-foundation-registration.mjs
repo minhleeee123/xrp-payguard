@@ -36,6 +36,14 @@ export const teeManagerRegistrationAbi = parseAbi([
   "function isCodeHashPlatformDisabled(uint256 extensionId, bytes32 codeHash, bytes32 platform) view returns (bool)",
   "function isCodeHashPlatformSupported(uint256 extensionId, bytes32 codeHash, bytes32 platform) view returns (bool)",
   "function addTeeVersion(uint256 extensionId, bytes32 version, bytes32 codeHash, bytes32[] platforms)",
+  "event TeeMachineRegistered(address indexed teeId, address indexed teeProxyId, address indexed owner, uint256 extensionId, string url, bytes32 codeHash, bytes32 platform, bytes32 governanceHash)",
+  "event TeeMachineStatusChanged(address indexed teeId, uint8 indexed newStatus)",
+  "function getTeeMachine(address teeId) view returns ((address teeId, address teeProxyId, string url))",
+  "function getTeeMachineWithAttestationData(address teeId) view returns ((address teeId, address initialTeeId, string url, bytes32 codeHash, bytes32 platform))",
+  "function getTeeMachineStatus(address teeId) view returns (uint8)",
+  "function getTeeMachineOwner(address teeId) view returns (address)",
+  "function getExtensionId(address teeId) view returns (uint256)",
+  "function getLastStatusChangeTs(address teeId) view returns (uint256)",
 ]);
 
 const addressPattern = /^0x[0-9a-fA-F]{40}$/;

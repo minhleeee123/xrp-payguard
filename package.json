@@ -37,6 +37,10 @@
     "fcc:version:deploy": "node tooling/fcc-code-version-deploy.mjs deploy --broadcast",
     "fcc:version:verify": "node tooling/fcc-code-version-deploy.mjs verify",
     "fcc:version:test": "node --test tooling/fcc-code-version.test.mjs tooling/fcc-code-version-deploy.test.mjs",
-    "check": "pnpm toolchain:check && pnpm docs:check && pnpm secret:scan && pnpm privacy:scan && pnpm evidence:check && pnpm release:check && pnpm release:test && pnpm deploy:coston2:test && pnpm fcc:container:test && pnpm fcc:foundation:test && pnpm fcc:machine:preflight:test && pnpm fcc:version:test && pnpm bindings:check"
+    "fcc:machine:plan": "node tooling/fcc-machine-registration.mjs plan",
+    "fcc:machine:register": "node tooling/fcc-machine-registration.mjs register --broadcast",
+    "fcc:machine:verify": "node tooling/fcc-machine-registration.mjs verify",
+    "fcc:machine:registration:test": "node --test tooling/fcc-machine-registration.test.mjs",
+    "check": "pnpm toolchain:check && pnpm docs:check && pnpm secret:scan && pnpm privacy:scan && pnpm evidence:check && pnpm release:check && pnpm release:test && pnpm deploy:coston2:test && pnpm fcc:container:test && pnpm fcc:foundation:test && pnpm fcc:machine:preflight:test && pnpm fcc:version:test && pnpm fcc:machine:registration:test && pnpm bindings:check"
   }
 }

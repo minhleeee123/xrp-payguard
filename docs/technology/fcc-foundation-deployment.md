@@ -130,6 +130,42 @@ A successful preflight is only an off-chain admission result. The official
 on-chain version allowance, FDC-backed machine promotion, registry reads, and
 live signed `PING_V1` are still mandatory and remain unverified.
 
+### Production machine registration
+
+After the exact code hash and platform have been allowed, the guarded runner
+uses the pinned official scaffold's full FDC-backed `rRap` flow:
+
+```bash
+pnpm fcc:machine:plan -- --url https://machine.example \
+  --image-id sha256:<64-lowercase-hex> \
+  --ftdc-url https://trusted-ftdc.example \
+  --leaf-crl /trusted/public/leaf.crl \
+  --intermediate-crl /trusted/public/intermediate.crl
+
+pnpm fcc:machine:register -- --url https://machine.example \
+  --image-id sha256:<64-lowercase-hex> \
+  --ftdc-url https://trusted-ftdc.example \
+  --leaf-crl /trusted/public/leaf.crl \
+  --intermediate-crl /trusted/public/intermediate.crl
+```
+
+Both URLs must be distinct credential-free public HTTPS origins with no path,
+port, query, fragment, or trailing slash in the canonical value. The FTDC
+origin is an explicit trusted operator input; an example URL in a checkout is
+not promoted into a release fact. Registration requires a clean committed
+PayGuard tree, the clean official scaffold at the pinned commit and seven exact
+source digests, an already-supported exact code version, an explicit broadcast,
+the verified extension-owner key, and a conservative C2FLR gas buffer. Public
+resume checkpoints remain only under ignored `evidence/local/`.
+
+After `rRap`, the runner obtains a fresh admission result and independently
+checks the manager runtime, chain, machine and proxy IDs, owner, extension,
+both registered URLs, attested code hash/platform, status `2`, and exact
+registration/production events. Only then may it write
+`evidence/coston2/fcc-production-machine.json`; that evidence deliberately
+contains no attestation token, signature, credential, ciphertext, or private
+policy and still records blockers for two more machines and a live FCC result.
+
 ### Code-version handoff
 
 The preflight output now includes the signed TEE timestamp and has an exact

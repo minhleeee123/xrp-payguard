@@ -172,7 +172,7 @@ export async function readCodeVersionSnapshot(client, admission) {
   };
 }
 
-async function createOperationalPlan(options, { client = clientFor(), executor = execFileAsync, fetcher = fetch } = {}) {
+export async function createOperationalPlan(options, { client = clientFor(), executor = execFileAsync, fetcher = fetch } = {}) {
   const admission = await runMachineAdmission(options, executor);
   await officialManager(fetcher);
   const snapshot = await readCodeVersionSnapshot(client, admission);
