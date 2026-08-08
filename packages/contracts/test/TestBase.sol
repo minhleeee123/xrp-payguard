@@ -22,6 +22,27 @@ interface Vm {
         bytes4 selector
     ) external;
     function expectRevert() external;
+    function readFile(
+        string calldata path
+    ) external view returns (string memory data);
+    function parseUint(
+        string calldata stringifiedValue
+    ) external pure returns (uint256 parsedValue);
+    function parseJsonUint(
+        string calldata json,
+        string calldata key
+    ) external pure returns (uint256 value);
+    function parseJsonString(
+        string calldata json,
+        string calldata key
+    ) external pure returns (string memory value);
+    function parseJsonBool(
+        string calldata json,
+        string calldata key
+    ) external pure returns (bool value);
+    function toString(
+        uint256 value
+    ) external pure returns (string memory stringifiedValue);
 }
 
 abstract contract TestBase {

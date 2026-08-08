@@ -3,6 +3,8 @@ import { ACTION_FTESTXRP_TRANSFER, ZERO_BYTES32 } from "./constants.js";
 import { actionRequestHash, normalizePolicy, policyCommitment } from "./codec.js";
 import type { ActionRequestV1, Decision, EvaluationResultV1, PolicyV1, PublicReasonClass, SpendStateV1 } from "./types.js";
 
+const MAX_UINT256 = (1n << 256n) - 1n;
+
 function deny(request: ActionRequestV1, reason: PublicReasonClass, now: bigint, machineId: Hex = ZERO_BYTES32, keyFingerprint: Hex = ZERO_BYTES32): EvaluationResultV1 {
   return { request, decision: "DENY", publicReasonClass: reason, reservedAmount: 0n, resultingCheckpoint: request.spendCheckpoint,
     resultNonce: request.requestId, attempt: request.attempt, issuedAt: now, expiry: request.expiry, machineId, keyFingerprint };
@@ -16,11 +18,14 @@ function containsBytes32(values: Hex[], value: Hex): boolean {
   return values.some((candidate) => candidate.toLowerCase() === value.toLowerCase());
 }
 
-function checkedReferenceValue(amount: bigint, price: bigint, priceDecimals: number): bigint | null {
-  if (price <= 0n || priceDecimals < 0 || priceDecimals > 36) return null;
+/** Converts a public asset amount to its reference value, rounding caps upward. */
+export function referenceValueV1(amount: bigint, price: bigint, priceDecimals: number): bigint | null {
+  if (amount < 0n || amount > MAX_UINT256 || price <= 0n || price > MAX_UINT256
+    || !Number.isInteger(priceDecimals) || priceDecimals < 0 || priceDecimals > 36) return null;
   const scale = 10n ** BigInt(priceDecimals);
-  if (amount !== 0n && price > ((1n << 256n) - 1n) / amount) return null;
-  return (amount * price + scale - 1n) / scale;
+  if (amount !== 0n && price > MAX_UINT256 / amount) return null;
+  const product = amount * price;
+  return product / scale + (product % scale === 0n ? 0n : 1n);
 }
 
 function nextCheckpoint(request: ActionRequestV1, amount: bigint, occurrence: number, now: bigint): Hex {
@@ -62,7 +67,7 @@ export function evaluatePolicy(policyInput: PolicyV1, request: ActionRequestV1, 
     const feed = state.ftso;
     if (!feed || feed.feedId.toLowerCase() !== policy.ftsoFeedId.toLowerCase() || feed.timestamp > now || now - feed.timestamp > policy.maxPriceAgeSeconds
       || feed.checkpoint === ZERO_BYTES32 || request.inputCommitment.toLowerCase() !== feed.checkpoint.toLowerCase()) return deny(request, "FTSO_INVALID", now);
-    const value = checkedReferenceValue(request.amount, feed.value, feed.decimals);
+    const value = referenceValueV1(request.amount, feed.value, feed.decimals);
     if (value === null) return deny(request, "FTSO_INVALID", now);
     referenceValue = value;
   }

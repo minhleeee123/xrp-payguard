@@ -199,6 +199,11 @@ mapping before counting distinct signers.
 - Explicit inclusive/exclusive boundary definitions.
 - Reference-value conversion binds feed, decimals, timestamp, freshness, and
   documented rounding direction.
+- `REFERENCE_VALUE_V1` computes `ceil(amount * price / 10**decimals)` with
+  `amount`/`price` restricted to `uint256`, a strictly positive price,
+  decimals in `[0, 36]`, and a checked product. The implementation uses
+  quotient/remainder rounding so it never adds `scale - 1` near the uint256
+  boundary.
 - Deny overrides allow when multiple rules conflict.
 - Unknown schema/rule/action/input denies.
 - Missing, stale, negative, zero, overflowed, or inconsistent oracle/proof input

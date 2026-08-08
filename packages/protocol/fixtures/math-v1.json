@@ -1,0 +1,71 @@
+{
+  "schema": "REFERENCE_VALUE_V1",
+  "rounding": "CEILING",
+  "caseCount": 8,
+  "cases": [
+    {
+      "name": "integer-scale",
+      "amount": "75",
+      "price": "2",
+      "decimals": 0,
+      "expected": "150",
+      "valid": true
+    },
+    {
+      "name": "fraction-rounds-up",
+      "amount": "75",
+      "price": "123456789",
+      "decimals": 8,
+      "expected": "93",
+      "valid": true
+    },
+    {
+      "name": "smallest-positive-rounds-up",
+      "amount": "1",
+      "price": "1",
+      "decimals": 36,
+      "expected": "1",
+      "valid": true
+    },
+    {
+      "name": "zero-amount",
+      "amount": "0",
+      "price": "115792089237316195423570985008687907853269984665640564039457584007913129639935",
+      "decimals": 36,
+      "expected": "0",
+      "valid": true
+    },
+    {
+      "name": "maximum-product",
+      "amount": "115792089237316195423570985008687907853269984665640564039457584007913129639935",
+      "price": "1",
+      "decimals": 0,
+      "expected": "115792089237316195423570985008687907853269984665640564039457584007913129639935",
+      "valid": true
+    },
+    {
+      "name": "zero-price",
+      "amount": "1",
+      "price": "0",
+      "decimals": 0,
+      "expected": "0",
+      "valid": false
+    },
+    {
+      "name": "unsupported-decimals",
+      "amount": "1",
+      "price": "1",
+      "decimals": 37,
+      "expected": "0",
+      "valid": false
+    },
+    {
+      "name": "product-overflow",
+      "amount": "115792089237316195423570985008687907853269984665640564039457584007913129639935",
+      "price": "2",
+      "decimals": 0,
+      "expected": "0",
+      "valid": false
+    }
+  ]
+}

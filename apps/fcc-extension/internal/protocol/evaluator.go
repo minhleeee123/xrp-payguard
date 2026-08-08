@@ -74,8 +74,10 @@ func containsHash(values []common.Hash, value common.Hash) bool {
 	return false
 }
 
-func checkedReferenceValue(amount, price *big.Int, decimals uint8) (*big.Int, bool) {
-	if amount == nil || price == nil || amount.Sign() < 0 || price.Sign() <= 0 || decimals > 36 {
+// ReferenceValueV1 converts an asset amount to its reference value and rounds
+// upward so a fractional unit cannot bypass a cap.
+func ReferenceValueV1(amount, price *big.Int, decimals uint8) (*big.Int, bool) {
+	if amount == nil || price == nil || amount.Sign() < 0 || amount.Cmp(maxUint256) > 0 || price.Sign() <= 0 || price.Cmp(maxUint256) > 0 || decimals > 36 {
 		return nil, false
 	}
 	scale := new(big.Int).Exp(big.NewInt(10), new(big.Int).SetUint64(uint64(decimals)), nil)
@@ -86,8 +88,12 @@ func checkedReferenceValue(amount, price *big.Int, decimals uint8) (*big.Int, bo
 		}
 	}
 	product := new(big.Int).Mul(amount, price)
-	product.Add(product, new(big.Int).Sub(new(big.Int).Set(scale), big.NewInt(1)))
-	return product.Div(product, scale), true
+	quotient, remainder := new(big.Int), new(big.Int)
+	quotient.QuoRem(product, scale, remainder)
+	if remainder.Sign() != 0 {
+		quotient.Add(quotient, big.NewInt(1))
+	}
+	return quotient, true
 }
 
 func calculateNextCheckpoint(request ActionRequestV1, amount *big.Int, occurrence uint32, now uint64) (common.Hash, error) {
@@ -168,7 +174,7 @@ func EvaluatePolicy(policy PolicyV1, request ActionRequestV1, state SpendStateV1
 		if state.FTSO == nil || state.FTSO.Value == nil || state.FTSO.FeedID != normalized.FTSOFeedID || state.FTSO.Timestamp > state.Now || state.Now-state.FTSO.Timestamp > normalized.MaxPriceAgeSecs || state.FTSO.Checkpoint == zeroHash() || request.InputCommitment != state.FTSO.Checkpoint {
 			return denied(request, ReasonFTSOInvalid, state.Now), nil
 		}
-		value, valid := checkedReferenceValue(request.Amount, state.FTSO.Value, state.FTSO.Decimals)
+		value, valid := ReferenceValueV1(request.Amount, state.FTSO.Value, state.FTSO.Decimals)
 		if !valid {
 			return denied(request, ReasonFTSOInvalid, state.Now), nil
 		}

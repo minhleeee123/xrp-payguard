@@ -130,7 +130,9 @@ Solidity policy composition and live machine-domain verification remain open.
 
 - [x] Freeze `POLICY_SCHEMA_V1`, `POLICY_RECEIPT_V1`, `ACTION_REQUEST_V1`,
   `SPEND_CHECKPOINT_V1`, and `EVALUATION_RESULT_V1`.
-- [ ] Implement fixed-point value conversion and policy composition with shared
+- [x] Implement fixed-point value conversion with shared Go/Solidity/TypeScript
+  golden vectors.
+- [ ] Implement deterministic policy composition with shared
   Go/Solidity/TypeScript golden vectors.
 - [ ] Implement recurring slots, rolling windows, target rules, occurrence
   limits, delegated allowances, expiry, and deny precedence.

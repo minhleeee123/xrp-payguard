@@ -9,6 +9,8 @@ Local Foundry/Solidity V1 implementation of the public state machine:
 - `PayGuardActionRouter` freezes requests, verifies two distinct registered
   signatures over the signer-independent evaluation digest, and executes one
   transfer atomically.
+- `PayGuardPolicyMath` is the Solidity reference for the checked, ceiling-rounded
+  FTSO value conversion shared with the Go and TypeScript policy evaluators.
 
 Run with the pinned local toolchain from the repository root:
 
@@ -17,7 +19,7 @@ PATH="$PWD/.local/toolchains/bin:$PATH" forge test -vv
 PATH="$PWD/.local/toolchains/bin:$PATH" forge build
 ```
 
-The tests include the TypeScript golden receipt/request/evaluation digests and
-replay, stale-checkpoint, wrong-signer, conservation, cancellation, and
+The tests include shared receipt/request/evaluation and reference-value vectors,
+plus replay, stale-checkpoint, wrong-signer, conservation, cancellation, and
 machine-replacement negatives. Addresses, token integrations, FCC signatures,
 and deployment evidence remain unverified until a real Coston2 release.
