@@ -4,3 +4,4 @@ export * from "./funding.js";
 export * from "./triggers.js";
 export * from "./redemption.js";
 export * from "./vault.js";
+export * from "./requests.js";

@@ -14,6 +14,9 @@ states until a verified Coston2 release is connected.
 The Vaults surface accepts only a schema-checked, finalized public snapshot;
 it verifies the conservation equation and shows no balance when the provider
 is unconfigured, unavailable, unfinalized, or invalid.
+Requests & schedules applies the same boundary to request hashes, checkpoints,
+occurrence windows, threshold-derived decisions, expiry, and recovery states;
+it never creates an approval when the public request endpoint is unavailable.
 
 Run locally with the pinned Node toolchain:
 

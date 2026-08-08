@@ -1,6 +1,11 @@
 import "./styles.css";
 import "./studio.css";
-import { unavailableVaultState, type VaultReadState } from "@xrp-payguard/integrations";
+import {
+  unavailableRequestState,
+  unavailableVaultState,
+  type PublicRequestReadState,
+  type VaultReadState,
+} from "@xrp-payguard/integrations";
 import {
   STUDIO_TEMPLATES,
   StudioValidationError,
@@ -28,6 +33,7 @@ let studioCompilation: StudioCompilation | null = null;
 let studioIssues: readonly StudioIssue[] = [];
 let appNotice = "";
 let vaultState: VaultReadState = unavailableVaultState();
+let requestState: PublicRequestReadState = unavailableRequestState();
 
 const esc = (value: string): string => value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character] ?? character));
 const short = (value: string): string => value.length > 18 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value;
@@ -142,8 +148,32 @@ function vaultUnavailableReason(reason: string): string {
 }
 
 function requestsView(): string {
+  const snapshot = requestState.status === "UNAVAILABLE" ? undefined : requestState.snapshot;
+  const unavailable = requestState.status === "UNAVAILABLE";
+  const unavailableReason = unavailable ? requestUnavailableReason(requestState.reason) : "Finalized public request";
+  const liveReadiness = requestState.status === "UNAVAILABLE" ? undefined : requestState.readiness;
+  const readiness = snapshot && liveReadiness ? requestReadinessLabel(liveReadiness) : "UNAVAILABLE";
+  const requestCell = snapshot ? `<strong>${esc(short(snapshot.requestId))}</strong><small>Occurrence ${snapshot.occurrence} · nonce ${snapshot.requestNonce}</small>` : `<strong>—</strong><small>No verified request ID</small>`;
+  const actionCell = snapshot ? `<strong>${esc(short(snapshot.target))}</strong><small>${snapshot.amount} FTestXRP · public transfer</small>` : `<strong>—</strong><small>Target and amount unavailable</small>`;
+  const checkpointCell = snapshot ? `<strong>${esc(short(snapshot.spendCheckpoint))}</strong><small>Slot ${snapshot.scheduleSlot} · expires ${snapshot.expiry}</small>` : `<strong>—</strong><small>Waiting for RPC</small>`;
+  const publicState = snapshot
+    ? `<div class="request-public-state"><div><span>Readiness</span><strong>${readiness}</strong></div><div><span>Decision evidence</span><strong>${snapshot.decision === "PENDING" ? "Waiting for threshold" : snapshot.decision === "ALLOW" ? "Threshold ALLOW · public" : `DENY · ${snapshot.publicReasonClass ?? "UNKNOWN"}`}</strong></div><div><span>Attempt</span><strong>${snapshot.attempt}</strong></div><div><span>Checkpoint</span><strong class="mono-value">${esc(short(snapshot.requestHash))}</strong></div></div>`
+    : `<div class="request-public-state"><div><span>Readiness</span><strong>Unavailable</strong></div><div><span>Decision evidence</span><strong>No chain result</strong></div><div><span>Attempt</span><strong>—</strong></div><div><span>Checkpoint</span><strong>—</strong></div></div>`;
   return `${pageIntro("PUBLIC REQUEST QUEUE", "Requests & schedules", "Executors can advance public checkpoints. They cannot choose ALLOW, read private rules, or bypass the result threshold.", "new-request")}
-    <section class="panel table-panel"><div class="panel-heading"><div><div class="eyebrow">ACTION REQUESTS</div><h2>Nothing can execute yet</h2></div><div class="table-tools"><button class="filter-button" type="button">All statuses⌄</button><button class="icon-button" type="button" aria-label="Refresh">↻</button></div></div><div class="request-table"><div class="table-head"><span>REQUEST</span><span>PUBLIC ACTION</span><span>CHECKPOINT</span><span>STATUS</span><span></span></div><div class="table-row"><span><strong>—</strong><small>No verified request ID</small></span><span><strong>—</strong><small>Target and amount unavailable</small></span><span><strong>—</strong><small>Waiting for RPC</small></span><span><span class="state-tag amber-tag">UNAVAILABLE</span></span><span>···</span></div></div><div class="table-footer"><span>Showing public finalized state only</span><span class="muted">No browser cache</span></div></section><div class="recovery-strip"><div class="recovery-icon">↻</div><div><strong>Fresh-process recovery is built in</strong><p>A relay restart reconstructs work from chain checkpoints, not a private policy database.</p></div><button class="text-button" type="button" data-action="details">See checkpoint model ↗</button></div>`;
+    <section class="panel table-panel"><div class="panel-heading"><div><div class="eyebrow">ACTION REQUESTS</div><h2>${snapshot ? "Public request state" : "Nothing can execute yet"}</h2></div><div class="table-tools"><button class="filter-button" type="button">All statuses⌄</button><button class="icon-button" type="button" aria-label="Refresh">↻</button></div></div><div class="request-table"><div class="table-head"><span>REQUEST</span><span>PUBLIC ACTION</span><span>CHECKPOINT</span><span>STATUS</span><span></span></div><div class="table-row"><span>${requestCell}</span><span>${actionCell}</span><span>${checkpointCell}</span><span><span class="state-tag ${snapshot ? (liveReadiness === "READY_TO_EXECUTE" ? "green-tag" : "gray-tag") : "amber-tag"}">${esc(readiness)}</span></span><span>···</span></div></div>${publicState}<div class="table-footer"><span>Showing public finalized state only</span><span class="muted">${esc(unavailableReason)} · no browser cache</span></div></section><div class="recovery-strip"><div class="recovery-icon">↻</div><div><strong>Fresh-process recovery is built in</strong><p>A relay restart reconstructs work from chain checkpoints, not a private policy database.</p></div><button class="text-button" type="button" data-action="details">See checkpoint model ↗</button></div>`;
+}
+
+function requestUnavailableReason(reason: string): string {
+  return ({
+    RPC_UNCONFIGURED: "No verified RPC provider configured",
+    RPC_UNAVAILABLE: "RPC provider unavailable",
+    SNAPSHOT_UNFINALIZED: "Snapshot is not finalized",
+    SNAPSHOT_INVALID: "Public snapshot failed validation",
+  } as Record<string, string>)[reason] ?? "Public request unavailable";
+}
+
+function requestReadinessLabel(readiness: string): string {
+  return readiness.replaceAll("_", " ");
 }
 
 function payeeView(): string {

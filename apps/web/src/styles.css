@@ -315,6 +315,10 @@ h1, h2, h3 { font-family: var(--font-pt-serif); font-weight: 300; }
 .table-row strong, .table-row small { display: block; }
 .table-row strong { color: var(--color-bone); font: 500 11px var(--font-jetbrains-mono); }
 .table-row small { margin-top: 3px; color: var(--color-ash); font-size: 10px; }
+.request-public-state { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 0 24px; border-bottom: 1px solid var(--color-graphite); padding: 14px 0; }
+.request-public-state span, .request-public-state strong { display: block; }
+.request-public-state span { color: var(--color-ash); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; }
+.request-public-state strong { margin-top: 4px; color: var(--color-pearl); font-size: 10px; font-weight: 500; }
 .table-footer { display: flex; justify-content: space-between; padding: 14px 24px; color: var(--color-ash); font-size: 10px; }
 .recovery-strip { display: flex; align-items: center; gap: 12px; margin-top: 17px; border: 1px solid var(--color-slate); border-radius: 0; padding: 15px 17px; background: var(--color-graphite); }
 .recovery-icon { color: var(--color-signal-lime); font-size: 22px; }
@@ -400,7 +404,7 @@ h1, h2, h3 { font-family: var(--font-pt-serif); font-weight: 300; }
   .metric-card { min-height: 112px; }
   .notice-banner { align-items: flex-start; }
   .notice-banner button { display: none; }
-  .two-col, .vault-stats, .vault-public-state { grid-template-columns: 1fr; }
+  .two-col, .vault-stats, .vault-public-state, .request-public-state { grid-template-columns: 1fr; }
   .vault-card { padding: 20px; }
   .vault-actions { flex-direction: column; }
   .table-head { display: none; }
@@ -408,6 +412,7 @@ h1, h2, h3 { font-family: var(--font-pt-serif); font-weight: 300; }
   .table-row > span:last-child { display: none; }
   .table-row .state-tag { margin-left: 0; }
   .table-footer { padding: 12px 15px; }
+  .request-public-state { margin: 0 15px; }
   .recovery-strip { align-items: flex-start; flex-wrap: wrap; }
   .recovery-strip .text-button { margin-left: 0; }
   .roles-panel { padding: 18px; }
