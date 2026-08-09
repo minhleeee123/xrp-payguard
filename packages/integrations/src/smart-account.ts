@@ -10,7 +10,7 @@ import {
   zeroHash,
   type Hex,
 } from "viem";
-import { isValidClassicAddress } from "xrpl";
+import { isValidXrplClassicAddress } from "./xrpl-address.js";
 
 const MAX_UINT64 = (1n << 64n) - 1n;
 const MAX_UINT256 = (1n << 256n) - 1n;
@@ -108,7 +108,7 @@ function normalizeAddress(value: unknown, label: string): Hex {
 }
 
 function normalizeXrplOwner(value: unknown): string {
-  if (typeof value !== "string" || !isValidClassicAddress(value)) {
+  if (typeof value !== "string" || !isValidXrplClassicAddress(value)) {
     throw new Error("XRPL owner must be a valid classic r-address");
   }
   return value;

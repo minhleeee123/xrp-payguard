@@ -1,5 +1,5 @@
 import { getAddress, isAddress, zeroAddress, type Hex } from "viem";
-import { isValidClassicAddress } from "xrpl";
+import { isValidXrplClassicAddress } from "./xrpl-address.js";
 
 const MAX_UINT256 = (1n << 256n) - 1n;
 
@@ -175,7 +175,7 @@ export async function readDirectMintingPaymentAddress(
   } catch {
     throw new Error("direct minting payment address unavailable");
   }
-  if (typeof value !== "string" || !isValidClassicAddress(value)) {
+  if (typeof value !== "string" || !isValidXrplClassicAddress(value)) {
     throw new Error("direct minting payment address malformed");
   }
   return value;

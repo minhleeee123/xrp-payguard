@@ -1,5 +1,5 @@
 import type { Hex } from "@xrp-payguard/protocol";
-import { isValidClassicAddress } from "xrpl";
+import { isValidXrplClassicAddress } from "./xrpl-address.js";
 
 const MAX_UINT32 = (1n << 32n) - 1n;
 const MAX_UINT64 = (1n << 64n) - 1n;
@@ -105,7 +105,7 @@ function normalizeUint(value: unknown, max: bigint, label: string): bigint {
 }
 
 function normalizeAccount(value: unknown, label: string): string {
-  if (typeof value !== "string" || !isValidClassicAddress(value)) fail("MALFORMED", `${label} is malformed`);
+  if (typeof value !== "string" || !isValidXrplClassicAddress(value)) fail("MALFORMED", `${label} is malformed`);
   return value;
 }
 

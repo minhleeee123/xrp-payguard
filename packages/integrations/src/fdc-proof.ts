@@ -1,7 +1,7 @@
 import { getAddress, isAddress, type Hex } from "viem";
-import { isValidClassicAddress } from "xrpl";
 import { FDC_XRP_PAYMENT_V1, type XrplPaymentRequestBodyV1, type XrplPaymentResponseBodyV1 } from "./triggers.js";
 import { XRPL_TESTNET_SOURCE_ID } from "./fdc-request.js";
+import { isValidXrplClassicAddress } from "./xrpl-address.js";
 
 const MAX_UINT8 = (1n << 8n) - 1n;
 const MAX_UINT32 = (1n << 32n) - 1n;
@@ -97,7 +97,7 @@ function int256(value: unknown, label: string): bigint {
 }
 
 function account(value: unknown, label: string): string {
-  if (typeof value !== "string" || !isValidClassicAddress(value)) fail("MALFORMED", `${label} is malformed`);
+  if (typeof value !== "string" || !isValidXrplClassicAddress(value)) fail("MALFORMED", `${label} is malformed`);
   return value;
 }
 
