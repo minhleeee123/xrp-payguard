@@ -46,12 +46,33 @@ pnpm coston2:fdc-trigger:test
 pnpm coston2:fdc-trigger:plan
 pnpm coston2:fdc-trigger:deploy
 pnpm coston2:fdc-trigger:verify
+pnpm coston2:fdc-live:test
+pnpm coston2:fdc-live:plan
+pnpm coston2:fdc-live:run
 ```
 
 `plan` is read-only. `deploy` requires an exact `--broadcast` capability inside
 the package script, a clean committed worktree, the PayGuard-local deployer key,
 matching configured address, sufficient testnet gas, current dependency
 runtimes, and a safe pending nonce. It never loads VeilBid credentials.
+
+The separate live runner is prepared but has not yet produced committed live
+evidence. Its `plan` mode verifies the deployed consumer, router, vault,
+runtime `FdcVerification`, `FdcHub`, and Relay without signing. `run` additionally
+requires explicit broadcast, XRPL Testnet faucet, and simulated-TEE
+capabilities plus a clean committed source tree. It generates both XRPL wallets
+and three policy receipt signers in memory, submits an exact 100-drop payment
+whose 32-byte memo is the request ID, waits a bounded 20 minutes for a finalized
+FDC proof, verifies that proof on-chain, and then creates only a `Pending`
+request. Wallet seeds, EVM keys, receipt signatures, private policy fields,
+verifier access headers, and raw proofs are never written to public evidence.
+
+The runner loads the exact pinned `xrpl@5.0.0` browser artifact for wallet and
+WebSocket operations. This avoids the package's current Node CommonJS/ESM
+dependency boundary without changing the pinned SDK or accepting remote
+signing. Server-side proof parsing uses the locally tested XRPL version-0,
+20-byte Base58Check validator, whose canonical and checksum-mutation vectors
+are compared against `xrpl.js` in the integration suite.
 
 ## Remaining authorization boundary
 

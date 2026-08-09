@@ -11,6 +11,12 @@ importers:
       viem:
         specifier: 2.55.11
         version: 2.55.11(typescript@7.0.2)
+      ws:
+        specifier: 8.21.0
+        version: 8.21.0
+      xrpl:
+        specifier: 5.0.0
+        version: 5.0.0
 
   apps/relay:
     dependencies:

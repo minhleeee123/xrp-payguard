@@ -8,7 +8,9 @@
     "node": ">=24 <25"
   },
   "devDependencies": {
-    "viem": "2.55.11"
+    "viem": "2.55.11",
+    "ws": "8.21.0",
+    "xrpl": "5.0.0"
   },
   "scripts": {
     "toolchain:check": "node tooling/preflight.mjs",
@@ -46,6 +48,9 @@
     "coston2:fdc-trigger:plan": "node tooling/coston2-fdc-trigger-deploy.mjs plan",
     "coston2:fdc-trigger:deploy": "node tooling/coston2-fdc-trigger-deploy.mjs deploy --broadcast",
     "coston2:fdc-trigger:verify": "node tooling/coston2-fdc-trigger-deploy.mjs verify",
+    "coston2:fdc-live:test": "node --test tooling/coston2-fdc-trigger-live.test.mjs",
+    "coston2:fdc-live:plan": "node tooling/coston2-fdc-trigger-live.mjs plan",
+    "coston2:fdc-live:run": "node tooling/coston2-fdc-trigger-live.mjs run --broadcast --confirm-xrpl-testnet-faucet --confirm-simulated-tee-onchain",
     "coston2:endpoints:observe": "node tooling/coston2-public-endpoints.mjs observe",
     "coston2:endpoints:record": "node tooling/coston2-public-endpoints.mjs observe --write",
     "fcc:container:smoke": "node tooling/fcc-container-smoke.mjs",
@@ -69,6 +74,6 @@
     "fcc:ping:plan": "node tooling/fcc-foundation-ping.mjs plan",
     "fcc:ping:send": "node tooling/fcc-foundation-ping.mjs send --broadcast",
     "fcc:ping:test": "node --test tooling/fcc-foundation-ping.test.mjs",
-    "check": "pnpm toolchain:check && pnpm docs:check && pnpm secret:scan && pnpm privacy:scan && pnpm evidence:check && pnpm web:evidence:test && pnpm web:deployment-audit:test && pnpm demo:record:test && pnpm web:test && pnpm release:check && pnpm release:test && pnpm deploy:coston2:test && pnpm coston2:dependencies:test && pnpm coston2:endpoints:test && pnpm coston2:direct-mint:test && pnpm coston2:funding-resume:test && pnpm coston2:simulated-lifecycle:test && pnpm coston2:fdc-trigger:test && pnpm fcc:container:test && pnpm fcc:foundation:test && pnpm fcc:machine:preflight:test && pnpm fcc:version:test && pnpm fcc:machine:registration:test && pnpm fcc:result:test && pnpm fcc:ping:test && pnpm bindings:check"
+    "check": "pnpm toolchain:check && pnpm docs:check && pnpm secret:scan && pnpm privacy:scan && pnpm evidence:check && pnpm web:evidence:test && pnpm web:deployment-audit:test && pnpm demo:record:test && pnpm web:test && pnpm release:check && pnpm release:test && pnpm deploy:coston2:test && pnpm coston2:dependencies:test && pnpm coston2:endpoints:test && pnpm coston2:direct-mint:test && pnpm coston2:funding-resume:test && pnpm coston2:simulated-lifecycle:test && pnpm coston2:fdc-trigger:test && pnpm coston2:fdc-live:test && pnpm fcc:container:test && pnpm fcc:foundation:test && pnpm fcc:machine:preflight:test && pnpm fcc:version:test && pnpm fcc:machine:registration:test && pnpm fcc:result:test && pnpm fcc:ping:test && pnpm bindings:check"
   }
 }
