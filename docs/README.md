@@ -41,6 +41,8 @@
   adaptation record for the read-only official FCC scaffold.
 - [`../packages/integrations/README.md`](../packages/integrations/README.md):
   public-only XRP/FDC/FTSO/Smart Account checkpoint boundaries.
+- [`integration-guide.md`](integration-guide.md): compile-tested XRPL-wallet
+  and Flare-dApp examples plus the fail-closed adoption checklist.
 - [`technology/architecture.md`](technology/architecture.md): component model,
   public/private data, trust, and recovery.
 - [`technology/contract-spec.md`](technology/contract-spec.md): V1 schemas,

@@ -420,7 +420,9 @@ Exit: source, runtime, bindings, UI, docs, and public-safe evidence agree.
 - [ ] Run one personal subscription pilot and one treasury recurring-payment pilot.
 - [ ] Measure setup completion, activation time, failed-action comprehension,
   recovery success, and recipient confidence.
-- [ ] Publish SDK examples and integration guide for XRPL wallets and Flare dApps.
+- [x] Publish compile-tested, fail-closed SDK examples and an integration guide
+  for XRPL wallets and Flare dApps; keep the package private until a verified
+  release manifest exists.
 - [ ] Record feedback and product decisions without invented traction.
 - [ ] Prepare audit, liveness incentives, pricing, support, and mainnet readiness plans.
 
