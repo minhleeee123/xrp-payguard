@@ -104,6 +104,19 @@ the sanitized public identifiers and assertions are recorded in
 The production integration remains signerless: signing/broadcast authority is
 held by the caller, and FCC/private-policy/hosted-release gates are separate.
 
+The credential-free `coston2:funding-resume:observe` command now reconstructs
+that completed checkpoint from public history rather than from saved private
+state. It decodes the historical `executeDirectMintingWithData` calldata,
+re-verifies its FDC proof through the runtime `FdcVerification`, checks the
+XRPL `0xFE` memo commitment against the PackedUserOperation, and binds the
+consumed nonce, approve/deposit pair, current Core Vault address and fee quote,
+receipt event, and PayGuard vault conservation. Its deterministic tests mutate
+each binding and require failure before success can be reported. The sanitized
+record is
+[`coston2-funding-resume-audit-2026-08-09.json`](../../evidence/coston2/coston2-funding-resume-audit-2026-08-09.json).
+Because the source transaction completed immediately, this does not prove an
+actual `DirectMintingDelayed` wait/resubmission.
+
 Official references:
 
 - [Smart Accounts overview](https://dev.flare.network/smart-accounts/overview)

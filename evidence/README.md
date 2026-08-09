@@ -20,6 +20,15 @@ payment, FDC request/finalized round/proof commitment, direct mint receipt, and
 verified FTestXRP deposit accounting. It contains no raw proof, memo payload,
 wallet seed, API key, or private policy, and it is not a complete release claim.
 
+`coston2/coston2-funding-resume-audit-2026-08-09.json` is a separate,
+credential-free read-only reconstruction of that completed funding checkpoint.
+It obtains the historical proof and PackedUserOperation from public Coston2
+calldata, re-verifies the proof on-chain, re-reads the XRPL payment and current
+runtime address/fee/nonce/accounting state, and records only hashes, public
+identifiers, amounts, and booleans. The source transaction did not emit a
+`DirectMintingDelayed` checkpoint, so an actual delayed-event resubmission
+remains explicitly open.
+
 `coston2/fassets-redemption-2026-08-09.json` records one public amount-based
 FXRP redemption request, the validated XRPL payout with matching payment
 reference, and the Coston2 `RedemptionPerformed` receipt. It deliberately marks

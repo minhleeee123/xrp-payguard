@@ -286,8 +286,7 @@ verified on Coston2. External review and registered FCC execution remain open.
 - [x] Add a credential-free read-only Coston2 observer that resolves
   `AssetManagerFXRP` through the Contract Registry, reads the runtime FAsset,
   direct-mint fee settings, and Core Vault payment address, and records an
-  integer quote without submitting a transaction. Delayed resume and
-  nonce/proof/operation/receipt drift remain live-service gates.
+  integer quote without submitting a transaction.
 - [x] Add an injected, read-only XRPL API v2 checkpoint reader for validated
   account, ledger, and native-XRP Payment state; wallet signing remains outside
   the production reader boundary, while one live funding run is evidenced.
@@ -301,8 +300,15 @@ verified on Coston2. External review and registered FCC execution remain open.
 - [x] Implement a local fail-closed funding state machine that revalidates the
   operation and expected-payment hashes at every transition, binds accepted FDC
   proof commitment, and requires an exact public direct-mint receipt.
-- [ ] Prove public-safe delayed-mint checkpoint/resume and quote, address, nonce,
-  proof, operation, or receipt drift rejection against live supported services.
+- [x] Reconstruct the completed public funding checkpoint from XRPL/Coston2
+  history, decode the FDC proof and `0xFE` operation from public calldata,
+  reverify the proof on-chain, and bind current quote, payment address,
+  consumed nonce, approve/deposit operation, receipt, and vault conservation;
+  injected mutations prove each live-bound drift fails closed.
+- [ ] Capture a real `DirectMintingDelayed` event on a supported test condition,
+  wait until its public `executionAllowedAt`, and verify the same proof/data is
+  resubmitted successfully. The completed historical funding transaction did
+  not enter the delayed state, so local delay simulation is not live evidence.
 - [x] Add local fail-closed `EVMTransaction` and `XRPPayment` trigger adapters
   over the official request/response fields, with freshness, replay, bounded
   bytes, async-drift, exact-event/payment, and injected-verifier tests.

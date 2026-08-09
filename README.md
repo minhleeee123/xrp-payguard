@@ -27,6 +27,11 @@ Coston2 testnet funding run has passed validated XRPL payment → FDC
 `XRPPayment` proof → Smart Account tuple operation → direct mint → PayGuardVault
 accounting; see the sanitized
 [`xrp-fdc-smart-account-funding-2026-08-09.json`](evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json).
+A credential-free historical resume audit independently re-reads that public
+XRPL/Coston2 path, decodes the proof and `0xFE` operation from calldata, and
+rechecks the current runtime bindings; see
+[`coston2-funding-resume-audit-2026-08-09.json`](evidence/coston2/coston2-funding-resume-audit-2026-08-09.json).
+No actual delayed-mint event or resubmission is claimed.
 
 The hackathon build deliberately uses the credential-free local
 three-machine simulated FCC stack together with the real public Coston2 facts

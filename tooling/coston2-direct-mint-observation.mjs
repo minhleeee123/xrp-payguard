@@ -217,7 +217,7 @@ export function buildDirectMintObservationEvidence(observation, recordedAt = new
       integerQuoteRecomputed: true,
       noTransactionSubmitted: true,
       delayedMintStillExplicitlyUnverified: true,
-      nonceProofOperationReceiptDriftStillUnverified: true,
+      historicalResumeAuditRecordedSeparately: true,
       testnetOnly: true,
       noPrivateKeyRecorded: true,
       noCredentialRecorded: true,
@@ -226,13 +226,13 @@ export function buildDirectMintObservationEvidence(observation, recordedAt = new
     },
     blockers: [
       "DELAYED_MINT_RESUME_NOT_LIVE_VERIFIED",
-      "NONCE_PROOF_OPERATION_RECEIPT_DRIFT_NOT_LIVE_VERIFIED",
       "PAYGUARD_RELEASE_MANIFEST_NOT_VERIFIED",
     ],
     notes: [
       "This read-only observation resolves AssetManagerFXRP through the official Coston2 Contract Registry and reads the runtime direct-mint getters.",
       "The quote is an integer-only public calculation for the recorded net mint amount; no XRP payment, FDC request, signing, or mint transaction was submitted.",
-      "The local delayed checkpoint and drift tests remain separate from this live runtime observation.",
+      "The completed historical funding checkpoint and its live-bound drift checks are recorded separately in coston2-funding-resume-audit-2026-08-09.json.",
+      "An actual DirectMintingDelayed wait and resubmission remains open and is not inferred from the completed historical transaction.",
     ],
   };
 }

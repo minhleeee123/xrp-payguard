@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "suite": "payguard-coston2-funding-resume-audit",
+  "status": "historical-checkpoint-reconstructed",
+  "recordedAt": "2026-08-09T06:48:24.602Z",
+  "network": {
+    "name": "flare-coston2",
+    "chainId": 114,
+    "observedBlock": "33810306"
+  },
+  "publicIdentifiers": {
+    "xrpl": {
+      "transactionHash": "0xe4166ad4cb7da1727195c5fdf1402f592163a1b31f3dda40c33bcfe3c6b24525",
+      "ledgerIndex": "19749091",
+      "source": "rJRfrgiV5qaY9qf38NeBF7bDXdsQNn7uSM",
+      "destination": "rDhpmiPq4BVBDWMVdSrmkgt8thKyRzGV1p",
+      "deliveredAmountUBA": "1200000",
+      "memoHash": "0x7010acbdb1682988bfb225129ea9268c10d8fc1e29eec1c4590fe252ce5891fd"
+    },
+    "fdc": {
+      "votingRound": "1420027",
+      "proofOwner": "0xA5B4Fa983Df9564B49a69606C96b92aA7c1b9Acd",
+      "proofCommitment": "0xf4f6135d0af13015ef8cb13a7b57068f45d895032304ab29c3b75f77668e7d2d"
+    },
+    "operation": {
+      "operationHash": "0x65d92c4fe2ed6fb85d4d8282865963dad50f2ed6d8523ccdc26c0d45be22641d",
+      "personalAccount": "0xA9026253C14237Ee0722Fee6b58f7951101fd602",
+      "consumedNonce": "0",
+      "observedCurrentNonce": "1",
+      "callCount": 2,
+      "totalCallValueWei": "0",
+      "beneficiary": "0xDC1cc527423C882156a632C250528D1922d18Fc7",
+      "asset": "0x0b6A3645c240605887a5532109323A3E12273dc7",
+      "depositedUBA": "1000000"
+    },
+    "receipt": {
+      "transactionHash": "0x0524497bd1952d411ff5d7413199ed3148e36442e176a003dc2d3e1e0c2a9c88",
+      "blockNumber": "33800461",
+      "executor": "0xA5B4Fa983Df9564B49a69606C96b92aA7c1b9Acd"
+    },
+    "runtime": {
+      "assetManager": "0xc1Ca88b937d0b528842F95d5731ffB586f4fbDFA",
+      "fAsset": "0x0b6A3645c240605887a5532109323A3E12273dc7",
+      "fdcVerification": "0x906507E0B64bcD494Db73bd0459d1C667e14B933",
+      "masterAccountController": "0x434936d47503353f06750Db1A444DBDC5F0AD37c",
+      "paymentAddress": "rDhpmiPq4BVBDWMVdSrmkgt8thKyRzGV1p"
+    },
+    "quote": {
+      "netMintAmountUBA": "1000000",
+      "executorFeeUBA": "100000",
+      "feeBIPS": "25",
+      "minimumFeeUBA": "100000",
+      "proportionalFeeUBA": "2500",
+      "mintingFeeUBA": "100000",
+      "totalPaymentUBA": "1200000"
+    },
+    "vaultAccounting": {
+      "deposited": "1000000",
+      "available": "1000000",
+      "reserved": "0",
+      "spent": "0",
+      "withdrawn": "0",
+      "refunded": "0"
+    }
+  },
+  "assertions": {
+    "xrplPaymentRevalidated": true,
+    "runtimePaymentAddressMatched": true,
+    "fdcProofDecodedFromPublicCalldata": true,
+    "fdcProofCommitmentMatched": true,
+    "fdcProofReverifiedOnChain": true,
+    "memoOperationHashMatched": true,
+    "packedUserOperationDecoded": true,
+    "operationNonceConsumed": true,
+    "approveDepositPairMatched": true,
+    "smartAccountQuoteRecomputed": true,
+    "directMintReceiptSuccessful": true,
+    "payGuardDepositEventMatched": true,
+    "payGuardConservationVerified": true,
+    "noTransactionSubmitted": true,
+    "actualDelayedEventObserved": false,
+    "testnetOnly": true,
+    "noPrivateKeyRecorded": true,
+    "noCredentialRecorded": true,
+    "noRawProofOrUserOperationRecorded": true,
+    "noPolicyPlaintextOrCiphertextRecorded": true,
+    "noPayGuardReleaseClaimed": true
+  },
+  "blockers": [
+    "ACTUAL_DIRECT_MINT_DELAY_AND_RESUBMISSION_NOT_OBSERVED",
+    "PAYGUARD_RELEASE_MANIFEST_NOT_VERIFIED"
+  ],
+  "notes": [
+    "This credential-free audit reconstructs the completed funding checkpoint from public XRPL and Coston2 history and re-verifies the calldata FDC proof through the runtime FdcVerification contract.",
+    "The 0xFE memo commitment, PackedUserOperation, consumed nonce, approve/deposit pair, receipt, runtime payment address, current fee quote, PayGuard deposit event, and conservation state are bound fail-closed.",
+    "Raw FDC proof nodes, raw PackedUserOperation bytes, credentials, and signing material are intentionally excluded from this evidence.",
+    "This historical transaction completed without a recorded DirectMintingDelayed event. A real delayed-event wait and resubmission remains open and is not simulated as live success.",
+    "This is testnet funding evidence, not FCC custody/evaluation or a verified PayGuard release."
+  ]
+}
