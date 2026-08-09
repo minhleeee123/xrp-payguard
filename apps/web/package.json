@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@xrp-payguard/bindings": "workspace:*",
     "@xrp-payguard/integrations": "workspace:*",
     "@xrp-payguard/protocol": "workspace:*",
     "viem": "2.55.11"

@@ -211,6 +211,13 @@ totals; any history or FTSO/FDC snapshot drift denies.
 
 An EVM wallet approves and deposits supported FTestXRP directly. This is useful
 for development/recovery, not the flagship XRPL-native story.
+The web reader first requests only the injected wallet's public account and
+Coston2 chain selection. It pins runtime, wiring, token metadata, balances,
+allowance, and vault accounting reads to one finalized block. The UI publishes
+no balance when any runtime hash, contract binding, supported-asset check,
+schema, RPC read, or conservation equation fails. Transaction signing remains
+inside the injected wallet and is enabled only by a separate reviewed writer
+flow.
 
 ### XRPL-native path
 

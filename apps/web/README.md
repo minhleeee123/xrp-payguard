@@ -1,6 +1,6 @@
 # Web application
 
-Vite laptop-first shell with a full editorial landing page at `#landing`, plus
+Vite laptop-first Coston2 dApp with a full editorial landing page at `#landing`, plus
 Overview, Policy Studio, Vaults, Requests, Payee, wallet-free Auditor, and
 Team/roles surfaces. Its visual language follows the
 repository-level [`DESIGN.md`](../../DESIGN.md). The Policy Studio computes a
@@ -10,8 +10,17 @@ and an exact activation/request/private visibility map. Its contract addresses
 are explicitly local examples, and receipt progress remains unavailable rather
 than substituting local receipts until a verified Coston2 machine set exists.
 It does not use browser storage, send ciphertext, or provide an authorization
-result. Other screens render explicit `planned`, `local`, and `unavailable`
-states until a verified Coston2 release is connected.
+result.
+
+The injected-wallet boundary now connects or adds Flare Coston2 without ever
+receiving a private key. For an authorized public account it pins all reads to
+one `finalized` block, verifies the deployed registry/vault/router runtime
+hashes against reviewed PayGuard evidence, verifies router/vault wiring and
+the supported FTestXRP metadata, then displays exact C2FLR, wallet FTestXRP,
+allowance, and conservation-checked vault accounting. Runtime, wiring, asset,
+RPC, schema, or conservation drift fails closed and clears every asserted live
+balance. This first live integration is read-only; approve, deposit, withdraw,
+request, and execution transaction controls remain separate reviewed units.
 
 The landing page includes a public/private data boundary, three inline SVG
 guardian mascots, the complete XRPL/FDC/Smart Account/FAssets/FCC journey,
@@ -19,9 +28,9 @@ policy use cases, public-safe evidence scope, FAQ/limitations, and
 reduced-motion-compatible ambient effects. It makes no remote image request and
 never upgrades the local FCC simulation into a live release claim.
 
-The Vaults surface accepts only a schema-checked, finalized public snapshot;
-it verifies the conservation equation and shows no balance when the provider
-is unconfigured, unavailable, unfinalized, or invalid.
+The Vaults surface accepts only the verified finalized Coston2 account snapshot;
+it verifies the conservation equation and shows no balance when the wallet or
+RPC is unconfigured, unavailable, unfinalized, or invalid.
 Requests & schedules applies the same boundary to request hashes, checkpoints,
 occurrence windows, threshold-derived decisions, expiry, and recovery states;
 it never creates an approval when the public request endpoint is unavailable.
@@ -51,8 +60,9 @@ Run locally with the pinned Node toolchain:
 PATH="$PWD/.local/toolchains/bin:$PATH" pnpm --filter @xrp-payguard/web dev
 ```
 
-This UI is a public-safe product shell, not evidence of a live PayGuard
-release. Deploy the built static artifact with the Vercel CLI from the
+The connected public account/vault reader is a real Coston2 feature, but the UI
+is not evidence of a complete PayGuard release or live FCC authorization.
+Deploy the built static artifact with the Vercel CLI from the
 repository root:
 
 ```sh
@@ -60,9 +70,9 @@ pnpm --filter @xrp-payguard/web build
 vercel deploy apps/web/dist --prod --yes --project xrp-payguard
 ```
 
-The deployment contains only `apps/web/dist`; it does not provide FCC
-machines, a relay, a policy provider, wallet signing, or a verified PayGuard
-release. The latest sanitized deployment record is
+The deployment contains only `apps/web/dist`; wallet signing stays in the
+injected wallet, while FCC machines, a relay, a policy provider, and a verified
+PayGuard release remain external. The latest sanitized deployment record is
 [`vercel-preview-2026-08-09.json`](../../evidence/web/vercel-preview-2026-08-09.json).
 
 The build also emits only the allowlisted public evidence files under

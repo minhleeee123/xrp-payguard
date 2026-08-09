@@ -6,7 +6,6 @@ import {
   unavailableNotificationState,
   unavailablePayeeState,
   unavailableRequestState,
-  unavailableVaultState,
   unavailableWorkspaceState,
   buildPublicNotificationExport,
   buildUnavailableNotificationExport,
@@ -17,8 +16,8 @@ import {
   type PublicPayeeReadState,
   type PublicRequestReadState,
   type PublicWorkspaceReadState,
-  type VaultReadState,
 } from "@xrp-payguard/integrations";
+import { formatEther, formatUnits, type Address } from "viem";
 import {
   STUDIO_TEMPLATES,
   StudioValidationError,
@@ -33,12 +32,36 @@ import {
 } from "./model.js";
 import { fetchPublicWebEvidenceIndex, type PublicWebEvidenceIndex } from "./web-evidence.js";
 import { landingView } from "./landing.js";
+import {
+  COSTON2_CHAIN,
+  PAYGUARD_COSTON2,
+  WalletConnectionError,
+  connectCoston2Wallet,
+  coston2ReadFailureMessage,
+  explorerAddress,
+  injectedProvider,
+  loadCoston2AccountSnapshot,
+  readWalletSession,
+  walletFailureMessage,
+  type Coston2AccountSnapshot,
+} from "./coston2.js";
 
 type View = "overview" | "studio" | "vaults" | "requests" | "payee" | "auditor" | "team";
 type PublicEvidenceMirrorState =
   | { status: "LOADING" }
   | { status: "READY"; index: PublicWebEvidenceIndex }
   | { status: "UNAVAILABLE"; reason: "NOT_PUBLISHED" | "INVALID" };
+type WalletUiState =
+  | { status: "DISCONNECTED" }
+  | { status: "CONNECTING" }
+  | { status: "CONNECTED"; account: Address }
+  | { status: "WRONG_CHAIN"; account: Address; chainId: number }
+  | { status: "ERROR"; message: string };
+type Coston2UiState =
+  | { status: "IDLE" }
+  | { status: "LOADING" }
+  | { status: "READY"; snapshot: Coston2AccountSnapshot }
+  | { status: "UNAVAILABLE"; message: string };
 
 const appElement = document.querySelector<HTMLDivElement>("#app");
 if (!appElement) throw new Error("PayGuard root missing");
@@ -51,7 +74,6 @@ let studioEntropy = createStudioEntropy();
 let studioCompilation: StudioCompilation | null = null;
 let studioIssues: readonly StudioIssue[] = [];
 let appNotice = "";
-let vaultState: VaultReadState = unavailableVaultState();
 let requestState: PublicRequestReadState = unavailableRequestState();
 let auditState: PublicAuditReadState = unavailableAuditState();
 let custodyState: PublicPolicyCustodyReadState = unavailablePolicyCustodyState();
@@ -62,6 +84,10 @@ let notificationOpen = false;
 let mobileMenuOpen = false;
 let landingOpen = window.location.hash === "#landing";
 let publicEvidenceMirrorState: PublicEvidenceMirrorState = { status: "LOADING" };
+const walletProvider = injectedProvider();
+let walletState: WalletUiState = { status: "DISCONNECTED" };
+let coston2State: Coston2UiState = { status: "IDLE" };
+let liveReadSequence = 0;
 
 const esc = (value: string): string => value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character] ?? character));
 const short = (value: string): string => value.length > 18 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value;
@@ -75,7 +101,7 @@ function render(): void {
   app.innerHTML = `
     <div class="app-shell">
       <aside class="sidebar">
-        <button class="brand brand-link" type="button" data-action="landing" aria-label="Open PayGuard landing page"><span class="brand-mark">P</span><span>PayGuard</span><span class="brand-beta">LOCAL</span></button>
+        <button class="brand brand-link" type="button" data-action="landing" aria-label="Open PayGuard landing page"><span class="brand-mark">P</span><span>PayGuard</span><span class="brand-beta">TESTNET</span></button>
         <div class="workspace-label">PERSONAL WORKSPACE</div>
         <nav class="primary-nav" aria-label="Primary navigation">
           ${navItem("overview", "Overview", "⌂")}
@@ -89,13 +115,13 @@ function render(): void {
         </nav>
         ${mobileMenuOpen ? `<div class="mobile-secondary-nav" id="mobile-secondary-nav" aria-label="Secondary navigation">${navItem("payee", "Payee", "◍")}${navItem("auditor", "Auditor", "◌")}${navItem("team", "Team & roles", "♧")}</div>` : ""}
         <div class="sidebar-bottom">
-          <div class="security-card"><span class="status-dot amber"></span><div><strong>Local preview</strong><small>Live providers are not connected</small></div></div>
+          ${sidebarNetworkCard()}
           <button class="help-link" type="button" data-action="landing">? <span>How PayGuard works</span></button>
-          <div class="user-row"><div class="avatar">ML</div><div><strong>Owner</strong><small>Wallet not connected</small></div><span class="more">···</span></div>
+          ${sidebarUserRow()}
         </div>
       </aside>
       <main class="main-area">
-        <header class="topbar"><div class="breadcrumbs"><span>Workspace</span><b>/</b><strong>${label(activeView)}</strong></div><div class="top-actions"><span class="network-chip"><span class="status-dot amber"></span>Coston2 <em>planned</em></span><button class="icon-button" type="button" data-action="notifications" aria-label="Notifications" aria-expanded="${notificationOpen}">♢${notificationState.status === "READY" && notificationState.feed.notifications.length > 0 ? '<span class="notification-dot"></span>' : ""}</button><button class="outline-button" type="button" data-action="connect">Connect wallet</button></div></header>
+        <header class="topbar"><div class="breadcrumbs"><span>Workspace</span><b>/</b><strong>${label(activeView)}</strong></div><div class="top-actions">${networkChip()}<button class="icon-button" type="button" data-action="notifications" aria-label="Notifications" aria-expanded="${notificationOpen}">♢${notificationState.status === "READY" && notificationState.feed.notifications.length > 0 ? '<span class="notification-dot"></span>' : ""}</button><button class="outline-button wallet-button" type="button" data-action="connect">${walletButtonLabel()}</button></div></header>
         ${notificationOpen ? notificationTray() : ""}
         <section class="content">${viewContent()}</section>
         ${appNotice ? `<div class="toast" role="status">${esc(appNotice)}</div>` : ""}
@@ -109,6 +135,55 @@ function navItem(view: View, text: string, icon: string): string {
 }
 
 function label(view: View): string { return ({ overview: "Overview", studio: "Policy Studio", vaults: "Vaults", requests: "Requests", payee: "Payee", auditor: "Auditor", team: "Team & roles" })[view]; }
+
+function connectedAccount(): Address | null {
+  return walletState.status === "CONNECTED" || walletState.status === "WRONG_CHAIN" ? walletState.account : null;
+}
+
+function walletButtonLabel(): string {
+  if (walletState.status === "CONNECTING") return "Connecting…";
+  const account = connectedAccount();
+  return account ? short(account) : "Connect wallet";
+}
+
+function networkChip(): string {
+  if (coston2State.status === "READY") return `<span class="network-chip"><span class="status-dot green"></span>Coston2 <em>finalized #${coston2State.snapshot.finalizedBlock}</em></span>`;
+  if (coston2State.status === "LOADING" || walletState.status === "CONNECTING") return `<span class="network-chip"><span class="status-dot amber"></span>Coston2 <em>checking</em></span>`;
+  if (coston2State.status === "UNAVAILABLE") return `<span class="network-chip"><span class="status-dot amber"></span>Coston2 <em>read failed</em></span>`;
+  if (walletState.status === "WRONG_CHAIN") return `<span class="network-chip"><span class="status-dot amber"></span>Wrong network <em>chain ${walletState.chainId}</em></span>`;
+  return `<span class="network-chip"><span class="status-dot amber"></span>Coston2 <em>connect</em></span>`;
+}
+
+function sidebarNetworkCard(): string {
+  if (coston2State.status === "READY") return `<div class="security-card live-card"><span class="status-dot green"></span><div><strong>Verified Coston2 reads</strong><small>Runtime, wiring & asset checked</small></div></div>`;
+  if (coston2State.status === "LOADING") return `<div class="security-card"><span class="status-dot amber"></span><div><strong>Checking Coston2</strong><small>Reading one finalized block</small></div></div>`;
+  return `<div class="security-card"><span class="status-dot amber"></span><div><strong>Testnet dApp</strong><small>FCC authorization remains simulated</small></div></div>`;
+}
+
+function sidebarUserRow(): string {
+  const account = connectedAccount();
+  const label = walletState.status === "WRONG_CHAIN" ? "Switch to Coston2" : account ? short(account) : "Wallet not connected";
+  return `<div class="user-row"><div class="avatar">${account ? account.slice(2, 4).toUpperCase() : "—"}</div><div><strong>Owner</strong><small>${esc(label)}</small></div><span class="more">···</span></div>`;
+}
+
+function token(value: bigint): string {
+  return displayUnits(formatUnits(value, 6), 6);
+}
+
+function nativeToken(value: bigint): string {
+  return displayUnits(formatEther(value), 4);
+}
+
+function displayUnits(value: string, maximumFractionDigits: number): string {
+  const [whole = "0", fraction = ""] = value.split(".");
+  const grouped = BigInt(whole).toLocaleString("en-US");
+  const visibleFraction = fraction.slice(0, maximumFractionDigits).replace(/0+$/, "");
+  return visibleFraction ? `${grouped}.${visibleFraction}` : grouped;
+}
+
+function liveSnapshot(): Coston2AccountSnapshot | null {
+  return coston2State.status === "READY" ? coston2State.snapshot : null;
+}
 
 function viewContent(): string {
   if (activeView === "studio") return studioView();
@@ -126,10 +201,17 @@ function pageIntro(eyebrow: string, title: string, copy: string, action = ""): s
 }
 
 function overviewView(): string {
-  return `${pageIntro("PERSONAL PAYGUARD", "Good morning, Minh.", "Public funds stay visible. Your payment rules stay inside the registered FCC machine set.", "new-policy")}
-    <div class="notice-banner"><span class="notice-icon">◉</span><div><strong>Live connection is not configured</strong><span>This local preview never reports a mock approval, payment, price, or proof. Connect a verified Coston2 release to continue.</span></div><button type="button" data-action="details">View limits</button></div>
-    <div class="metric-grid"><div class="metric-card"><div class="metric-label">AVAILABLE BALANCE <span class="public-pill">PUBLIC</span></div><div class="metric-value">— <small>FTestXRP</small></div><div class="metric-foot muted">No vault provider connected</div></div><div class="metric-card"><div class="metric-label">RESERVED <span class="public-pill">PUBLIC</span></div><div class="metric-value">—</div><div class="metric-foot muted">Pending state unavailable</div></div><div class="metric-card"><div class="metric-label">ACTIVE POLICIES</div><div class="metric-value">0</div><div class="metric-foot"><span class="status-dot amber"></span> No live policy registry</div></div><div class="metric-card accent-card"><div class="metric-label">NEXT RECURRING ACTION</div><div class="metric-value">—</div><div class="metric-foot muted">Create a policy to preview</div></div></div>
-    <div class="section-grid"><section class="panel activity-panel"><div class="panel-heading"><div><div class="eyebrow">PUBLIC CHECKPOINTS</div><h2>Recent activity</h2></div><button class="text-button" type="button" data-view="requests">View all ↗</button></div><div class="empty-state"><div class="empty-orbit">◌</div><strong>No verified activity yet</strong><span>Requests, decisions, and transfers appear here only after a public chain checkpoint is finalized.</span><button class="outline-button" type="button" data-action="new-policy">Explore Policy Studio</button></div></section><section class="panel health-panel"><div class="panel-heading"><div><div class="eyebrow">DEPENDENCY HEALTH</div><h2>Trust surface</h2></div><span class="health-label"><span class="status-dot amber"></span>Limited</span></div><ul class="health-list"><li><span class="health-icon gray">◇</span><div><strong>FCC machine quorum</strong><small>Registration not verified</small></div><span class="state-tag amber-tag">PLANNED</span></li><li><span class="health-icon gray">◈</span><div><strong>FDC attestation</strong><small>Proof verifier not configured</small></div><span class="state-tag amber-tag">PLANNED</span></li><li><span class="health-icon gray">◫</span><div><strong>FTSO snapshot</strong><small>Feed resolution not verified</small></div><span class="state-tag amber-tag">PLANNED</span></li><li><span class="health-icon gray">▣</span><div><strong>Router & vault</strong><small>Local contracts tested only</small></div><span class="state-tag gray-tag">LOCAL</span></li></ul></section></div>`;
+  const live = liveSnapshot();
+  const account = connectedAccount();
+  const notice = live
+    ? `<div class="notice-banner live-notice"><span class="notice-icon">✓</span><div><strong>Finalized Coston2 account state verified</strong><span>Runtime bytecode, router/vault wiring, supported FTestXRP and conservation were checked together at block ${live.finalizedBlock}.</span></div><button type="button" data-action="refresh">Refresh</button></div>`
+    : account
+      ? `<div class="notice-banner"><span class="notice-icon">◉</span><div><strong>${coston2State.status === "LOADING" ? "Reading finalized Coston2 state" : "Finalized Coston2 state unavailable"}</strong><span>${coston2State.status === "UNAVAILABLE" ? esc(coston2State.message) : "The public account is connected; no balance is asserted until every live check passes."}</span></div><button type="button" data-action="refresh">Retry</button></div>`
+      : `<div class="notice-banner"><span class="notice-icon">◉</span><div><strong>Connect a Coston2 wallet</strong><span>Wallet access enables public balance and vault reads. FCC policy authorization remains explicitly simulated.</span></div><button type="button" data-action="connect">Connect</button></div>`;
+  return `${pageIntro("PERSONAL PAYGUARD", "Your testnet control center.", "Use real Coston2 account and vault state while private authorization remains separated from the browser.", "new-policy")}
+    ${notice}
+    <div class="metric-grid"><div class="metric-card"><div class="metric-label">VAULT AVAILABLE <span class="public-pill">PUBLIC</span></div><div class="metric-value">${live ? token(live.accounting.available) : "—"} <small>FTestXRP</small></div><div class="metric-foot muted">${live ? `${token(live.tokenBalance)} in connected wallet` : account ? "Live verification unavailable" : "Connect wallet for finalized read"}</div></div><div class="metric-card"><div class="metric-label">RESERVED <span class="public-pill">PUBLIC</span></div><div class="metric-value">${live ? token(live.accounting.reserved) : "—"}</div><div class="metric-foot muted">${live ? "Verified vault accounting" : "Pending state unavailable"}</div></div><div class="metric-card"><div class="metric-label">C2FLR GAS</div><div class="metric-value">${live ? nativeToken(live.nativeBalance) : "—"}</div><div class="metric-foot"><span class="status-dot ${live ? "green" : "amber"}"></span> ${account ? "Wallet connected" : "Wallet not connected"}</div></div><div class="metric-card accent-card"><div class="metric-label">FINALIZED BLOCK</div><div class="metric-value">${live ? live.finalizedBlock : "—"}</div><div class="metric-foot muted">${live ? "All reads pinned to this block" : "No public checkpoint loaded"}</div></div></div>
+    <div class="section-grid"><section class="panel activity-panel"><div class="panel-heading"><div><div class="eyebrow">PUBLIC ACCOUNT</div><h2>${live ? "Coston2 wallet ready" : account ? "Wallet connected · reads blocked" : "Connect without sharing a key"}</h2></div><button class="text-button" type="button" data-view="vaults">Open vault ↗</button></div>${live ? `<div class="live-account-summary"><div><span>ACCOUNT</span><strong class="mono-value">${esc(live.account)}</strong></div><div><span>FTESTXRP ALLOWANCE</span><strong>${token(live.vaultAllowance)}</strong></div><div><span>ASSET</span><strong>${live.token.symbol} · ${live.token.decimals} decimals</strong></div></div><a class="outline-button inline-link" href="${explorerAddress(live.account)}" target="_blank" rel="noreferrer">Open account explorer ↗</a>` : `<div class="empty-state"><div class="empty-orbit">◌</div><strong>${account ? "No unverified balance displayed" : "No wallet permission yet"}</strong><span>${account ? "Retry the finalized Coston2 checks before trusting any account or vault value." : "PayGuard asks only for the public account. Signing stays inside the injected wallet."}</span><button class="outline-button" type="button" data-action="${account ? "refresh" : "connect"}">${account ? "Retry finalized reads" : "Connect Coston2 wallet"}</button></div>`}</section><section class="panel health-panel"><div class="panel-heading"><div><div class="eyebrow">DEPENDENCY HEALTH</div><h2>Trust surface</h2></div><span class="health-label"><span class="status-dot ${live ? "green" : "amber"}"></span>${live ? "Public live" : "Limited"}</span></div><ul class="health-list"><li><span class="health-icon gray">▣</span><div><strong>PayGuard contracts</strong><small>${live ? "Runtime and wiring verified" : "Waiting for finalized RPC read"}</small></div><span class="state-tag ${live ? "green-tag" : "amber-tag"}">${live ? "VERIFIED" : "WAITING"}</span></li><li><span class="health-icon gray">X</span><div><strong>FTestXRP asset</strong><small>${live ? "Supported asset metadata verified" : "Waiting for account read"}</small></div><span class="state-tag ${live ? "green-tag" : "amber-tag"}">${live ? "VERIFIED" : "WAITING"}</span></li><li><span class="health-icon gray">◇</span><div><strong>FCC machine quorum</strong><small>Registered production machines unavailable</small></div><span class="state-tag gray-tag">SIMULATED</span></li><li><span class="health-icon gray">◈</span><div><strong>FDC/FAssets evidence</strong><small>Reviewed static Coston2 observations</small></div><span class="state-tag gray-tag">EVIDENCE</span></li></ul></section></div>`;
 }
 
 function studioView(): string {
@@ -181,24 +263,10 @@ function previewGroup(title: string, items: readonly PreviewItem[], kind: "publi
 }
 
 function vaultsView(): string {
-  const snapshot = vaultState.status === "UNAVAILABLE" ? undefined : vaultState.snapshot;
-  const unavailable = vaultState.status === "UNAVAILABLE";
-  const reason = unavailable ? vaultUnavailableReason(vaultState.reason) : "Finalized public snapshot";
-  const balance = snapshot ? `${snapshot.available} <small>FTestXRP</small>` : "— <small>FTestXRP</small>";
-  const conservation = snapshot ? "Verified from public snapshot" : "Unavailable until finalized RPC state";
-  const emergency = snapshot ? (snapshot.emergencyStopped ? "STOPPED" : "RUNNING") : "UNAVAILABLE";
-  const checkpoint = snapshot ? short(snapshot.checkpoint) : "—";
-  return `${pageIntro("PUBLIC ASSET VAULTS", "Your vaults", "Balances, reservations, and transfers are public chain facts. Funding and withdrawals need a verified wallet connection.", "deposit")}
-    <div class="vault-card panel"><div class="vault-card-top"><div class="token-symbol">X</div><div><h2>FTestXRP vault</h2><span class="muted">Public asset · Coston2 target</span></div><span class="state-tag ${unavailable ? "amber-tag" : "green-tag"}">${unavailable ? "UNAVAILABLE" : vaultState.status}</span></div><div class="vault-balance"><span>Available balance</span><strong>${balance}</strong><span class="muted">${reason}</span></div><div class="vault-stats"><div><span>Deposited</span><strong>${snapshot?.deposited ?? "—"}</strong></div><div><span>Reserved</span><strong>${snapshot?.reserved ?? "—"}</strong></div><div><span>Spent</span><strong>${snapshot?.spent ?? "—"}</strong></div><div><span>Withdrawn</span><strong>${snapshot?.withdrawn ?? "—"}</strong></div></div><div class="vault-public-state"><div><span>Conservation</span><strong>${conservation}</strong></div><div><span>Policy caps</span><strong>Private in FCC</strong></div><div><span>Emergency state</span><strong>${emergency}</strong></div><div><span>Checkpoint</span><strong class="mono-value">${esc(checkpoint)}</strong></div></div><div class="vault-actions"><button class="primary-button" type="button" data-action="connect">Connect wallet to fund</button><button class="outline-button" type="button" data-action="details">How XRPL funding works</button></div></div><div class="section-grid"><section class="panel"><div class="panel-heading"><div><div class="eyebrow">FUNDING PATH</div><h2>XRPL → Flare</h2></div><span class="state-tag amber-tag">PLANNED</span></div><div class="step-list"><div class="step-row"><span class="step-number">01</span><div><strong>Build Smart Account operation</strong><small>Owner, PersonalAccount, nonce, asset, amount, fee</small></div></div><div class="step-row"><span class="step-number">02</span><div><strong>Sign an XRPL Payment</strong><small>PayGuard never receives your XRPL seed</small></div></div><div class="step-row"><span class="step-number">03</span><div><strong>Verify an FDC proof</strong><small>Finalization is asynchronous and fail-closed</small></div></div></div></section><section class="panel"><div class="panel-heading"><div><div class="eyebrow">RECOVERY</div><h2>Safe exits</h2></div></div><p class="panel-copy">A stopped policy can release unspent reservations through the router state machine. No recovery path creates an authorization or hides the public transfer graph.</p><button class="text-button" type="button" data-action="details">Read recovery rules ↗</button></section></div>`;
-}
-
-function vaultUnavailableReason(reason: string): string {
-  return ({
-    RPC_UNCONFIGURED: "No verified RPC provider configured",
-    RPC_UNAVAILABLE: "RPC provider unavailable",
-    SNAPSHOT_UNFINALIZED: "Snapshot is not finalized",
-    SNAPSHOT_INVALID: "Public snapshot failed validation",
-  } as Record<string, string>)[reason] ?? "Public snapshot unavailable";
+  const live = liveSnapshot();
+  const account = connectedAccount();
+  return `${pageIntro("PUBLIC ASSET VAULTS", "Your Coston2 vault", "Read one finalized public checkpoint before approving, depositing, or withdrawing test tokens.")}
+    <div class="vault-card panel"><div class="vault-card-top"><div class="token-symbol">X</div><div><h2>FTestXRP vault</h2><span class="muted">${account ? esc(short(account)) : "Public asset · Coston2"}</span></div><span class="state-tag ${live ? "green-tag" : "amber-tag"}">${live ? "LIVE READ" : account ? "READ BLOCKED" : "CONNECT"}</span></div><div class="vault-balance"><span>Available in vault</span><strong>${live ? token(live.accounting.available) : "—"} <small>FTestXRP</small></strong><span class="muted">${live ? `Finalized block ${live.finalizedBlock}` : account ? "Live verification must pass before balances appear" : "Connect an injected wallet to read account state"}</span></div><div class="vault-stats"><div><span>Deposited</span><strong>${live ? token(live.accounting.deposited) : "—"}</strong></div><div><span>Reserved</span><strong>${live ? token(live.accounting.reserved) : "—"}</strong></div><div><span>Spent</span><strong>${live ? token(live.accounting.spent) : "—"}</strong></div><div><span>Withdrawn</span><strong>${live ? token(live.accounting.withdrawn) : "—"}</strong></div></div><div class="vault-public-state"><div><span>Conservation</span><strong>${live ? "Verified at finalized block" : "Waiting for Coston2"}</strong></div><div><span>Wallet balance</span><strong>${live ? `${token(live.tokenBalance)} FTestXRP` : "—"}</strong></div><div><span>Vault allowance</span><strong>${live ? `${token(live.vaultAllowance)} FTestXRP` : "—"}</strong></div><div><span>Contract runtime</span><strong>${live ? "Verified against deployment evidence" : "—"}</strong></div></div><div class="vault-actions"><button class="primary-button" type="button" data-action="${account ? "refresh" : "connect"}">${live ? "Refresh finalized state" : account ? "Retry finalized reads" : "Connect Coston2 wallet"}</button>${live ? `<a class="outline-button inline-link" href="${explorerAddress(PAYGUARD_COSTON2.vault)}" target="_blank" rel="noreferrer">Vault explorer ↗</a>` : `<button class="outline-button" type="button" data-action="details">How funding works</button>`}</div></div><div class="section-grid"><section class="panel"><div class="panel-heading"><div><div class="eyebrow">EVM TESTNET PATH</div><h2>Wallet → PayGuardVault</h2></div><span class="state-tag ${live ? "green-tag" : "amber-tag"}">${live ? "READ READY" : account ? "READ BLOCKED" : "CONNECT"}</span></div><div class="step-list"><div class="step-row"><span class="step-number">01</span><div><strong>Verify Coston2 and deployment</strong><small>Chain 114, finalized block, runtime hashes and wiring</small></div></div><div class="step-row"><span class="step-number">02</span><div><strong>Approve exact FTestXRP amount</strong><small>Wallet confirmation required; no private key enters PayGuard</small></div></div><div class="step-row"><span class="step-number">03</span><div><strong>Deposit or withdraw</strong><small>Testnet transaction and post-receipt conservation check</small></div></div></div><p class="panel-copy phase-note">Transaction controls are the next integration unit; this commit enables verified live reads only.</p></section><section class="panel"><div class="panel-heading"><div><div class="eyebrow">XRPL-NATIVE PATH</div><h2>XRPL → FDC → Flare</h2></div><span class="state-tag gray-tag">EVIDENCE</span></div><p class="panel-copy">The flagship Smart Account funding path has a reviewed public observation. Interactive XRPL signing remains separate from this EVM recovery/developer path.</p><a class="text-button inline-link" href="/evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json" target="_blank" rel="noreferrer">Open funding evidence ↗</a></section></div>`;
 }
 
 function requestsView(): string {
@@ -387,12 +455,89 @@ function handleAction(action: string): void {
   if (action === "notifications") { notificationOpen = !notificationOpen; render(); return; }
   if (action === "mobile-menu") { mobileMenuOpen = !mobileMenuOpen; render(); return; }
   if (action === "export-notifications") { exportNotifications(); return; }
+  if (action === "connect") { void connectWallet(); return; }
+  if (action === "refresh") { void refreshCoston2State(); return; }
   if (action === "verify") appNotice = "Live evidence is unavailable; the static mirror cannot assert a transaction, proof, signer, or authorization result.";
-  else if (action === "connect") appNotice = "Wallet providers are unavailable until a verified Coston2 release is configured.";
   else if (action === "details") appNotice = "This preview reports only finalized public checkpoints; live dependencies are not configured.";
   else if (action === "help") appNotice = "PayGuard keeps policy rules in FCC custody while public requests and settlement remain visible.";
   else appNotice = "This action remains planned for a verified PayGuard release.";
   render();
+}
+
+async function connectWallet(): Promise<void> {
+  walletState = { status: "CONNECTING" };
+  coston2State = { status: "IDLE" };
+  appNotice = "Approve public account access and Flare Coston2 in your wallet. PayGuard never requests a private key.";
+  render();
+  try {
+    const session = await connectCoston2Wallet(walletProvider);
+    walletState = { status: "CONNECTED", account: session.account };
+    appNotice = `Connected ${short(session.account)} on Coston2. Verifying finalized public state…`;
+    render();
+    await refreshCoston2State();
+  } catch (error) {
+    const message = error instanceof WalletConnectionError
+      ? walletFailureMessage(error.reason)
+      : "Wallet connection failed safely.";
+    walletState = { status: "ERROR", message };
+    coston2State = { status: "IDLE" };
+    appNotice = message;
+    render();
+  }
+}
+
+async function refreshCoston2State(): Promise<void> {
+  const account = connectedAccount();
+  if (!account || walletState.status !== "CONNECTED") {
+    await connectWallet();
+    return;
+  }
+  const sequence = ++liveReadSequence;
+  coston2State = { status: "LOADING" };
+  appNotice = "Reading runtime, wiring, asset, balance and vault accounting at one finalized Coston2 block…";
+  render();
+  try {
+    const snapshot = await loadCoston2AccountSnapshot(account);
+    if (sequence !== liveReadSequence || connectedAccount()?.toLowerCase() !== account.toLowerCase()) return;
+    coston2State = { status: "READY", snapshot };
+    appNotice = `Verified finalized Coston2 block ${snapshot.finalizedBlock}. No transaction was signed.`;
+  } catch (error) {
+    if (sequence !== liveReadSequence) return;
+    const message = coston2ReadFailureMessage(error);
+    coston2State = { status: "UNAVAILABLE", message };
+    appNotice = `${message} Reads failed closed; no balance or contract state is being asserted.`;
+  }
+  render();
+}
+
+async function restoreWalletSession(): Promise<void> {
+  if (!walletProvider) return;
+  try {
+    const session = await readWalletSession(walletProvider);
+    if (!session) return;
+    if (session.chainId !== COSTON2_CHAIN.id) {
+      walletState = { status: "WRONG_CHAIN", account: session.account, chainId: session.chainId };
+      coston2State = { status: "IDLE" };
+      render();
+      return;
+    }
+    walletState = { status: "CONNECTED", account: session.account };
+    render();
+    await refreshCoston2State();
+  } catch {
+    walletState = { status: "ERROR", message: "The injected wallet session could not be read safely." };
+    coston2State = { status: "IDLE" };
+    render();
+  }
+}
+
+function walletChanged(): void {
+  liveReadSequence += 1;
+  walletState = { status: "DISCONNECTED" };
+  coston2State = { status: "IDLE" };
+  appNotice = "Wallet account or network changed. Revalidating the public session…";
+  render();
+  void restoreWalletSession();
 }
 
 function exportNotifications(): void {
@@ -462,6 +607,9 @@ function readStudioDraft(form: HTMLFormElement): StudioDraft {
 }
 
 render();
+walletProvider?.on?.("accountsChanged", walletChanged);
+walletProvider?.on?.("chainChanged", walletChanged);
+void restoreWalletSession();
 void fetchPublicWebEvidenceIndex()
   .then((index) => { publicEvidenceMirrorState = { status: "READY", index }; if (!landingOpen) render(); })
   .catch(() => { publicEvidenceMirrorState = { status: "UNAVAILABLE", reason: "NOT_PUBLISHED" }; if (!landingOpen) render(); });

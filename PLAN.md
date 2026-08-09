@@ -378,9 +378,10 @@ evidence, and live role journeys remain open.
 - [x] Build the local Policy Studio with templates, exact public/private
   preview, local validation, schema-checked custody receipt progress, and an
   activation block; live ingress and activation evidence remain open.
-- [x] Build the local Accounts/Vaults surface with public balances,
-  conservation, emergency state, and recovery copy; wallet deposits and
-  withdrawals remain open until a verified provider exists.
+- [x] Build the Accounts/Vaults surface with injected-wallet Coston2 connection,
+  one-finalized-block runtime/wiring/asset verification, public wallet and vault
+  balances, conservation, and recovery copy; wallet approval, deposits, and
+  withdrawals remain open as the next transaction unit.
 - [x] Build the local Schedule/Requests surface with occurrence readiness,
   public threshold decisions, expiry, and recovery; live executor actions
   remain open.

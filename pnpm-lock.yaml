@@ -39,6 +39,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@xrp-payguard/bindings':
+        specifier: workspace:*
+        version: link:../../packages/bindings
       '@xrp-payguard/integrations':
         specifier: workspace:*
         version: link:../../packages/integrations

@@ -228,6 +228,8 @@ h1, h2, h3 { font-family: var(--font-pt-serif); font-weight: 300; }
 
 .outline-button, .filter-button { border: 1px solid var(--color-signal-lime); background: transparent; color: var(--color-signal-lime); }
 .outline-button:hover, .filter-button:hover { background: var(--color-iron); box-shadow: var(--shadow-sm); }
+.inline-link { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; text-decoration: none; }
+.wallet-button { max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .primary-button { border: 1px solid var(--color-signal-lime); background: var(--color-signal-lime); color: var(--color-void-black); box-shadow: var(--shadow-sm); }
 .primary-button:hover { background: var(--color-signal-lime); box-shadow: 0 0 12px rgba(197, 255, 74, .45); }
 .text-button { border: 0; padding: 4px 0; background: transparent; color: var(--color-signal-lime); }
@@ -255,6 +257,7 @@ h1, h2, h3 { font-family: var(--font-pt-serif); font-weight: 300; }
 .notice-banner strong { color: var(--color-chalk); font: 500 11px var(--font-inter-tight); letter-spacing: .04em; }
 .notice-banner span { margin-top: 3px; color: var(--color-ash); font-size: 11px; }
 .notice-banner button { margin-left: auto; border: 0; background: transparent; color: var(--color-signal-lime); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+.live-notice { border-color: var(--color-signal-lime); }
 
 .section-grid, .auditor-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(320px, .9fr); gap: 16px; }
 .panel { padding: 24px; }
@@ -276,6 +279,11 @@ h1, h2, h3 { font-family: var(--font-pt-serif); font-weight: 300; }
 .health-list strong, .health-list small { display: block; }
 .health-list strong { color: var(--color-bone); font-size: 12px; }
 .health-list small { margin-top: 2px; color: var(--color-ash); font-size: 10px; }
+.live-account-summary { display: grid; gap: 11px; margin: 22px 0 18px; }
+.live-account-summary div { border-bottom: 1px solid var(--color-graphite); padding-bottom: 11px; }
+.live-account-summary span, .live-account-summary strong { display: block; }
+.live-account-summary span { color: var(--color-ash); font-size: 9px; letter-spacing: .14em; text-transform: uppercase; }
+.live-account-summary strong { margin-top: 4px; color: var(--color-bone); font-size: 11px; }
 
 .state-tag { margin-left: auto; border: 1px solid var(--color-fog); border-radius: 2px; padding: 4px 6px; color: var(--color-ash); font: 500 9px/1 var(--font-inter-tight); letter-spacing: .1em; white-space: nowrap; }
 .amber-tag, .gray-tag { border-color: var(--color-fog); background: transparent; color: var(--color-ash); }
@@ -310,6 +318,7 @@ h1, h2, h3 { font-family: var(--font-pt-serif); font-weight: 300; }
 .step-row strong { color: var(--color-bone); font-size: 12px; }
 .step-row small { margin-top: 2px; color: var(--color-ash); font-size: 10px; }
 .panel-copy { max-width: 480px; margin: 16px 0; color: var(--color-ash); font-size: 12px; line-height: 1.7; }
+.phase-note { border-left: 1px solid var(--color-signal-lime); padding-left: 12px; }
 
 .table-panel { padding: 24px 0 0; }
 .table-panel .panel-heading { padding: 0 24px; }
