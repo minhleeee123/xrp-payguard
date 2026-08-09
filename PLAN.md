@@ -416,6 +416,9 @@ Exit: failure is resumable or explicitly denied, never represented as success.
   confidentiality, registered custody, or a live PayGuard release.
 - [x] Publish a hackathon handoff with the exact demo boundary, production-web
   smoke, local validation commands/results, limitations, and pushed commits.
+- [x] Record a captioned, wallet-free production walkthrough that excludes
+  Policy Studio/private inputs, checks the exact public evidence boundary, and
+  remains local/ignored pending owner review and upload.
 - [x] Record one solution-3 Coston2 simulated-policy lifecycle with three
   ephemeral in-memory signers, two matching allow evaluations, deterministic
   cap denial, stop/resume/revoke, and vault conservation; keep the evidence

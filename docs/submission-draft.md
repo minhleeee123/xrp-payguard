@@ -68,7 +68,8 @@ evidence without publishing the policy rules themselves.
 - Verification matrix: [`technology/verification.md`](technology/verification.md)
 - Threat model: [`technology/threat-model.md`](technology/threat-model.md)
 - Roadmap: [`product/production-readiness-plan.md`](product/production-readiness-plan.md)
-- Demo video: **not yet recorded**
+- Demo video: local captioned capture recorded and validated; **public upload
+  URL not yet available**. See [`demo-video.md`](demo-video.md).
 
 ## Coston2 public identifiers
 
@@ -130,8 +131,9 @@ incident coverage, and a verified release manifest.
 - [ ] Reconfirm the enabled final form fields, account eligibility, and bounty
   selection directly in the owner's DoraHacks session before submitting; the
   public page currently reports its submission form disabled.
-- [ ] Record and upload a demo video without showing `.env.local`, credentials,
-  keys, raw signatures, or private policy material.
+- [x] Record and locally validate a captioned production demo without showing
+  `.env.local`, credentials, keys, raw signatures, or private policy material.
+- [ ] Owner-review and upload the demo video, then add its public URL.
 - [ ] Add only user/community/pilot facts that actually occurred; otherwise
   retain the explicit zero-session statement.
 - [ ] Submit from the owner's account and save the resulting public submission

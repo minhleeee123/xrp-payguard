@@ -1,9 +1,10 @@
 # XRP PayGuard hackathon handoff
 
-> Validation run: `2026-08-09T07:37:29Z` against implementation source commit
-> `b0cc48b42ebb776d9e06ab27e27dbaaa054ed3d3` plus the reviewed public-safe
-> lifecycle evidence and documentation in this subsequent commit. This is a
-> testnet/simulation handoff, not a verified PayGuard release.
+> Current web/tooling validation run: `2026-08-09T08:04:26Z` against source
+> commit `b20e7ac9ca707b084f8edadda865e6e922c76600` plus the demo recorder and
+> documentation in this subsequent commit. The unchanged full Go/Forge baseline
+> was last rerun at `2026-08-09T07:37:29Z`. This is a testnet/simulation
+> handoff, not a verified PayGuard release.
 
 ## Delivery boundary
 
@@ -26,6 +27,8 @@ live authorization result.
 
 - Application: <https://xrp-payguard.vercel.app/>
 - Evidence index: <https://xrp-payguard.vercel.app/evidence/index.json>
+- Demo video: local validated MP4 exists under ignored `evidence/local/`; public
+  upload remains owner-only and no public video URL is claimed.
 - Vercel deployment ID: `dpl_HVwCXyFLKxh1aNv9R9S4W37j1BH5`
 - Deployed source commit: `00d04ed4b141930b21e17ea262fd9772b031ad7e`
 
@@ -76,13 +79,14 @@ Observed results on the current baseline:
   Foundry `1.7.1`, and Solidity `0.8.25` requirements.
 - 141 workspace package tests passed: bindings 2, protocol 35, relay 13,
   integrations 74, web 13, and SDK examples 4. The top-level gate also passed
-  the separate public-web evidence and deployment/release/FCC tooling suites.
+  the separate public-web evidence, three demo-recorder tests, and
+  deployment/release/FCC tooling suites.
 - All workspace TypeScript typechecks and all Go packages passed.
 - Forge passed 31 tests, including 256 fuzz runs and a 128-run/8192-call
   conservation invariant with zero reverts.
 - Secret scan inspected 326 current files and 141 revisions with zero history
-  findings on the earlier baseline. The current run inspected 331 files and
-  144 revisions with zero history findings. Privacy scan inspected 40
+  findings on the earlier baseline. The current run inspected 334 files and
+  146 revisions with zero history findings. Privacy scan inspected 40
   browser/relay/FCC source and build files and found no browser persistence API;
   the Coston2 evidence gate retained 11 testnet-only records, while the public
   web validator separately accepted two explicitly limited simulation records.
@@ -112,6 +116,13 @@ before that validation and then independently re-read through the public RPC:
   overflow. Lighthouse 13.0.1 scored both Landing and Overview at 98
   performance and 100 accessibility, best practices, and SEO, with zero
   recorded contrast failures.
+- The fixed-origin demo recorder produced a 74-second, 592-frame, 1440×900 H.264
+  MP4 with a silent AAC track and burned captions. `ffprobe` verified the media,
+  six sampled scenes and focused Auditor/lifecycle frames were reviewed, and
+  the SHA-256 is
+  `5c4a69f6de285a8a06e49188f00de9204f3c6e25dd4d4f6f90df47e775081d39`.
+  It excludes Policy Studio/private inputs and remains ignored until owner
+  review/upload.
 
 A fresh HTTPS and Chrome read of deployment
 `dpl_HVwCXyFLKxh1aNv9R9S4W37j1BH5` returned 200 for the application, its
@@ -119,7 +130,7 @@ favicon/JavaScript/CSS, the index, and all 13 evidence assets. Desktop and
 mobile rendering, Enter-key activation, the 13/12/2 Auditor counts, zero
 browser storage, zero HTTP/console errors, and no horizontal overflow passed.
 The index retained `staticShellOnly: true` and `testnetOnly: true`. `PLAN.md`
-records 95 checked and 26 open checkboxes (78.5%). The open items are not
+records 96 checked and 26 open checkboxes (78.7%). The open items are not
 silently promoted:
 organizer/account actions, user research/pilots, live FCC
 infrastructure/lifecycle, remaining canonical live drills, external review,

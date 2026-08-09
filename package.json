@@ -18,6 +18,8 @@
     "bindings:check": "node tooling/check-bindings.mjs",
     "web:test": "pnpm --filter @xrp-payguard/web test",
     "web:evidence:test": "node --test tooling/public-web-evidence.test.mjs",
+    "demo:record:test": "node --test tooling/record-web-demo.test.mjs",
+    "demo:record": "node tooling/record-web-demo.mjs record",
     "privacy:scan": "node tooling/privacy-scan.mjs",
     "evidence:check": "node tooling/check-evidence.mjs",
     "release:check": "node tooling/check-release.mjs",
@@ -60,6 +62,6 @@
     "fcc:ping:plan": "node tooling/fcc-foundation-ping.mjs plan",
     "fcc:ping:send": "node tooling/fcc-foundation-ping.mjs send --broadcast",
     "fcc:ping:test": "node --test tooling/fcc-foundation-ping.test.mjs",
-    "check": "pnpm toolchain:check && pnpm docs:check && pnpm secret:scan && pnpm privacy:scan && pnpm evidence:check && pnpm web:evidence:test && pnpm web:test && pnpm release:check && pnpm release:test && pnpm deploy:coston2:test && pnpm coston2:dependencies:test && pnpm coston2:endpoints:test && pnpm coston2:direct-mint:test && pnpm coston2:funding-resume:test && pnpm coston2:simulated-lifecycle:test && pnpm fcc:container:test && pnpm fcc:foundation:test && pnpm fcc:machine:preflight:test && pnpm fcc:version:test && pnpm fcc:machine:registration:test && pnpm fcc:result:test && pnpm fcc:ping:test && pnpm bindings:check"
+    "check": "pnpm toolchain:check && pnpm docs:check && pnpm secret:scan && pnpm privacy:scan && pnpm evidence:check && pnpm web:evidence:test && pnpm demo:record:test && pnpm web:test && pnpm release:check && pnpm release:test && pnpm deploy:coston2:test && pnpm coston2:dependencies:test && pnpm coston2:endpoints:test && pnpm coston2:direct-mint:test && pnpm coston2:funding-resume:test && pnpm coston2:simulated-lifecycle:test && pnpm fcc:container:test && pnpm fcc:foundation:test && pnpm fcc:machine:preflight:test && pnpm fcc:version:test && pnpm fcc:machine:registration:test && pnpm fcc:result:test && pnpm fcc:ping:test && pnpm bindings:check"
   }
 }
