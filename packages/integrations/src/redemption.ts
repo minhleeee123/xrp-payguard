@@ -98,7 +98,7 @@ export interface RedemptionJobV1 extends RedemptionIntentV1 {
 }
 
 export interface FAssetsRedemptionClient {
-  requestRedemption(intent: RedemptionIntentV1): Promise<RedemptionRequestReceiptV1>;
+  requestRedemption(job: RedemptionJobV1): Promise<RedemptionRequestReceiptV1>;
 }
 
 export interface FAssetsRedemptionEventVerifier<TEvent> {

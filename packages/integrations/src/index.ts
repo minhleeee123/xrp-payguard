@@ -23,3 +23,4 @@ export * from "./fdc-verify.js";
 export * from "./fdc-flow.js";
 export * from "./fdc-submit.js";
 export * from "./fassets-direct-mint-call.js";
+export * from "./fassets-redemption.js";

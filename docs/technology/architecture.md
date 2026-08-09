@@ -232,7 +232,10 @@ pending: underlying payment requires a verifier-backed `RedemptionPerformed`
 event, while timeout compensation is recorded separately from a verifier-backed
 `RedemptionDefault` event. Both terminal paths bind their public receipt
 commitment and fail closed on replay or asynchronous drift. Live Coston2
-redemption remains unverified.
+redemption remains unverified. The Coston2 redemption boundary resolves the
+runtime FAsset/minimum, checks balance and allowance, builds the official
+amount/tag call, and parses only receipt logs from the runtime AssetManager;
+signing stays in the injected wallet writer.
 
 ### Recurring execution
 

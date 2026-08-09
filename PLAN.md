@@ -295,6 +295,11 @@ verified on Coston2. External review and registered FCC execution remain open.
 - [x] Implement a local official-field FAssets redemption checkpoint model that
   distinguishes request, partial/multi-agent obligations, verified underlying
   payment, and verified collateral default without claiming instant XRP.
+- [x] Add a Coston2 FAssets redemption boundary that resolves the runtime
+  AssetManager/FAsset/minimum, checks public balance and allowance, binds
+  approve/redeem receipts to submitted transaction hashes, and parses official
+  amount/tag request events with fail-closed partial-leg checks. Signing stays
+  in an injected writer; live settlement remains open.
 - [ ] Execute and verify an official live FAssets redemption/default exit on
   Coston2, including partial fulfillment and destination-tag behavior.
 

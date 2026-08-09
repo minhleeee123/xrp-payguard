@@ -29,6 +29,17 @@ paid or collateral-defaulted only after an injected canonical-event verifier
 returns a non-zero receipt commitment. Request creation alone remains pending;
 it is never described as an XRP payout.
 
+`fassets-redemption.ts` adds the Coston2 writer boundary for this model. It
+resolves the runtime FAsset and minimum redemption amount, checks the public
+balance and allowance, emits bounded `approve`/`redeemAmount` or
+`redeemWithTag` calldata through an injected writer, binds each mined receipt
+to the submitted transaction hash, and parses only official AssetManager
+events. A reverted receipt, wrong chain, runtime asset/minimum drift, missing
+event, duplicate leg, tag mismatch, or partial-amount mismatch fails closed.
+The writer owns signing and transport; this package never accepts or stores a
+private key. A live Coston2 redemption and its asynchronous settlement are
+still a separate evidence gate.
+
 The FDC verifier and Smart Account client are injected interfaces. An absent or
 negative verifier, stale/mismatched payment, mismatched `proofOwner`, missing
 proof, or unavailable mint client cannot become success. `DELAYED` is an
