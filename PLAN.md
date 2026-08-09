@@ -385,6 +385,9 @@ Exit: failure is resumable or explicitly denied, never represented as success.
 - [x] Deploy the public-safe static web shell to Vercel through the pinned
   CLI workflow and verify HTTPS HTML/JS/CSS reachability; FCC, relay, policy
   provider, and full-release smoke remain open.
+- [x] Emit an allowlisted public-safe evidence index and JSON assets at the
+  Vercel `/evidence/` endpoint; private-policy, FCC, relay, and release claims
+  remain unavailable.
 - [ ] Generate and verify a PayGuard release manifest and consumer bindings.
 - [ ] Verify runtime bytecode, constructor/wiring, extension ID, code/image hash,
   governance, machines, key fingerprints, and signer mapping.
@@ -392,8 +395,8 @@ Exit: failure is resumable or explicitly denied, never represented as success.
   recovery, Smart Account funding, and redemption lifecycles.
 - [ ] Publish only sanitized public identifiers, hashes, blocks, transactions,
   timings, and assertion booleans.
-- [ ] Deploy web, FCC origins, proxy/relay, and evidence endpoint; run production
-  desktop/mobile/keyboard smokes against the deployed commit.
+- [ ] Deploy web, FCC origins, and proxy/relay; run production desktop/mobile/
+  keyboard smokes against the complete deployed commit.
 
 Exit: source, runtime, bindings, UI, docs, and public-safe evidence agree.
 

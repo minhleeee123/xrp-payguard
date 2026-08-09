@@ -49,6 +49,11 @@ static-shell deployment and its HTTP HTML/JS/CSS smoke. It is a static preview
 only and does not represent a hosted relay, FCC origin, policy provider, wallet
 flow, or verified PayGuard release.
 
+The Vercel build publishes the same reviewed Coston2 JSON files and the
+metadata-only `https://xrp-payguard.vercel.app/evidence/index.json` endpoint.
+The endpoint is an evidence mirror, not a live policy, relay, FCC, or release
+service.
+
 Never store private policies, ciphertext, wallet/XRPL/FCC keys, signatures
 forbidden by policy, proxy/indexer credentials, authenticated raw responses, or
 private denial details. See `docs/technology/verification.md`.

@@ -1,0 +1,97 @@
+import { readdir, readFile } from "node:fs/promises";
+import { join, relative, resolve } from "node:path";
+
+const PUBLIC_EVIDENCE_SOURCES = [
+  { directory: "evidence/coston2", include: () => true },
+  { directory: "evidence/web", include: (name) => /^vercel-preview-.*\.json$/u.test(name) },
+];
+const FORBIDDEN_FIELD = /(?:ciphertext|plaintext|password|mnemonic|private[_-]?key|secret|api[_-]?key|credential|seed)/iu;
+const SAFETY_ASSERTION = /^no(?:private|policy|api|credential)/iu;
+const FORBIDDEN_VALUE = /-----BEGIN (?:RSA|OPENSSH|EC|PGP) PRIVATE KEY-----/u;
+
+export function assertPublicSafe(value, path = "$", field = "") {
+  if (FORBIDDEN_FIELD.test(field) && !(SAFETY_ASSERTION.test(field) && typeof value === "boolean")) {
+    throw new Error(`forbidden public-evidence field at ${path}: ${field}`);
+  }
+  if (typeof value === "string" && FORBIDDEN_VALUE.test(value)) {
+    throw new Error(`private-key material at ${path}`);
+  }
+  if (Array.isArray(value)) {
+    value.forEach((entry, index) => assertPublicSafe(entry, `${path}[${index}]`));
+    return;
+  }
+  if (value && typeof value === "object") {
+    for (const [key, entry] of Object.entries(value)) assertPublicSafe(entry, `${path}.${key}`, key);
+  }
+}
+
+async function jsonFiles(directory, include) {
+  let names = [];
+  try {
+    names = await readdir(directory);
+  } catch (error) {
+    if (error?.code === "ENOENT") return [];
+    throw error;
+  }
+  return names.filter((name) => include(name) && name.endsWith(".json")).sort();
+}
+
+export async function collectPublicWebEvidence(repositoryRoot) {
+  const root = resolve(repositoryRoot);
+  const entries = [];
+  for (const source of PUBLIC_EVIDENCE_SOURCES) {
+    const directory = resolve(root, source.directory);
+    for (const name of await jsonFiles(directory, source.include)) {
+      const sourcePath = join(directory, name);
+      const data = JSON.parse(await readFile(sourcePath, "utf8"));
+      assertPublicSafe(data, source.directory, "");
+      entries.push({
+        path: relative(root, sourcePath).replaceAll("\\", "/"),
+        data,
+      });
+    }
+  }
+  return entries;
+}
+
+export function buildPublicWebEvidenceManifest(entries) {
+  return {
+    schemaVersion: 1,
+    status: "AVAILABLE",
+    testnetOnly: true,
+    staticShellOnly: true,
+    entries: entries.map(({ path, data }) => ({
+      path: `/${path}`,
+      suite: typeof data.suite === "string" ? data.suite : "UNSPECIFIED",
+      status: typeof data.status === "string" ? data.status : "UNSPECIFIED",
+      recordedAt: typeof data.recordedAt === "string" ? data.recordedAt : null,
+      chainId: typeof data.chainId === "string" || typeof data.chainId === "number" ? String(data.chainId) : null,
+      testnetOnly: data.testnetOnly === true || data.assertions?.testnetOnly === true,
+      noPrivateKeyRecorded: data.noPrivateKeyRecorded === true || data.assertions?.noPrivateKeyRecorded === true,
+      noCredentialRecorded: data.noCredentialRecorded === true || data.assertions?.noCredentialRecorded === true,
+      noPolicyPlaintextOrCiphertextRecorded: data.noPolicyPlaintextOrCiphertextRecorded === true || data.assertions?.noPolicyPlaintextOrCiphertextRecorded === true,
+    })),
+  };
+}
+
+export function createPublicWebEvidencePlugin(repositoryRoot) {
+  return {
+    name: "payguard-public-web-evidence",
+    apply: "build",
+    async generateBundle() {
+      const entries = await collectPublicWebEvidence(repositoryRoot);
+      for (const entry of entries) {
+        this.emitFile({
+          type: "asset",
+          fileName: entry.path,
+          source: `${JSON.stringify(entry.data, null, 2)}\n`,
+        });
+      }
+      this.emitFile({
+        type: "asset",
+        fileName: "evidence/index.json",
+        source: `${JSON.stringify(buildPublicWebEvidenceManifest(entries), null, 2)}\n`,
+      });
+    },
+  };
+}

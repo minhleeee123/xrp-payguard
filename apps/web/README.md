@@ -57,3 +57,9 @@ The deployment contains only `apps/web/dist`; it does not provide FCC
 machines, a relay, a policy provider, wallet signing, or a verified PayGuard
 release. The latest sanitized deployment record is
 [`vercel-preview-2026-08-09.json`](../../evidence/web/vercel-preview-2026-08-09.json).
+
+The build also emits only the allowlisted public evidence files under
+`/evidence/`, with [`/evidence/index.json`](https://xrp-payguard.vercel.app/evidence/index.json)
+as the metadata entry point. This endpoint contains testnet identifiers,
+hashes, statuses, and assertion booleans; it never contains policy plaintext,
+ciphertext, keys, credentials, or private denial details.
