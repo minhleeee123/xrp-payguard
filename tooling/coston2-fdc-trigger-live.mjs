@@ -44,6 +44,7 @@ const ARTIFACTS = {
 const XRPL_TESTNET_WEBSOCKET = "wss://s.altnet.rippletest.net:51233/";
 const PUBLIC_FDC_ACCESS_ID = "00000000-0000-0000-0000-000000000000";
 const PAYMENT_DROPS = 100n;
+const MAX_PREPARE_WAIT_MS = 5 * 60 * 1_000;
 const MAX_PROOF_WAIT_MS = 20 * 60 * 1_000;
 const POLL_MS = 10_000;
 const REQUEST_LIFETIME_SECONDS = 900n;
@@ -581,12 +582,39 @@ async function submitXrplPayment(xrpl, requestId) {
   }
 }
 
+export async function waitForPreparedFdcRequest(
+  prepare,
+  input,
+  {
+    timeoutMs = MAX_PREPARE_WAIT_MS,
+    pollMs = POLL_MS,
+    clock = () => Date.now(),
+    sleeper = sleep,
+    onRetry = () => {},
+  } = {},
+) {
+  const deadline = clock() + timeoutMs;
+  let lastReason = "REJECTED";
+  while (clock() <= deadline) {
+    try {
+      return await prepare(input);
+    } catch (error) {
+      if (!["REJECTED", "UNAVAILABLE", "HTTP_ERROR"].includes(error?.reason)) throw error;
+      lastReason = error.reason;
+      onRetry(lastReason);
+      if (clock() + pollMs > deadline) break;
+      await sleeper(pollMs);
+    }
+  }
+  throw new Error(`timed out waiting for FDC verifier preparation (${lastReason})`);
+}
+
 async function submitFdcRequest({ publicClient, walletClient, account, integration, dependencies, transactionHash, proofOwner }) {
-  const prepared = await integration.prepareCoston2XrplPaymentRequest({
-    transactionId: transactionHash,
-    proofOwner,
-    apiKey: PUBLIC_FDC_ACCESS_ID,
-  });
+  const prepared = await waitForPreparedFdcRequest(
+    integration.prepareCoston2XrplPaymentRequest,
+    { transactionId: transactionHash, proofOwner, apiKey: PUBLIC_FDC_ACCESS_ID },
+    { onRetry: (reason) => progress("fdc-verifier-index-pending", { reason }) },
+  );
   const intent = await integration.prepareCoston2FdcSubmission(publicClient, {
     hubAddress: dependencies.fdcHub,
     requestBytes: prepared.abiEncodedRequest,

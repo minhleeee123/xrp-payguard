@@ -7,6 +7,7 @@ import {
   loadXrplBrowserRuntime,
   parseLiveFdcCLI,
   parseValidatedXrplPaymentResult,
+  waitForPreparedFdcRequest,
 } from "./coston2-fdc-trigger-live.mjs";
 import { assertPublicSafe } from "./public-web-evidence.mjs";
 
@@ -133,6 +134,26 @@ describe("Coston2 live XRPL FDC Pending runner", () => {
       ...result,
       tx_json: { ...result.tx_json, Amount: "101" },
     }, expected), /amount drift/);
+  });
+
+  it("bounds fresh-payment verifier indexing retries without retrying drift", async () => {
+    let attempts = 0;
+    let now = 0;
+    const prepared = await waitForPreparedFdcRequest(async () => {
+      attempts += 1;
+      if (attempts < 3) throw Object.assign(new Error("not indexed"), { reason: "REJECTED" });
+      return { status: "VALID" };
+    }, { transactionId: hash("xrpl") }, {
+      timeoutMs: 50,
+      pollMs: 10,
+      clock: () => now,
+      sleeper: async (milliseconds) => { now += milliseconds; },
+    });
+    assert.deepEqual(prepared, { status: "VALID" });
+    assert.equal(attempts, 3);
+    await assert.rejects(() => waitForPreparedFdcRequest(async () => {
+      throw Object.assign(new Error("binding drift"), { reason: "DRIFT" });
+    }, {}, { timeoutMs: 50, pollMs: 10 }), /binding drift/);
   });
 
   it("builds explicit public-safe evidence that stops at Pending", () => {
