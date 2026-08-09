@@ -9,14 +9,31 @@ reconfirmed with the organizer before any submission. This document converts
 the supplied brief into PayGuard engineering gates; it does not assert that an
 old date or prize remains current.
 
-On 2026-08-09, a public mirror linked to the
-[DoraHacks event](https://dorahacks.io/hackathon/flaresummersignal) still listed
-an August 14 submission deadline and the supplied submission fields. This is a
-public freshness observation, not direct organizer confirmation. The
-[official FCC overview](https://dev.flare.network/fcc/overview) also states
-that FCC is not yet a fully public production system. Organizer-granted FCC
-capacity and final submission mechanics therefore remain an explicit Gate 0
-confirmation item.
+On 2026-08-09, the server-rendered public
+[DoraHacks event](https://dorahacks.io/hackathon/flaresummersignal) identified
+the event as virtual, published a `$12,000` total prize pool, and exposed
+`2026-08-14T19:59:00Z` as its JSON-LD end time. It listed two `$6,000` tracks:
+Interoperable Asset Products and Confidential Compute Apps, each with `$4,000`
+first and `$2,000` second place prizes. The public requirements request the
+project name, selected bounty or bounties, product and target-user summaries,
+a demo/video/application link, repository or technical material, Flare usage,
+a new/ported/integrated/improved-work explanation, applicable deployment facts,
+and a short roadmap.
+
+The same public payload says existing projects are welcome, multiple tracks
+are allowed, and XRP/FXRP/FAssets are priority directions for the interoperable
+asset track. It also reports that the public submission and registration forms
+are currently disabled. Those fields are a public-page observation, not proof
+that the owner's account is eligible, that a final form will expose identical
+fields, that PayGuard has been accepted into a bounty, or that any organizer
+FCC capacity was granted. Final account/form/selection checks therefore remain
+an owner-session Gate 0 item.
+
+The [official FCC overview](https://dev.flare.network/fcc/overview), fetched on
+the same date, states that FCC is in the final stages of development and is not
+yet a fully public production system. That reinforces the solution-3 boundary;
+it does not turn the local simulated FCC path into a live confidential-compute
+submission.
 
 ## 2. Target bounty strategy
 
@@ -28,6 +45,11 @@ FDC `XRPPayment` proof and on-chain verification, Smart Account direct mint
 into the PayGuard vault, plus public FAssets redemption observations. The
 submission must preserve each evidence file's limitations: these facts do not
 prove a private-policy authorization or complete release.
+
+The public track text explicitly prioritizes XRP/FXRP/FAssets and names payment
+flows, asset-management experiences, and products that make interoperable
+assets useful in real applications. This is evidence that PayGuard fits the
+published direction, not a final eligibility or award determination.
 
 ### Confidential Compute Apps — post-hackathon live gate
 

@@ -83,10 +83,11 @@ owner, payee, executor, and auditor inspect public execution evidence
 
 ### Phase 0 — competition, product, and user discovery
 
-- [x] Recheck the public DoraHacks-linked competition listing and official FCC
-  readiness documentation on 2026-08-09; record the August 14 public deadline
-  observation and FCC's not-fully-public status without calling either direct
-  organizer confirmation.
+- [x] Recheck the public DoraHacks listing and official FCC readiness docs on
+  2026-08-09; record the exact public deadline, prize/track, required-package,
+  existing-project, and currently-disabled-form observations plus FCC's
+  not-fully-public status without calling any of them account eligibility,
+  organizer approval, or granted infrastructure.
 - [ ] Confirm final dates, form mechanics, bounty eligibility, and any granted
   FCC access in the owner's DoraHacks/organizer session before submission.
 - [ ] Conduct at least five XRPL-user interviews, five treasury/DAO interviews,

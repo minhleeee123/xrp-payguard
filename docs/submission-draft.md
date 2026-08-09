@@ -119,8 +119,11 @@ incident coverage, and a verified release manifest.
 - [x] Demo/application, repository, technical docs, Coston2 identifiers, and
   roadmap links prepared.
 - [x] Flare integration, new work, provenance, and limitations drafted.
-- [ ] Reconfirm deadline, form fields, bounty selection, and eligibility
-  directly in the owner's DoraHacks session before submitting.
+- [x] Recheck the public event page for the exact deadline, published package,
+  track direction, existing-project policy, and public form state.
+- [ ] Reconfirm the enabled final form fields, account eligibility, and bounty
+  selection directly in the owner's DoraHacks session before submitting; the
+  public page currently reports its submission form disabled.
 - [ ] Record and upload a demo video without showing `.env.local`, credentials,
   keys, raw signatures, or private policy material.
 - [ ] Add only user/community/pilot facts that actually occurred; otherwise
