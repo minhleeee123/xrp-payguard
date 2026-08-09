@@ -272,6 +272,16 @@ drop-shadows, remote requests, or hidden product claims. Each sits beside a
 textual role and explicit `LOCAL`, `TARGET`, or `TESTED` label, so the SVG can be
 decorative (`aria-hidden`) without losing information.
 
+The three silhouettes must remain visibly distinct, not one robot with swapped
+symbols. Cipher is a broad shield/vault with three converging custody nodes;
+Quorum is a paired witness form joined by one digest diamond; Ledger is a tall,
+stepped checkpoint monolith. Their ambient motion also communicates different
+mechanics without changing state: Cipher runs an inward custody/scan pulse,
+Quorum moves a dashed link between two witnesses, and Ledger advances three
+checkpoint rows. Moss Shadow may tint the interior field and Olive Depth may
+carry the mechanism stroke; Signal Lime remains one small status point per
+mascot. No mascot gains a second chromatic accent or CTA-style glow.
+
 ### Overview
 
 The overview opens with the active role/workspace and a one-line network state.

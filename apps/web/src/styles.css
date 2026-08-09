@@ -468,15 +468,35 @@ h1, h2, h3 { font-family: var(--font-pt-serif); font-weight: 300; }
 .guardian-section { padding-top: 82px; }
 .guardian-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .guardian-card { position: relative; min-width: 0; overflow: hidden; border: 1px solid var(--color-graphite); background: var(--color-onyx); transition: border-color .2s ease, background .2s ease, transform .2s ease; }
+.guardian-card::after { position: absolute; top: 0; right: 0; width: 34px; height: 1px; background: var(--color-olive-depth); content: ""; transition: width .3s ease; }
 .guardian-card:hover { border-color: var(--color-slate); background: var(--color-graphite); transform: translateY(-3px); }
-.guardian-art { display: grid; min-height: 240px; place-items: center; border-bottom: 1px solid var(--color-graphite); background: var(--color-void-black); color: var(--color-ash); }
-.guardian-svg { width: min(210px, 76%); overflow: visible; animation: mascotFloat 4.8s ease-in-out infinite; }
+.guardian-card:hover::after { width: 78px; }
+.guardian-art { position: relative; display: grid; min-height: 240px; place-items: center; overflow: hidden; border-bottom: 1px solid var(--color-graphite); background: var(--color-void-black); color: var(--color-ash); }
+.guardian-art::before { position: absolute; right: 0; bottom: 0; left: 0; height: 24px; background: var(--color-graphite); content: ""; opacity: .3; }
+.guardian-art::after { position: absolute; right: 14px; bottom: 9px; z-index: 2; color: var(--color-fog); font: 500 8px/1 var(--font-jetbrains-mono); letter-spacing: .16em; content: attr(data-signal); }
+.guardian-svg { position: relative; z-index: 1; width: min(210px, 76%); overflow: visible; animation: mascotFloat 4.8s ease-in-out infinite; }
 .guardian-card:nth-child(2) .guardian-svg { animation-delay: .7s; }
 .guardian-card:nth-child(3) .guardian-svg { animation-delay: 1.4s; }
-.mascot-orbit { stroke: var(--color-moss-shadow); stroke-width: 1; stroke-dasharray: 3 5; transform-origin: 90px 80px; animation: mascotOrbit 18s linear infinite; }
+.mascot-orbit { stroke: var(--color-moss-shadow); stroke-width: 1; stroke-dasharray: 3 5; transform-origin: 90px 80px; }
+.mascot-orbit-cipher { animation: mascotOrbit 18s linear infinite; }
+.mascot-orbit-quorum { animation: quorumOrbit 8s ease-in-out infinite; }
+.mascot-orbit-ledger { stroke-dasharray: 2 7; animation: ledgerFrame 16s linear infinite; }
+.mascot-field { fill: var(--color-moss-shadow); stroke: none; opacity: .3; }
+.mascot-quorum-field { fill: var(--color-onyx); opacity: .92; }
+.mascot-ledger-field { fill: var(--color-graphite); opacity: .72; }
 .mascot-body { stroke: var(--color-pearl); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
-.mascot-eye { fill: var(--color-chalk); stroke: none; transform-origin: center; animation: mascotBlink 5.6s ease-in-out infinite; }
-.mascot-signal { fill: var(--color-signal-lime); stroke: none; animation: signalPulse 2.5s ease-in-out infinite; }
+.mascot-eye { fill: var(--color-chalk); stroke: none; transform-box: fill-box; transform-origin: center; animation: mascotBlink 5.6s ease-in-out infinite; }
+.mascot-signal { fill: var(--color-signal-lime); stroke: none; transform-box: fill-box; transform-origin: center; animation: signalPulse 2.5s ease-in-out infinite; }
+.mascot-custody, .mascot-lock, .mascot-link, .mascot-witness-marks, .mascot-checkpoints, .mascot-ledger-tick { stroke: var(--color-olive-depth); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.mascot-custody { stroke-dasharray: 4 4; animation: custodyConverge 3.8s ease-in-out infinite; }
+.mascot-cipher-scan { stroke: var(--color-olive-depth); stroke-width: 1; opacity: 0; animation: cipherScan 4.4s ease-in-out infinite; }
+.mascot-link { stroke-dasharray: 3 4; animation: quorumLink 2.8s linear infinite; }
+.mascot-witness-marks { opacity: .8; animation: witnessConfirm 3.4s ease-in-out infinite; }
+.mascot-checkpoints { animation: checkpointFlow 3.6s steps(3, end) infinite; }
+.mascot-ledger-tick { opacity: .25; animation: ledgerTick 3.6s steps(3, end) infinite; }
+.guardian-card[data-mascot="cipher"] .guardian-art::before { background: var(--color-moss-shadow); opacity: .3; }
+.guardian-card[data-mascot="quorum"] .guardian-art::before { background: var(--color-olive-depth); opacity: .2; }
+.guardian-card[data-mascot="ledger"] .guardian-art::before { background: var(--color-graphite); opacity: .7; }
 .guardian-copy { min-height: 275px; padding: 28px; }
 .guardian-copy h3 { margin: 20px 0 12px; color: var(--color-chalk); font-size: 31px; line-height: 1.06; }
 .guardian-copy p { margin: 0; color: var(--color-bone); font-size: 14px; line-height: 1.65; }
@@ -539,7 +559,15 @@ h1, h2, h3 { font-family: var(--font-pt-serif); font-weight: 300; }
 @keyframes scanSweep { 0%, 18% { opacity: 0; transform: translateY(-120px); } 35%, 65% { opacity: .55; } 82%, 100% { opacity: 0; transform: translateY(470px); } }
 @keyframes mascotFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
 @keyframes mascotOrbit { to { transform: rotate(360deg); } }
+@keyframes quorumOrbit { 0%, 100% { stroke-dashoffset: 0; opacity: .5; } 50% { stroke-dashoffset: 18; opacity: 1; } }
+@keyframes ledgerFrame { to { stroke-dashoffset: -54; } }
 @keyframes mascotBlink { 0%, 45%, 49%, 100% { transform: scaleY(1); } 47% { transform: scaleY(.1); } }
+@keyframes custodyConverge { 0%, 100% { stroke-dashoffset: 18; opacity: .45; } 50% { stroke-dashoffset: 0; opacity: 1; } }
+@keyframes cipherScan { 0%, 20% { opacity: 0; transform: translateY(0); } 35%, 65% { opacity: .75; } 80%, 100% { opacity: 0; transform: translateY(47px); } }
+@keyframes quorumLink { to { stroke-dashoffset: -14; } }
+@keyframes witnessConfirm { 0%, 30%, 100% { opacity: .25; } 48%, 72% { opacity: 1; } }
+@keyframes checkpointFlow { 0% { opacity: .3; transform: translateY(-2px); } 66% { opacity: 1; } 100% { opacity: .3; transform: translateY(2px); } }
+@keyframes ledgerTick { 0% { opacity: .15; transform: translateY(7px); } 66% { opacity: .85; transform: translateY(25px); } 100% { opacity: .15; transform: translateY(33px); } }
 @keyframes tapePulse { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
 @keyframes cursorBlink { 0%, 48% { opacity: 1; } 49%, 100% { opacity: 0; } }
 

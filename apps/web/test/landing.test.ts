@@ -25,6 +25,12 @@ describe("editorial landing page", () => {
     expect(html).toContain('data-mascot="cipher"');
     expect(html).toContain('data-mascot="quorum"');
     expect(html).toContain('data-mascot="ledger"');
+    expect(html).toContain('class="guardian-svg guardian-cipher"');
+    expect(html).toContain('class="guardian-svg guardian-quorum"');
+    expect(html).toContain('class="guardian-svg guardian-ledger"');
+    expect(html).toContain('class="mascot-custody"');
+    expect(html).toContain('class="mascot-link"');
+    expect(html).toContain('class="mascot-checkpoints"');
     expect(html.match(/class="guardian-svg/g)).toHaveLength(3);
     expect(html.match(/aria-hidden="true" focusable="false"/g)).toHaveLength(4);
     expect(html).not.toMatch(/<img|gradient|data:image|https?:\/\/[^" ]+\.(?:png|jpe?g|webp)/i);
@@ -35,6 +41,7 @@ describe("editorial landing page", () => {
     expect(css).toContain("prefers-reduced-motion: reduce");
     expect(css).toContain(".reveal-ready .landing-reveal.is-visible");
     expect(css).toContain(".reveal-ready .landing-reveal { opacity: 1; transform: none; }");
+    for (const motion of ["custodyConverge", "quorumLink", "ledgerTick"]) expect(css).toContain(`@keyframes ${motion}`);
     expect(css).not.toMatch(/(?:linear|radial|conic)-gradient/i);
   });
 

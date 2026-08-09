@@ -108,24 +108,56 @@ export function landingView(): string {
 }
 
 function guardianCard(kind: GuardianKind, name: string, role: string, copy: string, status: string): string {
-  return `<article class="guardian-card" data-mascot="${kind}"><div class="guardian-art">${guardianMascot(kind)}</div><div class="guardian-copy"><span class="guardian-name">${name}</span><h3>${role}</h3><p>${copy}</p><span class="landing-tag">${status}</span></div></article>`;
+  const signal = kind === "cipher" ? "CUSTODY / 03" : kind === "quorum" ? "DIGEST / 02" : "ROOT / N+1";
+  return `<article class="guardian-card" data-mascot="${kind}"><div class="guardian-art" data-signal="${signal}" aria-hidden="true">${guardianMascot(kind)}</div><div class="guardian-copy"><span class="guardian-name">${name}</span><h3>${role}</h3><p>${copy}</p><span class="landing-tag">${status}</span></div></article>`;
 }
 
 function guardianMascot(kind: GuardianKind): string {
-  const symbol = kind === "cipher"
-    ? '<path d="M82 88h16v15H82z M86 88v-5a4 4 0 0 1 8 0v5" />'
-    : kind === "quorum"
-      ? '<circle cx="82" cy="95" r="5" /><circle cx="98" cy="95" r="5" /><path d="M87 95h6" />'
-      : '<path d="M79 86h22v18H79z M84 91h12 M84 96h12 M84 101h8" />';
-  const antenna = kind === "cipher" ? "M90 38V25l-9-8" : kind === "quorum" ? "M90 38V20m-9 7 9-7 9 7" : "M90 38V25l10-7";
-  const mouth = kind === "quorum" ? "M78 72c7 7 17 7 24 0" : kind === "ledger" ? "M80 74h20" : "M80 72c5 4 15 4 20 0";
-  return `<svg class="guardian-svg guardian-${kind}" viewBox="0 0 180 160" aria-hidden="true" focusable="false">
-    <g class="mascot-orbit" fill="none"><circle cx="90" cy="80" r="68" /><path d="M21 80h14 M145 80h14" /></g>
-    <g class="mascot-body" fill="none"><path d="${antenna}" /><circle class="mascot-signal" cx="${kind === "cipher" ? 79 : kind === "quorum" ? 90 : 101}" cy="${kind === "quorum" ? 19 : 17}" r="4" />
-      <rect x="44" y="38" width="92" height="52" rx="4" /><circle class="mascot-eye" cx="71" cy="62" r="4" /><circle class="mascot-eye" cx="109" cy="62" r="4" /><path d="${mouth}" />
-      <path d="M60 91v42h60V91 M60 104H43l-10 18 M120 104h17l10 18 M73 133v12 M107 133v12" />
-      <rect x="72" y="82" width="36" height="30" rx="2" />${symbol}
+  if (kind === "cipher") {
+    return `<svg class="guardian-svg guardian-cipher" viewBox="0 0 180 160" aria-hidden="true" focusable="false">
+      <g class="mascot-orbit mascot-orbit-cipher" fill="none"><path d="M24 83a66 66 0 0 1 132 0 M35 113a66 66 0 0 0 110 0" /><path d="M20 83h14 M146 83h14" /></g>
+      <g class="mascot-field mascot-cipher-field"><path d="M90 26 134 43v39c0 28-18 49-44 61-26-12-44-33-44-61V43z" /></g>
+      <g class="mascot-body mascot-cipher-body" fill="none">
+        <path d="M90 26 134 43v39c0 28-18 49-44 61-26-12-44-33-44-61V43z" />
+        <path d="M59 52h62v43H59z M67 95v20l23 15 23-15V95" />
+        <circle class="mascot-eye" cx="76" cy="72" r="3.5" /><circle class="mascot-eye" cx="104" cy="72" r="3.5" /><path d="M80 83h20" />
+        <path class="mascot-lock" d="M81 102h18v17H81z M85 102v-6a5 5 0 0 1 10 0v6 M90 108v5" />
+        <path d="M46 68 32 78l14 9 M134 68l14 10-14 9" />
+      </g>
+      <g class="mascot-custody" fill="none"><circle cx="51" cy="42" r="4" /><circle cx="90" cy="20" r="4" /><circle cx="129" cy="42" r="4" /><path d="m55 40 31-18 M94 22l31 18" /></g>
+      <path class="mascot-scan mascot-cipher-scan" d="M60 61h60" />
+      <circle class="mascot-signal" cx="90" cy="20" r="3.5" />
+    </svg>`;
+  }
+  if (kind === "quorum") {
+    return `<svg class="guardian-svg guardian-quorum" viewBox="0 0 180 160" aria-hidden="true" focusable="false">
+      <g class="mascot-orbit mascot-orbit-quorum" fill="none"><circle cx="64" cy="77" r="52" /><circle cx="116" cy="77" r="52" /></g>
+      <g class="mascot-field mascot-quorum-field"><rect x="27" y="43" width="52" height="70" rx="4" /><rect x="101" y="43" width="52" height="70" rx="4" /></g>
+      <g class="mascot-body mascot-quorum-body" fill="none">
+        <path d="M53 43V29l-8-7 M127 43V29l8-7" />
+        <rect x="27" y="43" width="52" height="70" rx="4" /><rect x="101" y="43" width="52" height="70" rx="4" />
+        <circle class="mascot-eye" cx="44" cy="65" r="3.5" /><circle class="mascot-eye" cx="62" cy="65" r="3.5" />
+        <circle class="mascot-eye" cx="118" cy="65" r="3.5" /><circle class="mascot-eye" cx="136" cy="65" r="3.5" />
+        <path d="M43 78h20 M117 78h20 M39 113v19 M67 113v19 M113 113v19 M141 113v19" />
+        <path d="M79 88h9 M92 88h9" />
+      </g>
+      <g class="mascot-link" fill="none"><path d="M74 88h32" /><path d="m90 76 12 12-12 12-12-12z" /><path d="M84 88h12" /></g>
+      <g class="mascot-witness-marks" fill="none"><path d="m43 96 5 5 10-11 M117 96l5 5 10-11" /></g>
+      <circle class="mascot-signal" cx="90" cy="88" r="3.5" />
+    </svg>`;
+  }
+  return `<svg class="guardian-svg guardian-ledger" viewBox="0 0 180 160" aria-hidden="true" focusable="false">
+    <g class="mascot-orbit mascot-orbit-ledger" fill="none"><path d="M32 35h116v90H32z" /><path d="M24 48h16 M140 48h16 M24 112h16 M140 112h16" /></g>
+    <g class="mascot-field mascot-ledger-field"><path d="M57 34h66v103H57z M49 43h8v86h-8z M123 43h8v86h-8z" /></g>
+    <g class="mascot-body mascot-ledger-body" fill="none">
+      <path d="M57 34h66v103H57z M49 43h8v86h-8z M123 43h8v86h-8z" />
+      <path d="M69 48h42v31H69z" /><circle class="mascot-eye" cx="80" cy="62" r="3.5" /><circle class="mascot-eye" cx="100" cy="62" r="3.5" /><path d="M81 71h18" />
+      <path d="M68 137v9 M112 137v9 M49 73H36l-8 10 M131 73h13l8 10" />
+      <path d="M68 91h44v34H68z" />
     </g>
+    <g class="mascot-checkpoints" fill="none"><path d="M76 99h28 M76 107h28 M76 115h19" /><circle cx="109" cy="99" r="2" /><circle cx="109" cy="107" r="2" /><circle cx="100" cy="115" r="2" /></g>
+    <path class="mascot-ledger-tick" d="M69 86h42" />
+    <circle class="mascot-signal" cx="121" cy="34" r="3.5" />
   </svg>`;
 }
 
