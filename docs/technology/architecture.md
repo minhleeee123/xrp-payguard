@@ -241,8 +241,9 @@ successful-event spend; it accepts the current uint256 request-id ABI and the
 legacy uint64 form without widening the local checkpoint domain.
 One amount-based Coston2 testnet request, validated XRPL payout, and matching
 `RedemptionPerformed` receipt are recorded in public-safe evidence. The live
-PayGuard canonical verifier-consumption, tag, and default-recovery paths remain
-separate gates.
+tagged request path is also recorded with its validated XRPL destination tag;
+PayGuard canonical verifier-consumption, partial fulfillment, and
+default-recovery remain separate gates.
 
 ### Recurring execution
 

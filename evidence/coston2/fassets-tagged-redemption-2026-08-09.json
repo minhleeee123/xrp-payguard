@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "suite": "payguard-coston2-fassets-tagged-redemption",
+  "status": "tagged-request-payout-settlement-observed",
+  "recordedAt": "2026-08-09T00:27:09Z",
+  "network": {
+    "name": "flare-coston2",
+    "chainId": 114,
+    "observedBlock": "33801407"
+  },
+  "publicIdentifiers": {
+    "assetManager": "0xc1Ca88b937d0b528842F95d5731ffB586f4fbDFA",
+    "fAsset": "0x0b6A3645c240605887a5532109323A3E12273dc7",
+    "redeemer": "0xDC1cc527423C882156a632C250528D1922d18Fc7",
+    "agentVault": "0x5b89514d1F060AdbEA8B7294AFf81ed8dbAa7fC5",
+    "method": "redeemWithTag",
+    "requestedAmountUBA": "5000000",
+    "minimumRedeemAmountUBA": "5000000",
+    "paymentAddress": "rsNuQhwCTGosz9PTb6kBmhGKHnwzqNqhC2",
+    "destinationTag": "424242",
+    "redemptionRequest": {
+      "transactionHash": "0x78be1759471e257d2eec194f0993b3eb72a6565ec789b87eccd56eb588f3feba",
+      "block": "33801332",
+      "status": "success",
+      "requestId": "44296212",
+      "valueUBA": "5000000",
+      "feeUBA": "25000",
+      "firstUnderlyingBlock": "19749771",
+      "lastUnderlyingBlock": "19750356",
+      "lastUnderlyingTimestamp": "1786235623",
+      "paymentReference": "0x4642505266410002000000000000000000000000000000000000000002a3e814",
+      "executor": "0x0000000000000000000000000000000000000000",
+      "executorFeeNatWei": "0",
+      "remainingAmountUBA": "0"
+    },
+    "underlyingPayment": {
+      "network": "xrpl-testnet",
+      "transactionHash": "0x9f4f3b10e89c037ed9d21609cc46106cf4348a01e37b0df608d3eb19449eb1cd",
+      "ledgerIndex": "19749873",
+      "destination": "rsNuQhwCTGosz9PTb6kBmhGKHnwzqNqhC2",
+      "destinationTag": "424242",
+      "deliveredAmountDrops": "4975000",
+      "transactionResult": "tesSUCCESS",
+      "memoData": null
+    },
+    "redemptionPerformed": {
+      "transactionHash": "0x26ba3af12270ba388485c1632582d24c03bdaf0bf6cbb71cd0b2429b5ac50d03",
+      "block": "33801407",
+      "status": "success",
+      "underlyingTransactionHash": "0x9f4f3b10e89c037ed9d21609cc46106cf4348a01e37b0df608d3eb19449eb1cd",
+      "redemptionAmountUBA": "5000000",
+      "spentUnderlyingUBA": "4975012"
+    },
+    "fAssetBalances": {
+      "redeemerBefore": "99145265",
+      "redeemerAfter": "94145265",
+      "decreaseUBA": "5000000"
+    }
+  },
+  "assertions": {
+    "runtimeAssetAndMinimumResolved": true,
+    "redemptionWithTagReceiptSuccessful": true,
+    "taggedRequestLegParsed": true,
+    "destinationTagRecordedInRequest": true,
+    "underlyingPaymentValidated": true,
+    "destinationTagMatched": true,
+    "paymentReferenceRecordedInRequest": true,
+    "redemptionPerformedReceiptSuccessful": true,
+    "settlementAmountAndUnderlyingHashMatched": true,
+    "fAssetBalanceDecreasedByRequestedAmount": true,
+    "partialFulfillmentFlowExercised": false,
+    "defaultRecoveryFlowExercised": false,
+    "payGuardCanonicalSettlementConsumption": false,
+    "testnetOnly": true,
+    "noPrivateKeyRecorded": true,
+    "noApiKeyRecorded": true,
+    "noPolicyPlaintextOrCiphertextRecorded": true,
+    "noPayGuardReleaseClaimed": true
+  },
+  "blockers": [
+    "CANONICAL_EVENT_VERIFIER_AND_ATOMIC_PAYGUARD_CONSUMPTION_NOT_WIRED",
+    "PARTIAL_FULFILLMENT_NOT_LIVE_VERIFIED",
+    "REDEMPTION_DEFAULT_RECOVERY_NOT_LIVE_VERIFIED"
+  ],
+  "notes": [
+    "The tagged request used the existing funded XRPL Testnet destination and destination tag 424242; only public identifiers are recorded.",
+    "The validated XRPL payment had tesSUCCESS and the requested destination tag. No Memo record was present in the public XRPL transaction response; the payment reference remains the canonical request-event field.",
+    "The evidence does not claim canonical PayGuard settlement consumption, FCC/private-policy execution, partial fulfillment, default recovery, or a verified PayGuard release."
+  ]
+}

@@ -22,7 +22,12 @@ wallet seed, API key, or private policy, and it is not a complete release claim.
 FXRP redemption request, the validated XRPL payout with matching payment
 reference, and the Coston2 `RedemptionPerformed` receipt. It deliberately marks
 PayGuard canonical event consumption, destination-tag redemption, and default
-recovery as open; it is not a complete release claim.
+recovery as open for that amount-based run; it is not a complete release claim.
+
+`coston2/fassets-tagged-redemption-2026-08-09.json` records a separate public
+`redeemWithTag` request, the validated XRPL payout with `DestinationTag=424242`,
+and its matching `RedemptionPerformed` receipt. Partial fulfillment, default
+recovery, and canonical PayGuard event consumption remain open.
 
 `coston2/coston2-public-endpoint-reachability.json` records only
 credential-free Coston2 RPC, Explorer/API, and faucet page reachability. It

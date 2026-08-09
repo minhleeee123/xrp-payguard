@@ -308,8 +308,13 @@ verified on Coston2. External review and registered FCC execution remain open.
   observe a validated XRPL payout plus matching `RedemptionPerformed` event;
   the sanitized public identifiers are in the redemption evidence file. The
   canonical PayGuard verifier-consumption, tag, and default paths remain open.
+- [x] Execute one live `redeemWithTag` FXRP redemption on Coston2 and verify the
+  XRPL payout carries the requested destination tag; the sanitized public
+  identifiers are in the tagged redemption evidence file. Partial fulfillment,
+  default recovery, and canonical PayGuard event consumption remain open.
 - [ ] Execute and verify an official live FAssets redemption/default exit on
-  Coston2, including partial fulfillment and destination-tag behavior.
+  Coston2, including partial fulfillment, default recovery, and canonical
+  PayGuard settlement consumption.
 
 Exit: one XRPL Testnet payment funds a canonical Coston2 PayGuard vault and an
 FDC-attested trigger safely advances one request. A single live testnet run
