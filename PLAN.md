@@ -270,6 +270,11 @@ verified on Coston2. External review and registered FCC execution remain open.
 - [x] Add an integer-only official-field FAssets direct-mint quote calculator
   and injected settings reader; the live quote, payment, and mint execution are
   covered, while quote-drift/recovery drills remain open.
+- [x] Add a credential-free read-only Coston2 observer that resolves
+  `AssetManagerFXRP` through the Contract Registry, reads the runtime FAsset,
+  direct-mint fee settings, and Core Vault payment address, and records an
+  integer quote without submitting a transaction. Delayed resume and
+  nonce/proof/operation/receipt drift remain live-service gates.
 - [x] Add an injected, read-only XRPL API v2 checkpoint reader for validated
   account, ledger, and native-XRP Payment state; wallet signing remains outside
   the production reader boundary, while one live funding run is evidenced.

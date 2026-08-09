@@ -80,6 +80,8 @@ Forbidden evidence:
 - Fresh/stale/unavailable/negative FTSO value.
 - Direct mint success, delayed mint, callback/event mismatch, quote drift.
 - FAssets approve/transfer/redeem request and non-instant exit semantics.
+- Runtime direct-mint AssetManager/FAsset/payment-address lookup and integer
+  quote observation without transaction submission.
 
 ### Product
 

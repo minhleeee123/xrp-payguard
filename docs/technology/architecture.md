@@ -220,7 +220,11 @@ binds the expected payment and proof to the exact EVM `proofOwner` that will
 submit the direct-mint transaction. A
 direct-mint success is accepted only from an exact public receipt matching all
 owner/account/destination/asset/value/fee/nonce/operation fields. Live supported
-service execution remains unverified.
+service execution remains unverified. A separate read-only Coston2 observation
+resolves the runtime `AssetManagerFXRP`, FAsset, direct-mint fee settings, and
+Core Vault payment address through the Contract Registry and records an integer
+quote; no transaction is submitted. Delayed resume and live drift rejection
+remain open.
 
 ### FAssets exit
 

@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "suite": "payguard-coston2-direct-mint-runtime-observation",
+  "status": "runtime-quote-address-observed",
+  "recordedAt": "2026-08-09T00:35:20.249Z",
+  "network": {
+    "name": "flare-coston2",
+    "chainId": 114,
+    "rpcUrl": "https://coston2-api.flare.network/ext/C/rpc",
+    "observedBlock": "33801659"
+  },
+  "publicIdentifiers": {
+    "registry": "0xaD67FE66660Fb8dFE9d6b1b4240d8650e30F6019",
+    "registryName": "AssetManagerFXRP",
+    "assetManager": "0xc1Ca88b937d0b528842F95d5731ffB586f4fbDFA",
+    "fAsset": "0x0b6A3645c240605887a5532109323A3E12273dc7",
+    "directMintingPaymentAddress": "rDhpmiPq4BVBDWMVdSrmkgt8thKyRzGV1p",
+    "quote": {
+      "netMintAmountUBA": "1000000",
+      "executorFeeUBA": "100000",
+      "feeBIPS": "25",
+      "minimumFeeUBA": "100000",
+      "proportionalFeeUBA": "2500",
+      "mintingFeeUBA": "100000",
+      "totalPaymentUBA": "1200000"
+    }
+  },
+  "assertions": {
+    "chainIdVerified": true,
+    "assetManagerResolvedThroughRegistry": true,
+    "runtimeFAssetRead": true,
+    "runtimeDirectMintSettingsRead": true,
+    "runtimePaymentAddressValidated": true,
+    "integerQuoteRecomputed": true,
+    "noTransactionSubmitted": true,
+    "delayedMintStillExplicitlyUnverified": true,
+    "nonceProofOperationReceiptDriftStillUnverified": true,
+    "testnetOnly": true,
+    "noPrivateKeyRecorded": true,
+    "noCredentialRecorded": true,
+    "noPolicyPlaintextOrCiphertextRecorded": true,
+    "noPayGuardReleaseClaimed": true
+  },
+  "blockers": [
+    "DELAYED_MINT_RESUME_NOT_LIVE_VERIFIED",
+    "NONCE_PROOF_OPERATION_RECEIPT_DRIFT_NOT_LIVE_VERIFIED",
+    "PAYGUARD_RELEASE_MANIFEST_NOT_VERIFIED"
+  ],
+  "notes": [
+    "This read-only observation resolves AssetManagerFXRP through the official Coston2 Contract Registry and reads the runtime direct-mint getters.",
+    "The quote is an integer-only public calculation for the recorded net mint amount; no XRP payment, FDC request, signing, or mint transaction was submitted.",
+    "The local delayed checkpoint and drift tests remain separate from this live runtime observation."
+  ]
+}

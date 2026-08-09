@@ -29,6 +29,11 @@ recovery as open for that amount-based run; it is not a complete release claim.
 and its matching `RedemptionPerformed` receipt. Partial fulfillment, default
 recovery, and canonical PayGuard event consumption remain open.
 
+`coston2/coston2-direct-mint-runtime-observation.json` records a credential-free
+read-only AssetManagerFXRP/Contract Registry lookup, the runtime FAsset and
+Core Vault payment address, and an integer direct-mint quote. It does not submit
+an XRP payment, FDC request, or mint transaction.
+
 `coston2/coston2-public-endpoint-reachability.json` records only
 credential-free Coston2 RPC, Explorer/API, and faucet page reachability. It
 does not represent a faucet grant, FCC indexer access, or a PayGuard release.
