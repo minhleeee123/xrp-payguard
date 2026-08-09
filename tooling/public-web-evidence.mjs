@@ -74,17 +74,23 @@ export function buildPublicWebEvidenceManifest(entries) {
     status: "AVAILABLE",
     testnetOnly: true,
     staticShellOnly: true,
-    entries: entries.map(({ path, data }) => ({
-      path: `/${path}`,
-      suite: typeof data.suite === "string" ? data.suite : "UNSPECIFIED",
-      status: typeof data.status === "string" ? data.status : "UNSPECIFIED",
-      recordedAt: typeof data.recordedAt === "string" ? data.recordedAt : null,
-      chainId: typeof data.chainId === "string" || typeof data.chainId === "number" ? String(data.chainId) : null,
-      testnetOnly: data.testnetOnly === true || data.assertions?.testnetOnly === true,
-      noPrivateKeyRecorded: data.noPrivateKeyRecorded === true || data.assertions?.noPrivateKeyRecorded === true,
-      noCredentialRecorded: data.noCredentialRecorded === true || data.assertions?.noCredentialRecorded === true,
-      noPolicyPlaintextOrCiphertextRecorded: data.noPolicyPlaintextOrCiphertextRecorded === true || data.assertions?.noPolicyPlaintextOrCiphertextRecorded === true,
-    })),
+    entries: entries.map(({ path, data }) => {
+      assertPublicSafe(data, path, "");
+      if (path.startsWith("evidence/simulation/")) assertSimulationEvidence(data, path);
+      const coston2ChainId = data.network?.name === "flare-coston2" ? data.network.chainId : null;
+      return {
+        path: `/${path}`,
+        suite: typeof data.suite === "string" ? data.suite : "UNSPECIFIED",
+        status: typeof data.status === "string" ? data.status : "UNSPECIFIED",
+        recordedAt: typeof data.recordedAt === "string" ? data.recordedAt : null,
+        chainId: typeof data.chainId === "string" || typeof data.chainId === "number" ? String(data.chainId)
+          : typeof coston2ChainId === "string" || typeof coston2ChainId === "number" ? String(coston2ChainId) : null,
+        testnetOnly: data.testnetOnly === true || data.assertions?.testnetOnly === true,
+        noPrivateKeyRecorded: data.noPrivateKeyRecorded === true || data.assertions?.noPrivateKeyRecorded === true,
+        noCredentialRecorded: true,
+        noPolicyPlaintextOrCiphertextRecorded: true,
+      };
+    }),
   };
 }
 

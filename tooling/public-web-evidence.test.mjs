@@ -29,6 +29,14 @@ test("manifest exposes public metadata without copying evidence payload into the
   assert.equal(Array.isArray(manifest.entries), true);
   assert.equal(JSON.stringify(manifest).includes("privateSalt"), false);
   assert.equal(JSON.stringify(manifest).includes("ciphertext"), false);
+  assert.equal(manifest.entries.every((entry) => entry.noPrivateKeyRecorded
+    && entry.noCredentialRecorded && entry.noPolicyPlaintextOrCiphertextRecorded), true);
+  assert.equal(manifest.entries.find((entry) => entry.path === "/evidence/coston2/contracts-deployment.json")?.chainId, "114");
+  assert.equal(manifest.entries.find((entry) => entry.path.startsWith("/evidence/simulation/"))?.chainId, null);
+  assert.throws(() => buildPublicWebEvidenceManifest([{
+    path: "evidence/coston2/unsafe.json",
+    data: { secret: "not-public" },
+  }]), /forbidden public-evidence field/);
 });
 
 test("rejects private fields and key material", () => {
