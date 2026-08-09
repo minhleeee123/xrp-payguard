@@ -101,6 +101,15 @@ menu. The separate Vercel evidence record covers public HTML/JS/CSS and evidence
 reachability, desktop/mobile Chrome captures, and Enter-key activation from the
 landing page to the Overview view. Neither run is a live FCC or release smoke.
 
+A separate Lighthouse 13.0.1 lab run against the production landing after the
+brand accessible-name correction scored 96 performance and 100 accessibility,
+best practices, and SEO (FCP/LCP 2,184 ms, TBT 38 ms, CLS 0). The specific
+visible-label/accessibility-name mismatch has zero remaining nodes. Lighthouse
+still estimates 94,516 bytes of unused first-load JavaScript, so code splitting
+remains an explicit performance optimization rather than a completed claim.
+This audit covers the landing route, not every authenticated or provider-bound
+application state.
+
 ## 4. Release manifest
 
 A future `coston2.release.json` becomes authoritative only after it records and
