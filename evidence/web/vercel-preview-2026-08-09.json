@@ -2,18 +2,18 @@
   "schemaVersion": 1,
   "suite": "payguard-vercel-public-safe-web-preview",
   "status": "deployed-static-preview",
-  "recordedAt": "2026-08-09T05:17:26Z",
+  "recordedAt": "2026-08-09T05:34:13Z",
   "platform": {
     "name": "vercel",
     "project": "xrp-payguard",
     "scope": "minh00plus-5489s-projects",
     "url": "https://xrp-payguard.vercel.app/",
-    "deploymentUrl": "https://xrp-payguard-kogonpnmu-minh00plus-5489s-projects.vercel.app",
-    "deploymentId": "dpl_Cf8npQWfX2h9CjMzN1SHFPLuyaB3",
-    "inspectorUrl": "https://vercel.com/minh00plus-5489s-projects/xrp-payguard/Cf8npQWfX2h9CjMzN1SHFPLuyaB3",
+    "deploymentUrl": "https://xrp-payguard-4p6q3ae02-minh00plus-5489s-projects.vercel.app",
+    "deploymentId": "dpl_HNSht1z7AJFmbbCJfo68jCxf3P17",
+    "inspectorUrl": "https://vercel.com/minh00plus-5489s-projects/xrp-payguard/HNSht1z7AJFmbbCJfo68jCxf3P17",
     "target": "production",
     "readyState": "READY",
-    "sourceCommit": "807ee9332862e91a26ca0532faa6c5b1a3315efd"
+    "sourceCommit": "7475fcc5472903a88b6370e4a3892ad3a2af4446"
   },
   "input": {
     "artifactPath": "apps/web/dist",
@@ -37,7 +37,10 @@
     "headlessChromeMobileViewport": "390x844",
     "headlessChromeDesktopScreenshotBytes": 106173,
     "headlessChromeMobileScreenshotBytes": 38823,
-    "keyboardSmokeRecorded": false
+    "keyboardSmokeRecorded": true,
+    "keyboardFocusTarget": "Open app",
+    "keyboardActivationKey": "Enter",
+    "keyboardActivationResult": "Overview"
   },
   "assertions": {
     "cliDeploymentSucceeded": true,
@@ -45,6 +48,7 @@
     "publicAssetsReachable": true,
     "evidenceEndpointReachable": true,
     "publicEvidenceAssetsReachable": true,
+    "keyboardActivationVerified": true,
     "artifactOnlyDeployment": true,
     "testnetOnly": true,
     "noPrivateKeyRecorded": true,
@@ -63,8 +67,8 @@
   "notes": [
     "This evidence proves only the public-safe Vite shell and reviewed evidence mirror deployed from apps/web/dist and HTTP asset reachability.",
     "The artifact contains 15 static files, including the metadata-only /evidence/index.json and 11 reviewed JSON assets; no repository source or ignored environment file was deployed.",
-    "The Auditor's static evidence-mirror decoder is covered by local unit tests; this browser run records the shell and endpoint smoke, not a live audit result or keyboard interaction.",
-    "Headless Chrome rendered desktop and mobile viewport captures from the production alias; keyboard interaction was not recorded in this run.",
+    "The Auditor's static evidence-mirror decoder is covered by local unit tests; this browser run records the shell and endpoint smoke, not a live audit result.",
+    "Headless Chrome rendered desktop and mobile viewport captures from the production alias; a focused Open app control activated the Overview view through an Enter key event.",
     "The hosted shell intentionally remains unavailable for wallet, FCC, relay, policy, and authorization operations.",
     "This deployment is not a verified PayGuard release or production-value service."
   ]
