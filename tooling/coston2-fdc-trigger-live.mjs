@@ -110,6 +110,11 @@ function randomHash() {
   return `0x${randomBytes(32).toString("hex")}`;
 }
 
+export function randomNonZeroUint64(bytes = randomBytes) {
+  const value = BigInt(`0x${bytes(8).toString("hex")}`);
+  return value === 0n ? 1n : value;
+}
+
 function domainHash(label, nonce) {
   return keccak256(encodePacked(["string", "bytes32"], [label, nonce]));
 }
@@ -755,7 +760,7 @@ async function registerSimulatedPolicy({ publicClient, walletClient, account, co
   const now = (await publicClient.getBlock({ blockTag: "latest" })).timestamp;
   const policy = livePolicy(protocol, context, now, runNonce, submissionNonce);
   const policyCommitment = protocol.policyCommitment(policy);
-  const policyNonce = BigInt(randomHash());
+  const policyNonce = randomNonZeroUint64();
   const binding = {
     chainId: BigInt(COSTON2_CHAIN_ID),
     registry: context.registry,

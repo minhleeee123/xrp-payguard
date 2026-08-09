@@ -7,6 +7,7 @@ import {
   loadXrplBrowserRuntime,
   parseLiveFdcCLI,
   parseValidatedXrplPaymentResult,
+  randomNonZeroUint64,
   waitForPreparedFdcRequest,
 } from "./coston2-fdc-trigger-live.mjs";
 import { assertPublicSafe } from "./public-web-evidence.mjs";
@@ -154,6 +155,11 @@ describe("Coston2 live XRPL FDC Pending runner", () => {
     await assert.rejects(() => waitForPreparedFdcRequest(async () => {
       throw Object.assign(new Error("binding drift"), { reason: "DRIFT" });
     }, {}, { timeoutMs: 50, pollMs: 10 }), /binding drift/);
+  });
+
+  it("keeps receipt nonces inside the canonical non-zero uint64 wire width", () => {
+    assert.equal(randomNonZeroUint64(() => Buffer.alloc(8)), 1n);
+    assert.equal(randomNonZeroUint64(() => Buffer.from("ffffffffffffffff", "hex")), (1n << 64n) - 1n);
   });
 
   it("builds explicit public-safe evidence that stops at Pending", () => {
