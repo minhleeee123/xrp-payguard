@@ -3,6 +3,7 @@ import { join, relative, resolve } from "node:path";
 
 const PUBLIC_EVIDENCE_SOURCES = [
   { directory: "evidence/coston2", include: () => true },
+  { directory: "evidence/simulation", include: () => true },
   { directory: "evidence/web", include: (name) => /^vercel-preview-.*\.json$/u.test(name) },
 ];
 const FORBIDDEN_FIELD = /(?:ciphertext|plaintext|password|mnemonic|private[_-]?key|secret|api[_-]?key|credential|seed)/iu;
@@ -22,6 +23,18 @@ export function assertPublicSafe(value, path = "$", field = "") {
   }
   if (value && typeof value === "object") {
     for (const [key, entry] of Object.entries(value)) assertPublicSafe(entry, `${path}.${key}`, key);
+  }
+}
+
+export function assertSimulationEvidence(value, path = "evidence/simulation") {
+  const assertions = value?.assertions;
+  if (value?.status !== "local-simulated-pass" || value?.mode !== "SIMULATED_TEE"
+    || value?.network?.publicChainConnected !== false || !assertions
+    || assertions.simulationOnly !== true || assertions.hardwareTeeVerified !== false
+    || assertions.registeredMachinesVerified !== false || assertions.stableHttpsOriginsVerified !== false
+    || assertions.authenticatedIndexerVerified !== false || assertions.noLiveFccResultClaimed !== true
+    || assertions.noPayGuardReleaseClaimed !== true) {
+    throw new Error(`${path} must remain an explicit non-live simulation record`);
   }
 }
 
@@ -45,6 +58,7 @@ export async function collectPublicWebEvidence(repositoryRoot) {
       const sourcePath = join(directory, name);
       const data = JSON.parse(await readFile(sourcePath, "utf8"));
       assertPublicSafe(data, source.directory, "");
+      if (source.directory === "evidence/simulation") assertSimulationEvidence(data, sourcePath);
       entries.push({
         path: relative(root, sourcePath).replaceAll("\\", "/"),
         data,

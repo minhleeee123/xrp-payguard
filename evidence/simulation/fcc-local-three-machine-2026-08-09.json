@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "suite": "payguard-local-three-machine-fcc-simulation",
+  "status": "local-simulated-pass",
+  "recordedAt": "2026-08-09T05:37:54Z",
+  "sourceCommit": "40c37c4b4bd6fc1a8527f43acc1787697845c335",
+  "mode": "SIMULATED_TEE",
+  "network": {
+    "name": "local-simulation",
+    "chainId": 114,
+    "publicChainConnected": false
+  },
+  "runtime": {
+    "machines": 3,
+    "imageManifestDigest": "sha256:a3fa63ba174e4f78b31694370c26375deb72736a5922cb48179405e58f8ec851",
+    "privateIngressExposure": "loopback-only",
+    "persistentState": false,
+    "cleanupCompleted": true
+  },
+  "assertions": {
+    "simulationOnly": true,
+    "hardwareTeeVerified": false,
+    "registeredMachinesVerified": false,
+    "stableHttpsOriginsVerified": false,
+    "authenticatedIndexerVerified": false,
+    "distinctIdentitiesVerified": true,
+    "signerBindingsVerified": true,
+    "containerHardeningVerified": true,
+    "failClosedIngressVerified": true,
+    "restartRotatedIdentityVerified": true,
+    "cleanupVerified": true,
+    "testnetOnly": true,
+    "noPrivateKeyRecorded": true,
+    "noCredentialRecorded": true,
+    "noPolicyPlaintextOrCiphertextRecorded": true,
+    "noLiveFccResultClaimed": true,
+    "noPayGuardReleaseClaimed": true
+  },
+  "blockers": [
+    "HARDWARE_TEE_NOT_PRESENT",
+    "STABLE_HTTPS_FCC_ORIGINS_NOT_DEPLOYED",
+    "AUTHENTICATED_FCC_INDEXER_NOT_CONFIGURED",
+    "PRODUCTION_MACHINES_NOT_REGISTERED",
+    "LIVE_PRIVATE_POLICY_LIFECYCLE_NOT_VERIFIED"
+  ],
+  "notes": [
+    "This record proves only a disposable credential-free local three-machine simulation against the exact source commit.",
+    "The smoke verified three distinct ephemeral identities, signer bindings, container hardening, loopback-only ingress, malformed-ingress failure, restart identity rotation, and cleanup.",
+    "It does not prove hardware-backed confidentiality, stable public origins, on-chain machine registration, a live FCC result, policy custody, payment authorization, or a PayGuard release."
+  ]
+}

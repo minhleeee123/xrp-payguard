@@ -2,6 +2,8 @@
 
 `coston2/` will contain reviewed public-safe PayGuard evidence after live gates.
 `local/` is ignored and may contain generated local assertion summaries.
+`simulation/` contains reviewed public-safe local demo records whose status and
+assertions explicitly prevent them from satisfying a live FCC or release gate.
 
 The `coston2/bootstrap-funding*.json` files record only testnet bootstrap
 identifiers, balances, transactions, and booleans. They are not PayGuard
@@ -49,10 +51,16 @@ static-shell deployment and its HTTP HTML/JS/CSS smoke. It is a static preview
 only and does not represent a hosted relay, FCC origin, policy provider, wallet
 flow, or verified PayGuard release.
 
-The Vercel build publishes the same reviewed Coston2 JSON files and the
-metadata-only `https://xrp-payguard.vercel.app/evidence/index.json` endpoint.
-The endpoint is an evidence mirror, not a live policy, relay, FCC, or release
-service.
+`simulation/fcc-local-three-machine-2026-08-09.json` records the disposable
+credential-free three-machine Docker smoke selected for the hackathon demo. It
+contains only source/image identifiers and assertion booleans; it explicitly
+records the absence of hardware TEE attestation, stable origins, authenticated
+indexer access, production registration, and a live private-policy lifecycle.
+
+The Vercel build publishes the reviewed Coston2 and explicitly labelled
+simulation JSON files plus the metadata-only
+`https://xrp-payguard.vercel.app/evidence/index.json` endpoint. The endpoint is
+an evidence mirror, not a live policy, relay, FCC, or release service.
 
 Never store private policies, ciphertext, wallet/XRPL/FCC keys, signatures
 forbidden by policy, proxy/indexer credentials, authenticated raw responses, or
