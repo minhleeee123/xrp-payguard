@@ -95,7 +95,10 @@ owner, payee, executor, and auditor inspect public execution evidence
 - [x] Select the first narrow policy problem and record why private policy
   evaluation is necessary instead of an ordinary public smart contract.
 - [x] Freeze product non-claims, data map, threat model, and one-sentence demo.
-- [ ] Record all pre-existing/reused/new work before implementation begins.
+- [x] Publish a retrospective, commit-linked ledger of reference-only,
+  third-party, adapted, and new PayGuard work before submission. A complete
+  ledger was not committed before implementation began, so preserve that
+  chronology limitation instead of presenting the retrospective as prior art.
 
 Exit: one validated policy journey and one real design partner target exist.
 

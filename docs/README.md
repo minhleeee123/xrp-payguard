@@ -11,6 +11,8 @@
 - [`submission-draft.md`](submission-draft.md): copy-ready Interoperable Asset
   Products submission facts, public identifiers, limitations, and owner-only
   completion steps.
+- [`new-work-ledger.md`](new-work-ledger.md): retrospective, commit-linked
+  classification of reference-only, third-party, adapted, and new PayGuard work.
 - [`product/product-plan.md`](product/product-plan.md): complete product vision,
   users, capabilities, and acceptance criteria.
 - [`product/discovery.md`](product/discovery.md): frozen first problem,

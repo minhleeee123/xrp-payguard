@@ -87,7 +87,8 @@ deployment checks, evidence validators, and documentation were built in this
 repository. The official FCC scaffold is digest-pinned and used according to
 its documented boundary. VeilBid was read-only: its secrets, deployments,
 evidence, signatures, extension IDs, and machine identities were not copied.
-The detailed adaptation/provenance record is in
+The complete retrospective new-work classification is in
+[`new-work-ledger.md`](new-work-ledger.md). Detailed adaptation provenance is in
 [`technology/reuse-ledger.md`](technology/reuse-ledger.md) and
 [`technology/reuse-inventory.md`](technology/reuse-inventory.md).
 
