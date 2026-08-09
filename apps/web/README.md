@@ -1,6 +1,6 @@
 # Web application
 
-Vite laptop-first shell with an editorial landing page at `#landing`, plus
+Vite laptop-first shell with a full editorial landing page at `#landing`, plus
 Overview, Policy Studio, Vaults, Requests, Payee, wallet-free Auditor, and
 Team/roles surfaces. Its visual language follows the
 repository-level [`DESIGN.md`](../../DESIGN.md). The Policy Studio computes a
@@ -12,6 +12,13 @@ than substituting local receipts until a verified Coston2 machine set exists.
 It does not use browser storage, send ciphertext, or provide an authorization
 result. Other screens render explicit `planned`, `local`, and `unavailable`
 states until a verified Coston2 release is connected.
+
+The landing page includes a public/private data boundary, three inline SVG
+guardian mascots, the complete XRPL/FDC/Smart Account/FAssets/FCC journey,
+policy use cases, public-safe evidence scope, FAQ/limitations, and
+reduced-motion-compatible ambient effects. It makes no remote image request and
+never upgrades the local FCC simulation into a live release claim.
+
 The Vaults surface accepts only a schema-checked, finalized public snapshot;
 it verifies the conservation equation and shows no balance when the provider
 is unconfigured, unavailable, unfinalized, or invalid.

@@ -32,6 +32,7 @@ import {
   type StudioTemplateId,
 } from "./model.js";
 import { fetchPublicWebEvidenceIndex, type PublicWebEvidenceIndex } from "./web-evidence.js";
+import { landingView } from "./landing.js";
 
 type View = "overview" | "studio" | "vaults" | "requests" | "payee" | "auditor" | "team";
 type PublicEvidenceMirrorState =
@@ -101,34 +102,6 @@ function render(): void {
       </main>
     </div>`;
   wireEvents();
-}
-
-function landingView(): string {
-  return `<div class="landing-shell">
-    <header class="landing-topbar"><a class="landing-brand" href="#landing" aria-label="PayGuard home"><span class="brand-mark">P</span><span>PayGuard</span><span class="brand-beta">LOCAL</span></a><nav class="landing-nav" aria-label="Landing navigation"><a href="#landing">WHY PAYGUARD</a><a href="#trust">TRUST BOUNDARY</a><a href="#journey">JOURNEY</a><a href="#limits">LIMITATIONS</a></nav><button class="outline-button" type="button" data-action="open-app">Open app</button></header>
-    <main>
-      <section class="landing-hero" aria-labelledby="landing-title"><div class="landing-hero-art" aria-hidden="true"><svg viewBox="0 0 820 470" role="presentation"><g fill="#fff">${landingDots()}</g></svg></div><div class="landing-eyebrow">PRIVATE POLICY · PUBLIC ACTION</div><h1 id="landing-title">Authorize public value with <em>private</em> rules.</h1><p class="landing-lede">XRP PayGuard keeps authorization rules inside a registered FCC machine set while the requested action, amount, recipient, and settlement remain public and auditable.</p><div class="landing-actions"><button class="primary-button" type="button" data-action="landing-studio">Open Policy Studio</button><a class="landing-text-link" href="#trust">See the trust boundary ↘</a></div><div class="landing-status"><span class="status-dot amber"></span><span>Coston2 release <strong>planned</strong> · local product shell only</span></div></section>
-      <div class="neon-divider" aria-hidden="true"></div>
-      <section class="landing-section" id="trust" aria-labelledby="trust-title"><div class="landing-section-heading"><div><div class="eyebrow">BUILT FOR PUBLIC PROOF</div><h2 id="trust-title">Private rules.<br /><em>Public</em> checkpoints.</h2></div><p>Ordinary FTestXRP/FXRP transfers reveal amount, recipient, and timing. PayGuard hides only the policy logic that decides whether a public action is permitted.</p></div><div class="landing-card-grid"><article class="landing-card"><div class="landing-card-meta">01 · FCC CUSTODY</div><h3>Three receipts before activation.</h3><p>Each machine signs the same policy commitment, domain, code version, and nonce. A local preview never substitutes a receipt.</p><span class="landing-tag">PLANNED · 3 OF 3 REQUIRED</span></article><article class="landing-card"><div class="landing-card-meta">02 · PUBLIC EXECUTION</div><h3>Two matching results over one request.</h3><p>Threshold results bind the exact chain, vault, router, policy, request, checkpoint, nonce, attempt, and expiry before the router can act.</p><span class="landing-tag">LOCAL · 2 OF 3 TARGET</span></article><article class="landing-card"><div class="landing-card-meta">03 · RECOVERABLE STATE</div><h3>Chain checkpoints remain authoritative.</h3><p>Relays and browsers resume from finalized public state. Failure is denied or resumable; it is never presented as a mock approval.</p><span class="landing-tag">LOCAL · FAIL CLOSED</span></article></div></section>
-      <section class="landing-section journey-section" id="journey" aria-labelledby="journey-title"><div class="eyebrow">FLAGSHIP JOURNEY</div><h2 id="journey-title">From XRPL intent to a public Flare action.</h2><div class="journey-track"><div class="journey-step"><span>01</span><strong>XRPL wallet</strong><small>Owner signs a public payment; PayGuard never receives the XRPL seed.</small></div><div class="journey-arrow" aria-hidden="true">→</div><div class="journey-step"><span>02</span><strong>FDC / Smart Account</strong><small>Payment proof and nonce checkpoints are verified asynchronously.</small></div><div class="journey-arrow" aria-hidden="true">→</div><div class="journey-step"><span>03</span><strong>Flare vault</strong><small>Public balance and conservation state advance atomically.</small></div><div class="journey-arrow" aria-hidden="true">→</div><div class="journey-step"><span>04</span><strong>Public action</strong><small>Only an exact threshold result can authorize execution.</small></div></div></section>
-      <section class="landing-limitations" id="limits" aria-labelledby="limits-title"><div><div class="eyebrow">LIMITATIONS · READ FIRST</div><h2 id="limits-title">This is not private money.</h2></div><div><p>PayGuard does not hide transfers, mix funds, or make an allowlisted Web2 source truthful. It cannot report a proof, price, payment, or execution while an RPC, FDC, FTSO, FCC, relay, or wallet dependency is unavailable.</p><button class="outline-button" type="button" data-action="open-app">Inspect the local app</button></div></section>
-    </main><footer class="landing-footer"><span>PAYGUARD · PUBLIC CONTROL / PRIVATE RULES</span><span>TESTNET-ONLY PRODUCT PREVIEW</span></footer>
-  </div>`;
-}
-
-function landingDots(): string {
-  const dots: string[] = [];
-  for (let row = 0; row < 9; row += 1) {
-    for (let column = 0; column < 18; column += 1) {
-      const x = 35 + column * 45;
-      const y = 45 + row * 46;
-      const distance = Math.abs(column - 8.5) / 9 + Math.abs(row - 4) / 5;
-      if (distance < 1.45 && ((row * 7 + column * 11) % 5 !== 0 || distance < 0.75)) {
-        dots.push(`<circle cx="${x}" cy="${y}" r="1.5" opacity="${(0.35 + ((row + column) % 4) * 0.12).toFixed(2)}" />`);
-      }
-    }
-  }
-  return dots.join("");
 }
 
 function navItem(view: View, text: string, icon: string): string {
@@ -382,6 +355,27 @@ function wireEvents(): void {
       if (notice) notice.textContent = "Draft changed. The previous commitment is no longer current.";
     }
   });
+  wireLandingMotion();
+}
+
+function wireLandingMotion(): void {
+  const shell = app.querySelector<HTMLElement>(".landing-shell");
+  const items = Array.from(app.querySelectorAll<HTMLElement>(".landing-reveal"));
+  if (!shell || items.length === 0 || window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    || typeof IntersectionObserver === "undefined") return;
+  shell.classList.add("reveal-ready");
+  const pending = new Set(items);
+  const observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      const element = entry.target as HTMLElement;
+      element.classList.add("is-visible");
+      observer.unobserve(element);
+      pending.delete(element);
+    }
+    if (pending.size === 0) observer.disconnect();
+  }, { rootMargin: "0px 0px -8%", threshold: 0.08 });
+  for (const item of items) observer.observe(item);
 }
 
 function handleAction(action: string): void {
@@ -389,6 +383,7 @@ function handleAction(action: string): void {
   if (action === "landing") { window.history.pushState(null, "", `${window.location.pathname}${window.location.search}#landing`); landingOpen = true; mobileMenuOpen = false; render(); return; }
   if (action === "open-app") { window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`); landingOpen = false; activeView = "overview"; render(); return; }
   if (action === "landing-studio") { window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`); landingOpen = false; activeView = "studio"; render(); return; }
+  if (action === "landing-auditor") { window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`); landingOpen = false; activeView = "auditor"; render(); return; }
   if (action === "notifications") { notificationOpen = !notificationOpen; render(); return; }
   if (action === "mobile-menu") { mobileMenuOpen = !mobileMenuOpen; render(); return; }
   if (action === "export-notifications") { exportNotifications(); return; }

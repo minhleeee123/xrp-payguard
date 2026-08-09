@@ -1,0 +1,38 @@
+import { readFileSync } from "node:fs";
+import { describe, expect, it } from "vitest";
+import { landingView } from "../src/landing.js";
+
+describe("editorial landing page", () => {
+  it("contains the full product story and honest release boundary", () => {
+    const html = landingView();
+    for (const id of ["why", "guardians", "journey", "use-cases", "evidence", "limits"]) {
+      expect(html).toContain(`id="${id}"`);
+    }
+    expect(html).toContain("PRIVATE POLICY · PUBLIC ACTION");
+    expect(html).toContain("PayGuard is not private money");
+    expect(html).toContain("Local simulated only");
+    expect(html).toContain("Not yet verified");
+    expect(html).toContain("PRODUCT MODEL · NOT PILOTED");
+    expect(html.match(/class="neon-divider"/g)).toHaveLength(1);
+    expect(html.match(/<details/g)).toHaveLength(4);
+  });
+
+  it("renders three meaningful code-native SVG mascots without chromatic assets", () => {
+    const html = landingView();
+    expect(html.match(/data-mascot=/g)).toHaveLength(3);
+    expect(html).toContain('data-mascot="cipher"');
+    expect(html).toContain('data-mascot="quorum"');
+    expect(html).toContain('data-mascot="ledger"');
+    expect(html.match(/class="guardian-svg/g)).toHaveLength(3);
+    expect(html.match(/aria-hidden="true" focusable="false"/g)).toHaveLength(4);
+    expect(html).not.toMatch(/<img|gradient|data:image|https?:\/\/[^" ]+\.(?:png|jpe?g|webp)/i);
+  });
+
+  it("keeps motion optional and content visible without animation", () => {
+    const css = readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
+    expect(css).toContain("prefers-reduced-motion: reduce");
+    expect(css).toContain(".reveal-ready .landing-reveal.is-visible");
+    expect(css).toContain(".reveal-ready .landing-reveal { opacity: 1; transform: none; }");
+    expect(css).not.toMatch(/(?:linear|radial|conic)-gradient/i);
+  });
+});

@@ -243,9 +243,34 @@ Below the hero, one 6px lime divider appears once. Follow with three sharp cards
 - `PUBLIC EXECUTION` — two matching results over the exact request/checkpoint;
 - `RECOVERABLE STATE` — chain checkpoints remain replay/rollback authority.
 
-The final section shows the flagship XRPL → FDC/Smart Account → Flare vault →
-public action journey and a plain limitations block. No logo wall or fake live
-metrics is allowed.
+After the trust cards, the complete landing narrative uses this order:
+
+1. public-ledger/private-rulebook data boundary;
+2. three code-native guardian mascots;
+3. XRPL → FDC/Smart Account → Flare vault → FCC gate → public action journey;
+4. personal subscription, treasury vendor, and delegated-budget templates;
+5. public-safe verified-versus-limited evidence terminal;
+6. FAQ/limitations; and
+7. a final local Policy Studio CTA.
+
+No logo wall, partner claim, fake live metric, invented pilot, or repeated neon
+divider is allowed. A longer landing page must increase comprehension rather
+than repeat marketing copy.
+
+### Guardian mascot system
+
+The landing page may use three inline SVG mascots to make protocol ownership
+memorable without becoming childish or implying live machines:
+
+- **Cipher** — all-three compatible policy custody;
+- **Quorum** — two distinct matching evaluation results; and
+- **Ledger** — canonical chain checkpoint/replay authority.
+
+Mascots use line-only Pearl/Ash strokes, a Moss/Olive orbit, and one tiny Signal
+Lime status point. They use no raster assets, gradients, multicolor fills,
+drop-shadows, remote requests, or hidden product claims. Each sits beside a
+textual role and explicit `LOCAL`, `TARGET`, or `TESTED` label, so the SVG can be
+decorative (`aria-hidden`) without losing information.
 
 ### Overview
 
@@ -317,6 +342,14 @@ receipts; active rules never silently mutate.
 - Respect `prefers-reduced-motion: reduce`; no information depends on animation.
 - Keep body text at least `14px` and maintain readable contrast for ash metadata.
 
+Landing motion is ambient and subordinate to reading: slow dotted-globe drift,
+orbit rotation, small signal pulses, one scan line, gentle mascot float/blink,
+surface-tone hover, and one-time intersection reveal. Motion never changes
+status or exposes information. Content is visible before JavaScript enhancement;
+the reveal state is added only when `IntersectionObserver` exists. Reduced-motion
+mode removes transforms/reveals and shortens every animation to effectively
+zero.
+
 ## 7. Privacy and implementation constraints
 
 - No policy plaintext or ciphertext in browser persistence, analytics, logs,
@@ -336,6 +369,7 @@ The current Vite app maps to:
 | Design area | Source |
 | --- | --- |
 | Application shell and screens | `apps/web/src/main.ts` |
+| Landing narrative and SVG mascots | `apps/web/src/landing.ts` |
 | Policy Studio domain/preview | `apps/web/src/model.ts` |
 | Base tokens and shared layout | `apps/web/src/styles.css` |
 | Studio-specific components | `apps/web/src/studio.css` |
