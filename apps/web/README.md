@@ -63,3 +63,7 @@ The build also emits only the allowlisted public evidence files under
 as the metadata entry point. This endpoint contains testnet identifiers,
 hashes, statuses, and assertion booleans; it never contains policy plaintext,
 ciphertext, keys, credentials, or private denial details.
+
+The Auditor view may display this index as a static evidence mirror. It keeps
+the live audit state unavailable until a verified RPC/provider supplies a
+finalized request, result, signer mapping, and conservation snapshot.

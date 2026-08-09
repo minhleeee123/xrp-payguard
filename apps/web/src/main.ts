@@ -31,8 +31,13 @@ import {
   type StudioIssue,
   type StudioTemplateId,
 } from "./model.js";
+import { fetchPublicWebEvidenceIndex, type PublicWebEvidenceIndex } from "./web-evidence.js";
 
 type View = "overview" | "studio" | "vaults" | "requests" | "payee" | "auditor" | "team";
+type PublicEvidenceMirrorState =
+  | { status: "LOADING" }
+  | { status: "READY"; index: PublicWebEvidenceIndex }
+  | { status: "UNAVAILABLE"; reason: "NOT_PUBLISHED" | "INVALID" };
 
 const appElement = document.querySelector<HTMLDivElement>("#app");
 if (!appElement) throw new Error("PayGuard root missing");
@@ -55,6 +60,7 @@ let notificationState: PublicNotificationReadState = unavailableNotificationStat
 let notificationOpen = false;
 let mobileMenuOpen = false;
 let landingOpen = window.location.hash === "#landing";
+let publicEvidenceMirrorState: PublicEvidenceMirrorState = { status: "LOADING" };
 
 const esc = (value: string): string => value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character] ?? character));
 const short = (value: string): string => value.length > 18 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value;
@@ -277,7 +283,19 @@ function auditorView(): string {
     ? `<li><span class="evidence-icon">#</span><div><strong>Policy commitment</strong><small>${esc(short(evidence.policy.policyCommitment))} · schema ${esc(short(evidence.policy.schema))}</small></div><span class="state-tag green-tag">VERIFIED</span></li><li><span class="evidence-icon">♧</span><div><strong>Machine/key binding</strong><small>3 frozen identities · ${evidence.policy.resultThreshold}-of-${evidence.policy.machineIds.length} result threshold</small></div><span class="state-tag green-tag">VERIFIED</span></li><li><span class="evidence-icon">↗</span><div><strong>Decision digest</strong><small>${evidence.decision} · ${esc(short(evidence.resultDigest))} · ${evidence.executionStatus}</small></div><span class="state-tag green-tag">VERIFIED</span></li><li><span class="evidence-icon">∑</span><div><strong>Conservation</strong><small>${evidence.conservation.deposited} = ${evidence.conservation.available} + ${evidence.conservation.reserved} + ${evidence.conservation.spent} + ${evidence.conservation.withdrawn} + ${evidence.conservation.refunded}</small></div><span class="state-tag green-tag">VERIFIED</span></li><li><span class="evidence-icon">◇</span><div><strong>External input</strong><small>${evidence.inputKind} · ${evidence.inputFinalized ? "finalized" : "not required"}</small></div><span class="state-tag green-tag">VERIFIED</span></li>`
     : `<li><span class="evidence-icon">#</span><div><strong>Policy commitment</strong><small>Hash only · no rules or ciphertext</small></div><span class="state-tag gray-tag">WAITING</span></li><li><span class="evidence-icon">♧</span><div><strong>Machine/key binding</strong><small>Three frozen identities · 2-of-3 result threshold</small></div><span class="state-tag gray-tag">WAITING</span></li><li><span class="evidence-icon">↗</span><div><strong>Decision digest</strong><small>Exact request, checkpoint, expiry, and signers</small></div><span class="state-tag gray-tag">WAITING</span></li><li><span class="evidence-icon">∑</span><div><strong>Conservation</strong><small>Deposited = available + reserved + spent + withdrawn + refunded</small></div><span class="state-tag gray-tag">WAITING</span></li><li><span class="evidence-icon">◇</span><div><strong>External input</strong><small>FTSO/FDC commitment and finalization status</small></div><span class="state-tag gray-tag">WAITING</span></li>`;
   return `${pageIntro("WALLET-FREE VERIFIER", "Auditor view", "Inspect public commitments and conservation without connecting a wallet or revealing the policy.")}
-    <div class="auditor-grid"><section class="panel verify-card"><div class="eyebrow">PUBLIC EVIDENCE</div><h2>Verify a PayGuard action</h2><p>Paste a request ID or transaction hash from a verified release. Private policy material is never requested.</p><label>Request or transaction ID<input placeholder="0x…" spellcheck="false" /></label><button class="primary-button" type="button" data-action="verify">Check finalized state</button><div class="unavailable-box"><span class="status-dot amber"></span><div><strong>${evidence ? "Public evidence verified" : "Evidence endpoint not connected"}</strong><small>${esc(unavailableReason)}. ${evidence ? `Block ${evidence.evidenceBlock} · ${evidence.executionStatus} · no private payload.` : "This preview cannot assert a transaction, block, proof, or signer."}</small></div></div></section><section class="panel evidence-card"><div class="eyebrow">ASSERTION CHECKLIST</div><h2>What an auditor will see</h2><ul class="evidence-list">${checklist}</ul></section></div>`;
+    <div class="auditor-grid"><section class="panel verify-card"><div class="eyebrow">PUBLIC EVIDENCE</div><h2>Verify a PayGuard action</h2><p>Paste a request ID or transaction hash from a verified release. Private policy material is never requested.</p><label>Request or transaction ID<input placeholder="0x…" spellcheck="false" /></label><button class="primary-button" type="button" data-action="verify">Check finalized state</button><div class="unavailable-box"><span class="status-dot amber"></span><div><strong>${evidence ? "Public evidence verified" : "Live evidence endpoint unavailable"}</strong><small>${esc(unavailableReason)}. ${evidence ? `Block ${evidence.evidenceBlock} · ${evidence.executionStatus} · no private payload.` : "This preview cannot assert a transaction, block, proof, or signer."}</small></div></div></section><section class="panel evidence-card"><div class="eyebrow">ASSERTION CHECKLIST</div><h2>What an auditor will see</h2><ul class="evidence-list">${checklist}</ul></section></div>
+    ${publicEvidenceMirrorView()}`;
+}
+
+function publicEvidenceMirrorView(): string {
+  if (publicEvidenceMirrorState.status === "LOADING") {
+    return `<section class="panel evidence-mirror"><div class="eyebrow">STATIC EVIDENCE MIRROR</div><h2>Checking public index…</h2><p class="panel-copy">Only reviewed testnet metadata is loaded. No policy, signature, or authorization result is requested.</p></section>`;
+  }
+  if (publicEvidenceMirrorState.status === "UNAVAILABLE") {
+    return `<section class="panel evidence-mirror"><div class="eyebrow">STATIC EVIDENCE MIRROR</div><h2>Evidence mirror unavailable</h2><p class="panel-copy">The static public index is not published or failed schema validation. This UI does not substitute a local evidence result.</p><span class="state-tag amber-tag">UNAVAILABLE</span></section>`;
+  }
+  const { index } = publicEvidenceMirrorState;
+  return `<section class="panel evidence-mirror"><div class="panel-heading"><div><div class="eyebrow">STATIC EVIDENCE MIRROR</div><h2>${index.entries.length} reviewed artifacts</h2></div><span class="state-tag green-tag">TESTNET · PUBLIC</span></div><p class="panel-copy">This index exposes only public identifiers, hashes, statuses, and assertion booleans. It is not a live policy provider or authorization result.</p><div class="evidence-mirror-meta"><span>${index.entries.filter((entry) => entry.chainId === "114").length} Coston2 artifacts</span><span>Private fields rejected</span><a href="/evidence/index.json" target="_blank" rel="noreferrer">Open index ↗</a></div></section>`;
 }
 
 function auditUnavailableReason(reason: string): string {
@@ -365,7 +383,7 @@ function handleAction(action: string): void {
   if (action === "notifications") { notificationOpen = !notificationOpen; render(); return; }
   if (action === "mobile-menu") { mobileMenuOpen = !mobileMenuOpen; render(); return; }
   if (action === "export-notifications") { exportNotifications(); return; }
-  if (action === "verify") appNotice = "Evidence endpoint is unavailable; no transaction, block, proof, or signer was asserted.";
+  if (action === "verify") appNotice = "Live evidence is unavailable; the static mirror cannot assert a transaction, proof, signer, or authorization result.";
   else if (action === "connect") appNotice = "Wallet providers are unavailable until a verified Coston2 release is configured.";
   else if (action === "details") appNotice = "This preview reports only finalized public checkpoints; live dependencies are not configured.";
   else if (action === "help") appNotice = "PayGuard keeps policy rules in FCC custody while public requests and settlement remain visible.";
@@ -440,6 +458,9 @@ function readStudioDraft(form: HTMLFormElement): StudioDraft {
 }
 
 render();
+void fetchPublicWebEvidenceIndex()
+  .then((index) => { publicEvidenceMirrorState = { status: "READY", index }; if (!landingOpen) render(); })
+  .catch(() => { publicEvidenceMirrorState = { status: "UNAVAILABLE", reason: "NOT_PUBLISHED" }; if (!landingOpen) render(); });
 window.addEventListener("hashchange", () => {
   landingOpen = window.location.hash === "#landing";
   render();
