@@ -380,8 +380,11 @@ evidence, and live role journeys remain open.
   activation block; live ingress and activation evidence remain open.
 - [x] Build the Accounts/Vaults surface with injected-wallet Coston2 connection,
   one-finalized-block runtime/wiring/asset verification, public wallet and vault
-  balances, conservation, and recovery copy; wallet approval, deposits, and
-  withdrawals remain open as the next transaction unit.
+  balances, conservation, and recovery copy. Add two-step exact FTestXRP
+  approval/deposit/withdrawal controls with preflight simulation, injected-wallet
+  signing, finalized receipt/event checks, and exact postcondition verification;
+  unit and browser preview checks pass, while a fresh UI-submitted transaction
+  remains outside the current evidence set.
 - [x] Build the local Schedule/Requests surface with occurrence readiness,
   public threshold decisions, expiry, and recovery; live executor actions
   remain open.

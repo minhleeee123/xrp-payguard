@@ -113,6 +113,14 @@ menu. The separate Vercel evidence record covers public HTML/JS/CSS and evidence
 reachability, desktop/mobile Chrome captures, and Enter-key activation from the
 landing page to the Overview view. Neither run is a live FCC or release smoke.
 
+The later connected-vault browser smoke restored an injected public account,
+verified the deployed Coston2 runtime/wiring/asset and finalized account state,
+and opened the exact approval preview without issuing
+`eth_sendTransaction`. Writer unit tests cover exact six-decimal amount parsing,
+balance/allowance preflight, Approval/Deposited/Withdrawn event matching, and
+post-finalization state changes. This validates the safety boundary and UI
+workflow, not a newly submitted owner-wallet transaction or FCC authorization.
+
 Separate Lighthouse 13.0.1 lab runs against the production landing and Overview
 route scored 100 performance, accessibility, best practices, and SEO for both
 routes. The landing measured FCP 1,085 ms, LCP 1,139 ms, TBT 4 ms, and CLS 0;

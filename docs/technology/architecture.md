@@ -216,8 +216,12 @@ Coston2 chain selection. It pins runtime, wiring, token metadata, balances,
 allowance, and vault accounting reads to one finalized block. The UI publishes
 no balance when any runtime hash, contract binding, supported-asset check,
 schema, RPC read, or conservation equation fails. Transaction signing remains
-inside the injected wallet and is enabled only by a separate reviewed writer
-flow.
+inside the injected wallet. The reviewed writer requires a separate exact
+preview and confirmation, simulates against the verified contracts, waits for
+the receipt to become finalized, validates the corresponding Approval,
+Deposited, or Withdrawn event, and then checks exact balance/allowance/vault
+postconditions. It fails closed on wallet rejection, revert, event drift,
+provider failure, or state mismatch and never accepts a private key.
 
 ### XRPL-native path
 

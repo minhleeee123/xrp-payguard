@@ -19,8 +19,14 @@ hashes against reviewed PayGuard evidence, verifies router/vault wiring and
 the supported FTestXRP metadata, then displays exact C2FLR, wallet FTestXRP,
 allowance, and conservation-checked vault accounting. Runtime, wiring, asset,
 RPC, schema, or conservation drift fails closed and clears every asserted live
-balance. This first live integration is read-only; approve, deposit, withdraw,
-request, and execution transaction controls remain separate reviewed units.
+balance. The Vaults writer supports exact FTestXRP approval, deposit, and
+withdrawal through a two-step preview. Before opening the wallet it reuses the
+verified finalized snapshot for balance/allowance checks; it then simulates the
+call, waits for the receipt and a finalized block, validates the exact contract
+event, and proves the expected post-transaction balance change. A rejection,
+revert, missing event, provider failure, or postcondition mismatch is never
+reported as success. Request and execution controls remain separate reviewed
+units.
 
 The landing page includes a public/private data boundary, three inline SVG
 guardian mascots, the complete XRPL/FDC/Smart Account/FAssets/FCC journey,
@@ -30,7 +36,10 @@ never upgrades the local FCC simulation into a live release claim.
 
 The Vaults surface accepts only the verified finalized Coston2 account snapshot;
 it verifies the conservation equation and shows no balance when the wallet or
-RPC is unconfigured, unavailable, unfinalized, or invalid.
+RPC is unconfigured, unavailable, unfinalized, or invalid. Transaction signing
+stays in the injected wallet, and the page never asks for or handles a private
+key. Unit coverage and a browser preview smoke are complete; a fresh owner-wallet
+transaction submitted from this UI is not yet recorded as release evidence.
 Requests & schedules applies the same boundary to request hashes, checkpoints,
 occurrence windows, threshold-derived decisions, expiry, and recovery states;
 it never creates an approval when the public request endpoint is unavailable.

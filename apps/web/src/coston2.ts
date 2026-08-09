@@ -3,13 +3,19 @@ import {
   PayGuardVaultAbi,
 } from "@xrp-payguard/bindings";
 import {
+  createWalletClient,
   createPublicClient,
+  custom,
+  decodeEventLog,
   erc20Abi,
   getAddress,
   http,
   keccak256,
+  parseUnits,
   type Address,
+  type Hash,
   type Hex,
+  type TransactionReceipt,
 } from "viem";
 
 export const COSTON2_CHAIN = {
@@ -87,6 +93,43 @@ export interface Coston2AccountSnapshot {
   };
 }
 
+export type VaultTransactionKind = "APPROVE" | "DEPOSIT" | "WITHDRAW";
+export type VaultTransactionFailure =
+  | "INPUT_INVALID"
+  | "INSUFFICIENT_TOKEN_BALANCE"
+  | "ALLOWANCE_REQUIRED"
+  | "INSUFFICIENT_VAULT_BALANCE"
+  | "USER_REJECTED"
+  | "TRANSACTION_REVERTED"
+  | "EVENT_MISMATCH"
+  | "POSTCONDITION_FAILED"
+  | "PROVIDER_ERROR";
+
+export class VaultTransactionError extends Error {
+  readonly reason: VaultTransactionFailure;
+
+  constructor(reason: VaultTransactionFailure) {
+    super(reason);
+    this.name = "VaultTransactionError";
+    this.reason = reason;
+  }
+}
+
+export interface VaultTransactionResult {
+  kind: VaultTransactionKind;
+  amount: bigint;
+  hash: Hash;
+  blockNumber: bigint;
+  before: Coston2AccountSnapshot;
+  after: Coston2AccountSnapshot;
+}
+
+export interface VaultReceiptLog {
+  address: Address;
+  data: Hex;
+  topics: [] | [Hex, ...Hex[]];
+}
+
 export interface RuntimeCodeHashes {
   registry: Hex;
   vault: Hex;
@@ -115,6 +158,122 @@ const publicClient = createPublicClient({
   chain: COSTON2_CHAIN,
   transport: http(COSTON2_CHAIN.rpcUrls.default.http[0], { retryCount: 2, timeout: 15_000 }),
 });
+
+export function parseFTestXrpAmount(value: string): bigint {
+  const normalized = value.trim();
+  if (!/^(?:0|[1-9][0-9]*)(?:\.[0-9]{1,6})?$/.test(normalized)) throw new VaultTransactionError("INPUT_INVALID");
+  let amount: bigint;
+  try { amount = parseUnits(normalized, 6); } catch { throw new VaultTransactionError("INPUT_INVALID"); }
+  if (amount <= 0n) throw new VaultTransactionError("INPUT_INVALID");
+  return amount;
+}
+
+export function validateVaultTransaction(kind: VaultTransactionKind, amount: bigint, snapshot: Coston2AccountSnapshot): void {
+  if (amount <= 0n) throw new VaultTransactionError("INPUT_INVALID");
+  if ((kind === "APPROVE" || kind === "DEPOSIT") && amount > snapshot.tokenBalance) {
+    throw new VaultTransactionError("INSUFFICIENT_TOKEN_BALANCE");
+  }
+  if (kind === "DEPOSIT" && amount > snapshot.vaultAllowance) throw new VaultTransactionError("ALLOWANCE_REQUIRED");
+  if (kind === "WITHDRAW" && amount > snapshot.accounting.available) throw new VaultTransactionError("INSUFFICIENT_VAULT_BALANCE");
+}
+
+export function verifyVaultPostcondition(
+  kind: VaultTransactionKind,
+  amount: bigint,
+  before: Coston2AccountSnapshot,
+  after: Coston2AccountSnapshot,
+): void {
+  if (before.account.toLowerCase() !== after.account.toLowerCase() || after.finalizedBlock < before.finalizedBlock) {
+    throw new VaultTransactionError("POSTCONDITION_FAILED");
+  }
+  if (kind === "APPROVE") {
+    if (after.vaultAllowance !== amount || after.tokenBalance !== before.tokenBalance || !sameAccounting(before.accounting, after.accounting)) {
+      throw new VaultTransactionError("POSTCONDITION_FAILED");
+    }
+    return;
+  }
+  if (kind === "DEPOSIT") {
+    if (after.tokenBalance !== before.tokenBalance - amount
+      || after.accounting.deposited !== before.accounting.deposited + amount
+      || after.accounting.available !== before.accounting.available + amount
+      || after.accounting.reserved !== before.accounting.reserved
+      || after.accounting.spent !== before.accounting.spent
+      || after.accounting.withdrawn !== before.accounting.withdrawn
+      || after.accounting.refunded !== before.accounting.refunded) {
+      throw new VaultTransactionError("POSTCONDITION_FAILED");
+    }
+    return;
+  }
+  if (after.tokenBalance !== before.tokenBalance + amount
+    || after.accounting.deposited !== before.accounting.deposited
+    || after.accounting.available !== before.accounting.available - amount
+    || after.accounting.reserved !== before.accounting.reserved
+    || after.accounting.spent !== before.accounting.spent
+    || after.accounting.withdrawn !== before.accounting.withdrawn + amount
+    || after.accounting.refunded !== before.accounting.refunded) {
+    throw new VaultTransactionError("POSTCONDITION_FAILED");
+  }
+}
+
+export async function executeVaultTransaction(
+  kind: VaultTransactionKind,
+  amount: bigint,
+  account: Address,
+  provider: Eip1193Provider | null,
+): Promise<VaultTransactionResult> {
+  if (!provider) throw new VaultTransactionError("PROVIDER_ERROR");
+  const before = await loadCoston2AccountSnapshot(account);
+  validateVaultTransaction(kind, amount, before);
+  const wallet = createWalletClient({ account, chain: COSTON2_CHAIN, transport: custom(provider) });
+  let hash: Hash;
+  try {
+    if (kind === "APPROVE") {
+      const { request } = await publicClient.simulateContract({
+        account,
+        address: PAYGUARD_COSTON2.asset,
+        abi: erc20Abi,
+        functionName: "approve",
+        args: [PAYGUARD_COSTON2.vault, amount],
+      });
+      hash = await wallet.writeContract(request);
+    } else {
+      const { request } = await publicClient.simulateContract({
+        account,
+        address: PAYGUARD_COSTON2.vault,
+        abi: PayGuardVaultAbi,
+        functionName: kind === "DEPOSIT" ? "deposit" : "withdraw",
+        args: kind === "DEPOSIT"
+          ? [PAYGUARD_COSTON2.asset, amount, account]
+          : [PAYGUARD_COSTON2.asset, amount, account],
+      });
+      hash = await wallet.writeContract(request);
+    }
+  } catch (error) {
+    if (hasProviderErrorCode(error, 4001)) throw new VaultTransactionError("USER_REJECTED");
+    throw new VaultTransactionError("PROVIDER_ERROR");
+  }
+  const receipt = await waitForFinalizedReceipt(hash);
+  verifyVaultReceiptEvent(kind, amount, account, receipt.logs);
+  const after = await loadCoston2AccountSnapshot(account);
+  verifyVaultPostcondition(kind, amount, before, after);
+  return { kind, amount, hash, blockNumber: receipt.blockNumber, before, after };
+}
+
+export function vaultTransactionFailureMessage(reason: VaultTransactionFailure): string {
+  if (reason === "INPUT_INVALID") return "Enter a positive FTestXRP amount with at most 6 decimal places.";
+  if (reason === "INSUFFICIENT_TOKEN_BALANCE") return "The connected wallet does not have enough finalized FTestXRP.";
+  if (reason === "ALLOWANCE_REQUIRED") return "Approve at least this exact FTestXRP amount before depositing.";
+  if (reason === "INSUFFICIENT_VAULT_BALANCE") return "The finalized vault available balance is lower than this withdrawal.";
+  if (reason === "USER_REJECTED") return "The wallet request was cancelled. No PayGuard success is being asserted.";
+  if (reason === "TRANSACTION_REVERTED") return "The Coston2 transaction reverted.";
+  if (reason === "EVENT_MISMATCH") return "The receipt did not contain the exact expected public event.";
+  if (reason === "POSTCONDITION_FAILED") return "The finalized post-transaction balance or conservation check did not match the intent.";
+  return "The wallet or Coston2 provider could not complete the transaction safely.";
+}
+
+export function explorerTransaction(hash: Hash): string {
+  return `${COSTON2_CHAIN.blockExplorers.default.url}/tx/${hash}`;
+}
 
 export function injectedProvider(value: unknown = globalThis.window): Eip1193Provider | null {
   if (typeof value !== "object" || value === null) return null;
@@ -297,4 +456,72 @@ function providerErrorCode(error: unknown): number | null {
   if (typeof error !== "object" || error === null || !("code" in error)) return null;
   const code = (error as { code?: unknown }).code;
   return typeof code === "number" ? code : null;
+}
+
+function hasProviderErrorCode(error: unknown, expected: number): boolean {
+  let current: unknown = error;
+  for (let depth = 0; depth < 8 && typeof current === "object" && current !== null; depth += 1) {
+    if (providerErrorCode(current) === expected) return true;
+    current = (current as { cause?: unknown }).cause;
+  }
+  return false;
+}
+
+function sameAccounting(left: VaultAccounting, right: VaultAccounting): boolean {
+  return left.deposited === right.deposited
+    && left.available === right.available
+    && left.reserved === right.reserved
+    && left.spent === right.spent
+    && left.withdrawn === right.withdrawn
+    && left.refunded === right.refunded;
+}
+
+async function waitForFinalizedReceipt(hash: Hash): Promise<TransactionReceipt> {
+  let receipt: TransactionReceipt;
+  try {
+    receipt = await publicClient.waitForTransactionReceipt({ hash, confirmations: 1, timeout: 90_000 });
+  } catch {
+    throw new VaultTransactionError("PROVIDER_ERROR");
+  }
+  if (receipt.status !== "success") throw new VaultTransactionError("TRANSACTION_REVERTED");
+  for (let attempt = 0; attempt < 60; attempt += 1) {
+    try {
+      const finalized = await publicClient.getBlock({ blockTag: "finalized" });
+      if (finalized.number !== null && finalized.number >= receipt.blockNumber) return receipt;
+    } catch {
+      // A transient RPC failure remains bounded; no success is returned early.
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1_000));
+  }
+  throw new VaultTransactionError("PROVIDER_ERROR");
+}
+
+export function verifyVaultReceiptEvent(kind: VaultTransactionKind, amount: bigint, account: Address, logs: readonly VaultReceiptLog[]): void {
+  const expectedAddress = kind === "APPROVE" ? PAYGUARD_COSTON2.asset : PAYGUARD_COSTON2.vault;
+  for (const log of logs) {
+    if (log.address.toLowerCase() !== expectedAddress.toLowerCase()) continue;
+    try {
+      if (kind === "APPROVE") {
+        const decoded = decodeEventLog({ abi: erc20Abi, data: log.data, topics: log.topics });
+        if (decoded.eventName === "Approval"
+          && decoded.args.owner.toLowerCase() === account.toLowerCase()
+          && decoded.args.spender.toLowerCase() === PAYGUARD_COSTON2.vault.toLowerCase()
+          && decoded.args.value === amount) return;
+      } else {
+        const decoded = decodeEventLog({ abi: PayGuardVaultAbi, data: log.data, topics: log.topics });
+        if (kind === "DEPOSIT" && decoded.eventName === "Deposited"
+          && decoded.args.owner.toLowerCase() === account.toLowerCase()
+          && decoded.args.asset.toLowerCase() === PAYGUARD_COSTON2.asset.toLowerCase()
+          && decoded.args.amount === amount) return;
+        if (kind === "WITHDRAW" && decoded.eventName === "Withdrawn"
+          && decoded.args.owner.toLowerCase() === account.toLowerCase()
+          && decoded.args.asset.toLowerCase() === PAYGUARD_COSTON2.asset.toLowerCase()
+          && decoded.args.to.toLowerCase() === account.toLowerCase()
+          && decoded.args.amount === amount) return;
+      }
+    } catch {
+      // Ignore unrelated or malformed logs; one exact event is mandatory below.
+    }
+  }
+  throw new VaultTransactionError("EVENT_MISMATCH");
 }

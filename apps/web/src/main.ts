@@ -35,15 +35,22 @@ import { landingView } from "./landing.js";
 import {
   COSTON2_CHAIN,
   PAYGUARD_COSTON2,
+  VaultTransactionError,
   WalletConnectionError,
   connectCoston2Wallet,
   coston2ReadFailureMessage,
+  executeVaultTransaction,
   explorerAddress,
+  explorerTransaction,
   injectedProvider,
   loadCoston2AccountSnapshot,
+  parseFTestXrpAmount,
   readWalletSession,
+  validateVaultTransaction,
+  vaultTransactionFailureMessage,
   walletFailureMessage,
   type Coston2AccountSnapshot,
+  type VaultTransactionKind,
 } from "./coston2.js";
 
 type View = "overview" | "studio" | "vaults" | "requests" | "payee" | "auditor" | "team";
@@ -62,6 +69,11 @@ type Coston2UiState =
   | { status: "LOADING" }
   | { status: "READY"; snapshot: Coston2AccountSnapshot }
   | { status: "UNAVAILABLE"; message: string };
+type VaultTransactionUiState =
+  | { status: "IDLE" }
+  | { status: "SUBMITTING"; kind: VaultTransactionKind; amount: bigint }
+  | { status: "SUCCESS"; kind: VaultTransactionKind; amount: bigint; hash: `0x${string}`; blockNumber: bigint }
+  | { status: "ERROR"; message: string };
 
 const appElement = document.querySelector<HTMLDivElement>("#app");
 if (!appElement) throw new Error("PayGuard root missing");
@@ -88,6 +100,9 @@ const walletProvider = injectedProvider();
 let walletState: WalletUiState = { status: "DISCONNECTED" };
 let coston2State: Coston2UiState = { status: "IDLE" };
 let liveReadSequence = 0;
+let vaultAmountInput = "1";
+let vaultIntent: { kind: VaultTransactionKind; amount: bigint } | null = null;
+let vaultTransactionState: VaultTransactionUiState = { status: "IDLE" };
 
 const esc = (value: string): string => value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character] ?? character));
 const short = (value: string): string => value.length > 18 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value;
@@ -266,7 +281,25 @@ function vaultsView(): string {
   const live = liveSnapshot();
   const account = connectedAccount();
   return `${pageIntro("PUBLIC ASSET VAULTS", "Your Coston2 vault", "Read one finalized public checkpoint before approving, depositing, or withdrawing test tokens.")}
-    <div class="vault-card panel"><div class="vault-card-top"><div class="token-symbol">X</div><div><h2>FTestXRP vault</h2><span class="muted">${account ? esc(short(account)) : "Public asset · Coston2"}</span></div><span class="state-tag ${live ? "green-tag" : "amber-tag"}">${live ? "LIVE READ" : account ? "READ BLOCKED" : "CONNECT"}</span></div><div class="vault-balance"><span>Available in vault</span><strong>${live ? token(live.accounting.available) : "—"} <small>FTestXRP</small></strong><span class="muted">${live ? `Finalized block ${live.finalizedBlock}` : account ? "Live verification must pass before balances appear" : "Connect an injected wallet to read account state"}</span></div><div class="vault-stats"><div><span>Deposited</span><strong>${live ? token(live.accounting.deposited) : "—"}</strong></div><div><span>Reserved</span><strong>${live ? token(live.accounting.reserved) : "—"}</strong></div><div><span>Spent</span><strong>${live ? token(live.accounting.spent) : "—"}</strong></div><div><span>Withdrawn</span><strong>${live ? token(live.accounting.withdrawn) : "—"}</strong></div></div><div class="vault-public-state"><div><span>Conservation</span><strong>${live ? "Verified at finalized block" : "Waiting for Coston2"}</strong></div><div><span>Wallet balance</span><strong>${live ? `${token(live.tokenBalance)} FTestXRP` : "—"}</strong></div><div><span>Vault allowance</span><strong>${live ? `${token(live.vaultAllowance)} FTestXRP` : "—"}</strong></div><div><span>Contract runtime</span><strong>${live ? "Verified against deployment evidence" : "—"}</strong></div></div><div class="vault-actions"><button class="primary-button" type="button" data-action="${account ? "refresh" : "connect"}">${live ? "Refresh finalized state" : account ? "Retry finalized reads" : "Connect Coston2 wallet"}</button>${live ? `<a class="outline-button inline-link" href="${explorerAddress(PAYGUARD_COSTON2.vault)}" target="_blank" rel="noreferrer">Vault explorer ↗</a>` : `<button class="outline-button" type="button" data-action="details">How funding works</button>`}</div></div><div class="section-grid"><section class="panel"><div class="panel-heading"><div><div class="eyebrow">EVM TESTNET PATH</div><h2>Wallet → PayGuardVault</h2></div><span class="state-tag ${live ? "green-tag" : "amber-tag"}">${live ? "READ READY" : account ? "READ BLOCKED" : "CONNECT"}</span></div><div class="step-list"><div class="step-row"><span class="step-number">01</span><div><strong>Verify Coston2 and deployment</strong><small>Chain 114, finalized block, runtime hashes and wiring</small></div></div><div class="step-row"><span class="step-number">02</span><div><strong>Approve exact FTestXRP amount</strong><small>Wallet confirmation required; no private key enters PayGuard</small></div></div><div class="step-row"><span class="step-number">03</span><div><strong>Deposit or withdraw</strong><small>Testnet transaction and post-receipt conservation check</small></div></div></div><p class="panel-copy phase-note">Transaction controls are the next integration unit; this commit enables verified live reads only.</p></section><section class="panel"><div class="panel-heading"><div><div class="eyebrow">XRPL-NATIVE PATH</div><h2>XRPL → FDC → Flare</h2></div><span class="state-tag gray-tag">EVIDENCE</span></div><p class="panel-copy">The flagship Smart Account funding path has a reviewed public observation. Interactive XRPL signing remains separate from this EVM recovery/developer path.</p><a class="text-button inline-link" href="/evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json" target="_blank" rel="noreferrer">Open funding evidence ↗</a></section></div>`;
+    <div class="vault-card panel"><div class="vault-card-top"><div class="token-symbol">X</div><div><h2>FTestXRP vault</h2><span class="muted">${account ? esc(short(account)) : "Public asset · Coston2"}</span></div><span class="state-tag ${live ? "green-tag" : "amber-tag"}">${live ? "LIVE READ" : account ? "READ BLOCKED" : "CONNECT"}</span></div><div class="vault-balance"><span>Available in vault</span><strong>${live ? token(live.accounting.available) : "—"} <small>FTestXRP</small></strong><span class="muted">${live ? `Finalized block ${live.finalizedBlock}` : account ? "Live verification must pass before balances appear" : "Connect an injected wallet to read account state"}</span></div><div class="vault-stats"><div><span>Deposited</span><strong>${live ? token(live.accounting.deposited) : "—"}</strong></div><div><span>Reserved</span><strong>${live ? token(live.accounting.reserved) : "—"}</strong></div><div><span>Spent</span><strong>${live ? token(live.accounting.spent) : "—"}</strong></div><div><span>Withdrawn</span><strong>${live ? token(live.accounting.withdrawn) : "—"}</strong></div></div><div class="vault-public-state"><div><span>Conservation</span><strong>${live ? "Verified at finalized block" : "Waiting for Coston2"}</strong></div><div><span>Wallet balance</span><strong>${live ? `${token(live.tokenBalance)} FTestXRP` : "—"}</strong></div><div><span>Vault allowance</span><strong>${live ? `${token(live.vaultAllowance)} FTestXRP` : "—"}</strong></div><div><span>Contract runtime</span><strong>${live ? "Verified against deployment evidence" : "—"}</strong></div></div><div class="vault-actions"><button class="primary-button" type="button" data-action="${account ? "refresh" : "connect"}">${live ? "Refresh finalized state" : account ? "Retry finalized reads" : "Connect Coston2 wallet"}</button>${live ? `<a class="outline-button inline-link" href="${explorerAddress(PAYGUARD_COSTON2.vault)}" target="_blank" rel="noreferrer">Vault explorer ↗</a>` : `<button class="outline-button" type="button" data-action="details">How funding works</button>`}</div></div>${vaultTransactionPanel(live, account)}<div class="section-grid"><section class="panel"><div class="panel-heading"><div><div class="eyebrow">EVM TESTNET PATH</div><h2>Wallet → PayGuardVault</h2></div><span class="state-tag ${live ? "green-tag" : "amber-tag"}">${live ? "TRANSACTIONS READY" : account ? "READ BLOCKED" : "CONNECT"}</span></div><div class="step-list"><div class="step-row"><span class="step-number">01</span><div><strong>Verify Coston2 and deployment</strong><small>Chain 114, finalized block, runtime hashes and wiring</small></div></div><div class="step-row"><span class="step-number">02</span><div><strong>Approve exact FTestXRP amount</strong><small>Wallet confirmation required; no private key enters PayGuard</small></div></div><div class="step-row"><span class="step-number">03</span><div><strong>Deposit or withdraw</strong><small>Receipt event and finalized postcondition must match exactly</small></div></div></div><p class="panel-copy phase-note">Only testnet FTestXRP is supported. FCC authorization and recurring execution remain separate from these public vault controls.</p></section><section class="panel"><div class="panel-heading"><div><div class="eyebrow">XRPL-NATIVE PATH</div><h2>XRPL → FDC → Flare</h2></div><span class="state-tag gray-tag">EVIDENCE</span></div><p class="panel-copy">The flagship Smart Account funding path has a reviewed public observation. Interactive XRPL signing remains separate from this EVM recovery/developer path.</p><a class="text-button inline-link" href="/evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json" target="_blank" rel="noreferrer">Open funding evidence ↗</a></section></div>`;
+}
+
+function vaultTransactionPanel(live: Coston2AccountSnapshot | null, account: Address | null): string {
+  const busy = vaultTransactionState.status === "SUBMITTING";
+  const intentCopy = vaultIntent ? ({
+    APPROVE: `Set the PayGuardVault allowance to exactly ${token(vaultIntent.amount)} FTestXRP. This replaces the current allowance.`,
+    DEPOSIT: `Transfer exactly ${token(vaultIntent.amount)} FTestXRP from the wallet into this account's PayGuard vault.`,
+    WITHDRAW: `Withdraw exactly ${token(vaultIntent.amount)} FTestXRP from the vault back to the connected wallet.`,
+  })[vaultIntent.kind] : "";
+  const result = vaultTransactionState.status === "SUCCESS"
+    ? `<div class="transaction-result success-result"><span class="status-dot green"></span><div><strong>${vaultTransactionState.kind} finalized</strong><small>${token(vaultTransactionState.amount)} FTestXRP · block ${vaultTransactionState.blockNumber}</small><a href="${explorerTransaction(vaultTransactionState.hash)}" target="_blank" rel="noreferrer">Open transaction ↗</a></div></div>`
+    : vaultTransactionState.status === "ERROR"
+      ? `<div class="transaction-result error-result"><span class="status-dot amber"></span><div><strong>Transaction not verified</strong><small>${esc(vaultTransactionState.message)}</small></div></div>`
+      : "";
+  const review = vaultIntent
+    ? `<div class="transaction-review"><div class="eyebrow">EXACT WALLET PREVIEW</div><h3>${vaultIntent.kind} · ${token(vaultIntent.amount)} FTestXRP</h3><p>${intentCopy}</p><dl><div><dt>Network</dt><dd>Coston2 · chain 114</dd></div><div><dt>Account</dt><dd>${account ? esc(account) : "—"}</dd></div><div><dt>Contract</dt><dd>${vaultIntent.kind === "APPROVE" ? PAYGUARD_COSTON2.asset : PAYGUARD_COSTON2.vault}</dd></div><div><dt>Success gate</dt><dd>Receipt + exact event + finalized postcondition</dd></div></dl><div class="transaction-warning">Testnet only. Confirm the same account, amount and contract in your wallet.</div><div class="vault-actions"><button class="outline-button" type="button" data-action="cancel-vault-intent" ${busy ? "disabled" : ""}>Cancel</button><button class="primary-button" type="button" data-action="submit-vault-intent" ${busy ? "disabled" : ""}>${busy ? "Waiting for wallet / finality…" : "Confirm in wallet"}</button></div></div>`
+    : "";
+  return `<section class="panel vault-transaction-panel"><div class="panel-heading"><div><div class="eyebrow">LIVE TEST-TOKEN CONTROLS</div><h2>Approve, deposit or withdraw</h2></div><span class="state-tag ${live ? "green-tag" : "amber-tag"}">${live ? "COSTON2 LIVE" : "READ REQUIRED"}</span></div><p class="panel-copy">Enter an exact FTestXRP amount. Preparing an action does not open the wallet; the second confirmation does.</p><label class="transaction-amount">Amount in FTestXRP<input id="vault-amount" value="${esc(vaultAmountInput)}" inputmode="decimal" autocomplete="off" placeholder="1.000000" ${!live || busy ? "disabled" : ""} /><small>${live ? `Wallet ${token(live.tokenBalance)} · allowance ${token(live.vaultAllowance)} · vault available ${token(live.accounting.available)}` : "Connect and pass finalized checks first."}</small></label><div class="transaction-actions"><button class="outline-button" type="button" data-vault-kind="APPROVE" ${!live || busy ? "disabled" : ""}>Prepare exact approval</button><button class="primary-button" type="button" data-vault-kind="DEPOSIT" ${!live || busy ? "disabled" : ""}>Prepare deposit</button><button class="outline-button" type="button" data-vault-kind="WITHDRAW" ${!live || busy ? "disabled" : ""}>Prepare withdrawal</button></div>${review}${result}</section>`;
 }
 
 function requestsView(): string {
@@ -411,6 +444,12 @@ function wireEvents(): void {
     });
   });
   app.querySelectorAll<HTMLButtonElement>("[data-template]").forEach((button) => button.addEventListener("click", () => selectTemplate(button.dataset.template ?? "")));
+  app.querySelectorAll<HTMLButtonElement>("[data-vault-kind]").forEach((button) => button.addEventListener("click", () => prepareVaultTransaction(button.dataset.vaultKind ?? "")));
+  app.querySelector<HTMLInputElement>("#vault-amount")?.addEventListener("input", (event) => {
+    vaultAmountInput = (event.currentTarget as HTMLInputElement).value;
+    vaultIntent = null;
+    if (vaultTransactionState.status === "ERROR") vaultTransactionState = { status: "IDLE" };
+  });
   const form = app.querySelector<HTMLFormElement>("#studio-form");
   form?.addEventListener("submit", (event) => { event.preventDefault(); computeStudio(form); });
   form?.addEventListener("input", () => {
@@ -457,10 +496,69 @@ function handleAction(action: string): void {
   if (action === "export-notifications") { exportNotifications(); return; }
   if (action === "connect") { void connectWallet(); return; }
   if (action === "refresh") { void refreshCoston2State(); return; }
+  if (action === "cancel-vault-intent") { vaultIntent = null; vaultTransactionState = { status: "IDLE" }; render(); return; }
+  if (action === "submit-vault-intent") { void submitVaultTransaction(); return; }
   if (action === "verify") appNotice = "Live evidence is unavailable; the static mirror cannot assert a transaction, proof, signer, or authorization result.";
   else if (action === "details") appNotice = "This preview reports only finalized public checkpoints; live dependencies are not configured.";
   else if (action === "help") appNotice = "PayGuard keeps policy rules in FCC custody while public requests and settlement remain visible.";
   else appNotice = "This action remains planned for a verified PayGuard release.";
+  render();
+}
+
+function prepareVaultTransaction(value: string): void {
+  const live = liveSnapshot();
+  if (!live || !connectedAccount()) {
+    vaultIntent = null;
+    vaultTransactionState = { status: "ERROR", message: "Connect the wallet and pass finalized Coston2 checks first." };
+    render();
+    return;
+  }
+  if (value !== "APPROVE" && value !== "DEPOSIT" && value !== "WITHDRAW") return;
+  try {
+    const amount = parseFTestXrpAmount(vaultAmountInput);
+    validateVaultTransaction(value, amount, live);
+    vaultIntent = { kind: value, amount };
+    vaultTransactionState = { status: "IDLE" };
+    appNotice = "Review the exact testnet intent below. The wallet has not opened yet.";
+  } catch (error) {
+    const message = error instanceof VaultTransactionError
+      ? vaultTransactionFailureMessage(error.reason)
+      : "The vault intent could not be prepared safely.";
+    vaultIntent = null;
+    vaultTransactionState = { status: "ERROR", message };
+    appNotice = message;
+  }
+  render();
+}
+
+async function submitVaultTransaction(): Promise<void> {
+  const intent = vaultIntent;
+  const account = connectedAccount();
+  if (!intent || !account || walletState.status !== "CONNECTED" || coston2State.status !== "READY") {
+    vaultIntent = null;
+    vaultTransactionState = { status: "ERROR", message: "The wallet or finalized preview changed. Prepare the action again." };
+    render();
+    return;
+  }
+  vaultTransactionState = { status: "SUBMITTING", ...intent };
+  appNotice = "Confirm the exact Coston2 transaction in your wallet, then wait for finalized postcondition checks.";
+  render();
+  try {
+    const result = await executeVaultTransaction(intent.kind, intent.amount, account, walletProvider);
+    if (connectedAccount()?.toLowerCase() !== account.toLowerCase()) throw new VaultTransactionError("POSTCONDITION_FAILED");
+    coston2State = { status: "READY", snapshot: result.after };
+    vaultIntent = null;
+    vaultTransactionState = { status: "SUCCESS", kind: result.kind, amount: result.amount, hash: result.hash, blockNumber: result.blockNumber };
+    appNotice = `${result.kind} finalized at Coston2 block ${result.blockNumber}; receipt, event and account postconditions matched.`;
+  } catch (error) {
+    const message = error instanceof VaultTransactionError
+      ? vaultTransactionFailureMessage(error.reason)
+      : "The transaction could not be verified safely.";
+    vaultIntent = null;
+    vaultTransactionState = { status: "ERROR", message };
+    appNotice = message;
+    if (walletState.status === "CONNECTED") void refreshCoston2State();
+  }
   render();
 }
 
@@ -536,6 +634,8 @@ function walletChanged(): void {
   walletState = { status: "DISCONNECTED" };
   coston2State = { status: "IDLE" };
   appNotice = "Wallet account or network changed. Revalidating the public session…";
+  vaultIntent = null;
+  vaultTransactionState = { status: "IDLE" };
   render();
   void restoreWalletSession();
 }

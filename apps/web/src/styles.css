@@ -42,6 +42,7 @@ body {
 
 button, input { font: inherit; }
 button { cursor: pointer; }
+button:disabled, input:disabled { cursor: not-allowed; opacity: .48; }
 button:focus-visible, input:focus-visible, summary:focus-visible {
   outline: 1px solid var(--color-signal-lime);
   outline-offset: 3px;
@@ -319,6 +320,25 @@ h1, h2, h3 { font-family: var(--font-pt-serif); font-weight: 300; }
 .step-row small { margin-top: 2px; color: var(--color-ash); font-size: 10px; }
 .panel-copy { max-width: 480px; margin: 16px 0; color: var(--color-ash); font-size: 12px; line-height: 1.7; }
 .phase-note { border-left: 1px solid var(--color-signal-lime); padding-left: 12px; }
+.vault-transaction-panel { max-width: 900px; margin-bottom: 17px; }
+.transaction-amount { display: block; max-width: 440px; color: var(--color-ash); font-size: 11px; }
+.transaction-amount input { display: block; width: 100%; margin: 7px 0 5px; border: 1px solid var(--color-slate); border-radius: 0; padding: 12px; background: var(--color-carbon); color: var(--color-bone); font: 13px var(--font-jetbrains-mono); }
+.transaction-amount small { color: var(--color-ash); font-size: 10px; }
+.transaction-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.transaction-review { margin-top: 22px; border: 1px solid var(--color-signal-lime); padding: 20px; background: var(--color-carbon); }
+.transaction-review h3 { margin: 7px 0 8px; color: var(--color-chalk); font-size: 22px; }
+.transaction-review p { margin: 0 0 16px; color: var(--color-bone); font-size: 12px; line-height: 1.6; }
+.transaction-review dl { margin: 0; }
+.transaction-review dl div { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 14px; border-top: 1px solid var(--color-graphite); padding: 10px 0; }
+.transaction-review dt { color: var(--color-ash); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; }
+.transaction-review dd { overflow-wrap: anywhere; margin: 0; color: var(--color-pearl); font: 10px var(--font-jetbrains-mono); }
+.transaction-warning { margin-top: 12px; border-left: 1px solid var(--color-signal-lime); padding: 9px 12px; color: var(--color-bone); font-size: 10px; }
+.transaction-result { display: flex; align-items: flex-start; gap: 10px; margin-top: 18px; border: 1px solid var(--color-slate); padding: 13px; }
+.transaction-result strong, .transaction-result small, .transaction-result a { display: block; }
+.transaction-result strong { color: var(--color-bone); font-size: 11px; }
+.transaction-result small { margin-top: 3px; color: var(--color-ash); font-size: 10px; }
+.transaction-result a { margin-top: 7px; color: var(--color-signal-lime); font-size: 10px; }
+.success-result { border-color: var(--color-signal-lime); }
 
 .table-panel { padding: 24px 0 0; }
 .table-panel .panel-heading { padding: 0 24px; }
@@ -651,7 +671,8 @@ h1, h2, h3 { font-family: var(--font-pt-serif); font-weight: 300; }
   .notice-banner button { display: none; }
   .two-col, .vault-stats, .vault-public-state, .request-public-state { grid-template-columns: 1fr; }
   .vault-card { padding: 20px; }
-  .vault-actions { flex-direction: column; }
+  .vault-actions, .transaction-actions { flex-direction: column; }
+  .transaction-review dl div { grid-template-columns: 1fr; gap: 5px; }
   .table-head { display: none; }
   .table-row { grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px 15px; }
   .table-row > span:last-child { display: none; }

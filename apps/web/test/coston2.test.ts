@@ -1,13 +1,19 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { getAddress, keccak256, type Hex } from "viem";
+import { PayGuardVaultAbi } from "@xrp-payguard/bindings";
+import { encodeAbiParameters, encodeEventTopics, erc20Abi, getAddress, keccak256, type Hex } from "viem";
 import {
   COSTON2_CHAIN_HEX,
   PAYGUARD_COSTON2,
   WalletConnectionError,
+  VaultTransactionError,
   connectCoston2Wallet,
   loadCoston2AccountSnapshot,
+  parseFTestXrpAmount,
   readWalletSession,
+  validateVaultTransaction,
+  verifyVaultPostcondition,
+  verifyVaultReceiptEvent,
   type Coston2ReadClient,
   type Eip1193Provider,
 } from "../src/coston2.js";
@@ -150,5 +156,72 @@ describe("Coston2 browser integration", () => {
         : readClient().readContract(args),
     });
     await expect(loadCoston2AccountSnapshot(account, invalidAccounting, testRuntimeHashes)).rejects.toThrow("VAULT_CONSERVATION_MISMATCH");
+  });
+
+  it("parses only positive exact FTestXRP base units", () => {
+    expect(parseFTestXrpAmount("1")).toBe(1_000_000n);
+    expect(parseFTestXrpAmount("0.000001")).toBe(1n);
+    for (const invalid of ["", "0", "-1", "1.0000001", "1e3", ".5", "01"]) {
+      expect(() => parseFTestXrpAmount(invalid)).toThrow(VaultTransactionError);
+    }
+  });
+
+  it("preflights approve, deposit, and withdrawal against finalized balances", async () => {
+    const snapshot = await loadCoston2AccountSnapshot(account, readClient(), testRuntimeHashes);
+    expect(() => validateVaultTransaction("APPROVE", snapshot.tokenBalance + 1n, snapshot)).toThrow("INSUFFICIENT_TOKEN_BALANCE");
+    expect(() => validateVaultTransaction("DEPOSIT", snapshot.vaultAllowance + 1n, snapshot)).toThrow("ALLOWANCE_REQUIRED");
+    expect(() => validateVaultTransaction("WITHDRAW", snapshot.accounting.available + 1n, snapshot)).toThrow("INSUFFICIENT_VAULT_BALANCE");
+    expect(() => validateVaultTransaction("DEPOSIT", 1_000_000n, snapshot)).not.toThrow();
+  });
+
+  it("requires exact finalized postconditions for all vault transaction kinds", async () => {
+    const before = await loadCoston2AccountSnapshot(account, readClient(), testRuntimeHashes);
+    verifyVaultPostcondition("APPROVE", 500_000n, before, { ...before, finalizedBlock: before.finalizedBlock + 1n, vaultAllowance: 500_000n });
+    verifyVaultPostcondition("DEPOSIT", 500_000n, before, {
+      ...before,
+      finalizedBlock: before.finalizedBlock + 1n,
+      tokenBalance: before.tokenBalance - 500_000n,
+      accounting: {
+        ...before.accounting,
+        deposited: before.accounting.deposited + 500_000n,
+        available: before.accounting.available + 500_000n,
+      },
+    });
+    verifyVaultPostcondition("WITHDRAW", 500_000n, before, {
+      ...before,
+      finalizedBlock: before.finalizedBlock + 1n,
+      tokenBalance: before.tokenBalance + 500_000n,
+      accounting: {
+        ...before.accounting,
+        available: before.accounting.available - 500_000n,
+        withdrawn: before.accounting.withdrawn + 500_000n,
+      },
+    });
+    expect(() => verifyVaultPostcondition("DEPOSIT", 500_000n, before, { ...before, finalizedBlock: before.finalizedBlock + 1n }))
+      .toThrow("POSTCONDITION_FAILED");
+  });
+
+  it("accepts only the exact public vault event for each intent", () => {
+    const amount = 500_000n;
+    const data = encodeAbiParameters([{ type: "uint256" }], [amount]);
+    const approval = {
+      address: PAYGUARD_COSTON2.asset,
+      data,
+      topics: encodeEventTopics({ abi: erc20Abi, eventName: "Approval", args: { owner: account, spender: PAYGUARD_COSTON2.vault } }) as [Hex, ...Hex[]],
+    };
+    const deposit = {
+      address: PAYGUARD_COSTON2.vault,
+      data,
+      topics: encodeEventTopics({ abi: PayGuardVaultAbi, eventName: "Deposited", args: { owner: account, asset: PAYGUARD_COSTON2.asset } }) as [Hex, ...Hex[]],
+    };
+    const withdrawal = {
+      address: PAYGUARD_COSTON2.vault,
+      data,
+      topics: encodeEventTopics({ abi: PayGuardVaultAbi, eventName: "Withdrawn", args: { owner: account, asset: PAYGUARD_COSTON2.asset, to: account } }) as [Hex, ...Hex[]],
+    };
+    expect(() => verifyVaultReceiptEvent("APPROVE", amount, account, [approval])).not.toThrow();
+    expect(() => verifyVaultReceiptEvent("DEPOSIT", amount, account, [deposit])).not.toThrow();
+    expect(() => verifyVaultReceiptEvent("WITHDRAW", amount, account, [withdrawal])).not.toThrow();
+    expect(() => verifyVaultReceiptEvent("DEPOSIT", amount + 1n, account, [deposit])).toThrow("EVENT_MISMATCH");
   });
 });
