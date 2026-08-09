@@ -49,6 +49,7 @@ import {
   injectedProvider,
   loadCoston2AccountSnapshot,
   loadCoston2PublicRequest,
+  notificationStateFromRequest,
   parseFTestXrpAmount,
   readWalletSession,
   requestTransactionFailureMessage,
@@ -168,7 +169,8 @@ function render(): void {
 }
 
 function navItem(view: View, text: string, icon: string): string {
-  return `<button class="nav-item nav-item-${view} ${activeView === view ? "active" : ""}" type="button" data-view="${view}"><span class="nav-icon">${icon}</span>${text}${view === "requests" ? '<span class="nav-count">2</span>' : ""}</button>`;
+  const requestCount = requestState.status === "UNAVAILABLE" ? "" : '<span class="nav-count">1</span>';
+  return `<button class="nav-item nav-item-${view} ${activeView === view ? "active" : ""}" type="button" data-view="${view}"><span class="nav-icon">${icon}</span>${text}${view === "requests" ? requestCount : ""}</button>`;
 }
 
 function label(view: View): string { return ({ overview: "Overview", studio: "Policy Studio", vaults: "Vaults", requests: "Requests", payee: "Payee", auditor: "Auditor", team: "Team & roles" })[view]; }
@@ -246,6 +248,7 @@ function pageIntro(eyebrow: string, title: string, copy: string, action = ""): s
 function overviewView(): string {
   const live = liveSnapshot();
   const account = connectedAccount();
+  const publicRequest = requestState.status === "UNAVAILABLE" ? null : requestState;
   const notice = live
     ? `<div class="notice-banner live-notice"><span class="notice-icon">✓</span><div><strong>Finalized Coston2 account state verified</strong><span>Runtime bytecode, router/vault wiring, supported FTestXRP and conservation were checked together at block ${live.finalizedBlock}.</span></div><button type="button" data-action="refresh">Refresh</button></div>`
     : account
@@ -253,7 +256,7 @@ function overviewView(): string {
       : `<div class="notice-banner"><span class="notice-icon">◉</span><div><strong>Connect a Coston2 wallet</strong><span>Wallet access enables public balance and vault reads. FCC policy authorization remains explicitly simulated.</span></div><button type="button" data-action="connect">Connect</button></div>`;
   return `${pageIntro("PERSONAL PAYGUARD", "Your testnet control center.", "Use real Coston2 account and vault state while private authorization remains separated from the browser.", "new-policy")}
     ${notice}
-    <div class="metric-grid"><div class="metric-card"><div class="metric-label">VAULT AVAILABLE <span class="public-pill">PUBLIC</span></div><div class="metric-value">${live ? token(live.accounting.available) : "—"} <small>FTestXRP</small></div><div class="metric-foot muted">${live ? `${token(live.tokenBalance)} in connected wallet` : account ? "Live verification unavailable" : "Connect wallet for finalized read"}</div></div><div class="metric-card"><div class="metric-label">RESERVED <span class="public-pill">PUBLIC</span></div><div class="metric-value">${live ? token(live.accounting.reserved) : "—"}</div><div class="metric-foot muted">${live ? "Verified vault accounting" : "Pending state unavailable"}</div></div><div class="metric-card"><div class="metric-label">C2FLR GAS</div><div class="metric-value">${live ? nativeToken(live.nativeBalance) : "—"}</div><div class="metric-foot"><span class="status-dot ${live ? "green" : "amber"}"></span> ${account ? "Wallet connected" : "Wallet not connected"}</div></div><div class="metric-card accent-card"><div class="metric-label">FINALIZED BLOCK</div><div class="metric-value">${live ? live.finalizedBlock : "—"}</div><div class="metric-foot muted">${live ? "All reads pinned to this block" : "No public checkpoint loaded"}</div></div></div>
+    <div class="metric-grid"><div class="metric-card"><div class="metric-label">VAULT AVAILABLE <span class="public-pill">PUBLIC</span></div><div class="metric-value">${live ? token(live.accounting.available) : "—"} <small>FTestXRP</small></div><div class="metric-foot muted">${live ? `${token(live.tokenBalance)} in connected wallet` : account ? "Live verification unavailable" : "Connect wallet for finalized read"}</div></div><div class="metric-card"><div class="metric-label">RESERVED <span class="public-pill">PUBLIC</span></div><div class="metric-value">${live ? token(live.accounting.reserved) : "—"}</div><div class="metric-foot muted">${live ? "Verified vault accounting" : "Pending state unavailable"}</div></div><div class="metric-card"><div class="metric-label">PUBLIC REQUEST</div><div class="metric-value metric-state">${publicRequest ? esc(requestReadinessLabel(publicRequest.readiness)) : "—"}</div><div class="metric-foot muted">${publicRequest ? `${publicRequest.status} · ${short(publicRequest.snapshot.requestId)}` : "Finalized request unavailable"}</div></div><div class="metric-card"><div class="metric-label">C2FLR GAS</div><div class="metric-value">${live ? nativeToken(live.nativeBalance) : "—"}</div><div class="metric-foot"><span class="status-dot ${live ? "green" : "amber"}"></span> ${account ? "Wallet connected" : "Wallet not connected"}</div></div><div class="metric-card accent-card"><div class="metric-label">FINALIZED BLOCK</div><div class="metric-value">${live?.finalizedBlock ?? requestFinalizedBlock ?? "—"}</div><div class="metric-foot muted">${live || publicRequest ? "Public reads are pinned to finality" : "No public checkpoint loaded"}</div></div></div>
     <div class="section-grid"><section class="panel activity-panel"><div class="panel-heading"><div><div class="eyebrow">PUBLIC ACCOUNT</div><h2>${live ? "Coston2 wallet ready" : account ? "Wallet connected · reads blocked" : "Connect without sharing a key"}</h2></div><button class="text-button" type="button" data-view="vaults">Open vault ↗</button></div>${live ? `<div class="live-account-summary"><div><span>ACCOUNT</span><strong class="mono-value">${esc(live.account)}</strong></div><div><span>FTESTXRP ALLOWANCE</span><strong>${token(live.vaultAllowance)}</strong></div><div><span>ASSET</span><strong>${live.token.symbol} · ${live.token.decimals} decimals</strong></div></div><a class="outline-button inline-link" href="${explorerAddress(live.account)}" target="_blank" rel="noreferrer">Open account explorer ↗</a>` : `<div class="empty-state"><div class="empty-orbit">◌</div><strong>${account ? "No unverified balance displayed" : "No wallet permission yet"}</strong><span>${account ? "Retry the finalized Coston2 checks before trusting any account or vault value." : "PayGuard asks only for the public account. Signing stays inside the injected wallet."}</span><button class="outline-button" type="button" data-action="${account ? "refresh" : "connect"}">${account ? "Retry finalized reads" : "Connect Coston2 wallet"}</button></div>`}</section><section class="panel health-panel"><div class="panel-heading"><div><div class="eyebrow">DEPENDENCY HEALTH</div><h2>Trust surface</h2></div><span class="health-label"><span class="status-dot ${live ? "green" : "amber"}"></span>${live ? "Public live" : "Limited"}</span></div><ul class="health-list"><li><span class="health-icon gray">▣</span><div><strong>PayGuard contracts</strong><small>${live ? "Runtime and wiring verified" : "Waiting for finalized RPC read"}</small></div><span class="state-tag ${live ? "green-tag" : "amber-tag"}">${live ? "VERIFIED" : "WAITING"}</span></li><li><span class="health-icon gray">X</span><div><strong>FTestXRP asset</strong><small>${live ? "Supported asset metadata verified" : "Waiting for account read"}</small></div><span class="state-tag ${live ? "green-tag" : "amber-tag"}">${live ? "VERIFIED" : "WAITING"}</span></li><li><span class="health-icon gray">◇</span><div><strong>FCC machine quorum</strong><small>Registered production machines unavailable</small></div><span class="state-tag gray-tag">SIMULATED</span></li><li><span class="health-icon gray">◈</span><div><strong>FDC/FAssets evidence</strong><small>Reviewed static Coston2 observations</small></div><span class="state-tag gray-tag">EVIDENCE</span></li></ul></section></div>`;
 }
 
@@ -442,12 +445,15 @@ function auditUnavailableReason(reason: string): string {
 
 function teamView(): string {
   const workspace = workspaceState.status === "UNAVAILABLE" ? undefined : workspaceState.snapshot;
+  const request = requestState.status === "UNAVAILABLE" ? undefined : requestState.snapshot;
   const workspaceReason = workspaceState.status === "UNAVAILABLE" ? workspaceUnavailableReason(workspaceState.reason) : "Finalized public role registry";
   const roleRows = workspace
     ? workspace.roles.map((assignment) => `<div class="role-row"><div class="avatar dashed">◌</div><div class="role-person"><strong>${esc(assignment.role)}</strong><small>${esc(short(assignment.account))} · ${assignment.active ? "Active assignment" : "Inactive assignment"}</small></div><span class="role-permission">Public role only</span></div>`).join("")
-    : `<div class="role-row"><div class="avatar purple">O</div><div class="role-person"><strong>Owner</strong><small>Local preview · policy author · funder · emergency recovery</small></div><span class="role-permission">Full public controls</span><button class="text-button" type="button">···</button></div><div class="role-row muted-row"><div class="avatar dashed">+</div><div class="role-person"><strong>Invite a teammate</strong><small>Auditor, payee, or delegated executor</small></div><button class="outline-button" type="button" data-action="invite">Invite</button></div>`;
+    : request && requestPolicyOwner
+      ? `<div class="role-row"><div class="avatar purple">O</div><div class="role-person"><strong>Policy owner</strong><small>${esc(short(requestPolicyOwner))} · registry-bound public account</small></div><span class="role-permission">May cancel/recover</span></div><div class="role-row"><div class="avatar dashed">R</div><div class="role-person"><strong>Requester</strong><small>${esc(short(request.requester))} · exact request creator</small></div><span class="role-permission">May cancel</span></div><div class="role-row"><div class="avatar dashed">P</div><div class="role-person"><strong>Payee</strong><small>${esc(short(request.target))} · public transfer target</small></div><span class="role-permission">Receives only after execution</span></div>`
+      : `<div class="role-row"><div class="avatar purple">O</div><div class="role-person"><strong>Owner</strong><small>Load a finalized request to observe its registry-bound actors.</small></div><span class="role-permission">Unavailable</span></div>`;
   return `${pageIntro("ROLES & GOVERNANCE", "Team workspace", "Separate policy author, funder, executor, payee, and auditor responsibilities. No role can supply an authorization result.", "invite")}
-    <section class="panel roles-panel"><div class="panel-heading"><div><div class="eyebrow">CURRENT WORKSPACE</div><h2>Personal workspace</h2></div><span class="state-tag ${workspace ? "green-tag" : "gray-tag"}">${workspace ? "VERIFIED" : "LOCAL ONLY"}</span></div>${roleRows}</section><div class="team-note"><span class="lock-icon">▣</span><div><strong>${workspace ? "Public role registry verified" : "Role registry unavailable"}</strong><p>${esc(workspaceReason)}. Role assignments can expose public controls only; no role supplies, overrides, or infers an authorization result.</p></div></div>`;
+    <section class="panel roles-panel"><div class="panel-heading"><div><div class="eyebrow">${workspace ? "CURRENT WORKSPACE" : "OBSERVED REQUEST ACTORS"}</div><h2>${workspace ? "Personal workspace" : "On-chain identities, not role grants"}</h2></div><span class="state-tag ${workspace || request ? "green-tag" : "gray-tag"}">${workspace ? "VERIFIED" : request ? "OBSERVED" : "UNAVAILABLE"}</span></div>${roleRows}</section><div class="team-note"><span class="lock-icon">▣</span><div><strong>${workspace ? "Public role registry verified" : request ? "No standalone role registry deployed" : "Role registry unavailable"}</strong><p>${request && !workspace ? "The rows above are identities bound by the registry/request contracts, not editable team assignments. " : `${esc(workspaceReason)}. `}No role supplies, overrides, or infers an authorization result.</p></div></div>`;
 }
 
 function notificationTray(): string {
@@ -617,6 +623,7 @@ async function submitRequestTransaction(): Promise<void> {
     requestFinalizedBlock = result.after.finalizedBlock;
     requestFinalizedAt = result.after.finalizedAt;
     requestPolicyOwner = result.after.policyOwner;
+    notificationState = notificationStateFromRequest(result.after);
     requestIntent = null;
     requestTransactionState = { status: "SUCCESS", kind, hash: result.hash, blockNumber: result.blockNumber };
     requestNotice = `${kind} verified in finalized Coston2 state at block ${result.after.finalizedBlock}.`;
@@ -652,12 +659,14 @@ async function refreshPublicRequest(): Promise<void> {
     requestFinalizedBlock = result.finalizedBlock;
     requestFinalizedAt = result.finalizedAt;
     requestPolicyOwner = result.policyOwner;
+    notificationState = notificationStateFromRequest(result);
     requestNotice = `Canonical public state verified at Coston2 block ${result.finalizedBlock}.`;
     appNotice = "Request runtime, wiring, domain, request hash and finalized state matched the deployed Coston2 router.";
   } catch {
     if (sequence !== requestReadSequence) return;
     requestState = unavailableRequestState("SNAPSHOT_INVALID");
     payeeState = unavailablePayeeState("RECEIPT_INVALID");
+    notificationState = unavailableNotificationState("FEED_INVALID");
     requestFinalizedAt = null;
     requestPolicyOwner = null;
     requestNotice = "The request was not found or failed finalized runtime/domain/schema validation.";

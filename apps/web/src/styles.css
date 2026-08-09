@@ -241,10 +241,11 @@ h1, h2, h3 { font-family: var(--font-pt-serif); font-weight: 300; }
 .page-intro h1 { margin: 7px 0 8px; color: var(--color-chalk); font-size: 40px; line-height: 1.05; letter-spacing: -.025em; }
 .page-intro p { max-width: 690px; margin: 0; color: var(--color-bone); font-size: 14px; line-height: 1.55; }
 
-.metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 22px; }
+.metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 22px; }
 .metric-card, .panel { border: 1px solid var(--color-graphite); border-radius: 0; background: var(--color-onyx); }
 .metric-card { min-height: 132px; padding: 20px; }
 .metric-card.accent-card { border-color: var(--color-graphite); background: var(--color-graphite); }
+.metric-state { font-size: 22px; line-height: 1.05; }
 .metric-label { color: var(--color-ash); font: 500 10px/1.2 var(--font-inter-tight); letter-spacing: .18em; text-transform: uppercase; }
 .public-pill { margin-left: 4px; border: 1px solid var(--color-signal-lime); border-radius: 2px; padding: 2px 4px; color: var(--color-signal-lime); font-size: 8px; letter-spacing: .08em; }
 .metric-value { margin: 19px 0 5px; color: var(--color-chalk); font: 300 32px/1 var(--font-pt-serif); }

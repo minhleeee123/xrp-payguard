@@ -138,6 +138,13 @@ zero/false. Deterministic tests cover state/time/authorization eligibility,
 exact router events, and terminal postconditions. No new router transaction was
 broadcast from this UI during the check.
 
+The shared-state browser check exposed the finalized request readiness on
+Overview, a hashed public evidence observation in Notifications, and the bound
+policy owner/requester/payee under Team's "observed actors" boundary. It did not
+label those actors as editable role grants or turn the Pending request into
+Allowed. The 1440px run retained zero browser storage and no horizontal
+overflow.
+
 Separate Lighthouse 13.0.1 lab runs against the production landing and Overview
 route scored 100 performance, accessibility, best practices, and SEO for both
 routes. The landing measured FCP 1,085 ms, LCP 1,139 ms, TBT 4 ms, and CLS 0;

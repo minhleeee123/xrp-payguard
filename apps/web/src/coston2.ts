@@ -5,10 +5,16 @@ import {
 } from "@xrp-payguard/bindings";
 import {
   payeeReceiptHash,
+  buildPublicNotificationFeed,
+  PUBLIC_NOTIFICATION_V1,
+  publicNotificationHash,
+  publicNotificationReadState,
   publicPayeeReadState,
   publicRequestReadState,
   unavailablePayeeState,
   type PublicPayeeReadState,
+  type PublicNotificationReadState,
+  type PublicNotificationKind,
   type PublicRequestReadState,
   type PublicRequestSnapshotV1,
 } from "@xrp-payguard/integrations";
@@ -18,11 +24,13 @@ import {
   createPublicClient,
   custom,
   decodeEventLog,
+  encodeAbiParameters,
   erc20Abi,
   getAddress,
   http,
   keccak256,
   parseUnits,
+  stringToHex,
   zeroHash,
   type Address,
   type Hash,
@@ -331,6 +339,32 @@ export function requestTransactionFailureMessage(reason: RequestTransactionFailu
   if (reason === "EVENT_MISMATCH") return "The receipt did not contain the exact expected router event.";
   if (reason === "POSTCONDITION_FAILED") return "The finalized router state did not match the submitted action.";
   return "The wallet or Coston2 provider could not complete the router transaction safely.";
+}
+
+export function notificationStateFromRequest(result: Coston2PublicRequestResult): PublicNotificationReadState {
+  if (result.request.status === "UNAVAILABLE") throw new Error("REQUEST_NOTIFICATION_UNAVAILABLE");
+  const request = result.request.snapshot;
+  const kind: PublicNotificationKind = request.status === "ALLOWED" ? "REQUEST_READY"
+    : request.status === "DENIED" ? "REQUEST_DENIED"
+      : request.status === "EXECUTED" ? "REQUEST_EXECUTED"
+        : request.status === "EXPIRED" ? "REQUEST_EXPIRED" : "EVIDENCE_VERIFIED";
+  const requestKind = kind !== "EVIDENCE_VERIFIED";
+  const body = {
+    chainId: request.chainId,
+    eventId: keccak256(encodeAbiParameters(
+      [{ type: "bytes32" }, { type: "uint64" }, { type: "bytes32" }],
+      [request.requestHash, result.finalizedBlock, keccak256(stringToHex(kind))],
+    )),
+    kind,
+    severity: kind === "REQUEST_DENIED" || kind === "REQUEST_EXPIRED" ? "WARNING" as const : "INFO" as const,
+    reference: request.requestHash,
+    requestId: requestKind ? request.requestId : zeroHash,
+    blockNumber: result.finalizedBlock,
+    observedAt: result.finalizedAt,
+  };
+  const notification = { ...body, schema: PUBLIC_NOTIFICATION_V1, notificationHash: publicNotificationHash(body) };
+  const feed = buildPublicNotificationFeed({ chainId: request.chainId, generatedAt: result.finalizedAt, notifications: [notification] });
+  return publicNotificationReadState(feed);
 }
 
 export function parseFTestXrpAmount(value: string): bigint {

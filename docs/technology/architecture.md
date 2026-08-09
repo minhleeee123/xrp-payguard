@@ -240,6 +240,14 @@ requester or policy owner. The writer then simulates, signs in the injected
 wallet, validates the exact router event, and re-reads the expected terminal
 state. No caller-supplied decision exists in this path.
 
+Overview, Notifications, and Team reuse the same in-memory finalized request
+checkpoint. Notifications hash a single public observation with the block/time
+and request hash; only canonical Allowed/Denied/Executed/Expired states receive
+the corresponding typed request kind, while Pending/Cancelled remain a neutral
+evidence observation. Team labels the bound policy owner, requester, and payee
+as observed actors when no independent role registry exists. Neither projection
+creates an authorization or governance assignment.
+
 ### XRPL-native path
 
 The XRPL owner commits a Smart Account operation in a supported Payment/mint

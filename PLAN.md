@@ -401,10 +401,13 @@ evidence, and live role journeys remain open.
   verification. Add finalized canonical request-state verification while keeping
   full FCC/evaluation evidence unavailable until its independent facts exist.
 - [x] Build the local Team/Treasury workspace and role-aware public controls;
-  no client role can authorize, and live governance remains open.
+  no client role can authorize. Where no role registry exists, show only
+  finalized registry/request actors as observations rather than invented grants;
+  live editable governance remains open.
 - [x] Build a strict public notification feed and export with finalized block/time
-  facts, domain-separated hashes, and an unavailable UI/report path; hosted feed
-  delivery remains open until a verified Coston2 provider exists.
+  facts and domain-separated hashes. Derive exact terminal request kinds or a
+  neutral evidence-checkpoint observation from the validated Coston2 request;
+  never infer Ready/Allowed from Pending readiness.
 - [x] Make laptop UX primary with responsive/mobile layout, focus states, and
   explicit loading/error/recovery copy; full accessibility and reduced-motion
   review remains open.

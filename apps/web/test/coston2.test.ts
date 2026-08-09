@@ -13,6 +13,7 @@ import {
   connectCoston2Wallet,
   loadCoston2AccountSnapshot,
   loadCoston2PublicRequest,
+  notificationStateFromRequest,
   parseFTestXrpAmount,
   parseRequestId,
   readWalletSession,
@@ -222,6 +223,13 @@ describe("Coston2 browser integration", () => {
     expect(result.request.snapshot.requestHash).toBe(request.requestHash);
     expect(result.request.readiness).toBe("WAITING_FOR_THRESHOLD");
     expect(result.payee.status).toBe("PENDING");
+    const notifications = notificationStateFromRequest(result);
+    expect(notifications.status).toBe("READY");
+    if (notifications.status === "READY") {
+      expect(notifications.feed.notifications).toHaveLength(1);
+      expect(notifications.feed.notifications[0]?.kind).toBe("EVIDENCE_VERIFIED");
+      expect(notifications.feed.notifications[0]?.requestId).toBe(`0x${"00".repeat(32)}`);
+    }
     expect(new Set(blocks)).toEqual(new Set([1234n]));
   });
 

@@ -69,16 +69,21 @@ hash, settlement transaction, and resulting checkpoint; missing or drifting
 receipts remain unavailable.
 Team roles are schema-checked and hashed as public assignments; the permission
 projection covers public controls only and always returns `canAuthorize: false`.
+When no standalone role registry is deployed, Team instead shows only the
+registry-bound policy owner plus the exact request creator and payee as
+"observed request actors". These rows are not editable grants and make no team
+permission claim.
 Policy Studio custody progress accepts only the schema-checked three-machine
 receipt bundle: each digest/signature must match the frozen binding and the
 shared submission nonce/time window. Until a verified provider supplies that
 bundle, the UI shows activation blocked and never substitutes a local receipt.
-Notifications use a strict public event feed with finalized block/time facts,
-typed status/severity, request references, and domain-separated feed/export
-hashes. The tray remains unavailable until a verified provider supplies a
-finalized feed; its export action can only download a public unavailable report
-or a schema-checked public feed, never policy plaintext, ciphertext, signatures,
-or private denial reasons.
+Notifications use a strict public feed with finalized block/time facts, typed
+status/severity, public references, and domain-separated feed/export hashes. A
+validated router checkpoint now produces one `EVIDENCE_VERIFIED` observation;
+canonical Allowed/Denied/Executed/Expired states map to their exact request
+notification kind. A Pending checkpoint is never labelled Ready or Allowed.
+Export downloads only this schema-checked public feed, never policy plaintext,
+ciphertext, signatures, or private denial reasons.
 
 Run locally with the pinned Node toolchain:
 
