@@ -231,8 +231,10 @@ amount, and multiple agents remain separate request legs. A request is only
 pending: underlying payment requires a verifier-backed `RedemptionPerformed`
 event, while timeout compensation is recorded separately from a verifier-backed
 `RedemptionDefault` event. Both terminal paths bind their public receipt
-commitment and fail closed on replay or asynchronous drift. Live Coston2
-redemption remains unverified. The Coston2 redemption boundary resolves the
+commitment and fail closed on replay or asynchronous drift. Coston2 amount and
+destination-tag request/payout observations are recorded in public evidence;
+full canonical settlement consumption and default recovery remain unverified.
+The Coston2 redemption boundary resolves the
 runtime FAsset/minimum, checks balance and allowance, builds the official
 amount/tag call, and parses only receipt logs from the runtime AssetManager;
 signing stays in the injected wallet writer. The settlement parser binds the

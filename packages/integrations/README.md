@@ -37,8 +37,9 @@ to the submitted transaction hash, and parses only official AssetManager
 events. A reverted receipt, wrong chain, runtime asset/minimum drift, missing
 event, duplicate leg, tag mismatch, or partial-amount mismatch fails closed.
 The writer owns signing and transport; this package never accepts or stores a
-private key. A live Coston2 redemption and its asynchronous settlement are
-still a separate evidence gate. Settlement parsing accepts the deployed
+private key. Live Coston2 amount and destination-tag request/payout observations
+have separate public evidence; canonical PayGuard settlement consumption is
+still a separate gate. Settlement parsing accepts the deployed
 `RedemptionPerformed` request-id ABI variants and requires a positive
 `spentUnderlyingUBA` for the successful event; negative spend values belong to
 the separate blocked/failed event families.
@@ -54,8 +55,10 @@ and key order, shared submission nonce/time window, three receipt digests, and
 three machine signatures. A missing, reordered, drifted, or unverifiable receipt
 cannot become activation evidence; the browser still has no authorization path.
 
-No live XRPL Testnet payment, FDC proof or trigger, Smart Account transaction,
-FTSO feed, FAssets mint, or redemption is claimed by these local tests.
+The local tests do not claim a live XRPL Testnet payment, FDC proof or trigger,
+Smart Account transaction, FTSO feed, FAssets mint, or canonical PayGuard
+settlement; the separate Coston2 evidence files identify live testnet
+observations without promoting them to a release claim.
 
 `resolveCoston2Dependencies` reads the official Flare Contract Registry at its
 canonical registry address for FDC, FTSO, FAssets, Smart Account, and related
