@@ -31,12 +31,12 @@ live authorization result.
 - Evidence index: <https://xrp-payguard.vercel.app/evidence/index.json>
 - Demo video: local validated MP4 exists under ignored `evidence/local/`; public
   upload remains owner-only and no public video URL is claimed.
-- Vercel deployment ID: `dpl_5T18msAVRVXgzSZiWmkgKLUieEs9`
-- Deployed source commit: `3147d26fefa8fdeb9a475782820065c1121fa160`
+- Vercel deployment ID: `dpl_DrnxHSajHmvife9S8MshyctPCCrY`
+- Deployed source commit: `f6d570a1255c9d2608ce81a45410e73a96082898`
 
 The deployment is an artifact-only Vercel CLI upload containing 20 static
 files. The recorded smoke observed HTTP 200 for HTML, favicon, JavaScript, CSS,
-the index, and every listed evidence asset. The index contains 13 records under
+the index, and every listed evidence asset. The index contains 14 records under
 `evidence/coston2/` and two explicit simulation records. The Auditor reports 14
 chain-114 artifacts because the on-chain simulated lifecycle belongs to both
 the Coston2 and simulation categories; those counts are not additive. The index
@@ -126,7 +126,8 @@ public RPC:
 - Production Chrome verified the expanded eight-section/three-SVG-mascot
   landing at desktop `1440x1200` and mobile `390x844`, Enter-key activation,
   zero storage entries, no HTTP/console errors, and no horizontal overflow.
-  The unchanged compiled CSS retains the earlier reduced-motion verification.
+  The three guardians now have distinct custody/witness/checkpoint silhouettes;
+  the reduced-motion CSS gate reran against the deployed source.
   Lighthouse 13.0.1 scored both Landing and Overview at 100
   performance and 100 accessibility, best practices, and SEO, with zero
   recorded contrast failures.
@@ -138,7 +139,7 @@ public RPC:
   review/upload.
 
 A fresh HTTPS and Chrome read of deployment
-`dpl_5T18msAVRVXgzSZiWmkgKLUieEs9` returned 200 for the application, its
+`dpl_DrnxHSajHmvife9S8MshyctPCCrY` returned 200 for the application, its
 favicon/JavaScript/CSS, the index, and all 15 evidence assets. Desktop and
 mobile rendering, Enter-key activation, the 15/14/2 Auditor counts, zero
 browser storage, zero HTTP/console errors, and no horizontal overflow passed.

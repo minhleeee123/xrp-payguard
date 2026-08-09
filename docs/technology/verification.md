@@ -109,11 +109,11 @@ landing page to the Overview view. Neither run is a live FCC or release smoke.
 
 Separate Lighthouse 13.0.1 lab runs against the production landing and Overview
 route scored 100 performance, accessibility, best practices, and SEO for both
-routes. The landing measured FCP 1,082 ms, LCP 1,124 ms, TBT 0 ms, and CLS 0;
-the Overview measured FCP 1,081 ms, LCP 1,107 ms, TBT 1 ms, and CLS 0. The specific
+routes. The landing measured FCP 1,085 ms, LCP 1,139 ms, TBT 4 ms, and CLS 0;
+the Overview measured FCP 1,082 ms, LCP 1,139 ms, TBT 7 ms, and CLS 0. The specific
 visible-label/accessibility-name mismatch and color-contrast audits both have
 zero remaining nodes after aligning the brand name and raising the canonical
-muted-text token to `#a0a0a0`. Lighthouse estimated zero landing and 22,302
+muted-text token to `#a0a0a0`. Lighthouse estimated zero landing and 23,373
 Overview bytes of unused first-load JavaScript in this run; lab results remain
 environment-dependent.
 This audit covers the landing and Overview routes, not every authenticated or
