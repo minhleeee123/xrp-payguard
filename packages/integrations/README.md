@@ -38,7 +38,10 @@ events. A reverted receipt, wrong chain, runtime asset/minimum drift, missing
 event, duplicate leg, tag mismatch, or partial-amount mismatch fails closed.
 The writer owns signing and transport; this package never accepts or stores a
 private key. A live Coston2 redemption and its asynchronous settlement are
-still a separate evidence gate.
+still a separate evidence gate. Settlement parsing accepts the deployed
+`RedemptionPerformed` request-id ABI variants and requires a positive
+`spentUnderlyingUBA` for the successful event; negative spend values belong to
+the separate blocked/failed event families.
 
 The FDC verifier and Smart Account client are injected interfaces. An absent or
 negative verifier, stale/mismatched payment, mismatched `proofOwner`, missing

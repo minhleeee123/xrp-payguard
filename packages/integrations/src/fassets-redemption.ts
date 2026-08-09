@@ -11,6 +11,7 @@ import {
   assertRedemptionJobIntegrity,
   type FAssetsRedemptionClient,
   type RedemptionJobV1,
+  type RedemptionPerformedEventV1,
   type RedemptionRequestReceiptV1,
   type RedemptionRequestedEventV1,
 } from "./redemption.js";
@@ -135,6 +136,36 @@ export const FASSET_REDEMPTION_EVENTS_ABI = [
     inputs: [
       { name: "redeemer", type: "address", indexed: true },
       { name: "remainingAmountUBA", type: "uint256", indexed: false },
+    ],
+  },
+] as const;
+
+/** Deployed Coston2 versions have used both uint256 and legacy uint64 request IDs. */
+export const FASSET_REDEMPTION_PERFORMED_EVENT_ABIS = [
+  {
+    type: "event",
+    name: "RedemptionPerformed",
+    anonymous: false,
+    inputs: [
+      { name: "agentVault", type: "address", indexed: true },
+      { name: "redeemer", type: "address", indexed: true },
+      { name: "requestId", type: "uint256", indexed: true },
+      { name: "transactionHash", type: "bytes32", indexed: false },
+      { name: "redemptionAmountUBA", type: "uint256", indexed: false },
+      { name: "spentUnderlyingUBA", type: "int256", indexed: false },
+    ],
+  },
+  {
+    type: "event",
+    name: "RedemptionPerformed",
+    anonymous: false,
+    inputs: [
+      { name: "agentVault", type: "address", indexed: true },
+      { name: "redeemer", type: "address", indexed: true },
+      { name: "requestId", type: "uint64", indexed: true },
+      { name: "transactionHash", type: "bytes32", indexed: false },
+      { name: "redemptionAmountUBA", type: "uint256", indexed: false },
+      { name: "spentUnderlyingUBA", type: "int256", indexed: false },
     ],
   },
 ] as const;
@@ -393,6 +424,60 @@ export function parseCoston2RedemptionReceipt(input: {
     remainingAmountUBA,
     requests,
   };
+}
+
+/**
+ * Parse a canonical AssetManager settlement receipt. The successful event's
+ * `spentUnderlyingUBA` is a positive amount (failed/blocked events use a
+ * separate negative-spend event); the Flare receipt hash becomes the public
+ * settlement transaction binding and the event's bytes32 is the underlying
+ * payment transaction hash.
+ */
+export function parseCoston2RedemptionPerformedReceipt(input: {
+  job: RedemptionJobV1;
+  receipt: Coston2RedemptionReceiptV1;
+}): RedemptionPerformedEventV1 {
+  assertRedemptionJobIntegrity(input.job);
+  if (input.job.state !== "REQUESTED" || input.receipt.status !== "success"
+    || !HEX32.test(input.receipt.transactionHash) || input.receipt.transactionHash.toLowerCase() === zeroHash) {
+    throw new Error("redemption settlement receipt unavailable");
+  }
+  const assetManager = getAddress(input.job.assetManager);
+  let parsed: RedemptionPerformedEventV1 | undefined;
+  for (const log of input.receipt.logs) {
+    if (!isAddress(log.address) || getAddress(log.address) !== assetManager) continue;
+    for (const abi of FASSET_REDEMPTION_PERFORMED_EVENT_ABIS) {
+      try {
+        const decoded = decodeEventLog({ abi: [abi], data: log.data, topics: decodeTopics(log.topics) });
+        const args = asArgs(decoded.args);
+        const candidate: RedemptionPerformedEventV1 = {
+          status: "UNDERLYING_PAID",
+          flareTransactionHash: input.receipt.transactionHash.toLowerCase() as Hex,
+          agentVault: address(args.agentVault, "settlement agent vault"),
+          redeemer: address(args.redeemer, "settlement redeemer"),
+          requestId: uint(args.requestId, "settlement request id", (1n << 64n) - 1n),
+          transactionHash: nonZeroHash(args.transactionHash, "underlying transaction hash"),
+          redemptionAmountUBA: readUint(args.redemptionAmountUBA, "settlement redemption amount"),
+          spentUnderlyingUBA: args.spentUnderlyingUBA as bigint,
+        };
+        if (typeof candidate.spentUnderlyingUBA !== "bigint" || candidate.spentUnderlyingUBA <= 0n) {
+          throw new Error("settlement spent amount invalid");
+        }
+        if (candidate.redeemer !== getAddress(input.job.redeemer)) throw new Error("settlement redeemer drift");
+        const request = input.job.requests.find((leg) => leg.requestId === candidate.requestId);
+        if (!request || request.state !== "REQUESTED" || getAddress(request.agentVault) !== candidate.agentVault
+          || request.valueUBA !== candidate.redemptionAmountUBA) throw new Error("settlement request drift");
+        if (parsed) throw new Error("settlement event duplicate");
+        parsed = candidate;
+      } catch (error) {
+        if (error instanceof Error && /settlement (spent amount invalid|redeemer drift|request drift|event duplicate)/.test(error.message)) {
+          throw error;
+        }
+      }
+    }
+  }
+  if (!parsed) throw new Error("redemption settlement event missing");
+  return parsed;
 }
 
 function readAddress(value: unknown, label: string): Hex {

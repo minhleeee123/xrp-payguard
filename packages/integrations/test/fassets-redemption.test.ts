@@ -10,9 +10,11 @@ import {
 } from "viem";
 import {
   FASSET_REDEMPTION_EVENTS_ABI,
+  FASSET_REDEMPTION_PERFORMED_EVENT_ABIS,
   buildCoston2RedemptionCall,
   createCoston2FAssetsRedemptionClient,
   parseCoston2RedemptionReceipt,
+  parseCoston2RedemptionPerformedReceipt,
   type Coston2RedemptionLogV1,
 } from "../src/fassets-redemption.js";
 import {
@@ -121,7 +123,7 @@ describe("Coston2 FAssets redemption boundary", () => {
     })).toThrow(/tag drift/);
   });
 
-  it("parses partial multi-agent requests and rejects receipt drift", () => {
+  it("parses partial multi-agent requests and rejects receipt drift", async () => {
     const receipt = {
       status: "success" as const,
       transactionHash: id("redemption-tx"),
@@ -134,6 +136,26 @@ describe("Coston2 FAssets redemption boundary", () => {
     const parsed = parseCoston2RedemptionReceipt({ job, receipt });
     expect(parsed).toMatchObject({ requestedAmountUBA: 1_000n, redeemedAmountUBA: 1_000n, remainingAmountUBA: 0n });
     expect(parsed.requests).toHaveLength(2);
+    const requestedJob = await requestRedemption(job, { requestRedemption: async () => parsed });
+    const performedTopics = encodeEventTopics({
+      abi: FASSET_REDEMPTION_PERFORMED_EVENT_ABIS,
+      eventName: "RedemptionPerformed",
+      args: { agentVault: agentA, redeemer, requestId: 1n },
+    }) as readonly Hex[];
+    const performedLog: Coston2RedemptionLogV1 = {
+      address: assetManager,
+      topics: performedTopics,
+      data: encodeAbiParameters([{ type: "bytes32" }, { type: "uint256" }, { type: "int256" }], [id("underlying-payment"), 900n, 4_975_012n]),
+    };
+    const performedEvent = parseCoston2RedemptionPerformedReceipt({
+      job: requestedJob,
+      receipt: { status: "success", transactionHash: id("settlement-flare-tx"), logs: [performedLog] },
+    });
+    expect(performedEvent).toMatchObject({ status: "UNDERLYING_PAID", requestId: 1n, redemptionAmountUBA: 900n, spentUnderlyingUBA: 4_975_012n });
+    expect(() => parseCoston2RedemptionPerformedReceipt({
+      job: requestedJob,
+      receipt: { status: "success", transactionHash: id("settlement-flare-tx"), logs: [{ ...performedLog, data: encodeAbiParameters([{ type: "bytes32" }, { type: "uint256" }, { type: "int256" }], [id("underlying-payment"), 900n, 0n]) }] },
+    })).toThrow(/spent amount invalid/);
     expect(() => parseCoston2RedemptionReceipt({
       job,
       receipt: { ...receipt, logs: [requestedLog(), incompleteLog(1n)] },

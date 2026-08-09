@@ -300,6 +300,10 @@ verified on Coston2. External review and registered FCC execution remain open.
   approve/redeem receipts to submitted transaction hashes, and parses official
   amount/tag request events with fail-closed partial-leg checks. Signing stays
   in an injected writer; live settlement remains open.
+- [x] Align successful `RedemptionPerformed` settlement parsing with the live
+  Coston2 event (positive `spentUnderlyingUBA` and deployed uint256 request
+  ID), while retaining a uint64 compatibility decoder and rejecting blocked or
+  failed-event spend semantics on the successful path.
 - [ ] Execute and verify an official live FAssets redemption/default exit on
   Coston2, including partial fulfillment and destination-tag behavior.
 

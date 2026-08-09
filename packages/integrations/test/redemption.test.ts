@@ -74,7 +74,7 @@ const performed = (patch: Partial<RedemptionPerformedEventV1> = {}): RedemptionP
   requestId: 1n,
   transactionHash: id("redemption-underlying-tx"),
   redemptionAmountUBA: 400n,
-  spentUnderlyingUBA: -396n,
+  spentUnderlyingUBA: 396n,
   ...patch,
 });
 

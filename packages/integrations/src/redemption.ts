@@ -227,7 +227,7 @@ export function assertRedemptionJobIntegrity(job: RedemptionJobV1): void {
       if (!isNonZeroHex32(leg.flareTransactionHash) || !isNonZeroHex32(leg.underlyingTransactionHash)
         || !isNonZeroHex32(leg.settlementProofCommitment)
         || leg.spentUnderlyingUBA === undefined || leg.spentUnderlyingUBA < MIN_INT256
-        || leg.spentUnderlyingUBA > MAX_INT256 || leg.spentUnderlyingUBA >= 0n
+        || leg.spentUnderlyingUBA > MAX_INT256 || leg.spentUnderlyingUBA <= 0n
         || leg.redeemedVaultCollateralWei !== undefined || leg.redeemedPoolCollateralWei !== undefined) throw new Error("redemption job drift");
     } else if (leg.state === "COLLATERAL_DEFAULT") {
       if (!isNonZeroHex32(leg.flareTransactionHash) || leg.underlyingTransactionHash !== undefined
@@ -332,7 +332,7 @@ export async function acceptRedemptionPerformed(
     || !isNonZeroHex32(event.transactionHash) || !isAddress(event.agentVault) || !isAddress(event.redeemer)
     || getAddress(event.redeemer) !== getAddress(job.redeemer) || !isUint(event.requestId, MAX_UINT64)
     || !isUint(event.redemptionAmountUBA) || event.spentUnderlyingUBA < MIN_INT256
-    || event.spentUnderlyingUBA > MAX_INT256 || event.spentUnderlyingUBA >= 0n) throw new Error("redemption performed event invalid");
+    || event.spentUnderlyingUBA > MAX_INT256 || event.spentUnderlyingUBA <= 0n) throw new Error("redemption performed event invalid");
   const index = job.requests.findIndex((request) => request.requestId === event.requestId);
   const request = job.requests[index];
   if (!request || request.state !== "REQUESTED" || getAddress(request.agentVault) !== getAddress(event.agentVault)
