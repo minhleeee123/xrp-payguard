@@ -1,0 +1,226 @@
+{
+  "schemaVersion": 1,
+  "suite": "payguard-coston2-simulated-tee-policy-lifecycle",
+  "status": "coston2-simulated-pass",
+  "recordedAt": "2026-08-09T07:30:56.999Z",
+  "sourceCommit": "b0cc48b42ebb776d9e06ab27e27dbaaa054ed3d3",
+  "mode": "SIMULATED_TEE_ONCHAIN",
+  "network": {
+    "name": "flare-coston2",
+    "chainId": 114,
+    "publicChainConnected": true,
+    "observedBlock": "33811982"
+  },
+  "publicIdentifiers": {
+    "owner": "0xDC1cc527423C882156a632C250528D1922d18Fc7",
+    "asset": "0x0b6A3645c240605887a5532109323A3E12273dc7",
+    "contracts": {
+      "registry": "0x8DFb2D7D7a2608Ee7Cd78983fbe28cCE00e1D4A4",
+      "vault": "0xFFe7522075412B2eBA5b8B91c9aA4E1c2c6f84dB",
+      "router": "0x28A969018975Fb40aEd0BfA98f6d1c3023B6a7Da"
+    },
+    "deploymentSourceCommit": "17ff0bc1eb135195a94d0d261bc491f006730720",
+    "policyId": "0xff162c7c05a76e83199af8dcec6641aa3b00a8cc64860bbfe2ed47c296c36d2c",
+    "policyCommitment": "0x278fb0d4494669f56020e31081a6098bb286597693606149aca8d4e6bc5df174",
+    "extensionId": "0xee88fad5f4bfb090a07512f9e551dbcf55b4eba3b079fe0cb393998600fb2d7d",
+    "codeVersion": "0x53ebca41c66e738d85a2a9402af97f997b21ef29246743d49c5e1384e4e4f451",
+    "machines": [
+      {
+        "machineId": "0xcfd91443c06c0a1a5ad2dbdb70b5e5f87d1847e6630f7a460b55d09ea49953b2",
+        "keyFingerprint": "0xf5da4fe23fcc6c5b758ec9f72e0af5bd2acbec35bab5202b3c67a54227dddbf7",
+        "signer": "0x303A8DB3C34C0B18A0DBfD2b9d3D3C81539123bD"
+      },
+      {
+        "machineId": "0x65d461408ba348dbd3d0c71cc0b9c2c5638f96826b6234dae96b3738781155ba",
+        "keyFingerprint": "0x965313f3806b603b695ea05b8fcc3b6b5115ada7a664491c7f5659b724762b9d",
+        "signer": "0xac89D2e20a0c05601F8C798cB83F75169005c3dF"
+      },
+      {
+        "machineId": "0x712f2e0f277247c5b7e5011228541e0cb3f7696aa7ca5602300d1b122287fb50",
+        "keyFingerprint": "0xe694caa84e142ed308eeabe51f043dd3a4b2ac21c46f2232657ff31559a58711",
+        "signer": "0x56685CD740c8A80EF66A9149c2e44765aEe3343c"
+      }
+    ]
+  },
+  "lifecycle": {
+    "machineRegistrations": [
+      {
+        "transactionHash": "0xd51948a5416e979fe37dc95b21424961833f3fe3216199eac43e9164d7adc88b",
+        "blockNumber": "33811935",
+        "receiptStatus": "success",
+        "eventName": "MachineRegistered",
+        "eventVerified": true
+      },
+      {
+        "transactionHash": "0xdef49ea0eb79682389074982e12c914a39ceaaa1a79095f3e27941cbe3573beb",
+        "blockNumber": "33811936",
+        "receiptStatus": "success",
+        "eventName": "MachineRegistered",
+        "eventVerified": true
+      },
+      {
+        "transactionHash": "0x88d49bf30e2e1b1d6d19396a5eaa12ecf64321c208d3b3ed16aa878aa5108070",
+        "blockNumber": "33811939",
+        "receiptStatus": "success",
+        "eventName": "MachineRegistered",
+        "eventVerified": true
+      }
+    ],
+    "policyRegistration": {
+      "transactionHash": "0x243d59701505d5fb1e272756890d447e01d75fb61f13317d111363e2591d9f00",
+      "blockNumber": "33811943",
+      "receiptStatus": "success",
+      "eventName": "PolicyRegistered",
+      "eventVerified": true
+    },
+    "recurringAllow": {
+      "requestId": "0x7067d3a867268db55b8dd94c9bbe15e27b9e4fe0b41f13b5d7111697959be1e3",
+      "amountUBA": "10000",
+      "publicReasonClass": "OK",
+      "request": {
+        "transactionHash": "0xb7a1c9929a900c072bab933969c62dce40fcd752899582852239637ea536e60a",
+        "blockNumber": "33811947",
+        "receiptStatus": "success",
+        "eventName": "RequestCreated",
+        "eventVerified": true
+      },
+      "evaluations": [
+        {
+          "transactionHash": "0x6e5a84e5e2d875ad1ff2c1d7f98db0ca7beb5fa77f53e0caa05a513ac419c0ed",
+          "blockNumber": "33811950",
+          "receiptStatus": "success",
+          "eventName": "EvaluationAccepted",
+          "eventVerified": true
+        },
+        {
+          "transactionHash": "0x0b867ff266bc12893a4abeaf38478efc17023537c8b87250f494f0245023f7b3",
+          "blockNumber": "33811954",
+          "receiptStatus": "success",
+          "eventName": "EvaluationAccepted",
+          "eventVerified": true
+        }
+      ],
+      "execution": {
+        "transactionHash": "0x5f8cd29963873de5f98e1dca081e46a6e29952ba088fcf5f1412f0801f8245a2",
+        "blockNumber": "33811957",
+        "receiptStatus": "success",
+        "eventName": "RequestExecuted",
+        "eventVerified": true
+      }
+    },
+    "capDenial": {
+      "requestId": "0xb3f66c6e075a31a717d4d330044c413fd47dcca798dd23e308848e928ea74d6b",
+      "amountUBA": "10000",
+      "publicReasonClass": "CAP_EXCEEDED",
+      "request": {
+        "transactionHash": "0x59515c800f37d7b4b059a41b0f89c8103dab92ef9edcaf6abf2c9c5e4bd55eb4",
+        "blockNumber": "33811968",
+        "receiptStatus": "success",
+        "eventName": "RequestCreated",
+        "eventVerified": true
+      },
+      "evaluations": [
+        {
+          "transactionHash": "0x99e5bfe1a6841e13f36193833aa4687b445823bf88a0fba3e0a2227aa0143fa4",
+          "blockNumber": "33811971",
+          "receiptStatus": "success",
+          "eventName": "EvaluationAccepted",
+          "eventVerified": true
+        },
+        {
+          "transactionHash": "0xd0f2d0c1e04be8db516d6deda86c40cb9e12ccf53d61be3249bf514b7ccc0966",
+          "blockNumber": "33811973",
+          "receiptStatus": "success",
+          "eventName": "EvaluationAccepted",
+          "eventVerified": true
+        }
+      ]
+    },
+    "emergencyStop": {
+      "transactionHash": "0xa0247ccc8dd8262f20d190d4b8ee9f8d8116f5187af6bf80e1c26fb75404eaea",
+      "blockNumber": "33811978",
+      "receiptStatus": "success",
+      "eventName": "PolicyStopped",
+      "eventVerified": true,
+      "stoppedRequestRejected": true
+    },
+    "resume": {
+      "transactionHash": "0x4f6a701506157b81d5f7ad63b55a2ad4e91192822c66d00313b3feeaadf8b84f",
+      "blockNumber": "33811980",
+      "receiptStatus": "success",
+      "eventName": "PolicyResumed",
+      "eventVerified": true
+    },
+    "revoke": {
+      "transactionHash": "0x00a7eed55decee1015cee599d602684a17f0c7433067780219d107a63350eaed",
+      "blockNumber": "33811981",
+      "receiptStatus": "success",
+      "eventName": "PolicyRevoked",
+      "eventVerified": true,
+      "revokedRequestRejected": true
+    }
+  },
+  "accounting": {
+    "before": {
+      "deposited": "1000000",
+      "available": "1000000",
+      "reserved": "0",
+      "spent": "0",
+      "withdrawn": "0",
+      "refunded": "0"
+    },
+    "afterAllow": {
+      "deposited": "1000000",
+      "available": "990000",
+      "reserved": "0",
+      "spent": "10000",
+      "withdrawn": "0",
+      "refunded": "0"
+    },
+    "afterDeny": {
+      "deposited": "1000000",
+      "available": "990000",
+      "reserved": "0",
+      "spent": "10000",
+      "withdrawn": "0",
+      "refunded": "0"
+    },
+    "executedAmountUBA": "10000"
+  },
+  "assertions": {
+    "simulationOnly": true,
+    "hardwareTeeVerified": false,
+    "registeredMachinesVerified": false,
+    "stableHttpsOriginsVerified": false,
+    "authenticatedIndexerVerified": false,
+    "payGuardLocalMachineEntriesVerified": true,
+    "onChainTransactionsVerified": true,
+    "threeSimulatedCustodyReceiptsVerified": true,
+    "twoMatchingAllowEvaluationsVerified": true,
+    "capDenialVerified": true,
+    "emergencyStopVerified": true,
+    "resumeVerified": true,
+    "revokeVerified": true,
+    "conservationVerified": true,
+    "sourceCommitCleanAtBroadcast": true,
+    "testnetOnly": true,
+    "noPrivateKeyRecorded": true,
+    "noCredentialRecorded": true,
+    "noPolicyPlaintextOrCiphertextRecorded": true,
+    "noLiveFccResultClaimed": true,
+    "noPayGuardReleaseClaimed": true
+  },
+  "blockers": [
+    "HARDWARE_TEE_NOT_PRESENT",
+    "STABLE_HTTPS_FCC_ORIGINS_NOT_DEPLOYED",
+    "AUTHENTICATED_FCC_INDEXER_NOT_CONFIGURED",
+    "OFFICIAL_FCC_MACHINES_NOT_REGISTERED",
+    "LIVE_PRIVATE_POLICY_LIFECYCLE_NOT_VERIFIED"
+  ],
+  "notes": [
+    "This is a real Coston2 contract lifecycle driven by three ephemeral in-memory simulated signers; it is not a live FCC lifecycle.",
+    "Machine entries exist only in PayGuardPolicyRegistry for this demonstration and do not prove registration in the official FCC machine manager.",
+    "The in-memory private policy and all private keys were discarded; evidence contains only public commitments, identities, transaction identifiers, blocks, amounts, states, and assertion booleans.",
+    "The lifecycle proves the solution-3 contract path for one recurring allow, deterministic cap denial, stop, resume, revoke, and vault conservation without upgrading any hardware confidentiality or release claim."
+  ]
+}

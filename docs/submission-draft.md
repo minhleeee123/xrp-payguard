@@ -32,6 +32,11 @@ evidence without publishing the policy rules themselves.
 - Three disposable local `SIMULATED_TEE` containers demonstrate distinct
   identities, ciphertext-only ingress, threshold behavior, restart rotation,
   hardening, and fail-closed errors.
+- One separate solution-3 run exercised the deployed Coston2 contracts through
+  14 successful transactions using three ephemeral simulated signers. It
+  demonstrates two-of-three recurring authorization, cap denial,
+  stop/resume/revoke, and vault conservation, but not live FCC custody or
+  hardware confidentiality.
 - A public Vercel product shell exposes a reviewed evidence mirror and labels
   unavailable providers instead of mocking success.
 

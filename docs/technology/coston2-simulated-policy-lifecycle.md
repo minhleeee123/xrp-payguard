@@ -59,3 +59,24 @@ Successful evidence belongs under `evidence/simulation/`, even though its
 transactions are real Coston2 transactions. The public web evidence validator
 requires `SIMULATED_TEE_ONCHAIN`, false hardware/official-machine assertions,
 and explicit non-release claims before it will publish this class of record.
+
+## Recorded run
+
+The guarded run completed on 2026-08-09 and produced
+[`coston2-simulated-policy-lifecycle-2026-08-09.json`](../../evidence/simulation/coston2-simulated-policy-lifecycle-2026-08-09.json).
+It contains 14 unique successful Coston2 transactions across blocks `33811935`
+through `33811981`. A separate credential-free RPC read rechecked every receipt
+and the canonical final state:
+
+- all three PayGuard-local machine entries match their recorded public signer
+  and key fingerprint;
+- policy status is revoked (`3`), the recurring request is executed (`4`), and
+  the cap-exceeded request is denied (`3`);
+- vault accounting is `1,000,000` deposited, `990,000` available, `10,000`
+  spent, and zero reserved, withdrawn, or refunded.
+
+The run generated and discarded the private policy and signer keys in memory.
+Its three identities are not official FCC machine-manager registrations, so
+this record closes only the solution-3 on-chain simulation checkpoint. Live
+hardware custody, stable origins, authenticated indexers, and signed FCC
+results remain unverified.

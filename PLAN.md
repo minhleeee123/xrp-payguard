@@ -416,6 +416,10 @@ Exit: failure is resumable or explicitly denied, never represented as success.
   confidentiality, registered custody, or a live PayGuard release.
 - [x] Publish a hackathon handoff with the exact demo boundary, production-web
   smoke, local validation commands/results, limitations, and pushed commits.
+- [x] Record one solution-3 Coston2 simulated-policy lifecycle with three
+  ephemeral in-memory signers, two matching allow evaluations, deterministic
+  cap denial, stop/resume/revoke, and vault conservation; keep the evidence
+  under `evidence/simulation/` and do not count it as a live FCC lifecycle.
 - [ ] Generate and verify a PayGuard release manifest and consumer bindings.
 - [ ] Verify runtime bytecode, constructor/wiring, extension ID, code/image hash,
   governance, machines, key fingerprints, and signer mapping.

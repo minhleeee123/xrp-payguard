@@ -1,9 +1,9 @@
 # XRP PayGuard hackathon handoff
 
-> Validation run: `2026-08-09T07:10:05Z` against source commit
-> `4a82eb6d4d50572389cfe35a0322f98868364808`. This record is a subsequent
-> documentation-only commit. This is a testnet/local-simulation handoff, not a
-> verified PayGuard release.
+> Validation run: `2026-08-09T07:37:29Z` against implementation source commit
+> `b0cc48b42ebb776d9e06ab27e27dbaaa054ed3d3` plus the reviewed public-safe
+> lifecycle evidence and documentation in this subsequent commit. This is a
+> testnet/simulation handoff, not a verified PayGuard release.
 
 ## Delivery boundary
 
@@ -12,6 +12,8 @@ The hackathon build uses solution 3:
 - a credential-free local three-machine simulated FCC stack;
 - real public Coston2 contract, funding, FDC, FAssets, and foundation-sender
   observations where their individual evidence files say they passed;
+- one real Coston2 contract lifecycle driven by three ephemeral in-memory
+  simulated signers and classified as `SIMULATED_TEE_ONCHAIN`;
 - a Vercel public product shell and reviewed static evidence mirror.
 
 Stable FCC servers, authenticated indexer access, hardware TEE attestation,
@@ -77,14 +79,18 @@ Observed results on the current baseline:
 - Forge passed 31 tests, including 256 fuzz runs and a 128-run/8192-call
   conservation invariant with zero reverts.
 - Secret scan inspected 326 current files and 141 revisions with zero history
-  findings. Privacy scan inspected 40 browser/relay/FCC source and build files,
-  found no browser persistence API, and the evidence gate accepted 11
-  testnet-only Coston2 files without upgrading them into a release.
+  findings on the earlier baseline. The current run inspected 331 files and
+  144 revisions with zero history findings. Privacy scan inspected 40
+  browser/relay/FCC source and build files and found no browser persistence API;
+  the Coston2 evidence gate retained 11 testnet-only records, while the public
+  web validator separately accepted two explicitly limited simulation records.
 - The release check returned `planned` because no verified PayGuard Coston2
   release manifest exists; this is the expected fail-closed outcome.
 
-The following are previously executed, separately recorded operational facts;
-they were not rerun in the `2026-08-09T07:10:05Z` source-validation command set:
+The following operational facts have separate evidence records. The container,
+image-reproducibility, and browser observations were not rerun in the current
+source-validation command set. The on-chain lifecycle was executed immediately
+before that validation and then independently re-read through the public RPC:
 
 - The three-machine container smoke passed distinct identity/signer binding,
   container hardening, loopback-only ingress, malformed-ingress failure,
@@ -92,6 +98,12 @@ they were not rerun in the `2026-08-09T07:10:05Z` source-validation command set:
   [`../evidence/simulation/fcc-local-three-machine-2026-08-09.json`](../evidence/simulation/fcc-local-three-machine-2026-08-09.json).
 - Two no-cache `linux/amd64` FCC image builds produced the same local image
   digest `sha256:8b62d0b9eb714d433b0b2eb6de7640462893f87f0d2994af36b8d76888c848bd`.
+- The guarded solution-3 on-chain run produced 14 unique successful Coston2
+  transactions across blocks `33811935`–`33811981`. A separate credential-free
+  RPC read reverified all receipts, three PayGuard-local machine entries,
+  revoked policy state, executed allow request, denied cap request, and final
+  vault accounting of `1,000,000` deposited, `990,000` available, and `10,000`
+  spent. The record remains non-FCC simulation evidence.
 - Production Chrome verified the expanded eight-section/three-SVG-mascot
   landing at desktop `1440x1200` and mobile `390x844`, reduced motion, Enter-key
   activation, zero storage entries, no HTTP/console errors, and no horizontal
@@ -101,8 +113,10 @@ they were not rerun in the `2026-08-09T07:10:05Z` source-validation command set:
 
 A fresh HTTPS read during the current validation returned 200 for the
 application and evidence index; the index reported 12 entries and retained
-`staticShellOnly: true` and `testnetOnly: true`. `PLAN.md` records 94 checked
-and 26 open checkboxes (78.3%). The open items are not silently promoted:
+`staticShellOnly: true` and `testnetOnly: true`. The currently deployed index is
+still the preceding 12-entry artifact and will be replaced only after this
+reviewed record is committed. `PLAN.md` records 95 checked and 26 open
+checkboxes (78.5%). The open items are not silently promoted:
 organizer/account actions, user research/pilots, live FCC
 infrastructure/lifecycle, remaining canonical live drills, external review,
 release, and mainnet work remain outstanding.
@@ -115,7 +129,7 @@ release, and mainnet work remain outstanding.
 | XRP funding | One PayGuard-owned XRPL Testnet → FDC → Smart Account/direct-mint → vault accounting observation | Does not prove a recurring private-policy payment |
 | FAssets exits | Public amount and destination-tag redemption observations | Canonical PayGuard consumption/default recovery remain limited as recorded |
 | FCC foundation | Sender/extension binding exists and local `PING_V1` vectors pass | No registered production machine or signed live FCC result |
-| FCC policy path | Three-machine local simulation and deterministic threshold/replay tests pass | No hardware TEE confidentiality, stable HTTPS origins, or live custody |
+| FCC policy path | Three-machine local simulation, deterministic threshold/replay tests, and one 14-transaction Coston2 simulated-signer lifecycle pass | No hardware TEE confidentiality, official FCC registration, stable HTTPS origins, authenticated indexer, or live custody |
 | Web | Vercel shell, responsive/keyboard smoke, and public evidence mirror pass | Wallet, relay, policy provider, and live audit remain unavailable |
 | Release | Release validators and fail-closed checks pass | No verified release manifest exists |
 | SDK | Compile-tested XRPL-wallet and Flare-dApp preview examples plus integration guide | Package remains private; no live writer or release domain is exposed |
@@ -140,6 +154,8 @@ release, and mainnet work remain outstanding.
 - `de47283` — current application contrast/deployment audit record.
 - `1a9a6a1` — refreshed public competition requirements.
 - `4a82eb6` — retrospective new-work and provenance ledger.
+- `40986ec` — guarded solution-3 Coston2 simulated-policy lifecycle runner.
+- `b0cc48b` — canonical recurring schedule correction for that runner.
 
 This list is a handoff-oriented index, not the complete implementation history;
 the remote Git history is authoritative.

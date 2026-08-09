@@ -39,6 +39,13 @@ and Vercel shell/evidence mirror. Stable FCC servers, authenticated indexer
 access, hosted relay/proxy, production registration, and the complete private
 lifecycle are deferred until after the hackathon. The simulation is never
 presented as hardware-backed confidentiality or a verified PayGuard release.
+The same solution-3 boundary has also exercised the deployed contracts in one
+real Coston2 lifecycle using three ephemeral in-memory simulated signers: 14
+successful transactions cover local-registry machine entries, policy
+registration, two-of-three recurring authorization, cap denial,
+stop/resume/revoke, and vault conservation. The sanitized record is
+[`coston2-simulated-policy-lifecycle-2026-08-09.json`](evidence/simulation/coston2-simulated-policy-lifecycle-2026-08-09.json);
+it is on-chain simulation evidence, not a registered FCC result.
 
 ## Start here
 

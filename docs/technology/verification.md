@@ -25,7 +25,7 @@ Forbidden evidence:
 | B — Private policy ingress | sealed policy, three receipts, replay/domain negatives | LOCAL AUTH/ECIES PASS / SEALED LIVE NOT VERIFIED |
 | C — Common custody | all-three matching policy availability and commitment | NOT STARTED |
 | D — Deterministic evaluation | cross-language vectors and private policy result | LOCAL PASS / LIVE NOT VERIFIED |
-| E — Threshold execution | two distinct exact results authorize one atomic action | LOCAL PASS / CONTRACTS DEPLOYED / FCC EXECUTION OPEN |
+| E — Threshold execution | two distinct exact results authorize one atomic action | LOCAL PASS + SOLUTION-3 COSTON2 SIMULATED-SIGNER LIFECYCLE PASS / CONTRACTS DEPLOYED / LIVE FCC EXECUTION OPEN |
 | F — Vault conservation | deposits/reservations/spend/refund and adversarial invariants | LOCAL PASS / VAULT DEPLOYED / LIVE FAssets REQUEST/PAYOUT OBSERVED / CANONICAL SETTLEMENT + DEFAULT RECOVERY OPEN |
 | G — XRP-native funding | XRPL payment, FDC proof, Smart Account deposit | PASS — live PayGuard-owned Coston2 evidence in [`evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json`](../../evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json) covers validated XRPL Testnet payment, FDC request/finalized round/proof commitment, on-chain `verifyXRPPayment`, `executeDirectMintingWithData`, and verified PayGuardVault accounting. The credential-free [`coston2-funding-resume-audit-2026-08-09.json`](../../evidence/coston2/coston2-funding-resume-audit-2026-08-09.json) reconstructs that completed public checkpoint, re-verifies the historical proof and current runtime bindings, and proves injected drift rejection; no actual delayed-event resubmission is claimed. FCC/private-policy/hosted release gates remain open. |
 | H — Product release | full roles, recovery, accessibility, live deployment | STATIC VERCEL SHELL + PUBLIC-SAFE `/evidence/index.json` + LANDING + DESKTOP/MOBILE/KEYBOARD BROWSER SMOKE + CONTRACT DEPLOYMENT / HOSTED PRIVATE LIFECYCLE, RELAY, FCC, AND RELEASE MANIFEST OPEN |
@@ -134,6 +134,13 @@ credential-free local three-machine simulation, public Coston2 facts, and the
 Vercel public shell/evidence mirror may be demonstrated only with explicit
 simulation and availability labels. Production FCC servers and the hosted
 private lifecycle are post-hackathon work.
+
+One separate solution-3 record now proves the deployed Coston2 registry,
+router, and vault path with three ephemeral simulated signers, two matching
+allow results, cap denial, stop/resume/revoke, and conservation. It is stored
+under `evidence/simulation/`, asserts `hardwareTeeVerified: false` and
+`registeredMachinesVerified: false`, and does not satisfy Gate A, B, C, or the
+live portion of Gate E.
 
 Do not call PayGuard complete when only a local demo works. Release requires a
 real Coston2 lifecycle, live failure/recovery evidence, generated bindings,
