@@ -1,12 +1,13 @@
 # XRP PayGuard hackathon handoff
 
-> Current production deployment/browser audit: `2026-08-09T09:21:09Z` against
-> artifact source commit `3147d26fefa8fdeb9a475782820065c1121fa160` plus
-> audit implementation commit `6d4dca1942d5d2500b01bcc043e471db00f48718`
-> and the deployment-audit evidence and documentation in this subsequent
-> commit. The full workspace, Go, and Forge baseline was rerun at
-> `2026-08-09T09:23:35Z`. This is a
-> testnet/simulation handoff, not a verified PayGuard release.
+> Implementation baseline validated before this handoff refresh:
+> `897b54bfd11e236c78903fe5f3f5c3ec99509970`.
+> The production web artifact remains deliberately pinned to source commit
+> `f6d570a1255c9d2608ce81a45410e73a96082898`; its browser/deployment evidence
+> was recorded in `fc92b6a20b7d800ff56cf2e46967d5d742ea37aa`.
+> The full workspace, Go, Forge, security, privacy, evidence, release, and build
+> baseline was rerun at `2026-08-09T10:26:10Z`. This is a testnet/simulation
+> handoff, not a verified PayGuard release.
 
 ## Delivery boundary
 
@@ -85,14 +86,14 @@ Observed results on the current baseline:
 
 - The toolchain gate resolved Node `24.19.0`, pnpm `10.33.0`, Go `1.25.12`,
   Foundry `1.7.1`, and Solidity `0.8.25` requirements.
-- 144 workspace package tests passed: bindings 2, protocol 35, relay 13,
-  integrations 77, web 13, and SDK examples 4. The top-level gate also passed
+- 165 workspace package tests passed: bindings 2, protocol 50, relay 13,
+  integrations 83, web 13, and SDK examples 4. The top-level gate also passed
   the separate public-web evidence, four deployment-corpus auditor tests,
   three demo-recorder tests, and deployment/release/FCC tooling suites.
 - All workspace TypeScript typechecks and all Go packages passed.
 - Forge passed 43 tests, including 256 fuzz runs and a 128-run/8192-call
   conservation invariant with zero reverts.
-- Secret scan inspected 364 current files and 159 revisions with zero history
+- Secret scan inspected 368 current files and 163 revisions with zero history
   findings. Privacy scan inspected 40
   browser/relay/FCC source and build files and found no browser persistence API;
   the Coston2 evidence gate retained 13 testnet-only records, while the public
@@ -144,11 +145,30 @@ favicon/JavaScript/CSS, the index, and all 15 evidence assets. Desktop and
 mobile rendering, Enter-key activation, the 15/14/2 Auditor counts, zero
 browser storage, zero HTTP/console errors, and no horizontal overflow passed.
 The index retained `staticShellOnly: true` and `testnetOnly: true`. `PLAN.md`
-records 101 checked and 24 open checkboxes (80.8%). The open items are not
+records 102 checked and 23 open checkboxes (81.6%). The open items are not
 silently promoted:
 organizer/account actions, user research/pilots, live FCC
 infrastructure/lifecycle, remaining canonical live drills, external review,
 release, and mainnet work remain outstanding.
+
+## Remaining-gate audit
+
+The 23 unchecked `PLAN.md` gates are deliberately retained. They require
+evidence that this repository cannot manufacture through another local unit
+test:
+
+| Dependency | Open evidence required |
+| --- | --- |
+| Owner/organizer and users | Owner-session eligibility/form confirmation; 15 interviews/usability sessions; two pilots, measurements, and real feedback |
+| Live FCC infrastructure | Three stable HTTPS origins and indexer access; one registered-machine `PING`; all-three custody; replacement; hosted relay/proxy; live policy lifecycle and outage drills |
+| Uncontrolled protocol conditions | A real `DirectMintingDelayed` resume and official partial/default FAssets recovery with canonical PayGuard consumption |
+| Independent assurance | External contract/TEE review, exact-candidate remediation, and production security audit |
+| Verified release | Complete release manifest/bindings, runtime/wiring/machine/key/signer mapping, and live recurring/deny/stop/recovery/redemption journeys |
+| Production/mainnet | Fresh mainnet resolution/canary, multi-operator FCC design, managed monitoring, bounded-value FXRP pilot, and post-pilot primitive review |
+
+The local Web2Json boundary added at `897b54b` does not close any of those live
+gates. It has no configured production source, live FDC request/proof, private
+policy evaluation, or canonical on-chain Web2 consumer.
 
 ## Verified facts versus limitations
 
@@ -157,6 +177,7 @@ release, and mainnet work remain outstanding.
 | Contracts | Three PayGuard contracts and vault wiring deployed and runtime/constructor checked on Coston2 | Does not prove FCC authorization |
 | XRP funding | One PayGuard-owned XRPL Testnet → FDC → Smart Account/direct-mint → vault accounting observation | Does not prove a recurring private-policy payment |
 | FAssets exits | Public amount and destination-tag redemption observations | Canonical PayGuard consumption/default recovery remain limited as recorded |
+| Web2Json | Local source-commitment allowlist, exact jq/tuple-ABI/MIC/response binding, source-asserted freshness, replay, and fail-closed verifier tests | No production source, live proof, source-truth guarantee, private evaluation, or on-chain consumer |
 | FCC foundation | Sender/extension binding exists and local `PING_V1` vectors pass | No registered production machine or signed live FCC result |
 | FCC policy path | Three-machine local simulation, deterministic threshold/replay tests, and one 14-transaction Coston2 simulated-signer lifecycle pass | No hardware TEE confidentiality, official FCC registration, stable HTTPS origins, authenticated indexer, or live custody |
 | Web | Vercel shell, responsive/keyboard smoke, public evidence mirror, and byte-exact 15-asset deployment audit pass | Wallet, relay, policy provider, and live audit remain unavailable |
@@ -189,6 +210,10 @@ release, and mainnet work remain outstanding.
 - `dd2741e` — fail-closed deployed public-evidence corpus auditor.
 - `3147d26` — live XRPL/FDC `Pending` request evidence and claim boundary.
 - `6d4dca1` — fail-closed 15/14/2 deployed-corpus audit baseline.
+- `7360cd2` — canonical private FDC policy descriptor/snapshot enforcement.
+- `f6d570a` — distinct guardian identities, motion, and design alignment.
+- `fc92b6a` — current Vercel guardian browser/Lighthouse/deployment audit.
+- `897b54b` — local fail-closed Web2Json source/transform/schema boundary.
 
 This list is a handoff-oriented index, not the complete implementation history;
 the remote Git history is authoritative.

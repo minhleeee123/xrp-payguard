@@ -25,6 +25,10 @@ evidence without publishing the policy rules themselves.
 - One PayGuard-owned path completed validated XRPL Testnet Payment → FDC
   `XRPPayment` request/finality/proof verification → Smart Account direct mint
   → PayGuardVault accounting.
+- A separate local Web2Json adapter binds a consumer-managed source allowlist,
+  exact public request fields, deterministic jq/tuple-ABI schema, MIC, response,
+  source-asserted freshness, replay, and an injected verifier. It has no live
+  source, proof, private-policy evaluation, or on-chain consumer claim.
 - Public amount and tagged FAssets redemption request/payout/settlement
   observations are recorded separately.
 - The policy protocol, contract authorization/accounting state machines,
@@ -50,13 +54,16 @@ evidence without publishing the policy rules themselves.
 2. **FDC:** the funding path binds the exact XRPL transaction and proof owner,
    derives the round from the mined request, waits for finality, and verifies
    `XRPPayment` on-chain before accepting the public proof commitment.
-3. **FAssets exit:** redemption observations cover the public request and
+3. **Web2Json:** a local-only boundary pins source, jq transform, tuple ABI,
+   response, replay, and the explicit limitation that an attestation does not
+   make the publisher's business assertion true.
+4. **FAssets exit:** redemption observations cover the public request and
    settlement semantics; canonical PayGuard consumption/default recovery is
    still limited exactly as the evidence states.
-4. **FTSO:** deterministic freshness/value gates and runtime dependency
+5. **FTSO:** deterministic freshness/value gates and runtime dependency
    resolution exist, but no full live FCC policy lifecycle using an FTSO
    snapshot is claimed.
-5. **FCC:** the intended authorization path freezes three compatible machine
+6. **FCC:** the intended authorization path freezes three compatible machine
    identities and requires two matching evaluations. The hackathon artifact
    demonstrates this locally in `SIMULATED_TEE` mode only; stable registered
    hardware-backed machines and live policy custody/results are post-hackathon.
@@ -106,6 +113,8 @@ The complete retrospective new-work classification is in
 - No hardware-backed PayGuard FCC machine, stable HTTPS machine origin,
   authenticated FCC indexer, live policy custody, or signed live policy result
   has been verified.
+- No live supported Web2Json source, request/proof, private policy evaluation,
+  source-truth guarantee, or canonical Web2 consumer has been verified.
 - The Vercel build is a static shell/evidence mirror; wallet, policy provider,
   relay, and live audit providers remain unavailable.
 - No verified PayGuard release manifest, external audit, mainnet integration,
