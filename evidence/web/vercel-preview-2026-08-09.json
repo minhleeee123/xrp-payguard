@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "suite": "payguard-vercel-public-safe-web-preview",
+  "status": "deployed-static-preview",
+  "recordedAt": "2026-08-09T05:00:53Z",
+  "platform": {
+    "name": "vercel",
+    "project": "xrp-payguard",
+    "scope": "minh00plus-5489s-projects",
+    "url": "https://xrp-payguard.vercel.app/",
+    "deploymentUrl": "https://xrp-payguard-pwsgma24h-minh00plus-5489s-projects.vercel.app",
+    "deploymentId": "dpl_Ee7q7DpkuEbdnUxVV4yavKbo8ps3",
+    "inspectorUrl": "https://vercel.com/minh00plus-5489s-projects/xrp-payguard/Ee7q7DpkuEbdnUxVV4yavKbo8ps3",
+    "target": "production",
+    "readyState": "READY",
+    "sourceCommit": "a19b0578a3f0619575eb6c09abcc18521e77ff94"
+  },
+  "input": {
+    "artifactPath": "apps/web/dist",
+    "artifactFileCount": 3,
+    "buildCommand": "pnpm --filter @xrp-payguard/web build",
+    "nodeVersion": "24.19.0",
+    "pnpmVersion": "10.33.0",
+    "vercelCliVersion": "54.14.2"
+  },
+  "smoke": {
+    "indexHttpStatus": 200,
+    "javascriptHttpStatus": 200,
+    "stylesheetHttpStatus": 200,
+    "htmlTitleObserved": true,
+    "originRootAssetPathsObserved": true,
+    "headlessChromeDomEntryObserved": true,
+    "headlessChromeDesktopViewport": "1440x1200",
+    "headlessChromeMobileViewport": "390x844",
+    "headlessChromeDesktopScreenshotBytes": 106173,
+    "headlessChromeMobileScreenshotBytes": 38823,
+    "keyboardSmokeRecorded": false
+  },
+  "assertions": {
+    "cliDeploymentSucceeded": true,
+    "productionAliasReachable": true,
+    "publicAssetsReachable": true,
+    "artifactOnlyDeployment": true,
+    "testnetOnly": true,
+    "noPrivateKeyRecorded": true,
+    "noCredentialRecorded": true,
+    "noPolicyPlaintextOrCiphertextRecorded": true,
+    "noPayGuardReleaseClaimed": true,
+    "staticShellOnly": true,
+    "githubPagesRemoved": true
+  },
+  "blockers": [
+    "FCC_MACHINES_NOT_CONNECTED",
+    "RELAY_PROVIDER_NOT_DEPLOYED",
+    "POLICY_PROVIDER_NOT_CONNECTED",
+    "PAYGUARD_RELEASE_MANIFEST_NOT_VERIFIED"
+  ],
+  "notes": [
+    "This evidence proves only the public-safe Vite shell deployed from apps/web/dist and HTTP asset reachability.",
+    "The artifact was built with the repository-pinned Node and pnpm versions; no repository source or ignored environment file was deployed.",
+    "Headless Chrome rendered desktop and mobile viewport captures from the production alias; keyboard interaction was not recorded in this run.",
+    "The hosted shell intentionally remains unavailable for wallet, FCC, relay, policy, and authorization operations.",
+    "This deployment is not a verified PayGuard release or production-value service."
+  ]
+}

@@ -56,4 +56,4 @@ vercel deploy apps/web/dist --prod --yes --project xrp-payguard
 The deployment contains only `apps/web/dist`; it does not provide FCC
 machines, a relay, a policy provider, wallet signing, or a verified PayGuard
 release. The latest sanitized deployment record is
-recorded under `evidence/web/` after each verified deployment.
+[`vercel-preview-2026-08-09.json`](../../evidence/web/vercel-preview-2026-08-09.json).

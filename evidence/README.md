@@ -44,9 +44,10 @@ HTML/JS/CSS smoke. The site was removed before the Vercel deployment; the
 record does not represent a current URL, hosted relay, FCC origin, policy
 provider, wallet flow, or verified PayGuard release.
 
-Vercel deployment evidence is recorded under `web/` after each verified
-deployment. It is a static preview only and does not represent a hosted relay,
-FCC origin, policy provider, wallet flow, or verified PayGuard release.
+`web/vercel-preview-2026-08-09.json` records the current public-safe Vercel
+static-shell deployment and its HTTP HTML/JS/CSS smoke. It is a static preview
+only and does not represent a hosted relay, FCC origin, policy provider, wallet
+flow, or verified PayGuard release.
 
 Never store private policies, ciphertext, wallet/XRPL/FCC keys, signatures
 forbidden by policy, proxy/indexer credentials, authenticated raw responses, or
