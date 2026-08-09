@@ -38,6 +38,9 @@
 - [`technology/coston2-simulated-policy-lifecycle.md`](technology/coston2-simulated-policy-lifecycle.md):
   guarded solution-3 Coston2 lifecycle with ephemeral simulated signers and
   explicit non-FCC/non-release evidence boundaries.
+- [`technology/coston2-xrpl-fdc-trigger.md`](technology/coston2-xrpl-fdc-trigger.md):
+  atomic XRPL FDC consumer contract, deployment/verification workflow, and
+  explicit private-evaluator/live-proof limits.
 - [`technology/fcc-attestation-domain.md`](technology/fcc-attestation-domain.md):
   pinned tee-node sign-port behavior and PayGuard cross-language signature domain.
 - [`technology/fcc-private-policy-wire.md`](technology/fcc-private-policy-wire.md):
