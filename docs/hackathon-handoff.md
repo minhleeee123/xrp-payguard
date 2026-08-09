@@ -41,7 +41,7 @@ self-referential identifier that would always be one deployment stale.
 3. Open **Policy Studio**, choose a template, and run **Validate & compute**.
    Explain that the commitment is computed from in-memory local input and is
    not a custody receipt or activation.
-4. Open **Auditor**. Show `10 Coston2 artifacts`, `1 local simulation artifact`,
+4. Open **Auditor**. Show `11 Coston2 artifacts`, `1 local simulation artifact`,
    and the link to the public index while the live audit provider remains
    unavailable.
 5. Open the simulation record and point out the false live-gate assertions:
