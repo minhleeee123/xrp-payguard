@@ -513,6 +513,30 @@ async function writeContractStep({ publicClient, walletClient, account, contract
   return { transactionHash, receipt };
 }
 
+export function parseValidatedXrplPaymentResult(resultValue, expected) {
+  const result = record(resultValue, "XRPL payment result");
+  const transaction = record(result.tx_json, "XRPL payment transaction");
+  const meta = record(result.meta, "XRPL payment metadata");
+  const transactionHash = String(result.hash ?? transaction.hash ?? "").toUpperCase();
+  const ledgerIndex = result.ledger_index;
+  const deliverMax = transaction.DeliverMax ?? transaction.Amount;
+  if (transaction.DeliverMax !== undefined && transaction.Amount !== undefined
+    && transaction.DeliverMax !== transaction.Amount) {
+    throw new Error("XRPL v1/v2 payment amount drift");
+  }
+  if (result.validated !== true || meta.TransactionResult !== "tesSUCCESS"
+    || transaction.TransactionType !== "Payment" || transaction.Account !== expected.source
+    || transaction.Destination !== expected.destination || deliverMax !== expected.amountDrops.toString()
+    || meta.delivered_amount !== expected.amountDrops.toString()
+    || !/^[0-9A-F]{64}$/.test(transactionHash)
+    || !Number.isSafeInteger(ledgerIndex) || ledgerIndex <= 0) {
+    throw new Error("XRPL payment validation mismatch");
+  }
+  const memoData = transaction.Memos?.[0]?.Memo?.MemoData;
+  if (memoData !== expected.requestId.slice(2).toUpperCase()) throw new Error("XRPL request-ID memo mismatch");
+  return { transactionHash: `0x${transactionHash.toLowerCase()}`, ledgerIndex: BigInt(ledgerIndex) };
+}
+
 async function submitXrplPayment(xrpl, requestId) {
   const xrplClient = new xrpl.Client(XRPL_TESTNET_WEBSOCKET, { connectionTimeout: 20_000 });
   const source = xrpl.Wallet.generate();
@@ -534,25 +558,19 @@ async function submitXrplPayment(xrpl, requestId) {
         MemoType: Buffer.from("PAYGUARD_REQUEST_ID_V1", "utf8").toString("hex").toUpperCase(),
       } }],
     }, { wallet: source, autofill: true, failHard: true });
-    const result = record(response.result, "XRPL payment result");
-    const transaction = record(result.tx_json, "XRPL payment transaction");
-    const meta = record(result.meta, "XRPL payment metadata");
-    const transactionHash = String(result.hash ?? transaction.hash ?? "").toUpperCase();
-    const ledgerIndex = result.ledger_index;
-    if (result.validated !== true || meta.TransactionResult !== "tesSUCCESS"
-      || transaction.TransactionType !== "Payment" || transaction.Account !== source.classicAddress
-      || transaction.Destination !== destination.classicAddress || transaction.Amount !== PAYMENT_DROPS.toString()
-      || meta.delivered_amount !== PAYMENT_DROPS.toString()
-      || !/^[0-9A-F]{64}$/.test(transactionHash)
-      || !Number.isSafeInteger(ledgerIndex) || ledgerIndex <= 0) {
-      throw new Error("XRPL payment validation mismatch");
-    }
-    const memoData = transaction.Memos?.[0]?.Memo?.MemoData;
-    if (memoData !== requestId.slice(2).toUpperCase()) throw new Error("XRPL request-ID memo mismatch");
-    progress("xrpl-payment-validated", { transactionHash: `0x${transactionHash}`, ledgerIndex });
+    const parsed = parseValidatedXrplPaymentResult(response.result, {
+      source: source.classicAddress,
+      destination: destination.classicAddress,
+      amountDrops: PAYMENT_DROPS,
+      requestId,
+    });
+    progress("xrpl-payment-validated", {
+      transactionHash: parsed.transactionHash,
+      ledgerIndex: parsed.ledgerIndex.toString(),
+    });
     return {
-      transactionHash: `0x${transactionHash.toLowerCase()}`,
-      ledgerIndex: BigInt(ledgerIndex),
+      transactionHash: parsed.transactionHash,
+      ledgerIndex: parsed.ledgerIndex,
       source: source.classicAddress,
       destination: destination.classicAddress,
       amountDrops: PAYMENT_DROPS,

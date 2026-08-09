@@ -6,6 +6,7 @@ import {
   compileIntegrationRuntime,
   loadXrplBrowserRuntime,
   parseLiveFdcCLI,
+  parseValidatedXrplPaymentResult,
 } from "./coston2-fdc-trigger-live.mjs";
 import { assertPublicSafe } from "./public-web-evidence.mjs";
 
@@ -102,6 +103,36 @@ describe("Coston2 live XRPL FDC Pending runner", () => {
     assert.equal(typeof xrpl.Wallet.generate, "function");
     const wallet = xrpl.Wallet.generate();
     assert.equal(xrpl.isValidClassicAddress(wallet.classicAddress), true);
+  });
+
+  it("accepts the API v2 DeliverMax field and rejects v1/v2 amount drift", () => {
+    const expected = {
+      source: "r9cZA1mLK5R5Am25ArfXFmqgNwjZgnfk59",
+      destination: "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
+      amountDrops: 100n,
+      requestId: hash("request"),
+    };
+    const result = {
+      validated: true,
+      hash: hash("xrpl").slice(2).toUpperCase(),
+      ledger_index: 456,
+      tx_json: {
+        TransactionType: "Payment",
+        Account: expected.source,
+        Destination: expected.destination,
+        DeliverMax: "100",
+        Memos: [{ Memo: { MemoData: expected.requestId.slice(2).toUpperCase() } }],
+      },
+      meta: { TransactionResult: "tesSUCCESS", delivered_amount: "100" },
+    };
+    assert.deepEqual(parseValidatedXrplPaymentResult(result, expected), {
+      transactionHash: hash("xrpl"),
+      ledgerIndex: 456n,
+    });
+    assert.throws(() => parseValidatedXrplPaymentResult({
+      ...result,
+      tx_json: { ...result.tx_json, Amount: "101" },
+    }, expected), /amount drift/);
   });
 
   it("builds explicit public-safe evidence that stops at Pending", () => {
