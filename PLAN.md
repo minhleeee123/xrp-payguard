@@ -4,6 +4,14 @@
 > are implemented with cross-language/unit tests. The three contracts and vault
 > wiring are deployed and runtime/constructor-verified on Coston2; no registered
 > FCC result, private live lifecycle, or complete release is verified.
+>
+> Hackathon delivery decision (2026-08-09): the current demo uses the
+> credential-free local three-machine simulated FCC stack, the verified public
+> Coston2 contract/funding observations, and the Vercel public shell/evidence
+> mirror. Stable FCC servers, authenticated indexer access, hosted relay/proxy,
+> registered production machines, and the private live lifecycle are explicitly
+> post-hackathon work. Simulation must remain labelled `LOCAL` or `SIMULATED`
+> and cannot satisfy a live FCC or release gate.
 
 ## 1. Product objective
 
@@ -105,8 +113,8 @@ origins and the authenticated FCC indexer remain open.
 - [x] Build the official FCC scaffold unchanged and run its local smoke first.
 - [x] Build a digest-pinned reproducible PayGuard FCC image and pass a
   credential-free local three-machine identity/restart/hardening smoke.
-- [ ] Obtain three stable HTTPS FCC machine origins and an indexer path without
-  committing credentials.
+- [ ] Post-hackathon: obtain three stable HTTPS FCC machine origins and an
+  indexer path without committing credentials.
 - [x] Add secret, dependency, source-provenance, and release-doc checks.
 
 Exit: every mandatory dependency is pinned and reachable, or product work pauses.
@@ -140,20 +148,21 @@ registered Coston2 `PING_V1`, receipt, and evaluation proofs remain open.
 - [x] Add a guarded `PING_V1` dispatch/poll/evidence runner with simulation,
   exact sender/machine/event readback, bounded result polling, and public-safe
   testnet evidence that preserves custody/threshold blockers.
-- [ ] Register a production machine and verify one signed Coston2 `PING_V1`
-  result before treating the live FCC path as available.
+- [ ] Post-hackathon: register a production machine and verify one signed
+  Coston2 `PING_V1` result before treating the live FCC path as available.
 - [x] Implement ciphertext-only policy ingress and a sealed local policy store.
 - [x] Return machine-signed `POLICY_RECEIPT_V1` values bound to policy owner,
   commitment, schema, code version, chain, contracts, machine, and nonce.
 - [x] Add a TypeScript public custody-bundle verifier for three frozen receipt
   digests/signatures; registered live receipt evidence remains open.
-- [ ] Register three distinct machines and require all-three custody receipts.
+- [ ] Post-hackathon: register three distinct machines and require all-three
+  custody receipts.
 - [x] Implement deterministic `EVALUATE_V1` returning only public-safe decision
   fields; prove two matching result signatures in the local adapter.
 - [x] Prove replay, wrong owner, wrong commitment, wrong request, wrong code,
   and wrong machine failure locally.
-- [ ] Prove supported replacement registration and document that an active
-  policy never silently swaps a frozen identity.
+- [ ] Post-hackathon: prove supported replacement registration and document
+  that an active policy never silently swaps a frozen identity.
 
 Exit: private policy content never enters a public path and registered threshold
 machines authorize one domain-bound test action.
@@ -383,11 +392,14 @@ Exit: failure is resumable or explicitly denied, never represented as success.
 ### Phase 8 — Coston2 release and evidence
 
 - [x] Deploy the public-safe static web shell to Vercel through the pinned
-  CLI workflow and verify HTTPS HTML/JS/CSS reachability; FCC, relay, policy
-  provider, and full-release smoke remain open.
+  CLI workflow and verify HTTPS HTML/JS/CSS plus desktop/mobile/keyboard
+  reachability; FCC, relay, policy provider, and full-release smoke remain open.
 - [x] Emit an allowlisted public-safe evidence index and JSON assets at the
   Vercel `/evidence/` endpoint; private-policy, FCC, relay, and release claims
   remain unavailable.
+- [x] Freeze the hackathon demo to the local three-machine simulated FCC mode
+  and document that it proves deterministic/fail-closed behavior, not TEE
+  confidentiality, registered custody, or a live PayGuard release.
 - [ ] Generate and verify a PayGuard release manifest and consumer bindings.
 - [ ] Verify runtime bytecode, constructor/wiring, extension ID, code/image hash,
   governance, machines, key fingerprints, and signer mapping.
@@ -395,8 +407,9 @@ Exit: failure is resumable or explicitly denied, never represented as success.
   recovery, Smart Account funding, and redemption lifecycles.
 - [ ] Publish only sanitized public identifiers, hashes, blocks, transactions,
   timings, and assertion booleans.
-- [ ] Deploy web, FCC origins, and proxy/relay; run production desktop/mobile/
-  keyboard smokes against the complete deployed commit.
+- [ ] Post-hackathon: deploy stable FCC origins and proxy/relay, connect the
+  hosted web to the verified release, and run complete production
+  desktop/mobile/keyboard smokes against the exact deployed commit.
 
 Exit: source, runtime, bindings, UI, docs, and public-safe evidence agree.
 

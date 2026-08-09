@@ -4,6 +4,13 @@ Status: reproducible `linux/amd64` image and local simulated three-machine smoke
 pass. This is not a registered FCC deployment, stable HTTPS origin, sealed
 recovery proof, Coston2 action result, or release image claim.
 
+For the hackathon delivery, this local stack is the selected FCC demonstration
+mode. It demonstrates deterministic three-machine identities, ciphertext-only
+adapter behavior, restart identity rotation, and fail-closed ingress without
+incurring hosted TEE cost. It does not provide hardware confidentiality or
+upgrade any live product claim. Hosted FCC infrastructure is deferred until
+after the hackathon.
+
 ## Image contract
 
 `apps/fcc-extension/Dockerfile` builds only the PayGuard Go module and copies one
@@ -59,7 +66,7 @@ and removes its containers, network, volumes, and temporary image tag. The
 compose network has ordinary bridge egress solely for local testing and carries
 no credentials. It is not the production network policy.
 
-## Live gate still open
+## Post-hackathon live gate
 
 A live image must be rebuilt from the exact committed source, published by
 digest, and placed behind three new stable authenticated HTTPS proxy origins.

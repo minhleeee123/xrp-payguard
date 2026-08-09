@@ -33,19 +33,37 @@ product: XRPL Payment, FDC proof, Smart Account execution, FAssets mint/funding,
 PayGuard vault/action, and supported redemption. Address display or an unused
 FAssets call does not qualify.
 
+### Current hackathon delivery boundary
+
+The 2026-08-09 delivery decision uses the credential-free local
+three-machine simulated FCC stack for the hackathon demo. Public Coston2
+contracts, XRP/FDC/Smart Account funding observations, the Vercel shell, and
+the public-safe evidence mirror remain real testnet/public artifacts. The FCC
+custody/evaluation segment remains a local deterministic simulation.
+
+The submission must therefore say `LOCAL`, `SIMULATED`, `PLANNED`, or
+`NOT VERIFIED` wherever a registered machine, TEE confidentiality, signed live
+FCC result, hosted relay/proxy, or complete release would otherwise be implied.
+It must not claim that the current artifact has passed the Confidential Compute
+Apps live-authorization gate. Stable FCC servers, authenticated indexer access,
+production registration, and the complete hosted lifecycle are post-hackathon
+roadmap work.
+
 ## 3. Expected submission package
 
 - Product name and one-sentence problem/solution.
 - Target users and real validation notes.
 - Selected bounty or bounties with evidence-backed rationale.
-- Live Coston2 application and public evidence path.
+- Public Vercel application/evidence path plus clearly separated Coston2 facts
+  and local simulated FCC demo.
 - Demo video showing one uninterrupted flagship lifecycle.
 - Public repository, setup instructions, architecture, contract/extension facts,
   threat model, verification guide, and roadmap.
 - New-work ledger separating copied reference material, adapted utilities, and
   new PayGuard work.
-- Verified contract addresses, extension ID, code/image hash, machine policy,
-  transactions, blocks, and release commit.
+- Verified contract addresses, transactions, blocks, and source commit; any
+  extension, code/image, machine-policy, or release field remains explicitly
+  unavailable until its live gate passes.
 - Honest limitations, residual trust, testnet status, and next steps.
 
 ## 4. Judging gates

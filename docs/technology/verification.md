@@ -28,7 +28,7 @@ Forbidden evidence:
 | E — Threshold execution | two distinct exact results authorize one atomic action | LOCAL PASS / CONTRACTS DEPLOYED / FCC EXECUTION OPEN |
 | F — Vault conservation | deposits/reservations/spend/refund and adversarial invariants | LOCAL PASS / VAULT DEPLOYED / LIVE FAssets REQUEST/PAYOUT OBSERVED / CANONICAL SETTLEMENT + DEFAULT RECOVERY OPEN |
 | G — XRP-native funding | XRPL payment, FDC proof, Smart Account deposit | PASS — live PayGuard-owned Coston2 evidence in [`evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json`](../../evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json) covers validated XRPL Testnet payment, FDC request/finalized round/proof commitment, on-chain `verifyXRPPayment`, `executeDirectMintingWithData`, and verified PayGuardVault accounting. FCC/private-policy/hosted release gates remain open. |
-| H — Product release | full roles, recovery, accessibility, live deployment | STATIC VERCEL SHELL + PUBLIC-SAFE `/evidence/index.json` + LANDING + RESPONSIVE BROWSER SMOKE + CONTRACT DEPLOYMENT / HOSTED PRIVATE LIFECYCLE, RELAY, FCC, AND RELEASE MANIFEST OPEN |
+| H — Product release | full roles, recovery, accessibility, live deployment | STATIC VERCEL SHELL + PUBLIC-SAFE `/evidence/index.json` + LANDING + DESKTOP/MOBILE/KEYBOARD BROWSER SMOKE + CONTRACT DEPLOYMENT / HOSTED PRIVATE LIFECYCLE, RELAY, FCC, AND RELEASE MANIFEST OPEN |
 | I — User validation | interviews, usability, and design-partner pilot | NOT STARTED |
 
 ## 3. Test matrix
@@ -97,8 +97,9 @@ Forbidden evidence:
 The local Vite browser smoke run on 2026-08-09 covered the landing page and all
 seven application views at 1440px and 390px. It found no horizontal overflow;
 the mobile shell exposed five primary destinations plus a three-item secondary
-menu. This is local UX validation only, not hosted deployment or release
-evidence.
+menu. The separate Vercel evidence record covers public HTML/JS/CSS and evidence
+reachability, desktop/mobile Chrome captures, and Enter-key activation from the
+landing page to the Overview view. Neither run is a live FCC or release smoke.
 
 ## 4. Release manifest
 
@@ -115,6 +116,12 @@ verifies:
 - evidence files and pass/fail assertions.
 
 ## 5. Release acceptance
+
+The hackathon acceptance boundary is narrower than release acceptance: a
+credential-free local three-machine simulation, public Coston2 facts, and the
+Vercel public shell/evidence mirror may be demonstrated only with explicit
+simulation and availability labels. Production FCC servers and the hosted
+private lifecycle are post-hackathon work.
 
 Do not call PayGuard complete when only a local demo works. Release requires a
 real Coston2 lifecycle, live failure/recovery evidence, generated bindings,

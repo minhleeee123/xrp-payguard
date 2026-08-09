@@ -28,6 +28,13 @@ Coston2 testnet funding run has passed validated XRPL payment → FDC
 accounting; see the sanitized
 [`xrp-fdc-smart-account-funding-2026-08-09.json`](evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json).
 
+The hackathon build deliberately uses the credential-free local
+three-machine simulated FCC stack together with the real public Coston2 facts
+and Vercel shell/evidence mirror. Stable FCC servers, authenticated indexer
+access, hosted relay/proxy, production registration, and the complete private
+lifecycle are deferred until after the hackathon. The simulation is never
+presented as hardware-backed confidentiality or a verified PayGuard release.
+
 ## Start here
 
 1. [`AGENTS.md`](AGENTS.md) — mandatory engineering and privacy rules.
