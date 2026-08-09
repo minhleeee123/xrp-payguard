@@ -18,6 +18,10 @@ the local ciphertext-only FCC path, and the Foundry registry/vault/router state
 machine are implemented and tested. The three non-upgradeable contracts and
 their FTestXRP vault wiring are deployed and independently re-verified on
 Coston2 from source commit `17ff0bc1eb135195a94d0d261bc491f006730720`.
+A separate atomic XRPL FDC trigger consumer is deployed and runtime/binding-
+verified on Coston2 from source commit
+`aa75eda1bd7248be82bc3d70640d3aa247e1af0e`; it has not yet consumed a live
+proof or created a live request, and it cannot provide `ALLOW`.
 A foundation-only FCC sender is deployed, extension-registered, explicitly
 bound, and runtime/configuration-verified on Coston2 as extension `66037`; its
 typed `PING_V1` handler passes local cross-language tests. No registered TEE

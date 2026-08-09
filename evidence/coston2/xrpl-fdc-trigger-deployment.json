@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "suite": "payguard-coston2-xrpl-fdc-trigger-deployment",
+  "status": "verified",
+  "recordedAt": "2026-08-09T08:33:33.310Z",
+  "network": {
+    "name": "flare-coston2",
+    "chainId": 114,
+    "observedBlock": "33813503"
+  },
+  "publicIdentifiers": {
+    "sourceCommit": "aa75eda1bd7248be82bc3d70640d3aa247e1af0e",
+    "deployer": "0xDC1cc527423C882156a632C250528D1922d18Fc7",
+    "flareContractRegistry": "0xaD67FE66660Fb8dFE9d6b1b4240d8650e30F6019",
+    "fdcVerification": "0x906507E0B64bcD494Db73bd0459d1C667e14B933",
+    "router": "0x28A969018975Fb40aEd0BfA98f6d1c3023B6a7Da",
+    "trigger": "0x4b626E2DA4D45034C8fAA38D10AbDfD4921486b2",
+    "transactionHash": "0xb35216fef53faa446c151e92f4ad6896c898846db0de0311efa241bd98eda53a",
+    "blockNumber": "33813480",
+    "runtimeCodeHash": "0xf9037d9b2c326e4da1917de359f2fcc5d607291f9891ac0b6fe15dd69ce45931",
+    "maxProofAgeSeconds": "3600"
+  },
+  "assertions": {
+    "chainIdVerified": true,
+    "sourceCommitCleanAtBroadcast": true,
+    "coreRouterRuntimeVerified": true,
+    "runtimeFdcVerificationResolved": true,
+    "deploymentReceiptSuccessful": true,
+    "runtimeCodeVerified": true,
+    "constructorBindingsVerified": true,
+    "proofAgeBoundVerified": true,
+    "testnetOnly": true,
+    "noPrivateKeyRecorded": true,
+    "noPolicyRecorded": true,
+    "noFdcProofConsumed": true,
+    "noRequestCreated": true,
+    "noFccResultClaimed": true,
+    "noReleaseClaimed": true
+  },
+  "blockers": [
+    "LIVE_XRPL_FDC_TRIGGER_NOT_CONSUMED",
+    "PRIVATE_FDC_DESCRIPTOR_EVALUATION_NOT_IMPLEMENTED",
+    "LIVE_FCC_THRESHOLD_RESULT_NOT_VERIFIED"
+  ],
+  "notes": [
+    "This verifies only the PayGuard XRPL FDC trigger consumer deployment and constructor/runtime bindings on Coston2.",
+    "No XRPL payment, FDC proof consumption, PayGuard request, private policy evaluation, FCC result, execution, or release is claimed by this record."
+  ]
+}

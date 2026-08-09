@@ -274,8 +274,9 @@ canonical XRPL consumer: it runtime-binds `FdcVerification`, verifies the
 official proof, requires a consumer-owned proof plus an exact request-ID memo,
 and atomically consumes transaction/proof commitments while creating one
 `Pending` router request. A router failure reverts the replay markers, and the
-contract has no `ALLOW` path. Its Coston2 deployment/live proof receipt remains
-unverified. V1 FCC evaluators also do not yet interpret private FDC
+contract has no `ALLOW` path. Its Coston2 deployment/runtime bindings are
+verified, while live proof consumption and canonical request creation remain
+open. V1 FCC evaluators also do not yet interpret private FDC
 source/destination descriptors, so the consumer proves only safe canonical
 request creation—not private trigger-policy authorization. Web2Json is not
 implemented.

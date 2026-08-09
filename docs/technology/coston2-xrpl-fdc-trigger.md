@@ -8,12 +8,13 @@ separate from the three original state contracts and can only create a
 `Pending` request. It has no function that supplies `ALLOW`, submits an FCC
 result, reserves vault assets, or executes a transfer.
 
-The local implementation and real-router test are complete. Deployment tooling
-is fail-closed and resumable, but this document does not claim a Coston2
-deployment until `evidence/coston2/xrpl-fdc-trigger-deployment.json` exists and
-passes the repository evidence checks. A deployed consumer alone still does
-not prove a live XRPL payment, FDC consumption, request, private FDC policy
-evaluation, FCC result, or PayGuard release.
+The local implementation and real-router test are complete. The consumer is
+deployed at `0x4b626E2DA4D45034C8fAA38D10AbDfD4921486b2` from source commit
+`aa75eda1bd7248be82bc3d70640d3aa247e1af0e`; its receipt, bytecode, constructor,
+protocol constants, and current runtime dependency bindings are recorded in
+[`../../evidence/coston2/xrpl-fdc-trigger-deployment.json`](../../evidence/coston2/xrpl-fdc-trigger-deployment.json).
+A deployed consumer alone does not prove a live XRPL payment, FDC consumption,
+request, private FDC policy evaluation, FCC result, or PayGuard release.
 
 ## Fixed deployment bindings
 

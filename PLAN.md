@@ -320,6 +320,9 @@ verified on Coston2. External review and registered FCC execution remain open.
   runtime `FdcVerification`, exact payment amount/request-ID memo/proof owner,
   atomically consumes transaction and proof commitments, and creates one
   `Pending` request in the real PayGuard router without an `ALLOW` path.
+- [x] Deploy the XRPL FDC consumer on Coston2 and independently verify its
+  receipt, runtime bytecode, constructor/protocol constants, one-hour freshness
+  bound, current `FdcVerification`, and canonical PayGuard router bindings.
 - [ ] Extend the private policy schema and both evaluators with canonical FDC
   trigger descriptors/snapshots so source, destination, memo/tag, amount,
   freshness, proof commitment, and consumer state are independently enforced

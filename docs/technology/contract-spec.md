@@ -4,6 +4,9 @@
 > is covered by Foundry tests. Its three contracts and vault wiring are verified
 > on Coston2 in `evidence/coston2/contracts-deployment.json`. This document does
 > not assert registered FCC execution, a complete release, or a production audit.
+> The separate XRPL FDC trigger consumer is deployed and binding-verified in
+> `evidence/coston2/xrpl-fdc-trigger-deployment.json`, without a live proof or
+> request claim.
 
 ## 1. Contracts
 
@@ -66,9 +69,10 @@ Responsibilities:
 - create only a `Pending` request. It has no decision or execution function,
   and the existing two-of-three FCC threshold remains mandatory for `ALLOW`.
 
-This consumer and its real-router integration are locally tested. They are not
-a Coston2 deployment or live-trigger claim until separate public evidence exists.
-The consumer checks the public payment/request binding only; V1 evaluators do
+This consumer and its real-router integration are locally tested, and its
+Coston2 runtime/constructor bindings are independently verified. No live proof
+consumption or request is yet claimed. The consumer checks the public
+payment/request binding only; V1 evaluators do
 not yet interpret private FDC source/destination descriptors. A policy that
 requires those private semantics must therefore fail closed until the private
 schema, snapshot verification, and cross-language evaluator path are added.
@@ -105,9 +109,10 @@ is unavailable.
 The separately generated `PayGuardFoundationSender` and locally tested
 `PayGuardXrplFdcTrigger` are not among the original three public-state
 contracts. The sender is deployed and extension-registered on Coston2 under
-independently checked public evidence. The trigger consumer is not yet deployed.
-Their canonical request/commitment bindings are protected by hard-coded
-cross-language golden digests.
+independently checked public evidence. The trigger consumer is separately
+deployed with independently checked public evidence. Their canonical
+request/commitment bindings are protected by hard-coded cross-language golden
+digests.
 Production machine registration and live result verification remain mandatory
 before Gate A can pass.
 
