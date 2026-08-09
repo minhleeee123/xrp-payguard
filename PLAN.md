@@ -443,7 +443,7 @@ Exit: failure is resumable or explicitly denied, never represented as success.
 - [ ] Record live personal recurring-payment, cap-denial, emergency-stop,
   recovery, Smart Account funding, and redemption lifecycles.
 - [x] Publish only sanitized public identifiers, hashes, blocks, transactions,
-  timings, and assertion booleans; the production-corpus audit fetched all 13
+  timings, and assertion booleans; the production-corpus audit fetched all 15
   listed assets, matched every JSON body byte-for-byte to its reviewed source,
   reran the public-field/simulation guards, and remains repository-only to avoid
   recursive evidence publication.

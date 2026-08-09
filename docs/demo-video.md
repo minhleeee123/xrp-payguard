@@ -15,9 +15,9 @@ alias on 2026-08-09.
 | Frames | 592 at 8 fps |
 | Video | H.264, 1440×900, `yuvj420p` |
 | Audio | silent AAC stereo track |
-| Size | 2,810,609 bytes |
-| SHA-256 | `5c4a69f6de285a8a06e49188f00de9204f3c6e25dd4d4f6f90df47e775081d39` |
-| Production manifest | 13 records; 12 chain-114; 2 simulation records |
+| Size | 2,786,502 bytes |
+| SHA-256 | `1a8b09c4c11376a96075582c47ac8193760fe989477a44984ff04ebb630dd157` |
+| Production manifest | 15 records; 14 chain-114; 2 simulation records |
 
 The MP4 is intentionally Git-ignored. It is a review/upload deliverable, not
 public release evidence and not proof that a hackathon submission occurred.
@@ -35,7 +35,7 @@ The sequence shows only:
 1. the landing-page privacy boundary, guardians, architecture, use cases, and
    public-safe evidence section;
 2. the wallet-free Auditor with its unavailable live provider and overlapping
-   13-total/12-chain/2-simulation counts;
+   15-total/14-chain/2-simulation counts;
 3. the public `SIMULATED_TEE_ONCHAIN` JSON record, including false hardware TEE
    and official-machine assertions plus explicit blockers.
 

@@ -105,20 +105,20 @@ reachability, desktop/mobile Chrome captures, and Enter-key activation from the
 landing page to the Overview view. Neither run is a live FCC or release smoke.
 
 Separate Lighthouse 13.0.1 lab runs against the production landing and Overview
-route scored 98 performance and 100 accessibility, best practices, and SEO for
-both routes. The landing measured FCP/LCP 1,951 ms, TBT 37 ms, and CLS 0; the
-Overview measured FCP 1,951 ms, LCP 1,987 ms, TBT 23 ms, and CLS 0. The specific
+route scored 100 performance, accessibility, best practices, and SEO for both
+routes. The landing measured FCP 1,082 ms, LCP 1,124 ms, TBT 0 ms, and CLS 0;
+the Overview measured FCP 1,081 ms, LCP 1,107 ms, TBT 1 ms, and CLS 0. The specific
 visible-label/accessibility-name mismatch and color-contrast audits both have
 zero remaining nodes after aligning the brand name and raising the canonical
-muted-text token to `#a0a0a0`. Lighthouse still estimates 94,516 landing and
-97,582 Overview bytes of unused first-load JavaScript, so code splitting remains
-an explicit performance optimization rather than a completed claim. This audit
-covers the landing and Overview routes, not every authenticated or
+muted-text token to `#a0a0a0`. Lighthouse estimated zero landing and 22,302
+Overview bytes of unused first-load JavaScript in this run; lab results remain
+environment-dependent.
+This audit covers the landing and Overview routes, not every authenticated or
 provider-bound application state.
 
 The production evidence-corpus audit recorded on 2026-08-09 fetched the pinned
 Vercel origin, required JSON content types and HTTP 200, and matched the
-metadata-only index plus all 13 listed bodies byte-for-byte with the reviewed
+metadata-only index plus all 15 listed bodies byte-for-byte with the reviewed
 local sources. It reran recursive public-field checks and both simulation
 boundaries. The repository-only result is
 [`public-evidence-deployment-audit-2026-08-09.json`](../../evidence/web/public-evidence-deployment-audit-2026-08-09.json);

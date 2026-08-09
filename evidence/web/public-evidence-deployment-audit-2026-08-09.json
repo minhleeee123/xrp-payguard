@@ -2,18 +2,18 @@
   "schemaVersion": 1,
   "suite": "payguard-vercel-public-evidence-deployment-audit",
   "status": "public-evidence-deployment-audit-pass",
-  "recordedAt": "2026-08-09T08:09:50.021Z",
-  "sourceCommit": "dd2741ee6d132499a936ffa7d3de49cb1e31d6c1",
+  "recordedAt": "2026-08-09T09:16:02.900Z",
+  "sourceCommit": "6d4dca1942d5d2500b01bcc043e471db00f48718",
   "platform": {
     "name": "vercel",
     "origin": "https://xrp-payguard.vercel.app",
     "indexPath": "/evidence/index.json",
-    "indexSha256": "444a929f06cd4afc730caae18cf0b4fe1ae5ee25baceed95c001f2015080f498",
-    "indexBytes": 5464
+    "indexSha256": "d1db65ab4eba68a4f5957c02b38858f006e698ad91e1695d0460181cad072e25",
+    "indexBytes": 6273
   },
   "corpus": {
-    "totalEntries": 13,
-    "chain114Entries": 12,
+    "totalEntries": 15,
+    "chain114Entries": 14,
     "simulationEntries": 2,
     "entries": [
       {
@@ -160,6 +160,32 @@
         "explicitSimulationBoundaryVerified": null
       },
       {
+        "path": "/evidence/coston2/xrpl-fdc-trigger-deployment.json",
+        "suite": "payguard-coston2-xrpl-fdc-trigger-deployment",
+        "status": "verified",
+        "chainId": "114",
+        "sha256": "f1126c17b22d50013b185322b47d9861033a335a7ac5a9223bbc29e340e5f4d9",
+        "bytes": 1919,
+        "httpStatus": 200,
+        "contentType": "application/json; charset=utf-8",
+        "exactSourceBytesVerified": true,
+        "publicFieldScanVerified": true,
+        "explicitSimulationBoundaryVerified": null
+      },
+      {
+        "path": "/evidence/coston2/xrpl-fdc-trigger-pending-2026-08-09.json",
+        "suite": "payguard-coston2-live-xrpl-fdc-pending-request",
+        "status": "coston2-live-pass",
+        "chainId": "114",
+        "sha256": "dea2b632e2f77feb6f8ca27e90256548252450b35fea6af5e97bd8f74653c3a7",
+        "bytes": 6738,
+        "httpStatus": 200,
+        "contentType": "application/json; charset=utf-8",
+        "exactSourceBytesVerified": true,
+        "publicFieldScanVerified": true,
+        "explicitSimulationBoundaryVerified": null
+      },
+      {
         "path": "/evidence/simulation/coston2-simulated-policy-lifecycle-2026-08-09.json",
         "suite": "payguard-coston2-simulated-tee-policy-lifecycle",
         "status": "coston2-simulated-pass",
@@ -210,7 +236,7 @@
   ],
   "notes": [
     "This audit fetched the pinned production origin and compared the manifest plus every listed JSON body byte-for-byte with the reviewed local Coston2/simulation sources.",
-    "The 12 chain-114 and two simulation counts overlap for SIMULATED_TEE_ONCHAIN and are not additive.",
+    "The 14 chain-114 and two simulation counts overlap for SIMULATED_TEE_ONCHAIN and are not additive.",
     "Repository-only evidence/web records are intentionally excluded from the hosted corpus to avoid recursive deployment claims.",
     "A clean public evidence corpus does not prove hardware TEE confidentiality, live FCC custody/evaluation, a verified PayGuard release, or production readiness."
   ]

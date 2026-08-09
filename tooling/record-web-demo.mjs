@@ -34,7 +34,7 @@ export function verifyDemoManifest(value) {
   const chain114 = value.entries.filter((entry) => entry.chainId === "114").length;
   const simulations = value.entries.filter((entry) => entry.path.startsWith("/evidence/simulation/")).length;
   const lifecycle = value.entries.some((entry) => entry.path === "/evidence/simulation/coston2-simulated-policy-lifecycle-2026-08-09.json");
-  if (value.entries.length !== 13 || chain114 !== 12 || simulations !== 2 || !lifecycle) {
+  if (value.entries.length !== 15 || chain114 !== 14 || simulations !== 2 || !lifecycle) {
     throw new Error("production evidence manifest does not match the reviewed demo baseline");
   }
   return { entries: value.entries.length, chain114, simulations };
@@ -201,7 +201,7 @@ export async function recordDemo({ overwrite = false } = {}) {
     { seconds: 9, caption: "XRPL Payment → FDC proof → Smart Account → PayGuard vault → threshold policy gate" },
     { seconds: 8, caption: "Recurring personal and treasury controls are product models, not invented pilots or traction" },
     { seconds: 8, caption: "Public-safe evidence exposes only testnet facts and explicit simulation boundaries" },
-    { seconds: 10, caption: "Auditor: 13 reviewed records, 12 on Coston2, 2 simulations; categories overlap" },
+    { seconds: 10, caption: "Auditor: 15 reviewed records, 14 on Coston2, 2 simulations; categories overlap" },
     { seconds: 10, caption: "The on-chain simulated lifecycle records 14 transactions but explicitly proves no hardware TEE or official FCC machine" },
     { seconds: 6, caption: "Current delivery: production web + Coston2 facts + solution-3 simulation — no release claim" },
   ];
@@ -251,7 +251,7 @@ export async function recordDemo({ overwrite = false } = {}) {
     await cdp.evaluate(`document.querySelector("[data-action=landing-auditor]").click()`);
     await new Promise((resolveWait) => setTimeout(resolveWait, 500));
     const auditor = await cdp.evaluate(`({text:document.body.innerText,storage:localStorage.length+sessionStorage.length,overflow:document.documentElement.scrollWidth>document.documentElement.clientWidth})`);
-    if (!auditor.text.includes("13 reviewed artifacts") || !auditor.text.includes("12 Coston2 artifacts")
+    if (!auditor.text.includes("15 reviewed artifacts") || !auditor.text.includes("14 Coston2 artifacts")
       || !auditor.text.includes("2 local simulation artifacts") || auditor.storage !== 0 || auditor.overflow) {
       throw new Error("production Auditor did not match the reviewed demo baseline");
     }
