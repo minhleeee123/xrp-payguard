@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "suite": "payguard-github-pages-public-safe-web-preview",
+  "status": "deployed-static-preview",
+  "recordedAt": "2026-08-09T00:51:53Z",
+  "platform": {
+    "name": "github-pages",
+    "url": "https://minhleeee123.github.io/xrp-payguard/",
+    "httpsEnforced": true,
+    "workflowRunId": "31287042987",
+    "workflowUrl": "https://github.com/minhleeee123/xrp-payguard/actions/runs/31287042987",
+    "sourceCommit": "987191d0eab0fd11db3639dd9010c445fc1c0f4a"
+  },
+  "smoke": {
+    "indexHttpStatus": 200,
+    "javascriptHttpStatus": 200,
+    "stylesheetHttpStatus": 200,
+    "htmlTitleObserved": true,
+    "repositoryBasePathObserved": true
+  },
+  "assertions": {
+    "workflowBuildSucceeded": true,
+    "workflowDeploymentSucceeded": true,
+    "publicUrlReachable": true,
+    "publicAssetsReachable": true,
+    "testnetOnly": true,
+    "noPrivateKeyRecorded": true,
+    "noCredentialRecorded": true,
+    "noPolicyPlaintextOrCiphertextRecorded": true,
+    "noPayGuardReleaseClaimed": true,
+    "staticShellOnly": true
+  },
+  "blockers": [
+    "FCC_MACHINES_NOT_CONNECTED",
+    "RELAY_PROVIDER_NOT_DEPLOYED",
+    "POLICY_PROVIDER_NOT_CONNECTED",
+    "PAYGUARD_RELEASE_MANIFEST_NOT_VERIFIED"
+  ],
+  "notes": [
+    "This evidence proves only the public-safe Vite shell deployment and HTTP asset reachability.",
+    "The hosted shell intentionally remains unavailable for wallet, FCC, relay, policy, and authorization operations.",
+    "This deployment is not a verified PayGuard release or production-value service."
+  ]
+}
