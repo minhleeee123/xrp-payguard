@@ -26,15 +26,17 @@ live authorization result.
 
 - Application: <https://xrp-payguard.vercel.app/>
 - Evidence index: <https://xrp-payguard.vercel.app/evidence/index.json>
-- Vercel deployment ID: `dpl_CwbYf5W1PxjPTNw4pdnptGMjqbna`
-- Deployed source commit: `5e157263f280e226401d90bd0983358839b2fdb5`
+- Vercel deployment ID: `dpl_HVwCXyFLKxh1aNv9R9S4W37j1BH5`
+- Deployed source commit: `00d04ed4b141930b21e17ea262fd9772b031ad7e`
 
-The deployment is an artifact-only Vercel CLI upload containing 17 static
+The deployment is an artifact-only Vercel CLI upload containing 18 static
 files. The recorded smoke observed HTTP 200 for HTML, favicon, JavaScript, CSS,
-the index, and every listed evidence asset. The index contains 11 Coston2
-records and one explicit local simulation record. It does not embed the Vercel
-deployment record in itself, avoiding a self-referential identifier that would
-always be one deployment stale.
+the index, and every listed evidence asset. The index contains 11 records under
+`evidence/coston2/` and two explicit simulation records. The Auditor reports 12
+chain-114 artifacts because the on-chain simulated lifecycle belongs to both
+the Coston2 and simulation categories; those counts are not additive. The index
+does not embed the Vercel deployment record in itself, avoiding a
+self-referential identifier that would always be one deployment stale.
 
 ### Suggested walkthrough
 
@@ -45,7 +47,7 @@ always be one deployment stale.
 3. Open **Policy Studio**, choose a template, and run **Validate & compute**.
    Explain that the commitment is computed from in-memory local input and is
    not a custody receipt or activation.
-4. Open **Auditor**. Show `11 Coston2 artifacts`, `1 local simulation artifact`,
+4. Open **Auditor**. Show `12 Coston2 artifacts`, `2 local simulation artifacts`,
    and the link to the public index while the live audit provider remains
    unavailable.
 5. Open the simulation record and point out the false live-gate assertions:
@@ -111,12 +113,14 @@ before that validation and then independently re-read through the public RPC:
   performance and 100 accessibility, best practices, and SEO, with zero
   recorded contrast failures.
 
-A fresh HTTPS read during the current validation returned 200 for the
-application and evidence index; the index reported 12 entries and retained
-`staticShellOnly: true` and `testnetOnly: true`. The currently deployed index is
-still the preceding 12-entry artifact and will be replaced only after this
-reviewed record is committed. `PLAN.md` records 95 checked and 26 open
-checkboxes (78.5%). The open items are not silently promoted:
+A fresh HTTPS and Chrome read of deployment
+`dpl_HVwCXyFLKxh1aNv9R9S4W37j1BH5` returned 200 for the application, its
+favicon/JavaScript/CSS, the index, and all 13 evidence assets. Desktop and
+mobile rendering, Enter-key activation, the 13/12/2 Auditor counts, zero
+browser storage, zero HTTP/console errors, and no horizontal overflow passed.
+The index retained `staticShellOnly: true` and `testnetOnly: true`. `PLAN.md`
+records 95 checked and 26 open checkboxes (78.5%). The open items are not
+silently promoted:
 organizer/account actions, user research/pilots, live FCC
 infrastructure/lifecycle, remaining canonical live drills, external review,
 release, and mainnet work remain outstanding.
@@ -156,6 +160,7 @@ release, and mainnet work remain outstanding.
 - `4a82eb6` — retrospective new-work and provenance ledger.
 - `40986ec` — guarded solution-3 Coston2 simulated-policy lifecycle runner.
 - `b0cc48b` — canonical recurring schedule correction for that runner.
+- `00d04ed` — sanitized 14-transaction lifecycle evidence and claim boundary.
 
 This list is a handoff-oriented index, not the complete implementation history;
 the remote Git history is authoritative.
