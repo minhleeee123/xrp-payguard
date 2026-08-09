@@ -32,6 +32,7 @@ import {
   type StudioTemplateId,
 } from "./model.js";
 import { fetchPublicWebEvidenceIndex, type PublicWebEvidenceIndex } from "./web-evidence.js";
+import { fetchSimulatedLifecycleEvidence, type SimulatedLifecycleEvidence } from "./demo-evidence.js";
 import { landingView } from "./landing.js";
 import {
   COSTON2_CHAIN,
@@ -62,11 +63,12 @@ import {
   type VaultTransactionKind,
 } from "./coston2.js";
 
-type View = "overview" | "studio" | "vaults" | "requests" | "payee" | "auditor" | "team";
+type View = "overview" | "studio" | "vaults" | "requests" | "demo" | "payee" | "auditor" | "team";
 type PublicEvidenceMirrorState =
   | { status: "LOADING" }
   | { status: "READY"; index: PublicWebEvidenceIndex }
   | { status: "UNAVAILABLE"; reason: "NOT_PUBLISHED" | "INVALID" };
+type DemoUiState = { status: "LOADING" } | { status: "READY"; evidence: SimulatedLifecycleEvidence } | { status: "UNAVAILABLE" };
 type WalletUiState =
   | { status: "DISCONNECTED" }
   | { status: "CONNECTING" }
@@ -110,6 +112,7 @@ let notificationOpen = false;
 let mobileMenuOpen = false;
 let landingOpen = window.location.hash === "#landing";
 let publicEvidenceMirrorState: PublicEvidenceMirrorState = { status: "LOADING" };
+let demoState: DemoUiState = { status: "LOADING" };
 const walletProvider = injectedProvider();
 let walletState: WalletUiState = { status: "DISCONNECTED" };
 let coston2State: Coston2UiState = { status: "IDLE" };
@@ -146,12 +149,13 @@ function render(): void {
           ${navItem("studio", "Policy Studio", "◈")}
           ${navItem("vaults", "Vaults", "▣")}
           ${navItem("requests", "Requests", "↗")}
+          ${navItem("demo", "Demo lifecycle", "⌁")}
           ${navItem("payee", "Payee", "◍")}
           ${navItem("auditor", "Auditor", "◌")}
           ${navItem("team", "Team & roles", "♧")}
           <button class="nav-item mobile-more" type="button" data-action="mobile-menu" aria-expanded="${mobileMenuOpen}" aria-controls="mobile-secondary-nav"><span class="nav-icon">＋</span>More</button>
         </nav>
-        ${mobileMenuOpen ? `<div class="mobile-secondary-nav" id="mobile-secondary-nav" aria-label="Secondary navigation">${navItem("payee", "Payee", "◍")}${navItem("auditor", "Auditor", "◌")}${navItem("team", "Team & roles", "♧")}</div>` : ""}
+        ${mobileMenuOpen ? `<div class="mobile-secondary-nav" id="mobile-secondary-nav" aria-label="Secondary navigation">${navItem("demo", "Demo", "⌁")}${navItem("payee", "Payee", "◍")}${navItem("auditor", "Auditor", "◌")}${navItem("team", "Team & roles", "♧")}</div>` : ""}
         <div class="sidebar-bottom">
           ${sidebarNetworkCard()}
           <button class="help-link" type="button" data-action="landing">? <span>How PayGuard works</span></button>
@@ -173,7 +177,7 @@ function navItem(view: View, text: string, icon: string): string {
   return `<button class="nav-item nav-item-${view} ${activeView === view ? "active" : ""}" type="button" data-view="${view}"><span class="nav-icon">${icon}</span>${text}${view === "requests" ? requestCount : ""}</button>`;
 }
 
-function label(view: View): string { return ({ overview: "Overview", studio: "Policy Studio", vaults: "Vaults", requests: "Requests", payee: "Payee", auditor: "Auditor", team: "Team & roles" })[view]; }
+function label(view: View): string { return ({ overview: "Overview", studio: "Policy Studio", vaults: "Vaults", requests: "Requests", demo: "Demo lifecycle", payee: "Payee", auditor: "Auditor", team: "Team & roles" })[view]; }
 
 function connectedAccount(): Address | null {
   return walletState.status === "CONNECTED" || walletState.status === "WRONG_CHAIN" ? walletState.account : null;
@@ -234,6 +238,7 @@ function viewContent(): string {
   if (activeView === "studio") return studioView();
   if (activeView === "vaults") return vaultsView();
   if (activeView === "requests") return requestsView();
+  if (activeView === "demo") return demoView();
   if (activeView === "payee") return payeeView();
   if (activeView === "auditor") return auditorView();
   if (activeView === "team") return teamView();
@@ -351,6 +356,23 @@ function requestsView(): string {
 
 function requestLookup(): string {
   return `<section class="panel request-lookup"><div><div class="eyebrow">FINALIZED ROUTER LOOKUP</div><h2>Inspect a request ID</h2><p class="panel-copy">The prefilled ID is the reviewed XRPL/FDC-triggered Coston2 request. Paste another bytes32 request ID to inspect it without a wallet.</p></div><label>Request ID<input id="request-id" value="${esc(requestInput)}" autocomplete="off" spellcheck="false" placeholder="0x…" /></label><button class="primary-button" type="button" data-action="load-request" ${requestLoading ? "disabled" : ""}>${requestLoading ? "Reading finalized block…" : "Load public state"}</button><small>${esc(requestNotice)}</small></section>`;
+}
+
+function demoView(): string {
+  if (demoState.status === "LOADING") {
+    return `${pageIntro("SOLUTION 3 · PUBLIC DEMO", "Loading the simulated lifecycle", "Reading a reviewed, public-safe Coston2 evidence artifact. No wallet or private policy is requested.")}<section class="panel demo-loading"><div class="empty-orbit">◌</div><h2>Validating evidence schema…</h2></section>`;
+  }
+  if (demoState.status === "UNAVAILABLE") {
+    return `${pageIntro("SOLUTION 3 · PUBLIC DEMO", "Demo evidence unavailable", "The UI will not substitute a mock lifecycle when the reviewed artifact cannot be validated.")}<section class="panel"><div class="unavailable-box"><span class="status-dot amber"></span><div><strong>No simulated success asserted</strong><small>Build or evidence validation failed closed. Live FCC remains unavailable independently.</small></div></div></section>`;
+  }
+  const evidence = demoState.evidence;
+  const machines = evidence.machines.map((machine, index) => `<article class="demo-machine machine-${index + 1}"><div class="machine-glyph">${index === 0 ? "◇" : index === 1 ? "⌁" : "▣"}</div><div><span>SIMULATED MACHINE ${index + 1}</span><strong>${esc(short(machine.machineId))}</strong><small>Key ${esc(short(machine.keyFingerprint))}<br>Signer ${esc(short(machine.signer))}</small></div></article>`).join("");
+  const steps = evidence.steps.map((step, index) => `<li><span class="demo-step-index">${String(index + 1).padStart(2, "0")}</span><div><strong>${esc(step.label)}</strong><small>Block ${step.blockNumber} · ${esc(short(step.transactionHash))}</small></div><a href="${explorerTransaction(step.transactionHash)}" target="_blank" rel="noreferrer" aria-label="Open ${esc(step.label)} transaction">↗</a></li>`).join("");
+  return `${pageIntro("SOLUTION 3 · PUBLIC DEMO", "One complete policy lifecycle", "A real Coston2 contract run driven by three ephemeral simulated signers. It proves the contract path, not hardware confidentiality or production FCC.")}
+    <div class="demo-boundary"><span class="state-tag amber-tag">SIMULATION ONLY</span><strong>On-chain transactions verified · hardware TEE not present</strong><span>Observed through Coston2 block ${evidence.observedBlock}</span></div>
+    <section class="demo-machine-grid">${machines}</section>
+    <div class="demo-summary-grid"><section class="panel demo-result allow-result"><div class="eyebrow">2 MATCHING RESULTS</div><h2>Recurring payment allowed</h2><strong>${token(evidence.amount)} FTestXRP</strong><p>Two simulated machines produced one matching ALLOW digest, the vault reserved value, and the router executed the exact transfer.</p><span class="mono-value">${esc(short(evidence.allowRequestId))}</span></section><section class="panel demo-result deny-result"><div class="eyebrow">DETERMINISTIC POLICY RESULT</div><h2>Next request denied</h2><strong>CAP_EXCEEDED</strong><p>Two matching DENY results kept the vault unchanged. The private cap itself is not present in this public evidence.</p><span class="mono-value">${esc(short(evidence.denyRequestId))}</span></section><section class="panel demo-result"><div class="eyebrow">VAULT CONSERVATION</div><h2>Accounting still balances</h2><strong>${token(evidence.deposited)} deposited</strong><p>${token(evidence.availableAfter)} available + ${token(evidence.spentAfter)} spent. Stop, resume, and revoke were also verified.</p></section></div>
+    <div class="demo-detail-grid"><section class="panel demo-timeline"><div class="panel-heading"><div><div class="eyebrow">COSTON2 TRANSACTION TIMELINE</div><h2>${evidence.steps.length} verified checkpoints</h2></div><span class="state-tag green-tag">PUBLIC EVIDENCE</span></div><ol>${steps}</ol></section><aside class="panel demo-limitations"><div class="eyebrow">NOT PROVEN HERE</div><h2>Production gates stay explicit</h2><ul>${evidence.blockers.map((blocker) => `<li>${esc(blocker.replaceAll("_", " "))}</li>`).join("")}</ul><p>This demonstration cannot activate a new private browser draft or authorize a new request without the future three production FCC machines.</p><a class="outline-button inline-link" href="/evidence/simulation/coston2-simulated-policy-lifecycle-2026-08-09.json" target="_blank" rel="noreferrer">Open reviewed JSON ↗</a></aside></div>`;
 }
 
 function requestTransactionPanel(snapshot: PublicRequestSnapshotV1 | undefined): string {
@@ -889,6 +911,9 @@ void refreshPublicRequest().finally(() => restoreWalletSession());
 void fetchPublicWebEvidenceIndex()
   .then((index) => { publicEvidenceMirrorState = { status: "READY", index }; if (!landingOpen) render(); })
   .catch(() => { publicEvidenceMirrorState = { status: "UNAVAILABLE", reason: "NOT_PUBLISHED" }; if (!landingOpen) render(); });
+void fetchSimulatedLifecycleEvidence()
+  .then((evidence) => { demoState = { status: "READY", evidence }; if (!landingOpen) render(); })
+  .catch(() => { demoState = { status: "UNAVAILABLE" }; if (!landingOpen) render(); });
 window.addEventListener("hashchange", () => {
   landingOpen = window.location.hash === "#landing";
   render();

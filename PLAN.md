@@ -370,8 +370,9 @@ redemption remain separate release gates.
 
 ### Phase 6 — full application
 
-The checked items describe the local public-safe shell. Wallet flows, hosted
-evidence, and live role journeys remain open.
+The checked items describe the reviewed source application. Fresh user-wallet
+broadcast evidence, the next Vercel deployment, production FCC, and live editable
+governance remain open.
 
 - [x] Build the local laptop-first application shell and standalone landing
   page; hosted deployment and production smoke remain open.
@@ -400,6 +401,11 @@ evidence, and live role journeys remain open.
   machine/code binding, FTSO/FDC facts, decision digest, and conservation
   verification. Add finalized canonical request-state verification while keeping
   full FCC/evaluation evidence unavailable until its independent facts exist.
+- [x] Build a solution-3 Demo lifecycle that strictly parses the reviewed
+  simulation artifact and presents three distinct simulated machines, fourteen
+  Coston2 transactions, matching allow/deny results, lifecycle governance, and
+  conservation while preserving every false production-FCC assertion. Serve the
+  same scanner-approved evidence in Vite development and production builds.
 - [x] Build the local Team/Treasury workspace and role-aware public controls;
   no client role can authorize. Where no role registry exists, show only
   finalized registry/request actors as observations rather than invented grants;

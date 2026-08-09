@@ -1,8 +1,8 @@
 # Web application
 
 Vite laptop-first Coston2 dApp with a full editorial landing page at `#landing`, plus
-Overview, Policy Studio, Vaults, Requests, Payee, wallet-free Auditor, and
-Team/roles surfaces. Its visual language follows the
+Overview, Policy Studio, Vaults, Requests, a strict solution-3 Demo lifecycle,
+Payee, wallet-free Auditor, and Team/roles surfaces. Its visual language follows the
 repository-level [`DESIGN.md`](../../DESIGN.md). The Policy Studio computes a
 domain-bound commitment from an in-memory draft only. It includes three policy
 templates, structured local validation, fresh browser cryptographic entropy,
@@ -33,6 +33,15 @@ guardian mascots, the complete XRPL/FDC/Smart Account/FAssets/FCC journey,
 policy use cases, public-safe evidence scope, FAQ/limitations, and
 reduced-motion-compatible ambient effects. It makes no remote image request and
 never upgrades the local FCC simulation into a live release claim.
+
+Demo lifecycle parses the reviewed solution-3 artifact instead of rendering
+hard-coded success copy. It requires exactly three distinct simulated machine
+identities, two matching results per decision, fourteen successful Coston2
+checkpoints, allow execution, cap denial, stop/resume/revoke, conservation, and
+all negative production assertions. Schema, transaction, threshold,
+conservation, or limitation drift makes the entire demo unavailable. The Vite
+development server and production build expose the same scanner-approved
+same-origin evidence bodies with JSON/nosniff headers.
 
 The Vaults surface accepts only the verified finalized Coston2 account snapshot;
 it verifies the conservation equation and shows no balance when the wallet or

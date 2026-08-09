@@ -248,6 +248,14 @@ evidence observation. Team labels the bound policy owner, requester, and payee
 as observed actors when no independent role registry exists. Neither projection
 creates an authorization or governance assignment.
 
+The Demo lifecycle is an evidence consumer, not an evaluator. Its same-origin
+JSON decoder validates the exact solution-3 mode/network/contracts, three
+distinct simulated machines, transaction receipts/events, two-result thresholds,
+allow/deny semantics, vault conservation, and mandatory negative production
+assertions before rendering. The Vite evidence plugin applies the existing
+recursive public-safety and simulation guards in both development and build
+delivery; any body drift fails the page closed.
+
 ### XRPL-native path
 
 The XRPL owner commits a Smart Account operation in a supported Payment/mint

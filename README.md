@@ -189,13 +189,17 @@ Suggested five-minute walkthrough:
    public transfer and settlement.
 2. Press **Open app** with Enter and inspect the explicit provider-availability
    states. The shell never turns an unavailable dependency into mock success.
-3. In **Policy Studio**, validate a local policy and compute its commitment.
-   This is not a custody receipt or activation.
-4. In **Auditor**, inspect the live XRP/FDC funding and canonical `Pending`
-   trigger records.
-5. Open the solution-3 lifecycle record and point out the false live assertions:
+3. In **Vaults**, connect an injected Coston2 wallet, inspect finalized balances,
+   then use the two-step FTestXRP transaction preview without exposing a key.
+4. In **Requests**, load the prefilled canonical request; compare its router
+   status, Payee projection, Auditor boundary, and guarded expiry action.
+5. Open **Demo lifecycle** to inspect the three distinct simulated machines,
+   fourteen Coston2 checkpoints, allow execution, cap denial, conservation, and
+   the false live assertions:
    `hardwareTeeVerified`, `stableHttpsOriginsVerified`,
-   `authenticatedIndexerVerified`, and `liveFccResultVerified` remain false.
+   `authenticatedIndexerVerified`, and `registeredMachinesVerified` remain
+   false. Policy Studio commitment generation remains local and is not a custody
+   receipt or activation.
 
 The deployed artifact is a public-safe static shell and evidence mirror. It
 contains no `.env.local`, key, credential, private policy, ciphertext, or raw
@@ -313,7 +317,7 @@ production FCC machine.
 apps/
   fcc-extension/       Go private-policy handler, ingress, sealed store, admission
   relay/               stateless threshold collection and executor orchestration
-  web/                 landing, role views, Policy Studio, Auditor, evidence UI
+  web/                 landing, live vault/request views, demo, Auditor, evidence UI
 packages/
   protocol/            canonical TypeScript types, codecs, math, fixtures, evaluator
   contracts/           Solidity registry, vault, router, FCC sender, FDC consumer

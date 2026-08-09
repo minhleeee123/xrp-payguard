@@ -102,7 +102,21 @@ export function buildPublicWebEvidenceManifest(entries) {
 export function createPublicWebEvidencePlugin(repositoryRoot) {
   return {
     name: "payguard-public-web-evidence",
-    apply: "build",
+    async configureServer(server) {
+      const entries = await collectPublicWebEvidence(repositoryRoot);
+      const bodies = new Map(entries.map((entry) => [`/${entry.path}`, `${JSON.stringify(entry.data, null, 2)}\n`]));
+      bodies.set("/evidence/index.json", `${JSON.stringify(buildPublicWebEvidenceManifest(entries), null, 2)}\n`);
+      server.middlewares.use((request, response, next) => {
+        const path = new URL(request.url ?? "/", "http://127.0.0.1").pathname;
+        const body = bodies.get(path);
+        if (body === undefined) { next(); return; }
+        response.statusCode = 200;
+        response.setHeader("content-type", "application/json; charset=utf-8");
+        response.setHeader("cache-control", "no-store");
+        response.setHeader("x-content-type-options", "nosniff");
+        response.end(body);
+      });
+    },
     async generateBundle() {
       const entries = await collectPublicWebEvidence(repositoryRoot);
       for (const entry of entries) {

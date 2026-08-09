@@ -92,3 +92,28 @@ test("plugin emits each evidence asset and the index", async () => {
   assert.ok(emitted.some((file) => file.fileName === "evidence/simulation/fcc-local-three-machine-2026-08-09.json"));
   assert.equal(emitted.some((file) => file.fileName?.startsWith("evidence/web/")), false);
 });
+
+test("development middleware serves only scanner-approved same-origin JSON", async () => {
+  const plugin = createPublicWebEvidencePlugin(root);
+  let middleware;
+  await plugin.configureServer({ middlewares: { use: (handler) => { middleware = handler; } } });
+  assert.equal(typeof middleware, "function");
+  const headers = new Map();
+  let body = "";
+  let nextCalled = false;
+  const response = {
+    statusCode: 0,
+    setHeader: (name, value) => headers.set(name, value),
+    end: (value) => { body = value; },
+  };
+  middleware({ url: "/evidence/simulation/coston2-simulated-policy-lifecycle-2026-08-09.json" }, response, () => { nextCalled = true; });
+  assert.equal(response.statusCode, 200);
+  assert.equal(headers.get("content-type"), "application/json; charset=utf-8");
+  assert.equal(headers.get("cache-control"), "no-store");
+  assert.equal(headers.get("x-content-type-options"), "nosniff");
+  assert.equal(JSON.parse(body).assertions.simulationOnly, true);
+  assert.equal(nextCalled, false);
+
+  middleware({ url: "/src/main.ts" }, response, () => { nextCalled = true; });
+  assert.equal(nextCalled, true);
+});
