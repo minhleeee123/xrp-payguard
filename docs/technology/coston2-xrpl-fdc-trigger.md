@@ -91,10 +91,12 @@ are compared against `xrpl.js` in the integration suite.
 
 The consumer validates proof type/source, proof owner, payment status, source
 hash consistency, receiver consistency, positive/exact received amount, request
-ID memo, freshness, and both transaction/proof replay markers. These checks
-make canonical request creation fail closed, but they do not interpret a private
-policy's desired XRPL source or destination. V1 FCC evaluators therefore must
-not treat consumer acceptance alone as private-policy authorization. Canonical
-private FDC descriptors, verified snapshots, and both cross-language evaluator
-paths remain a separate open gate before either machine may sign `ALLOW` for a
-policy that requires those semantics.
+ID memo, freshness, and both transaction/proof replay markers. Consumer
+acceptance alone is still not private-policy authorization. The private V1
+schema now freezes an explicit XRPL FDC descriptor, and both TypeScript and Go
+evaluators independently require a canonical public snapshot matching its
+source/destination hashes, request-ID memo, optional destination tag, amount
+range, freshness window, proof owner/consumer, consumed transaction and proof
+markers, exact request hash, and `Pending` router state. Missing or drifting
+fields resolve to `FDC_INVALID`. This closes the local deterministic gate; no
+live registered FCC machine has evaluated the Coston2 request.

@@ -143,7 +143,7 @@ favicon/JavaScript/CSS, the index, and all 15 evidence assets. Desktop and
 mobile rendering, Enter-key activation, the 15/14/2 Auditor counts, zero
 browser storage, zero HTTP/console errors, and no horizontal overflow passed.
 The index retained `staticShellOnly: true` and `testnetOnly: true`. `PLAN.md`
-records 100 checked and 25 open checkboxes (80.0%). The open items are not
+records 101 checked and 24 open checkboxes (80.8%). The open items are not
 silently promoted:
 organizer/account actions, user research/pilots, live FCC
 infrastructure/lifecycle, remaining canonical live drills, external review,

@@ -14,6 +14,9 @@ const policy = {
   endAt: BigInt(vector.policy.endAt), scheduleIntervalSeconds: BigInt(vector.policy.scheduleIntervalSeconds),
   scheduleGraceSeconds: BigInt(vector.policy.scheduleGraceSeconds), cooldownSeconds: BigInt(vector.policy.cooldownSeconds),
   maxPriceAgeSeconds: BigInt(vector.policy.maxPriceAgeSeconds),
+  fdcMinReceivedAmount: BigInt(vector.policy.fdcMinReceivedAmount),
+  fdcMaxReceivedAmount: BigInt(vector.policy.fdcMaxReceivedAmount),
+  maxFdcAgeSeconds: BigInt(vector.policy.maxFdcAgeSeconds),
 } as PolicyV1;
 
 describe("private POLICY_SCHEMA_V1 wire", () => {

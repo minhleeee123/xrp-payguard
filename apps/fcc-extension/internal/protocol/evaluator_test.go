@@ -1,11 +1,13 @@
 package protocol
 
 import (
+	"encoding/json"
 	"math/big"
 	"sync"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 func stateFromVector(request ActionRequestV1) SpendStateV1 {
@@ -449,6 +451,143 @@ func TestEvaluatorIsDeterministicUnderConcurrency(t *testing.T) {
 	close(errors)
 	for err := range errors {
 		t.Fatal(err)
+	}
+}
+
+func fdcScenarioFromVector(t *testing.T) (PolicyV1, ActionRequestV1, FDCTriggerSnapshotV1, SpendStateV1) {
+	t.Helper()
+	vector := readVector(t)
+	policy := policyFromVector(vector.Policy)
+	request := requestFromVector(vector.Request)
+	policy.RequireFDC = true
+	policy.FDCAttestationType = FDCXrpPaymentV1
+	policy.FDCSourceID = common.BytesToHash([]byte("XRPL"))
+	policy.FDCSourceAddressHash = common.BytesToHash([]byte("source-account"))
+	policy.FDCReceivingAddressHash = common.BytesToHash([]byte("receiving-account"))
+	policy.FDCMemoMode = 1
+	policy.FDCRequireDestinationTag = true
+	policy.FDCDestinationTag = 73
+	policy.FDCMinReceivedAmount = big.NewInt(70)
+	policy.FDCMaxReceivedAmount = big.NewInt(80)
+	policy.MaxFDCAgeSecs = 60
+	policy.FDCConsumer = request.Router
+	request, state := rebindPolicyRequest(t, policy, request)
+	request.InputCommitment = common.BytesToHash([]byte("fdc-input"))
+	requestHash, err := ActionRequestHash(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	snapshot := FDCTriggerSnapshotV1{
+		AttestationType: FDCXrpPaymentV1, SourceID: policy.FDCSourceID,
+		TransactionID: common.BytesToHash([]byte("xrpl-transaction")), ProofOwner: policy.FDCConsumer,
+		Consumer: policy.FDCConsumer, InputCommitment: request.InputCommitment,
+		ProofCommitment:   common.BytesToHash([]byte("proof-commitment")),
+		SourceAddressHash: policy.FDCSourceAddressHash, ReceivingAddressHash: policy.FDCReceivingAddressHash,
+		ReceivedAmount: big.NewInt(75), HasMemoData: true, MemoDataHash: crypto.Keccak256Hash(request.RequestID.Bytes()),
+		HasDestinationTag: true, DestinationTag: 73, BlockNumber: 123, BlockTimestamp: 1040,
+		TransactionConsumed: true, ProofConsumed: true, RequestID: request.RequestID,
+		RouterRequestHash: requestHash, RouterRequestStatus: 1,
+	}
+	state.FDC = &snapshot
+	return policy, request, snapshot, state
+}
+
+func TestEvaluatorBindsConsumedFDCTriggerSnapshot(t *testing.T) {
+	policy, request, snapshot, state := fdcScenarioFromVector(t)
+	if _, err := FDCTriggerSnapshotCommitmentV1(snapshot); err != nil {
+		t.Fatal(err)
+	}
+	wire, err := json.Marshal(snapshot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var decoded FDCTriggerSnapshotV1
+	if err := json.Unmarshal(wire, &decoded); err != nil {
+		t.Fatal(err)
+	}
+	if decoded.ReceivedAmount.Cmp(snapshot.ReceivedAmount) != 0 || decoded.BlockNumber != snapshot.BlockNumber {
+		t.Fatal("FDC snapshot wire round trip drifted")
+	}
+	result, err := EvaluatePolicy(policy, request, state)
+	if err != nil || result.Decision != DecisionAllow {
+		t.Fatalf("valid FDC snapshot denied: result=%+v err=%v", result, err)
+	}
+
+	mutations := []struct {
+		name   string
+		mutate func(*FDCTriggerSnapshotV1)
+	}{
+		{"source", func(value *FDCTriggerSnapshotV1) {
+			value.SourceAddressHash = common.BytesToHash([]byte("wrong-source"))
+		}},
+		{"destination", func(value *FDCTriggerSnapshotV1) {
+			value.ReceivingAddressHash = common.BytesToHash([]byte("wrong-destination"))
+		}},
+		{"memo", func(value *FDCTriggerSnapshotV1) { value.MemoDataHash = common.BytesToHash([]byte("wrong-memo")) }},
+		{"destination-tag", func(value *FDCTriggerSnapshotV1) { value.DestinationTag++ }},
+		{"amount", func(value *FDCTriggerSnapshotV1) { value.ReceivedAmount = big.NewInt(81) }},
+		{"freshness", func(value *FDCTriggerSnapshotV1) { value.BlockTimestamp = 989 }},
+		{"proof-commitment", func(value *FDCTriggerSnapshotV1) { value.ProofCommitment = common.Hash{} }},
+		{"transaction-replay", func(value *FDCTriggerSnapshotV1) { value.TransactionConsumed = false }},
+		{"proof-replay", func(value *FDCTriggerSnapshotV1) { value.ProofConsumed = false }},
+		{"consumer", func(value *FDCTriggerSnapshotV1) { value.Consumer = request.Requester }},
+		{"router-request", func(value *FDCTriggerSnapshotV1) {
+			value.RouterRequestHash = common.BytesToHash([]byte("wrong-request"))
+		}},
+		{"router-status", func(value *FDCTriggerSnapshotV1) { value.RouterRequestStatus = 2 }},
+	}
+	for _, mutation := range mutations {
+		t.Run(mutation.name, func(t *testing.T) {
+			candidate := snapshot
+			candidate.ReceivedAmount = new(big.Int).Set(snapshot.ReceivedAmount)
+			mutation.mutate(&candidate)
+			candidateState := state
+			candidateState.FDC = &candidate
+			result, err := EvaluatePolicy(policy, request, candidateState)
+			if err != nil || result.PublicReasonClass != ReasonFDCInvalid {
+				t.Fatalf("FDC drift did not fail closed: result=%+v err=%v", result, err)
+			}
+		})
+	}
+
+	missing := state
+	missing.FDC = nil
+	result, err = EvaluatePolicy(policy, request, missing)
+	if err != nil || result.PublicReasonClass != ReasonFDCInvalid {
+		t.Fatalf("missing FDC snapshot did not fail closed: result=%+v err=%v", result, err)
+	}
+}
+
+func TestEvaluatorCombinesFTSOAndFDCInputs(t *testing.T) {
+	policy, request, snapshot, _ := fdcScenarioFromVector(t)
+	policy.RequireFTSO = true
+	policy.FTSOFeedID = common.BytesToHash([]byte("combined-feed"))
+	policy.MaxPriceAgeSecs = 60
+	request, state := rebindPolicyRequest(t, policy, request)
+	feedCheckpoint := common.BytesToHash([]byte("combined-ftso"))
+	combinedInput, err := PolicyInputCommitmentV1(feedCheckpoint, snapshot.InputCommitment)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request.InputCommitment = combinedInput
+	snapshot.RequestID = request.RequestID
+	snapshot.MemoDataHash = crypto.Keccak256Hash(request.RequestID.Bytes())
+	snapshot.RouterRequestHash, err = ActionRequestHash(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state.FTSO = &FTSOSnapshotV1{FeedID: policy.FTSOFeedID, Value: big.NewInt(1), Timestamp: 1040, Checkpoint: feedCheckpoint}
+	state.FDC = &snapshot
+	result, err := EvaluatePolicy(policy, request, state)
+	if err != nil || result.Decision != DecisionAllow {
+		t.Fatalf("combined FTSO/FDC input denied: result=%+v err=%v", result, err)
+	}
+	drifted := *state.FTSO
+	drifted.Checkpoint = common.BytesToHash([]byte("wrong-ftso"))
+	state.FTSO = &drifted
+	result, err = EvaluatePolicy(policy, request, state)
+	if err != nil || result.PublicReasonClass != ReasonFDCInvalid {
+		t.Fatalf("combined input drift did not fail closed: result=%+v err=%v", result, err)
 	}
 }
 

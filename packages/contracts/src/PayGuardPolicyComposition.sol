@@ -19,6 +19,7 @@ library PayGuardPolicyComposition {
     uint8 internal constant REASON_ACTION_DENIED = 13;
     uint8 internal constant REASON_FTSO_INVALID = 14;
     uint8 internal constant REASON_COOLDOWN = 15;
+    uint8 internal constant REASON_FDC_INVALID = 16;
 
     uint256 internal constant POLICY_DENIED = 1 << 0;
     uint256 internal constant TARGET_DENIED = 1 << 1;
@@ -29,7 +30,8 @@ library PayGuardPolicyComposition {
     uint256 internal constant INSUFFICIENT_BALANCE = 1 << 6;
     uint256 internal constant FTSO_INVALID = 1 << 7;
     uint256 internal constant CAP_EXCEEDED = 1 << 8;
-    uint256 internal constant KNOWN_MASK = (1 << 9) - 1;
+    uint256 internal constant FDC_INVALID = 1 << 9;
+    uint256 internal constant KNOWN_MASK = (1 << 10) - 1;
 
     function composePolicyDecisionV1(
         uint256 violations
@@ -48,6 +50,7 @@ library PayGuardPolicyComposition {
         if (violations & INSUFFICIENT_BALANCE != 0) {
             return (DECISION_DENY, REASON_INSUFFICIENT_BALANCE);
         }
+        if (violations & FDC_INVALID != 0) return (DECISION_DENY, REASON_FDC_INVALID);
         if (violations & FTSO_INVALID != 0) return (DECISION_DENY, REASON_FTSO_INVALID);
         if (violations & CAP_EXCEEDED != 0) return (DECISION_DENY, REASON_CAP_EXCEEDED);
         return (DECISION_ALLOW, REASON_OK);

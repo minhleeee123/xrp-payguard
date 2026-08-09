@@ -9,16 +9,19 @@ import {
 import {
   ACTION_REQUEST_V1,
   EVALUATION_RESULT_V1,
+  FDC_TRIGGER_SNAPSHOT_V1,
+  FDC_XRP_PAYMENT_V1,
   FCC_EVALUATION_PREFIX,
   FCC_POLICY_INGRESS_PREFIX,
   FCC_POLICY_RECEIPT_PREFIX,
   POLICY_RECEIPT_V1,
+  POLICY_INPUT_V1,
   POLICY_SCHEMA_V1,
   REASON_CODE,
   SPEND_CHECKPOINT_V1,
   ZERO_BYTES32,
 } from "./constants.js";
-import type { ActionRequestV1, PolicyBindingV1, PolicyReceiptV1, PolicyV1 } from "./types.js";
+import type { ActionRequestV1, FdcTriggerSnapshotV1, PolicyBindingV1, PolicyReceiptV1, PolicyV1 } from "./types.js";
 import { scheduleWindowV1 } from "./schedule.js";
 
 const policyParameters: readonly AbiParameter[] = [
@@ -27,7 +30,18 @@ const policyParameters: readonly AbiParameter[] = [
   { type: "uint256" }, { type: "uint256" }, { type: "uint256" }, { type: "uint64" }, { type: "uint64" },
   { type: "uint64" }, { type: "uint64" }, { type: "uint64" }, { type: "uint64" }, { type: "uint32" }, { type: "address[]" }, { type: "address[]" },
   { type: "address[]" }, { type: "bytes32[]" }, { type: "bool" }, { type: "bytes32" }, { type: "uint64" },
+  { type: "bool" }, { type: "bytes32" }, { type: "bytes32" }, { type: "bytes32" }, { type: "bytes32" },
+  { type: "uint8" }, { type: "bool" }, { type: "uint32" }, { type: "uint256" }, { type: "uint256" },
+  { type: "uint64" }, { type: "address" },
   { type: "bytes32" }, { type: "bytes32" },
+];
+
+const fdcSnapshotParameters: readonly AbiParameter[] = [
+  { type: "bytes32" }, { type: "bytes32" }, { type: "bytes32" }, { type: "bytes32" }, { type: "address" },
+  { type: "address" }, { type: "bytes32" }, { type: "bytes32" }, { type: "bytes32" }, { type: "bytes32" },
+  { type: "uint256" }, { type: "bool" }, { type: "bytes32" }, { type: "bool" }, { type: "uint32" },
+  { type: "uint64" }, { type: "uint64" }, { type: "bool" }, { type: "bool" }, { type: "bytes32" },
+  { type: "bytes32" }, { type: "uint8" },
 ];
 
 const policyBindingParameters: readonly AbiParameter[] = [
@@ -137,6 +151,35 @@ export function normalizePolicy(policy: PolicyV1): PolicyV1 {
   if (policy.requireFtso && policy.ftsoFeedId === ZERO_BYTES32) throw new Error("FTSO feed is required");
   if (!policy.requireFtso && policy.ftsoFeedId !== ZERO_BYTES32) throw new Error("unexpected FTSO feed");
   const maxPriceAgeSeconds = boundedUint(policy.maxPriceAgeSeconds, 64, "maxPriceAgeSeconds");
+  const requireFdc = policy.requireFdc;
+  if (typeof requireFdc !== "boolean" || typeof policy.fdcRequireDestinationTag !== "boolean") {
+    throw new Error("FDC requirement flags must be boolean");
+  }
+  const fdcAttestationType = bytes32(policy.fdcAttestationType, "fdcAttestationType");
+  const fdcSourceId = bytes32(policy.fdcSourceId, "fdcSourceId");
+  const fdcSourceAddressHash = bytes32(policy.fdcSourceAddressHash, "fdcSourceAddressHash");
+  const fdcReceivingAddressHash = bytes32(policy.fdcReceivingAddressHash, "fdcReceivingAddressHash");
+  const fdcMemoMode = Number(boundedUint(policy.fdcMemoMode, 8, "fdcMemoMode"));
+  const fdcDestinationTag = Number(boundedUint(policy.fdcDestinationTag, 32, "fdcDestinationTag"));
+  const fdcMinReceivedAmount = uint(policy.fdcMinReceivedAmount, "fdcMinReceivedAmount");
+  const fdcMaxReceivedAmount = uint(policy.fdcMaxReceivedAmount, "fdcMaxReceivedAmount");
+  const maxFdcAgeSeconds = boundedUint(policy.maxFdcAgeSeconds, 64, "maxFdcAgeSeconds");
+  const fdcConsumer = address(policy.fdcConsumer, "fdcConsumer");
+  if (requireFdc) {
+    if (fdcAttestationType.toLowerCase() !== FDC_XRP_PAYMENT_V1.toLowerCase()
+      || fdcSourceId === ZERO_BYTES32 || fdcSourceAddressHash === ZERO_BYTES32
+      || fdcReceivingAddressHash === ZERO_BYTES32 || fdcMemoMode !== 1
+      || fdcMinReceivedAmount === 0n || fdcMaxReceivedAmount < fdcMinReceivedAmount
+      || maxFdcAgeSeconds === 0n || fdcConsumer === "0x0000000000000000000000000000000000000000") {
+      throw new Error("required FDC descriptor is incomplete");
+    }
+  } else if (fdcAttestationType !== ZERO_BYTES32 || fdcSourceId !== ZERO_BYTES32
+    || fdcSourceAddressHash !== ZERO_BYTES32 || fdcReceivingAddressHash !== ZERO_BYTES32
+    || fdcMemoMode !== 0 || policy.fdcRequireDestinationTag || fdcDestinationTag !== 0
+    || fdcMinReceivedAmount !== 0n || fdcMaxReceivedAmount !== 0n || maxFdcAgeSeconds !== 0n
+    || fdcConsumer !== "0x0000000000000000000000000000000000000000") {
+    throw new Error("unexpected FDC descriptor");
+  }
   return {
     ...policy,
     chainId,
@@ -148,6 +191,9 @@ export function normalizePolicy(policy: PolicyV1): PolicyV1 {
     allowTargets: sortedAddresses(policy.allowTargets, "allowTargets"), denyTargets: sortedAddresses(policy.denyTargets, "denyTargets"),
     allowRequesters: sortedAddresses(policy.allowRequesters, "allowRequesters"), allowActionTypes: sortedBytes32(policy.allowActionTypes, "allowActionTypes"),
     ftsoFeedId: bytes32(policy.ftsoFeedId, "ftsoFeedId"), maxPriceAgeSeconds,
+    requireFdc, fdcAttestationType, fdcSourceId, fdcSourceAddressHash, fdcReceivingAddressHash,
+    fdcMemoMode, fdcRequireDestinationTag: policy.fdcRequireDestinationTag, fdcDestinationTag,
+    fdcMinReceivedAmount, fdcMaxReceivedAmount, maxFdcAgeSeconds, fdcConsumer,
     privateSalt, submissionNonce,
   };
 }
@@ -161,8 +207,42 @@ export function encodePolicyV1(policy: PolicyV1): Hex {
     normalized.scheduleIntervalSeconds, normalized.scheduleGraceSeconds, normalized.cooldownSeconds, normalized.maxOccurrences,
     normalized.allowTargets, normalized.denyTargets,
     normalized.allowRequesters, normalized.allowActionTypes, normalized.requireFtso, normalized.ftsoFeedId,
-    normalized.maxPriceAgeSeconds, normalized.privateSalt, normalized.submissionNonce,
+    normalized.maxPriceAgeSeconds, normalized.requireFdc, normalized.fdcAttestationType, normalized.fdcSourceId,
+    normalized.fdcSourceAddressHash, normalized.fdcReceivingAddressHash, normalized.fdcMemoMode,
+    normalized.fdcRequireDestinationTag, normalized.fdcDestinationTag, normalized.fdcMinReceivedAmount,
+    normalized.fdcMaxReceivedAmount, normalized.maxFdcAgeSeconds, normalized.fdcConsumer,
+    normalized.privateSalt, normalized.submissionNonce,
   ]);
+}
+
+export function fdcTriggerSnapshotCommitmentV1(snapshot: FdcTriggerSnapshotV1): Hex {
+  if (typeof snapshot.hasMemoData !== "boolean" || typeof snapshot.hasDestinationTag !== "boolean"
+    || typeof snapshot.transactionConsumed !== "boolean" || typeof snapshot.proofConsumed !== "boolean") {
+    throw new Error("FDC snapshot flags must be boolean");
+  }
+  return keccak256(encodeAbiParameters(fdcSnapshotParameters, [
+    FDC_TRIGGER_SNAPSHOT_V1, bytes32(snapshot.attestationType, "attestationType"), bytes32(snapshot.sourceId, "sourceId"),
+    bytes32(snapshot.transactionId, "transactionId"), address(snapshot.proofOwner, "proofOwner"),
+    address(snapshot.consumer, "consumer"), bytes32(snapshot.inputCommitment, "inputCommitment"),
+    bytes32(snapshot.proofCommitment, "proofCommitment"), bytes32(snapshot.sourceAddressHash, "sourceAddressHash"),
+    bytes32(snapshot.receivingAddressHash, "receivingAddressHash"), uint(snapshot.receivedAmount, "receivedAmount"),
+    snapshot.hasMemoData, bytes32(snapshot.memoDataHash, "memoDataHash"), snapshot.hasDestinationTag,
+    Number(boundedUint(snapshot.destinationTag, 32, "destinationTag")), boundedUint(snapshot.blockNumber, 64, "blockNumber"),
+    boundedUint(snapshot.blockTimestamp, 64, "blockTimestamp"), snapshot.transactionConsumed, snapshot.proofConsumed,
+    bytes32(snapshot.requestId, "requestId"), bytes32(snapshot.routerRequestHash, "routerRequestHash"),
+    Number(boundedUint(snapshot.routerRequestStatus, 8, "routerRequestStatus")),
+  ]));
+}
+
+export function policyInputCommitmentV1(ftsoCheckpoint: Hex | undefined, fdcInputCommitment: Hex | undefined): Hex {
+  const ftso = ftsoCheckpoint === undefined ? ZERO_BYTES32 : bytes32(ftsoCheckpoint, "FTSO checkpoint");
+  const fdc = fdcInputCommitment === undefined ? ZERO_BYTES32 : bytes32(fdcInputCommitment, "FDC input commitment");
+  if (ftso === ZERO_BYTES32) return fdc;
+  if (fdc === ZERO_BYTES32) return ftso;
+  return keccak256(encodeAbiParameters(
+    [{ type: "bytes32" }, { type: "bytes32" }, { type: "bytes32" }],
+    [POLICY_INPUT_V1, ftso, fdc],
+  ));
 }
 
 export function policyCommitment(policy: PolicyV1): Hex {

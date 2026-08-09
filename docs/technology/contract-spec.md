@@ -75,10 +75,14 @@ This consumer and its real-router integration are locally tested, and its
 Coston2 runtime/constructor bindings are independently verified. One validated
 XRPL Testnet payment, finalized FDC proof, both replay markers, and the resulting
 router `Pending` request are recorded in public-safe Coston2 evidence. The
-consumer checks the public payment/request binding only; V1 evaluators do
-not yet interpret private FDC source/destination descriptors. A policy that
-requires those private semantics must therefore fail closed until the private
-schema, snapshot verification, and cross-language evaluator path are added.
+consumer checks the public payment/request binding only. Private authorization
+is a separate deterministic step: the V1 schema freezes attestation/source IDs,
+source and receiving address hashes, request-ID memo mode, destination-tag
+rule, amount range, maximum age, and exact consumer. Both local evaluators
+require a canonical `FDC_TRIGGER_SNAPSHOT_V1` whose proof owner, replay markers,
+request ID/hash/status, proof commitment, and payment fields match the policy
+and request. Any mismatch yields `FDC_INVALID`. Cross-language vectors and
+mutation tests pass; live registered FCC evaluation remains unverified.
 
 ### Adapter interfaces
 
@@ -133,7 +137,8 @@ Conceptual fields:
 - schedule slots, occurrence limits, cooldown/grace;
 - start/end/expiry;
 - delegated requester rules;
-- FTSO/FDC requirement descriptors;
+- FTSO requirement and canonical XRPL FDC trigger descriptor (type/source,
+  source/destination hashes, memo/tag rules, amount range, freshness, consumer);
 - private salt and one-time submission nonce.
 
 The exact encoding must be canonical, fixed-width where practical, bounded, and
@@ -175,12 +180,21 @@ Fields include:
 No private rule, intermediate value, alternate target, or private reason appears.
 
 The public JSON transport for receipts, requests, spend state, FTSO snapshots,
-and evaluation results uses lower-camel field names. Every `uint256`, bigint,
+FDC trigger snapshots, and evaluation results uses lower-camel field names.
+Every `uint256`, bigint,
 and `uint64` is an unsigned quoted decimal string so JavaScript never rounds a
 digest input through IEEE-754. Decisions and public reason classes use the
 canonical names above, not implementation-specific integer codes. Go rejects
 numeric JSON bigints, invalid decimal strings, and unknown enums; round trips
 must preserve the receipt/request/evaluation digest.
+
+`FDC_TRIGGER_SNAPSHOT_V1` binds the official attestation/source identifiers,
+transaction ID, proof owner and consumer, FDC input and proof commitments,
+source/receiving hashes, amount, memo/tag facts, block/time, transaction/proof
+consumption markers, request ID, exact `ACTION_REQUEST_V1` hash, and router
+status. A policy requiring both FTSO and FDC commits their two checkpoints under
+`POLICY_INPUT_V1`; one required input remains its direct commitment. Snapshots
+that are absent, unexpected, stale, unconsumed, or inconsistent fail closed.
 
 ## 3. Policy lifecycle
 

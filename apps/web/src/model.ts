@@ -2,6 +2,7 @@ import { getAddress, hexToBytes, keccak256, stringToHex, toHex, type Hex } from 
 import {
   ACTION_FTESTXRP_TRANSFER,
   CHAIN_ID,
+  NO_FDC_DESCRIPTOR_V1,
   POLICY_SCHEMA_V1,
   ZERO_BYTES32,
   policyCommitment,
@@ -256,6 +257,7 @@ export function compileStudioDraft(draft: StudioDraft, entropy: StudioEntropy): 
     requireFtso: false,
     ftsoFeedId: ZERO_BYTES32,
     maxPriceAgeSeconds: 0n,
+    ...NO_FDC_DESCRIPTOR_V1,
     privateSalt: assertEntropy(entropy.privateSalt, "private salt"),
     submissionNonce: assertEntropy(entropy.submissionNonce, "submission nonce"),
   };

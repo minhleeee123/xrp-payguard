@@ -745,6 +745,7 @@ function livePolicy(protocol, context, now, runNonce, submissionNonce) {
     requireFtso: false,
     ftsoFeedId: protocol.ZERO_BYTES32,
     maxPriceAgeSeconds: 0n,
+    ...protocol.NO_FDC_DESCRIPTOR_V1,
     privateSalt: domainHash("PAYGUARD_LIVE_FDC_SIMULATED_PRIVATE_SALT_V1", runNonce),
     submissionNonce,
   };

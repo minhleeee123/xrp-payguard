@@ -323,7 +323,7 @@ verified on Coston2. External review and registered FCC execution remain open.
 - [x] Deploy the XRPL FDC consumer on Coston2 and independently verify its
   receipt, runtime bytecode, constructor/protocol constants, one-hour freshness
   bound, current `FdcVerification`, and canonical PayGuard router bindings.
-- [ ] Extend the private policy schema and both evaluators with canonical FDC
+- [x] Extend the private policy schema and both evaluators with canonical FDC
   trigger descriptors/snapshots so source, destination, memo/tag, amount,
   freshness, proof commitment, and consumer state are independently enforced
   before either machine can sign `ALLOW`.

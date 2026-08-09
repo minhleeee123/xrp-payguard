@@ -1,9 +1,9 @@
 import { encodeAbiParameters, keccak256, type Hex } from "viem";
 import { ACTION_FTESTXRP_TRANSFER, SPEND_CHECKPOINT_V1, ZERO_BYTES32 } from "./constants.js";
-import { actionRequestHash, genesisSpendCheckpoint, normalizePolicy, policyCommitment } from "./codec.js";
+import { actionRequestHash, fdcTriggerSnapshotCommitmentV1, genesisSpendCheckpoint, normalizePolicy, policyCommitment, policyInputCommitmentV1 } from "./codec.js";
 import { scheduleWindowV1 } from "./schedule.js";
 import { MAX_SPEND_WINDOW_ENTRIES_V1, spendWindowTotalsV1, type SpendWindowEntryV1 } from "./spend-window.js";
-import type { ActionRequestV1, Decision, EvaluationResultV1, FtsoSnapshotV1, PolicyV1, PublicReasonClass, SpendStateV1 } from "./types.js";
+import type { ActionRequestV1, Decision, EvaluationResultV1, FdcTriggerSnapshotV1, FtsoSnapshotV1, PolicyV1, PublicReasonClass, SpendStateV1 } from "./types.js";
 
 const MAX_UINT256 = (1n << 256n) - 1n;
 const MAX_UINT32 = 2 ** 32 - 1;
@@ -16,6 +16,7 @@ export const POLICY_VIOLATION_V1 = {
   OCCURRENCE_EXCEEDED: 1n << 4n,
   COOLDOWN: 1n << 5n,
   INSUFFICIENT_BALANCE: 1n << 6n,
+  FDC_INVALID: 1n << 9n,
   FTSO_INVALID: 1n << 7n,
   CAP_EXCEEDED: 1n << 8n,
 } as const;
@@ -82,8 +83,43 @@ function ftsoReferenceValue(
 ): bigint | null {
   if (!feed || feed.feedId.toLowerCase() !== policy.ftsoFeedId.toLowerCase()
     || feed.timestamp > now || now - feed.timestamp > policy.maxPriceAgeSeconds
-    || feed.checkpoint === ZERO_BYTES32 || request.inputCommitment.toLowerCase() !== feed.checkpoint.toLowerCase()) return null;
+    || feed.checkpoint === ZERO_BYTES32) return null;
   return referenceValueV1(request.amount, feed.value, feed.decimals);
+}
+
+function validFdcSnapshot(policy: PolicyV1, request: ActionRequestV1, snapshot: FdcTriggerSnapshotV1 | undefined, now: bigint): boolean {
+  if (!snapshot) return false;
+  try {
+    fdcTriggerSnapshotCommitmentV1(snapshot);
+    return snapshot.attestationType.toLowerCase() === policy.fdcAttestationType.toLowerCase()
+      && snapshot.sourceId.toLowerCase() === policy.fdcSourceId.toLowerCase()
+      && snapshot.transactionId !== ZERO_BYTES32 && snapshot.inputCommitment !== ZERO_BYTES32
+      && snapshot.proofCommitment !== ZERO_BYTES32
+      && snapshot.consumer.toLowerCase() === policy.fdcConsumer.toLowerCase()
+      && snapshot.proofOwner.toLowerCase() === policy.fdcConsumer.toLowerCase()
+      && snapshot.sourceAddressHash.toLowerCase() === policy.fdcSourceAddressHash.toLowerCase()
+      && snapshot.receivingAddressHash.toLowerCase() === policy.fdcReceivingAddressHash.toLowerCase()
+      && snapshot.receivedAmount >= policy.fdcMinReceivedAmount
+      && snapshot.receivedAmount <= policy.fdcMaxReceivedAmount
+      && snapshot.hasMemoData && policy.fdcMemoMode === 1
+      && snapshot.memoDataHash.toLowerCase() === keccak256(request.requestId).toLowerCase()
+      && snapshot.hasDestinationTag === policy.fdcRequireDestinationTag
+      && snapshot.destinationTag === policy.fdcDestinationTag
+      && snapshot.blockNumber > 0n && snapshot.blockTimestamp <= now
+      && now - snapshot.blockTimestamp <= policy.maxFdcAgeSeconds
+      && snapshot.transactionConsumed && snapshot.proofConsumed
+      && snapshot.requestId.toLowerCase() === request.requestId.toLowerCase()
+      && snapshot.routerRequestHash.toLowerCase() === actionRequestHash(request).toLowerCase()
+      && snapshot.routerRequestStatus === 1;
+  } catch {
+    return false;
+  }
+}
+
+function inputCommitmentMatches(policy: PolicyV1, request: ActionRequestV1, ftso: FtsoSnapshotV1 | undefined, fdc: FdcTriggerSnapshotV1 | undefined): boolean {
+  if ((!policy.requireFtso && ftso !== undefined) || (!policy.requireFdc && fdc !== undefined)) return false;
+  const expected = policyInputCommitmentV1(policy.requireFtso ? ftso?.checkpoint : undefined, policy.requireFdc ? fdc?.inputCommitment : undefined);
+  return request.inputCommitment.toLowerCase() === expected.toLowerCase();
 }
 
 function replaySpendHistoryV1(
@@ -116,6 +152,14 @@ function replaySpendHistoryV1(
         value = converted;
       } else if (entry.ftso !== undefined) {
         return "MALFORMED";
+      }
+      if (policy.requireFdc) {
+        if (!validFdcSnapshot(policy, historyRequest, entry.fdc, entry.accountedAt)) return "FDC_INVALID";
+      } else if (entry.fdc !== undefined) {
+        return "MALFORMED";
+      }
+      if (!inputCommitmentMatches(policy, historyRequest, entry.ftso, entry.fdc)) {
+        return policy.requireFdc ? "FDC_INVALID" : policy.requireFtso ? "FTSO_INVALID" : "MALFORMED";
       }
       checkpoint = nextCheckpoint(historyRequest, historyRequest.amount, occurrence, entry.accountedAt);
       windowEntries.push({ value, executedAt: entry.accountedAt });
@@ -184,6 +228,13 @@ export function evaluatePolicy(policyInput: PolicyV1, request: ActionRequestV1, 
     const value = ftsoReferenceValue(policy, request, state.ftso, now);
     if (value === null) violations |= POLICY_VIOLATION_V1.FTSO_INVALID;
     else referenceValue = value;
+  }
+  if (policy.requireFdc && !validFdcSnapshot(policy, request, state.fdc, now)) violations |= POLICY_VIOLATION_V1.FDC_INVALID;
+  if ((!policy.requireFdc && state.fdc !== undefined)
+    || !inputCommitmentMatches(policy, request, state.ftso, state.fdc)) {
+    if (policy.requireFdc) violations |= POLICY_VIOLATION_V1.FDC_INVALID;
+    else if (policy.requireFtso) violations |= POLICY_VIOLATION_V1.FTSO_INVALID;
+    else return deny(request, "MALFORMED", now);
   }
   if ((violations & POLICY_VIOLATION_V1.FTSO_INVALID) === 0n && ((policy.maxPerAction !== 0n && referenceValue > policy.maxPerAction)
     || (policy.dailyCap !== 0n && historyTotals.dailySpend + referenceValue > policy.dailyCap)

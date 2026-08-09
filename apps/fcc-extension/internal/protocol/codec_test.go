@@ -12,12 +12,13 @@ import (
 )
 
 type vectorFile struct {
-	Policy   vectorPolicy  `json:"policy"`
-	Binding  vectorBinding `json:"binding"`
-	Receipt  vectorReceipt `json:"receipt"`
-	Request  vectorRequest `json:"request"`
-	Result   vectorResult  `json:"result"`
-	Expected struct {
+	Policy      vectorPolicy    `json:"policy"`
+	Binding     vectorBinding   `json:"binding"`
+	Receipt     vectorReceipt   `json:"receipt"`
+	Request     vectorRequest   `json:"request"`
+	Result      vectorResult    `json:"result"`
+	FDCSnapshot json.RawMessage `json:"fdcSnapshot"`
+	Expected    struct {
 		PolicyCommitment            string `json:"policyCommitment"`
 		BindingDigest               string `json:"bindingDigest"`
 		ReceiptDigest               string `json:"receiptDigest"`
@@ -27,39 +28,52 @@ type vectorFile struct {
 		RequestHash                 string `json:"requestHash"`
 		EvaluationDigest            string `json:"evaluationDigest"`
 		EvaluationAttestationDigest string `json:"evaluationAttestationDigest"`
+		FDCSnapshotCommitment       string `json:"fdcSnapshotCommitment"`
 	} `json:"expected"`
 }
 
 type vectorPolicy struct {
-	SchemaVersion        uint16   `json:"schemaVersion"`
-	ChainID              string   `json:"chainId"`
-	Registry             string   `json:"registry"`
-	Vault                string   `json:"vault"`
-	Router               string   `json:"router"`
-	Owner                string   `json:"owner"`
-	PolicyID             string   `json:"policyId"`
-	PolicyVersion        uint32   `json:"policyVersion"`
-	Asset                string   `json:"asset"`
-	ReferenceCurrency    string   `json:"referenceCurrency"`
-	MaxPerAction         string   `json:"maxPerAction"`
-	DailyCap             string   `json:"dailyCap"`
-	RollingCap           string   `json:"rollingCap"`
-	RollingWindowSeconds string   `json:"rollingWindowSeconds"`
-	StartAt              string   `json:"startAt"`
-	EndAt                string   `json:"endAt"`
-	ScheduleInterval     string   `json:"scheduleIntervalSeconds"`
-	ScheduleGrace        string   `json:"scheduleGraceSeconds"`
-	CooldownSeconds      string   `json:"cooldownSeconds"`
-	MaxOccurrences       uint32   `json:"maxOccurrences"`
-	AllowTargets         []string `json:"allowTargets"`
-	DenyTargets          []string `json:"denyTargets"`
-	AllowRequesters      []string `json:"allowRequesters"`
-	AllowActionTypes     []string `json:"allowActionTypes"`
-	RequireFTSO          bool     `json:"requireFtso"`
-	FTSOFeedID           string   `json:"ftsoFeedId"`
-	MaxPriceAgeSeconds   string   `json:"maxPriceAgeSeconds"`
-	PrivateSalt          string   `json:"privateSalt"`
-	SubmissionNonce      string   `json:"submissionNonce"`
+	SchemaVersion            uint16   `json:"schemaVersion"`
+	ChainID                  string   `json:"chainId"`
+	Registry                 string   `json:"registry"`
+	Vault                    string   `json:"vault"`
+	Router                   string   `json:"router"`
+	Owner                    string   `json:"owner"`
+	PolicyID                 string   `json:"policyId"`
+	PolicyVersion            uint32   `json:"policyVersion"`
+	Asset                    string   `json:"asset"`
+	ReferenceCurrency        string   `json:"referenceCurrency"`
+	MaxPerAction             string   `json:"maxPerAction"`
+	DailyCap                 string   `json:"dailyCap"`
+	RollingCap               string   `json:"rollingCap"`
+	RollingWindowSeconds     string   `json:"rollingWindowSeconds"`
+	StartAt                  string   `json:"startAt"`
+	EndAt                    string   `json:"endAt"`
+	ScheduleInterval         string   `json:"scheduleIntervalSeconds"`
+	ScheduleGrace            string   `json:"scheduleGraceSeconds"`
+	CooldownSeconds          string   `json:"cooldownSeconds"`
+	MaxOccurrences           uint32   `json:"maxOccurrences"`
+	AllowTargets             []string `json:"allowTargets"`
+	DenyTargets              []string `json:"denyTargets"`
+	AllowRequesters          []string `json:"allowRequesters"`
+	AllowActionTypes         []string `json:"allowActionTypes"`
+	RequireFTSO              bool     `json:"requireFtso"`
+	FTSOFeedID               string   `json:"ftsoFeedId"`
+	MaxPriceAgeSeconds       string   `json:"maxPriceAgeSeconds"`
+	RequireFDC               bool     `json:"requireFdc"`
+	FDCAttestationType       string   `json:"fdcAttestationType"`
+	FDCSourceID              string   `json:"fdcSourceId"`
+	FDCSourceAddressHash     string   `json:"fdcSourceAddressHash"`
+	FDCReceivingAddressHash  string   `json:"fdcReceivingAddressHash"`
+	FDCMemoMode              uint8    `json:"fdcMemoMode"`
+	FDCRequireDestinationTag bool     `json:"fdcRequireDestinationTag"`
+	FDCDestinationTag        uint32   `json:"fdcDestinationTag"`
+	FDCMinReceivedAmount     string   `json:"fdcMinReceivedAmount"`
+	FDCMaxReceivedAmount     string   `json:"fdcMaxReceivedAmount"`
+	MaxFDCAgeSeconds         string   `json:"maxFdcAgeSeconds"`
+	FDCConsumer              string   `json:"fdcConsumer"`
+	PrivateSalt              string   `json:"privateSalt"`
+	SubmissionNonce          string   `json:"submissionNonce"`
 }
 
 type vectorBinding struct {
@@ -165,7 +179,7 @@ func policyFromVector(v vectorPolicy) PolicyV1 {
 		}
 		return result
 	}
-	return PolicyV1{SchemaVersion: v.SchemaVersion, ChainID: bigFromString(v.ChainID), Registry: mustAddress(v.Registry), Vault: mustAddress(v.Vault), Router: mustAddress(v.Router), Owner: mustAddress(v.Owner), PolicyID: mustHash(v.PolicyID), PolicyVersion: v.PolicyVersion, Asset: mustAddress(v.Asset), ReferenceCurrency: mustHash(v.ReferenceCurrency), MaxPerAction: bigFromString(v.MaxPerAction), DailyCap: bigFromString(v.DailyCap), RollingCap: bigFromString(v.RollingCap), RollingWindowSecs: mustUint64(v.RollingWindowSeconds), StartAt: mustUint64(v.StartAt), EndAt: mustUint64(v.EndAt), ScheduleIntervalSecs: mustUint64(v.ScheduleInterval), ScheduleGraceSecs: mustUint64(v.ScheduleGrace), CooldownSecs: mustUint64(v.CooldownSeconds), MaxOccurrences: v.MaxOccurrences, AllowTargets: addresses(v.AllowTargets), DenyTargets: addresses(v.DenyTargets), AllowRequesters: addresses(v.AllowRequesters), AllowActionTypes: hashes(v.AllowActionTypes), RequireFTSO: v.RequireFTSO, FTSOFeedID: mustHash(v.FTSOFeedID), MaxPriceAgeSecs: mustUint64(v.MaxPriceAgeSeconds), PrivateSalt: mustHash(v.PrivateSalt), SubmissionNonce: mustHash(v.SubmissionNonce)}
+	return PolicyV1{SchemaVersion: v.SchemaVersion, ChainID: bigFromString(v.ChainID), Registry: mustAddress(v.Registry), Vault: mustAddress(v.Vault), Router: mustAddress(v.Router), Owner: mustAddress(v.Owner), PolicyID: mustHash(v.PolicyID), PolicyVersion: v.PolicyVersion, Asset: mustAddress(v.Asset), ReferenceCurrency: mustHash(v.ReferenceCurrency), MaxPerAction: bigFromString(v.MaxPerAction), DailyCap: bigFromString(v.DailyCap), RollingCap: bigFromString(v.RollingCap), RollingWindowSecs: mustUint64(v.RollingWindowSeconds), StartAt: mustUint64(v.StartAt), EndAt: mustUint64(v.EndAt), ScheduleIntervalSecs: mustUint64(v.ScheduleInterval), ScheduleGraceSecs: mustUint64(v.ScheduleGrace), CooldownSecs: mustUint64(v.CooldownSeconds), MaxOccurrences: v.MaxOccurrences, AllowTargets: addresses(v.AllowTargets), DenyTargets: addresses(v.DenyTargets), AllowRequesters: addresses(v.AllowRequesters), AllowActionTypes: hashes(v.AllowActionTypes), RequireFTSO: v.RequireFTSO, FTSOFeedID: mustHash(v.FTSOFeedID), MaxPriceAgeSecs: mustUint64(v.MaxPriceAgeSeconds), RequireFDC: v.RequireFDC, FDCAttestationType: mustHash(v.FDCAttestationType), FDCSourceID: mustHash(v.FDCSourceID), FDCSourceAddressHash: mustHash(v.FDCSourceAddressHash), FDCReceivingAddressHash: mustHash(v.FDCReceivingAddressHash), FDCMemoMode: v.FDCMemoMode, FDCRequireDestinationTag: v.FDCRequireDestinationTag, FDCDestinationTag: v.FDCDestinationTag, FDCMinReceivedAmount: bigFromString(v.FDCMinReceivedAmount), FDCMaxReceivedAmount: bigFromString(v.FDCMaxReceivedAmount), MaxFDCAgeSecs: mustUint64(v.MaxFDCAgeSeconds), FDCConsumer: mustAddress(v.FDCConsumer), PrivateSalt: mustHash(v.PrivateSalt), SubmissionNonce: mustHash(v.SubmissionNonce)}
 }
 
 func bigFromString(value string) *big.Int {
@@ -206,6 +220,17 @@ func TestGoldenVector(t *testing.T) {
 	}
 	if commitment != mustHash(vector.Expected.PolicyCommitment) {
 		t.Fatalf("policy commitment mismatch: %s", commitment.Hex())
+	}
+	var fdcSnapshot FDCTriggerSnapshotV1
+	if err := json.Unmarshal(vector.FDCSnapshot, &fdcSnapshot); err != nil {
+		t.Fatal(err)
+	}
+	fdcCommitment, err := FDCTriggerSnapshotCommitmentV1(fdcSnapshot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fdcCommitment != mustHash(vector.Expected.FDCSnapshotCommitment) {
+		t.Fatalf("FDC snapshot commitment mismatch: %s", fdcCommitment.Hex())
 	}
 	binding := bindingFromVector(vector.Binding)
 	bindingDigest, err := PolicyBindingDigest(binding)

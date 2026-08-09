@@ -11,6 +11,7 @@ type SpendHistoryEntryV1 struct {
 	Request     ActionRequestV1
 	AccountedAt uint64
 	FTSO        *FTSOSnapshotV1
+	FDC         *FDCTriggerSnapshotV1
 }
 
 func matchesPolicyDomain(policy PolicyV1, request ActionRequestV1, commitment common.Hash) bool {
@@ -18,7 +19,7 @@ func matchesPolicyDomain(policy PolicyV1, request ActionRequestV1, commitment co
 }
 
 func historyReferenceValue(policy PolicyV1, request ActionRequestV1, feed *FTSOSnapshotV1, now uint64) (*big.Int, bool) {
-	if feed == nil || feed.Value == nil || feed.FeedID != policy.FTSOFeedID || feed.Timestamp > now || now-feed.Timestamp > policy.MaxPriceAgeSecs || feed.Checkpoint == zeroHash() || request.InputCommitment != feed.Checkpoint {
+	if feed == nil || feed.Value == nil || feed.FeedID != policy.FTSOFeedID || feed.Timestamp > now || now-feed.Timestamp > policy.MaxPriceAgeSecs || feed.Checkpoint == zeroHash() {
 		return nil, false
 	}
 	return ReferenceValueV1(request.Amount, feed.Value, feed.Decimals)
@@ -47,6 +48,22 @@ func replaySpendHistoryV1(policy PolicyV1, state SpendStateV1, commitment common
 			}
 			value = converted
 		} else if entry.FTSO != nil {
+			return SpendWindowTotalsResultV1{}, ReasonMalformed
+		}
+		if policy.RequireFDC {
+			if !validFDCSnapshot(policy, request, entry.FDC, entry.AccountedAt) {
+				return SpendWindowTotalsResultV1{}, ReasonFDCInvalid
+			}
+		} else if entry.FDC != nil {
+			return SpendWindowTotalsResultV1{}, ReasonMalformed
+		}
+		if !inputCommitmentMatches(policy, request, entry.FTSO, entry.FDC) {
+			if policy.RequireFDC {
+				return SpendWindowTotalsResultV1{}, ReasonFDCInvalid
+			}
+			if policy.RequireFTSO {
+				return SpendWindowTotalsResultV1{}, ReasonFTSOInvalid
+			}
 			return SpendWindowTotalsResultV1{}, ReasonMalformed
 		}
 		checkpoint, err = calculateNextCheckpoint(request, request.Amount, occurrence, entry.AccountedAt)

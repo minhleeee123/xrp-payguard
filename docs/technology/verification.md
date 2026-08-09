@@ -24,10 +24,10 @@ Forbidden evidence:
 | A — FCC result | registered extension result verified on Coston2 | REGISTERED SENDER + LOCAL TYPED HANDLER/GOLDEN VECTOR PASS + PRODUCTION ADMISSION/CODE-VERSION/MACHINE-REGISTRATION OPERATIONS IMPLEMENTED/LOCALLY TESTED / LIVE CODE VERSION + MACHINE + RESULT NOT VERIFIED |
 | B — Private policy ingress | sealed policy, three receipts, replay/domain negatives | LOCAL AUTH/ECIES PASS / SEALED LIVE NOT VERIFIED |
 | C — Common custody | all-three matching policy availability and commitment | NOT STARTED |
-| D — Deterministic evaluation | cross-language vectors and private policy result | LOCAL PASS / LIVE NOT VERIFIED |
+| D — Deterministic evaluation | cross-language vectors and private policy result | LOCAL PASS INCLUDING CANONICAL FTSO/FDC INPUTS / LIVE NOT VERIFIED |
 | E — Threshold execution | two distinct exact results authorize one atomic action | LOCAL PASS + SOLUTION-3 COSTON2 SIMULATED-SIGNER LIFECYCLE PASS / CONTRACTS DEPLOYED / LIVE FCC EXECUTION OPEN |
 | F — Vault conservation | deposits/reservations/spend/refund and adversarial invariants | LOCAL PASS / VAULT DEPLOYED / LIVE FAssets REQUEST/PAYOUT OBSERVED / CANONICAL SETTLEMENT + DEFAULT RECOVERY OPEN |
-| G — XRP-native funding | XRPL payment, FDC proof, Smart Account deposit | PASS — live PayGuard-owned Coston2 evidence in [`evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json`](../../evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json) covers validated XRPL Testnet payment, FDC request/finalized round/proof commitment, on-chain `verifyXRPPayment`, `executeDirectMintingWithData`, and verified PayGuardVault accounting. The credential-free [`coston2-funding-resume-audit-2026-08-09.json`](../../evidence/coston2/coston2-funding-resume-audit-2026-08-09.json) reconstructs that checkpoint and re-verifies its proof/runtime bindings. The separate [`xrpl-fdc-trigger-pending-2026-08-09.json`](../../evidence/coston2/xrpl-fdc-trigger-pending-2026-08-09.json) binds a second validated XRPL payment and finalized proof to atomic replay consumption and one canonical router `Pending` request. Its policy signers are simulated; delayed resubmission, private FDC evaluation, live FCC results, and release gates remain open. |
+| G — XRP-native funding | XRPL payment, FDC proof, Smart Account deposit | PASS — live PayGuard-owned Coston2 evidence in [`evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json`](../../evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json) covers validated XRPL Testnet payment, FDC request/finalized round/proof commitment, on-chain `verifyXRPPayment`, `executeDirectMintingWithData`, and verified PayGuardVault accounting. The credential-free [`coston2-funding-resume-audit-2026-08-09.json`](../../evidence/coston2/coston2-funding-resume-audit-2026-08-09.json) reconstructs that checkpoint and re-verifies its proof/runtime bindings. The separate [`xrpl-fdc-trigger-pending-2026-08-09.json`](../../evidence/coston2/xrpl-fdc-trigger-pending-2026-08-09.json) binds a second validated XRPL payment and finalized proof to atomic replay consumption and one canonical router `Pending` request. Canonical private FDC evaluation passes locally, but its policy signers are simulated; delayed resubmission, live FCC results, and release gates remain open. |
 | H — Product release | full roles, recovery, accessibility, live deployment | STATIC VERCEL SHELL + PUBLIC-SAFE `/evidence/index.json` + LANDING + DESKTOP/MOBILE/KEYBOARD BROWSER SMOKE + CONTRACT DEPLOYMENT / HOSTED PRIVATE LIFECYCLE, RELAY, FCC, AND RELEASE MANIFEST OPEN |
 | I — User validation | interviews, usability, and design-partner pilot | NOT STARTED |
 
@@ -80,6 +80,9 @@ Forbidden evidence:
 - XRPL FDC consumer golden commitment, payment/memo/owner/freshness,
   runtime-verifier drift, transaction/proof replay, and verifier/router atomic
   rollback against both a rejecting mock and the real local router.
+- Private FDC descriptor/snapshot parity across TypeScript and Go, including
+  source/destination, memo/tag, amount, freshness, proof commitment, consumer,
+  replay markers, request hash/status, missing input, and historical drift.
 - Fresh/stale/unavailable/negative FTSO value.
 - Direct mint success, delayed mint, callback/event mismatch, quote drift.
 - FAssets approve/transfer/redeem request and non-instant exit semantics.

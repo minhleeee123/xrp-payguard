@@ -38,35 +38,47 @@ type actionRequestWireV1 struct {
 }
 
 type policyWireV1 struct {
-	SchemaVersion        uint16           `json:"schemaVersion"`
-	ChainID              string           `json:"chainId"`
-	Registry             common.Address   `json:"registry"`
-	Vault                common.Address   `json:"vault"`
-	Router               common.Address   `json:"router"`
-	Owner                common.Address   `json:"owner"`
-	PolicyID             common.Hash      `json:"policyId"`
-	PolicyVersion        uint32           `json:"policyVersion"`
-	Asset                common.Address   `json:"asset"`
-	ReferenceCurrency    common.Hash      `json:"referenceCurrency"`
-	MaxPerAction         string           `json:"maxPerAction"`
-	DailyCap             string           `json:"dailyCap"`
-	RollingCap           string           `json:"rollingCap"`
-	RollingWindowSecs    string           `json:"rollingWindowSeconds"`
-	StartAt              string           `json:"startAt"`
-	EndAt                string           `json:"endAt"`
-	ScheduleIntervalSecs string           `json:"scheduleIntervalSeconds"`
-	ScheduleGraceSecs    string           `json:"scheduleGraceSeconds"`
-	CooldownSecs         string           `json:"cooldownSeconds"`
-	MaxOccurrences       uint32           `json:"maxOccurrences"`
-	AllowTargets         []common.Address `json:"allowTargets"`
-	DenyTargets          []common.Address `json:"denyTargets"`
-	AllowRequesters      []common.Address `json:"allowRequesters"`
-	AllowActionTypes     []common.Hash    `json:"allowActionTypes"`
-	RequireFTSO          bool             `json:"requireFtso"`
-	FTSOFeedID           common.Hash      `json:"ftsoFeedId"`
-	MaxPriceAgeSecs      string           `json:"maxPriceAgeSeconds"`
-	PrivateSalt          common.Hash      `json:"privateSalt"`
-	SubmissionNonce      common.Hash      `json:"submissionNonce"`
+	SchemaVersion            uint16           `json:"schemaVersion"`
+	ChainID                  string           `json:"chainId"`
+	Registry                 common.Address   `json:"registry"`
+	Vault                    common.Address   `json:"vault"`
+	Router                   common.Address   `json:"router"`
+	Owner                    common.Address   `json:"owner"`
+	PolicyID                 common.Hash      `json:"policyId"`
+	PolicyVersion            uint32           `json:"policyVersion"`
+	Asset                    common.Address   `json:"asset"`
+	ReferenceCurrency        common.Hash      `json:"referenceCurrency"`
+	MaxPerAction             string           `json:"maxPerAction"`
+	DailyCap                 string           `json:"dailyCap"`
+	RollingCap               string           `json:"rollingCap"`
+	RollingWindowSecs        string           `json:"rollingWindowSeconds"`
+	StartAt                  string           `json:"startAt"`
+	EndAt                    string           `json:"endAt"`
+	ScheduleIntervalSecs     string           `json:"scheduleIntervalSeconds"`
+	ScheduleGraceSecs        string           `json:"scheduleGraceSeconds"`
+	CooldownSecs             string           `json:"cooldownSeconds"`
+	MaxOccurrences           uint32           `json:"maxOccurrences"`
+	AllowTargets             []common.Address `json:"allowTargets"`
+	DenyTargets              []common.Address `json:"denyTargets"`
+	AllowRequesters          []common.Address `json:"allowRequesters"`
+	AllowActionTypes         []common.Hash    `json:"allowActionTypes"`
+	RequireFTSO              bool             `json:"requireFtso"`
+	FTSOFeedID               common.Hash      `json:"ftsoFeedId"`
+	MaxPriceAgeSecs          string           `json:"maxPriceAgeSeconds"`
+	RequireFDC               bool             `json:"requireFdc"`
+	FDCAttestationType       common.Hash      `json:"fdcAttestationType"`
+	FDCSourceID              common.Hash      `json:"fdcSourceId"`
+	FDCSourceAddressHash     common.Hash      `json:"fdcSourceAddressHash"`
+	FDCReceivingAddressHash  common.Hash      `json:"fdcReceivingAddressHash"`
+	FDCMemoMode              uint8            `json:"fdcMemoMode"`
+	FDCRequireDestinationTag bool             `json:"fdcRequireDestinationTag"`
+	FDCDestinationTag        uint32           `json:"fdcDestinationTag"`
+	FDCMinReceivedAmount     string           `json:"fdcMinReceivedAmount"`
+	FDCMaxReceivedAmount     string           `json:"fdcMaxReceivedAmount"`
+	MaxFDCAgeSecs            string           `json:"maxFdcAgeSeconds"`
+	FDCConsumer              common.Address   `json:"fdcConsumer"`
+	PrivateSalt              common.Hash      `json:"privateSalt"`
+	SubmissionNonce          common.Hash      `json:"submissionNonce"`
 }
 
 type policyBindingWireV1 struct {
@@ -106,10 +118,35 @@ type ftsoSnapshotWireV1 struct {
 	Checkpoint common.Hash `json:"checkpoint"`
 }
 
+type fdcTriggerSnapshotWireV1 struct {
+	AttestationType      common.Hash    `json:"attestationType"`
+	SourceID             common.Hash    `json:"sourceId"`
+	TransactionID        common.Hash    `json:"transactionId"`
+	ProofOwner           common.Address `json:"proofOwner"`
+	Consumer             common.Address `json:"consumer"`
+	InputCommitment      common.Hash    `json:"inputCommitment"`
+	ProofCommitment      common.Hash    `json:"proofCommitment"`
+	SourceAddressHash    common.Hash    `json:"sourceAddressHash"`
+	ReceivingAddressHash common.Hash    `json:"receivingAddressHash"`
+	ReceivedAmount       string         `json:"receivedAmount"`
+	HasMemoData          bool           `json:"hasMemoData"`
+	MemoDataHash         common.Hash    `json:"memoDataHash"`
+	HasDestinationTag    bool           `json:"hasDestinationTag"`
+	DestinationTag       uint32         `json:"destinationTag"`
+	BlockNumber          string         `json:"blockNumber"`
+	BlockTimestamp       string         `json:"blockTimestamp"`
+	TransactionConsumed  bool           `json:"transactionConsumed"`
+	ProofConsumed        bool           `json:"proofConsumed"`
+	RequestID            common.Hash    `json:"requestId"`
+	RouterRequestHash    common.Hash    `json:"routerRequestHash"`
+	RouterRequestStatus  uint8          `json:"routerRequestStatus"`
+}
+
 type spendHistoryEntryWireV1 struct {
-	Request     ActionRequestV1 `json:"request"`
-	AccountedAt string          `json:"accountedAt"`
-	FTSO        *FTSOSnapshotV1 `json:"ftso,omitempty"`
+	Request     ActionRequestV1       `json:"request"`
+	AccountedAt string                `json:"accountedAt"`
+	FTSO        *FTSOSnapshotV1       `json:"ftso,omitempty"`
+	FDC         *FDCTriggerSnapshotV1 `json:"fdc,omitempty"`
 }
 
 type spendStateWireV1 struct {
@@ -121,6 +158,7 @@ type spendStateWireV1 struct {
 	BalanceCheckpoint common.Hash           `json:"balanceCheckpoint"`
 	Now               string                `json:"now"`
 	FTSO              *FTSOSnapshotV1       `json:"ftso,omitempty"`
+	FDC               *FDCTriggerSnapshotV1 `json:"fdc,omitempty"`
 }
 
 type evaluationResultWireV1 struct {
@@ -145,6 +183,7 @@ var reasonNameV1 = map[uint8]string{
 	ReasonCapExceeded: "CAP_EXCEEDED", ReasonOccurrenceExceeded: "OCCURRENCE_EXCEEDED",
 	ReasonTargetDenied: "TARGET_DENIED", ReasonRequesterDenied: "REQUESTER_DENIED",
 	ReasonActionDenied: "ACTION_DENIED", ReasonFTSOInvalid: "FTSO_INVALID", ReasonCooldown: "COOLDOWN",
+	ReasonFDCInvalid: "FDC_INVALID",
 }
 
 var reasonCodeV1 = func() map[string]uint8 {
@@ -241,6 +280,22 @@ func (policy PolicyV1) MarshalJSON() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	fdcMin := policy.FDCMinReceivedAmount
+	if fdcMin == nil && !policy.RequireFDC {
+		fdcMin = new(big.Int)
+	}
+	fdcMinAmount, err := decimalBig(fdcMin, "fdcMinReceivedAmount")
+	if err != nil {
+		return nil, err
+	}
+	fdcMax := policy.FDCMaxReceivedAmount
+	if fdcMax == nil && !policy.RequireFDC {
+		fdcMax = new(big.Int)
+	}
+	fdcMaxAmount, err := decimalBig(fdcMax, "fdcMaxReceivedAmount")
+	if err != nil {
+		return nil, err
+	}
 	return json.Marshal(policyWireV1{
 		SchemaVersion: policy.SchemaVersion, ChainID: chainID, Registry: policy.Registry,
 		Vault: policy.Vault, Router: policy.Router, Owner: policy.Owner, PolicyID: policy.PolicyID,
@@ -255,7 +310,13 @@ func (policy PolicyV1) MarshalJSON() ([]byte, error) {
 		AllowRequesters: policy.AllowRequesters, AllowActionTypes: policy.AllowActionTypes,
 		RequireFTSO: policy.RequireFTSO, FTSOFeedID: policy.FTSOFeedID,
 		MaxPriceAgeSecs: strconv.FormatUint(policy.MaxPriceAgeSecs, 10),
-		PrivateSalt:     policy.PrivateSalt, SubmissionNonce: policy.SubmissionNonce,
+		RequireFDC:      policy.RequireFDC, FDCAttestationType: policy.FDCAttestationType,
+		FDCSourceID: policy.FDCSourceID, FDCSourceAddressHash: policy.FDCSourceAddressHash,
+		FDCReceivingAddressHash: policy.FDCReceivingAddressHash, FDCMemoMode: policy.FDCMemoMode,
+		FDCRequireDestinationTag: policy.FDCRequireDestinationTag, FDCDestinationTag: policy.FDCDestinationTag,
+		FDCMinReceivedAmount: fdcMinAmount, FDCMaxReceivedAmount: fdcMaxAmount,
+		MaxFDCAgeSecs: strconv.FormatUint(policy.MaxFDCAgeSecs, 10), FDCConsumer: policy.FDCConsumer,
+		PrivateSalt: policy.PrivateSalt, SubmissionNonce: policy.SubmissionNonce,
 	})
 }
 
@@ -317,6 +378,18 @@ func (policy *PolicyV1) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
+	fdcMinReceivedAmount, err := parseDecimalBig(wire.FDCMinReceivedAmount, "fdcMinReceivedAmount")
+	if err != nil {
+		return err
+	}
+	fdcMaxReceivedAmount, err := parseDecimalBig(wire.FDCMaxReceivedAmount, "fdcMaxReceivedAmount")
+	if err != nil {
+		return err
+	}
+	maxFDCAgeSecs, err := parseDecimalUint64(wire.MaxFDCAgeSecs, "maxFdcAgeSecs")
+	if err != nil {
+		return err
+	}
 	decoded := PolicyV1{
 		SchemaVersion: wire.SchemaVersion, ChainID: chainID, Registry: wire.Registry,
 		Vault: wire.Vault, Router: wire.Router, Owner: wire.Owner, PolicyID: wire.PolicyID,
@@ -329,6 +402,12 @@ func (policy *PolicyV1) UnmarshalJSON(data []byte) error {
 		AllowRequesters: wire.AllowRequesters, AllowActionTypes: wire.AllowActionTypes,
 		RequireFTSO: wire.RequireFTSO, FTSOFeedID: wire.FTSOFeedID,
 		MaxPriceAgeSecs: maxPriceAgeSecs, PrivateSalt: wire.PrivateSalt,
+		RequireFDC: wire.RequireFDC, FDCAttestationType: wire.FDCAttestationType,
+		FDCSourceID: wire.FDCSourceID, FDCSourceAddressHash: wire.FDCSourceAddressHash,
+		FDCReceivingAddressHash: wire.FDCReceivingAddressHash, FDCMemoMode: wire.FDCMemoMode,
+		FDCRequireDestinationTag: wire.FDCRequireDestinationTag, FDCDestinationTag: wire.FDCDestinationTag,
+		FDCMinReceivedAmount: fdcMinReceivedAmount, FDCMaxReceivedAmount: fdcMaxReceivedAmount,
+		MaxFDCAgeSecs: maxFDCAgeSecs, FDCConsumer: wire.FDCConsumer,
 		SubmissionNonce: wire.SubmissionNonce,
 	}
 	normalized, err := normalizePolicy(decoded)
@@ -491,8 +570,65 @@ func (snapshot *FTSOSnapshotV1) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (snapshot FDCTriggerSnapshotV1) MarshalJSON() ([]byte, error) {
+	receivedAmount, err := decimalBig(snapshot.ReceivedAmount, "receivedAmount")
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(fdcTriggerSnapshotWireV1{
+		AttestationType: snapshot.AttestationType, SourceID: snapshot.SourceID,
+		TransactionID: snapshot.TransactionID, ProofOwner: snapshot.ProofOwner, Consumer: snapshot.Consumer,
+		InputCommitment: snapshot.InputCommitment, ProofCommitment: snapshot.ProofCommitment,
+		SourceAddressHash: snapshot.SourceAddressHash, ReceivingAddressHash: snapshot.ReceivingAddressHash,
+		ReceivedAmount: receivedAmount, HasMemoData: snapshot.HasMemoData, MemoDataHash: snapshot.MemoDataHash,
+		HasDestinationTag: snapshot.HasDestinationTag, DestinationTag: snapshot.DestinationTag,
+		BlockNumber: strconv.FormatUint(snapshot.BlockNumber, 10), BlockTimestamp: strconv.FormatUint(snapshot.BlockTimestamp, 10),
+		TransactionConsumed: snapshot.TransactionConsumed, ProofConsumed: snapshot.ProofConsumed,
+		RequestID: snapshot.RequestID, RouterRequestHash: snapshot.RouterRequestHash,
+		RouterRequestStatus: snapshot.RouterRequestStatus,
+	})
+}
+
+func (snapshot *FDCTriggerSnapshotV1) UnmarshalJSON(data []byte) error {
+	var wire fdcTriggerSnapshotWireV1
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&wire); err != nil {
+		return err
+	}
+	var trailing any
+	if err := decoder.Decode(&trailing); err != io.EOF {
+		return fmt.Errorf("FDC snapshot contains trailing data")
+	}
+	receivedAmount, err := parseDecimalBig(wire.ReceivedAmount, "receivedAmount")
+	if err != nil {
+		return err
+	}
+	blockNumber, err := parseDecimalUint64(wire.BlockNumber, "blockNumber")
+	if err != nil {
+		return err
+	}
+	blockTimestamp, err := parseDecimalUint64(wire.BlockTimestamp, "blockTimestamp")
+	if err != nil {
+		return err
+	}
+	*snapshot = FDCTriggerSnapshotV1{
+		AttestationType: wire.AttestationType, SourceID: wire.SourceID,
+		TransactionID: wire.TransactionID, ProofOwner: wire.ProofOwner, Consumer: wire.Consumer,
+		InputCommitment: wire.InputCommitment, ProofCommitment: wire.ProofCommitment,
+		SourceAddressHash: wire.SourceAddressHash, ReceivingAddressHash: wire.ReceivingAddressHash,
+		ReceivedAmount: receivedAmount, HasMemoData: wire.HasMemoData, MemoDataHash: wire.MemoDataHash,
+		HasDestinationTag: wire.HasDestinationTag, DestinationTag: wire.DestinationTag,
+		BlockNumber: blockNumber, BlockTimestamp: blockTimestamp,
+		TransactionConsumed: wire.TransactionConsumed, ProofConsumed: wire.ProofConsumed,
+		RequestID: wire.RequestID, RouterRequestHash: wire.RouterRequestHash,
+		RouterRequestStatus: wire.RouterRequestStatus,
+	}
+	return nil
+}
+
 func (entry SpendHistoryEntryV1) MarshalJSON() ([]byte, error) {
-	return json.Marshal(spendHistoryEntryWireV1{Request: entry.Request, AccountedAt: strconv.FormatUint(entry.AccountedAt, 10), FTSO: entry.FTSO})
+	return json.Marshal(spendHistoryEntryWireV1{Request: entry.Request, AccountedAt: strconv.FormatUint(entry.AccountedAt, 10), FTSO: entry.FTSO, FDC: entry.FDC})
 }
 
 func (entry *SpendHistoryEntryV1) UnmarshalJSON(data []byte) error {
@@ -504,7 +640,7 @@ func (entry *SpendHistoryEntryV1) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-	*entry = SpendHistoryEntryV1{Request: wire.Request, AccountedAt: accountedAt, FTSO: wire.FTSO}
+	*entry = SpendHistoryEntryV1{Request: wire.Request, AccountedAt: accountedAt, FTSO: wire.FTSO, FDC: wire.FDC}
 	return nil
 }
 
@@ -519,7 +655,7 @@ func (state SpendStateV1) MarshalJSON() ([]byte, error) {
 	return json.Marshal(spendStateWireV1{
 		AvailableBalance: availableBalance, History: state.History, OccurrenceCount: state.OccurrenceCount,
 		LastAccountingAt: strconv.FormatUint(state.LastAccountingAt, 10), SpendCheckpoint: state.SpendCheckpoint,
-		BalanceCheckpoint: state.BalanceCheckpoint, Now: strconv.FormatUint(state.Now, 10), FTSO: state.FTSO,
+		BalanceCheckpoint: state.BalanceCheckpoint, Now: strconv.FormatUint(state.Now, 10), FTSO: state.FTSO, FDC: state.FDC,
 	})
 }
 
@@ -543,7 +679,7 @@ func (state *SpendStateV1) UnmarshalJSON(data []byte) error {
 	*state = SpendStateV1{
 		AvailableBalance: availableBalance, History: wire.History, OccurrenceCount: wire.OccurrenceCount,
 		LastAccountingAt: lastAccountingAt, SpendCheckpoint: wire.SpendCheckpoint,
-		BalanceCheckpoint: wire.BalanceCheckpoint, Now: now, FTSO: wire.FTSO,
+		BalanceCheckpoint: wire.BalanceCheckpoint, Now: now, FTSO: wire.FTSO, FDC: wire.FDC,
 	}
 	return nil
 }

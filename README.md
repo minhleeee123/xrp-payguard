@@ -26,6 +26,11 @@ finalized FDC proof have now been consumed atomically into one canonical
 [`xrpl-fdc-trigger-pending-2026-08-09.json`](evidence/coston2/xrpl-fdc-trigger-pending-2026-08-09.json).
 Its policy entries use ephemeral simulated signers, no evaluation was
 submitted, and the consumer cannot provide `ALLOW` or execute value.
+The private V1 schema and both TypeScript/Go evaluators now independently bind
+the required XRPL FDC source, destination, request-ID memo, destination tag,
+amount range, freshness, proof commitment, consumer replay state, and exact
+router request. Cross-language vectors and negative tests pass locally; no live
+registered FCC evaluation is claimed.
 A foundation-only FCC sender is deployed, extension-registered, explicitly
 bound, and runtime/configuration-verified on Coston2 as extension `66037`; its
 typed `PING_V1` handler passes local cross-language tests. No registered TEE

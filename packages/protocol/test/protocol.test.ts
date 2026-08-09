@@ -1,9 +1,9 @@
 import { getAddress, keccak256, padHex, stringToHex, zeroAddress } from "viem";
 import { describe, expect, it } from "vitest";
-import { ACTION_FTESTXRP_TRANSFER, CHAIN_ID, FCC_EVALUATION_PREFIX, FCC_POLICY_RECEIPT_PREFIX, ZERO_BYTES32 } from "../src/constants.js";
-import { actionRequestHash, encodeFccAttestation, encodePolicyV1, evaluationAttestationDigest, evaluationDigest, fccAttestationDigest, genesisSpendCheckpoint, policyCommitment, policyReceiptAttestationDigest, policyReceiptDigest } from "../src/codec.js";
+import { ACTION_FTESTXRP_TRANSFER, CHAIN_ID, FCC_EVALUATION_PREFIX, FCC_POLICY_RECEIPT_PREFIX, FDC_XRP_PAYMENT_V1, NO_FDC_DESCRIPTOR_V1, ZERO_BYTES32 } from "../src/constants.js";
+import { actionRequestHash, encodeFccAttestation, encodePolicyV1, evaluationAttestationDigest, evaluationDigest, fccAttestationDigest, fdcTriggerSnapshotCommitmentV1, genesisSpendCheckpoint, policyCommitment, policyInputCommitmentV1, policyReceiptAttestationDigest, policyReceiptDigest } from "../src/codec.js";
 import { evaluatePolicy } from "../src/evaluator.js";
-import type { ActionRequestV1, PolicyBindingV1, PolicyReceiptV1, PolicyV1, SpendStateV1 } from "../src/types.js";
+import type { ActionRequestV1, FdcTriggerSnapshotV1, PolicyBindingV1, PolicyReceiptV1, PolicyV1, SpendStateV1 } from "../src/types.js";
 
 const addressA = getAddress("0x00000000000000000000000000000000000000a1");
 const addressB = getAddress("0x00000000000000000000000000000000000000b2");
@@ -17,6 +17,7 @@ const policy: PolicyV1 = {
   scheduleIntervalSeconds: 3_600n, scheduleGraceSeconds: 100n, cooldownSeconds: 0n, maxOccurrences: 5,
   allowTargets: [addressC, addressB], denyTargets: [], allowRequesters: [addressA],
   allowActionTypes: [ACTION_FTESTXRP_TRANSFER], requireFtso: false, ftsoFeedId: ZERO_BYTES32, maxPriceAgeSeconds: 0n,
+  ...NO_FDC_DESCRIPTOR_V1,
   privateSalt: id("salt"), submissionNonce: id("submit"),
 };
 
@@ -38,6 +39,55 @@ function requestForPolicy(candidate: PolicyV1): ActionRequestV1 {
 
 function stateForRequest(candidate: ActionRequestV1): SpendStateV1 {
   return { ...state(), spendCheckpoint: candidate.spendCheckpoint };
+}
+
+function fdcScenario(): { policy: PolicyV1; request: ActionRequestV1; snapshot: FdcTriggerSnapshotV1; state: SpendStateV1 } {
+  const fdcPolicy: PolicyV1 = {
+    ...policy,
+    requireFdc: true,
+    fdcAttestationType: FDC_XRP_PAYMENT_V1,
+    fdcSourceId: id("XRPL"),
+    fdcSourceAddressHash: id("source-account"),
+    fdcReceivingAddressHash: id("receiving-account"),
+    fdcMemoMode: 1,
+    fdcRequireDestinationTag: true,
+    fdcDestinationTag: 73,
+    fdcMinReceivedAmount: 70n,
+    fdcMaxReceivedAmount: 80n,
+    maxFdcAgeSeconds: 60n,
+    fdcConsumer: addressC,
+  };
+  const fdcInput = id("fdc-input");
+  const fdcRequest = { ...requestForPolicy(fdcPolicy), inputCommitment: fdcInput };
+  const snapshot: FdcTriggerSnapshotV1 = {
+    attestationType: FDC_XRP_PAYMENT_V1,
+    sourceId: fdcPolicy.fdcSourceId,
+    transactionId: id("xrpl-transaction"),
+    proofOwner: addressC,
+    consumer: addressC,
+    inputCommitment: fdcInput,
+    proofCommitment: id("proof-commitment"),
+    sourceAddressHash: fdcPolicy.fdcSourceAddressHash,
+    receivingAddressHash: fdcPolicy.fdcReceivingAddressHash,
+    receivedAmount: 75n,
+    hasMemoData: true,
+    memoDataHash: keccak256(fdcRequest.requestId),
+    hasDestinationTag: true,
+    destinationTag: 73,
+    blockNumber: 123n,
+    blockTimestamp: 1_040n,
+    transactionConsumed: true,
+    proofConsumed: true,
+    requestId: fdcRequest.requestId,
+    routerRequestHash: actionRequestHash(fdcRequest),
+    routerRequestStatus: 1,
+  };
+  return {
+    policy: fdcPolicy,
+    request: fdcRequest,
+    snapshot,
+    state: { ...stateForRequest(fdcRequest), fdc: snapshot },
+  };
 }
 
 describe("POLICY_SCHEMA_V1 deterministic codec", () => {
@@ -181,6 +231,68 @@ describe("deterministic evaluator", () => {
     const ftsoState = { ...stateForRequest(ftsoRequest), ftso: { feedId, value: 1n, decimals: 0, timestamp: 1_040n, checkpoint: feedCheckpoint } };
     expect(evaluatePolicy(ftsoPolicy, ftsoRequest, ftsoState).decision).toBe("ALLOW");
     expect(evaluatePolicy(ftsoPolicy, { ...ftsoRequest, inputCommitment: id("different") }, ftsoState).publicReasonClass).toBe("FTSO_INVALID");
+  });
+
+  it("allows only a consumed FDC trigger snapshot bound to the exact request", () => {
+    const scenario = fdcScenario();
+    expect(fdcTriggerSnapshotCommitmentV1(scenario.snapshot)).toMatch(/^0x[0-9a-f]{64}$/);
+    expect(evaluatePolicy(scenario.policy, scenario.request, scenario.state).decision).toBe("ALLOW");
+  });
+
+  it("combines required FTSO and FDC inputs without weakening either binding", () => {
+    const scenario = fdcScenario();
+    const feedId = id("combined-feed");
+    const feedCheckpoint = id("combined-ftso");
+    const combinedPolicy = { ...scenario.policy, requireFtso: true, ftsoFeedId: feedId, maxPriceAgeSeconds: 60n };
+    const fdcInput = scenario.snapshot.inputCommitment;
+    const combinedRequest = {
+      ...requestForPolicy(combinedPolicy),
+      inputCommitment: policyInputCommitmentV1(feedCheckpoint, fdcInput),
+    };
+    const combinedSnapshot = {
+      ...scenario.snapshot,
+      inputCommitment: fdcInput,
+      requestId: combinedRequest.requestId,
+      memoDataHash: keccak256(combinedRequest.requestId),
+      routerRequestHash: actionRequestHash(combinedRequest),
+    };
+    const combinedState = {
+      ...stateForRequest(combinedRequest),
+      ftso: { feedId, value: 1n, decimals: 0, timestamp: 1_040n, checkpoint: feedCheckpoint },
+      fdc: combinedSnapshot,
+    };
+    expect(evaluatePolicy(combinedPolicy, combinedRequest, combinedState).decision).toBe("ALLOW");
+    expect(evaluatePolicy(combinedPolicy, combinedRequest, {
+      ...combinedState,
+      ftso: { ...combinedState.ftso, checkpoint: id("wrong-ftso") },
+    }).publicReasonClass).toBe("FDC_INVALID");
+  });
+
+  it.each([
+    ["source", { sourceAddressHash: id("wrong-source") }],
+    ["destination", { receivingAddressHash: id("wrong-destination") }],
+    ["memo", { memoDataHash: id("wrong-memo") }],
+    ["destination tag", { destinationTag: 74 }],
+    ["amount", { receivedAmount: 81n }],
+    ["freshness", { blockTimestamp: 989n }],
+    ["proof commitment", { proofCommitment: ZERO_BYTES32 }],
+    ["transaction replay state", { transactionConsumed: false }],
+    ["proof replay state", { proofConsumed: false }],
+    ["consumer", { consumer: addressB }],
+    ["router request", { routerRequestHash: id("wrong-request") }],
+    ["router status", { routerRequestStatus: 2 }],
+  ] as const)("fails closed when the FDC %s drifts", (_label, patch) => {
+    const scenario = fdcScenario();
+    const fdc = { ...scenario.snapshot, ...patch };
+    expect(evaluatePolicy(scenario.policy, scenario.request, { ...scenario.state, fdc }).publicReasonClass).toBe("FDC_INVALID");
+  });
+
+  it("rejects missing, unexpected, and input-mismatched FDC snapshots", () => {
+    const scenario = fdcScenario();
+    const { fdc: _fdc, ...stateWithoutFdc } = scenario.state;
+    expect(evaluatePolicy(scenario.policy, scenario.request, stateWithoutFdc).publicReasonClass).toBe("FDC_INVALID");
+    expect(evaluatePolicy(scenario.policy, { ...scenario.request, inputCommitment: id("wrong-input") }, scenario.state).publicReasonClass).toBe("FDC_INVALID");
+    expect(evaluatePolicy(policy, request(), { ...state(), fdc: scenario.snapshot }).publicReasonClass).toBe("MALFORMED");
   });
 
   it("derives caps only from checkpoint-bound public history", () => {

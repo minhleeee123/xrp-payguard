@@ -271,6 +271,7 @@ function lifecyclePolicy(runtime, context, startAt, runNonce, submissionNonce) {
     requireFtso: false,
     ftsoFeedId: runtime.ZERO_BYTES32,
     maxPriceAgeSeconds: 0n,
+    ...runtime.NO_FDC_DESCRIPTOR_V1,
     privateSalt: hash("PAYGUARD_SIMULATED_TEE_ONCHAIN_PRIVATE_SALT_V1", runNonce),
     submissionNonce,
   };

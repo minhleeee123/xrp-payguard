@@ -12,15 +12,18 @@ import (
 )
 
 var (
-	PolicySchemaV1           = crypto.Keccak256Hash([]byte("POLICY_SCHEMA_V1"))
-	PolicyReceiptTypeHash    = crypto.Keccak256Hash([]byte("POLICY_RECEIPT_V1"))
-	ActionRequestTypeHash    = crypto.Keccak256Hash([]byte("ACTION_REQUEST_V1"))
-	SpendCheckpointTypeHash  = crypto.Keccak256Hash([]byte("SPEND_CHECKPOINT_V1"))
-	EvaluationResultTypeHash = crypto.Keccak256Hash([]byte("EVALUATION_RESULT_V1"))
-	ActionFTestXRPTransfer   = crypto.Keccak256Hash([]byte("FTESTXRP_TRANSFER_V1"))
-	FCCPolicyReceiptPrefix   = stringBytes32("PAYGUARD_POLICY_RECEIPT_V1")
-	FCCEvaluationPrefix      = stringBytes32("PAYGUARD_EVALUATION_V1")
-	FCCPolicyIngressPrefix   = stringBytes32("PAYGUARD_POLICY_INGRESS_V1")
+	PolicySchemaV1             = crypto.Keccak256Hash([]byte("POLICY_SCHEMA_V1"))
+	PolicyReceiptTypeHash      = crypto.Keccak256Hash([]byte("POLICY_RECEIPT_V1"))
+	ActionRequestTypeHash      = crypto.Keccak256Hash([]byte("ACTION_REQUEST_V1"))
+	SpendCheckpointTypeHash    = crypto.Keccak256Hash([]byte("SPEND_CHECKPOINT_V1"))
+	EvaluationResultTypeHash   = crypto.Keccak256Hash([]byte("EVALUATION_RESULT_V1"))
+	FDCTriggerSnapshotTypeHash = crypto.Keccak256Hash([]byte("FDC_TRIGGER_SNAPSHOT_V1"))
+	PolicyInputTypeHash        = crypto.Keccak256Hash([]byte("POLICY_INPUT_V1"))
+	FDCXrpPaymentV1            = stringBytes32("XRPPayment")
+	ActionFTestXRPTransfer     = crypto.Keccak256Hash([]byte("FTESTXRP_TRANSFER_V1"))
+	FCCPolicyReceiptPrefix     = stringBytes32("PAYGUARD_POLICY_RECEIPT_V1")
+	FCCEvaluationPrefix        = stringBytes32("PAYGUARD_EVALUATION_V1")
+	FCCPolicyIngressPrefix     = stringBytes32("PAYGUARD_POLICY_INGRESS_V1")
 )
 
 var maxUint256 = new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(1))
@@ -35,35 +38,47 @@ func stringBytes32(value string) common.Hash {
 }
 
 type PolicyV1 struct {
-	SchemaVersion        uint16
-	ChainID              *big.Int
-	Registry             common.Address
-	Vault                common.Address
-	Router               common.Address
-	Owner                common.Address
-	PolicyID             common.Hash
-	PolicyVersion        uint32
-	Asset                common.Address
-	ReferenceCurrency    common.Hash
-	MaxPerAction         *big.Int
-	DailyCap             *big.Int
-	RollingCap           *big.Int
-	RollingWindowSecs    uint64
-	StartAt              uint64
-	EndAt                uint64
-	ScheduleIntervalSecs uint64
-	ScheduleGraceSecs    uint64
-	CooldownSecs         uint64
-	MaxOccurrences       uint32
-	AllowTargets         []common.Address
-	DenyTargets          []common.Address
-	AllowRequesters      []common.Address
-	AllowActionTypes     []common.Hash
-	RequireFTSO          bool
-	FTSOFeedID           common.Hash
-	MaxPriceAgeSecs      uint64
-	PrivateSalt          common.Hash
-	SubmissionNonce      common.Hash
+	SchemaVersion            uint16
+	ChainID                  *big.Int
+	Registry                 common.Address
+	Vault                    common.Address
+	Router                   common.Address
+	Owner                    common.Address
+	PolicyID                 common.Hash
+	PolicyVersion            uint32
+	Asset                    common.Address
+	ReferenceCurrency        common.Hash
+	MaxPerAction             *big.Int
+	DailyCap                 *big.Int
+	RollingCap               *big.Int
+	RollingWindowSecs        uint64
+	StartAt                  uint64
+	EndAt                    uint64
+	ScheduleIntervalSecs     uint64
+	ScheduleGraceSecs        uint64
+	CooldownSecs             uint64
+	MaxOccurrences           uint32
+	AllowTargets             []common.Address
+	DenyTargets              []common.Address
+	AllowRequesters          []common.Address
+	AllowActionTypes         []common.Hash
+	RequireFTSO              bool
+	FTSOFeedID               common.Hash
+	MaxPriceAgeSecs          uint64
+	RequireFDC               bool
+	FDCAttestationType       common.Hash
+	FDCSourceID              common.Hash
+	FDCSourceAddressHash     common.Hash
+	FDCReceivingAddressHash  common.Hash
+	FDCMemoMode              uint8
+	FDCRequireDestinationTag bool
+	FDCDestinationTag        uint32
+	FDCMinReceivedAmount     *big.Int
+	FDCMaxReceivedAmount     *big.Int
+	MaxFDCAgeSecs            uint64
+	FDCConsumer              common.Address
+	PrivateSalt              common.Hash
+	SubmissionNonce          common.Hash
 }
 
 type PolicyBindingV1 struct {
@@ -133,6 +148,30 @@ type EvaluationResultV1 struct {
 	Expiry              uint64
 	MachineID           common.Hash
 	KeyFingerprint      common.Hash
+}
+
+type FDCTriggerSnapshotV1 struct {
+	AttestationType      common.Hash
+	SourceID             common.Hash
+	TransactionID        common.Hash
+	ProofOwner           common.Address
+	Consumer             common.Address
+	InputCommitment      common.Hash
+	ProofCommitment      common.Hash
+	SourceAddressHash    common.Hash
+	ReceivingAddressHash common.Hash
+	ReceivedAmount       *big.Int
+	HasMemoData          bool
+	MemoDataHash         common.Hash
+	HasDestinationTag    bool
+	DestinationTag       uint32
+	BlockNumber          uint64
+	BlockTimestamp       uint64
+	TransactionConsumed  bool
+	ProofConsumed        bool
+	RequestID            common.Hash
+	RouterRequestHash    common.Hash
+	RouterRequestStatus  uint8
 }
 
 func uint256(value *big.Int, label string) (*big.Int, error) {
@@ -254,8 +293,43 @@ func normalizePolicy(policy PolicyV1) (PolicyV1, error) {
 	if !policy.RequireFTSO && policy.FTSOFeedID != (common.Hash{}) {
 		return PolicyV1{}, errors.New("unexpected FTSO feed")
 	}
+	if policy.RequireFDC {
+		if policy.FDCAttestationType != FDCXrpPaymentV1 || policy.FDCSourceID == (common.Hash{}) ||
+			policy.FDCSourceAddressHash == (common.Hash{}) || policy.FDCReceivingAddressHash == (common.Hash{}) ||
+			policy.FDCMemoMode != 1 || policy.FDCMinReceivedAmount == nil || policy.FDCMaxReceivedAmount == nil ||
+			policy.FDCMinReceivedAmount.Sign() <= 0 || policy.FDCMaxReceivedAmount.Cmp(policy.FDCMinReceivedAmount) < 0 ||
+			policy.MaxFDCAgeSecs == 0 || policy.FDCConsumer == (common.Address{}) {
+			return PolicyV1{}, errors.New("required FDC descriptor is incomplete")
+		}
+	} else {
+		minZero := policy.FDCMinReceivedAmount == nil || policy.FDCMinReceivedAmount.Sign() == 0
+		maxZero := policy.FDCMaxReceivedAmount == nil || policy.FDCMaxReceivedAmount.Sign() == 0
+		if policy.FDCAttestationType != (common.Hash{}) || policy.FDCSourceID != (common.Hash{}) ||
+			policy.FDCSourceAddressHash != (common.Hash{}) || policy.FDCReceivingAddressHash != (common.Hash{}) ||
+			policy.FDCMemoMode != 0 || policy.FDCRequireDestinationTag || policy.FDCDestinationTag != 0 ||
+			!minZero || !maxZero || policy.MaxFDCAgeSecs != 0 || policy.FDCConsumer != (common.Address{}) {
+			return PolicyV1{}, errors.New("unexpected FDC descriptor")
+		}
+	}
+	fdcMin := policy.FDCMinReceivedAmount
+	if fdcMin == nil {
+		fdcMin = new(big.Int)
+	}
+	fdcMax := policy.FDCMaxReceivedAmount
+	if fdcMax == nil {
+		fdcMax = new(big.Int)
+	}
+	fdcMin, err = uint256(fdcMin, "fdcMinReceivedAmount")
+	if err != nil {
+		return PolicyV1{}, err
+	}
+	fdcMax, err = uint256(fdcMax, "fdcMaxReceivedAmount")
+	if err != nil {
+		return PolicyV1{}, err
+	}
 	policy.ChainID = new(big.Int).Set(policy.ChainID)
 	policy.MaxPerAction, policy.DailyCap, policy.RollingCap = maxPerAction, dailyCap, rollingCap
+	policy.FDCMinReceivedAmount, policy.FDCMaxReceivedAmount = fdcMin, fdcMax
 	policy.AllowTargets, policy.DenyTargets, policy.AllowRequesters, policy.AllowActionTypes = allowTargets, denyTargets, allowRequesters, allowActionTypes
 	return policy, nil
 }
@@ -265,12 +339,42 @@ func EncodePolicyV1(policy PolicyV1) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	types := []string{"uint16", "uint256", "address", "address", "address", "address", "bytes32", "uint32", "address", "bytes32", "uint256", "uint256", "uint256", "uint64", "uint64", "uint64", "uint64", "uint64", "uint64", "uint32", "address[]", "address[]", "address[]", "bytes32[]", "bool", "bytes32", "uint64", "bytes32", "bytes32"}
+	types := []string{"uint16", "uint256", "address", "address", "address", "address", "bytes32", "uint32", "address", "bytes32", "uint256", "uint256", "uint256", "uint64", "uint64", "uint64", "uint64", "uint64", "uint64", "uint32", "address[]", "address[]", "address[]", "bytes32[]", "bool", "bytes32", "uint64", "bool", "bytes32", "bytes32", "bytes32", "bytes32", "uint8", "bool", "uint32", "uint256", "uint256", "uint64", "address", "bytes32", "bytes32"}
 	return pack(types, normalized.SchemaVersion, normalized.ChainID, normalized.Registry, normalized.Vault, normalized.Router, normalized.Owner, normalized.PolicyID,
 		normalized.PolicyVersion, normalized.Asset, normalized.ReferenceCurrency, normalized.MaxPerAction, normalized.DailyCap, normalized.RollingCap,
 		normalized.RollingWindowSecs, normalized.StartAt, normalized.EndAt, normalized.ScheduleIntervalSecs, normalized.ScheduleGraceSecs, normalized.CooldownSecs, normalized.MaxOccurrences, normalized.AllowTargets,
 		normalized.DenyTargets, normalized.AllowRequesters, normalized.AllowActionTypes, normalized.RequireFTSO, normalized.FTSOFeedID,
-		normalized.MaxPriceAgeSecs, normalized.PrivateSalt, normalized.SubmissionNonce)
+		normalized.MaxPriceAgeSecs, normalized.RequireFDC, normalized.FDCAttestationType, normalized.FDCSourceID,
+		normalized.FDCSourceAddressHash, normalized.FDCReceivingAddressHash, normalized.FDCMemoMode,
+		normalized.FDCRequireDestinationTag, normalized.FDCDestinationTag, normalized.FDCMinReceivedAmount,
+		normalized.FDCMaxReceivedAmount, normalized.MaxFDCAgeSecs, normalized.FDCConsumer,
+		normalized.PrivateSalt, normalized.SubmissionNonce)
+}
+
+func FDCTriggerSnapshotCommitmentV1(snapshot FDCTriggerSnapshotV1) (common.Hash, error) {
+	receivedAmount, err := uint256(snapshot.ReceivedAmount, "receivedAmount")
+	if err != nil {
+		return common.Hash{}, err
+	}
+	return digest(
+		[]string{"bytes32", "bytes32", "bytes32", "bytes32", "address", "address", "bytes32", "bytes32", "bytes32", "bytes32", "uint256", "bool", "bytes32", "bool", "uint32", "uint64", "uint64", "bool", "bool", "bytes32", "bytes32", "uint8"},
+		FDCTriggerSnapshotTypeHash, snapshot.AttestationType, snapshot.SourceID, snapshot.TransactionID,
+		snapshot.ProofOwner, snapshot.Consumer, snapshot.InputCommitment, snapshot.ProofCommitment,
+		snapshot.SourceAddressHash, snapshot.ReceivingAddressHash, receivedAmount, snapshot.HasMemoData,
+		snapshot.MemoDataHash, snapshot.HasDestinationTag, snapshot.DestinationTag, snapshot.BlockNumber,
+		snapshot.BlockTimestamp, snapshot.TransactionConsumed, snapshot.ProofConsumed, snapshot.RequestID,
+		snapshot.RouterRequestHash, snapshot.RouterRequestStatus,
+	)
+}
+
+func PolicyInputCommitmentV1(ftsoCheckpoint, fdcInputCommitment common.Hash) (common.Hash, error) {
+	if ftsoCheckpoint == (common.Hash{}) {
+		return fdcInputCommitment, nil
+	}
+	if fdcInputCommitment == (common.Hash{}) {
+		return ftsoCheckpoint, nil
+	}
+	return digest([]string{"bytes32", "bytes32", "bytes32"}, PolicyInputTypeHash, ftsoCheckpoint, fdcInputCommitment)
 }
 
 func PolicyCommitment(policy PolicyV1) (common.Hash, error) {

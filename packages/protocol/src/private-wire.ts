@@ -8,7 +8,11 @@ const fields = [
   "rollingCap", "rollingWindowSeconds", "startAt", "endAt", "scheduleIntervalSeconds",
   "scheduleGraceSeconds", "cooldownSeconds", "maxOccurrences", "allowTargets",
   "denyTargets", "allowRequesters", "allowActionTypes", "requireFtso", "ftsoFeedId",
-  "maxPriceAgeSeconds", "privateSalt", "submissionNonce",
+  "maxPriceAgeSeconds",
+  "requireFdc", "fdcAttestationType", "fdcSourceId", "fdcSourceAddressHash",
+  "fdcReceivingAddressHash", "fdcMemoMode", "fdcRequireDestinationTag",
+  "fdcDestinationTag", "fdcMinReceivedAmount", "fdcMaxReceivedAmount",
+  "maxFdcAgeSeconds", "fdcConsumer", "privateSalt", "submissionNonce",
 ] as const;
 
 type PrivatePolicyField = (typeof fields)[number];
@@ -46,6 +50,18 @@ export function serializePrivatePolicyV1(policy: PolicyV1): string {
     requireFtso: value.requireFtso,
     ftsoFeedId: value.ftsoFeedId,
     maxPriceAgeSeconds: decimal(value.maxPriceAgeSeconds),
+    requireFdc: value.requireFdc,
+    fdcAttestationType: value.fdcAttestationType,
+    fdcSourceId: value.fdcSourceId,
+    fdcSourceAddressHash: value.fdcSourceAddressHash,
+    fdcReceivingAddressHash: value.fdcReceivingAddressHash,
+    fdcMemoMode: value.fdcMemoMode,
+    fdcRequireDestinationTag: value.fdcRequireDestinationTag,
+    fdcDestinationTag: value.fdcDestinationTag,
+    fdcMinReceivedAmount: decimal(value.fdcMinReceivedAmount),
+    fdcMaxReceivedAmount: decimal(value.fdcMaxReceivedAmount),
+    maxFdcAgeSeconds: decimal(value.maxFdcAgeSeconds),
+    fdcConsumer: value.fdcConsumer,
     privateSalt: value.privateSalt,
     submissionNonce: value.submissionNonce,
   } satisfies PrivatePolicyWireV1);
@@ -91,6 +107,8 @@ export function parsePrivatePolicyV1(serialized: string): PolicyV1 {
     });
   };
   if (typeof record.requireFtso !== "boolean") throw new Error("requireFtso must be boolean");
+  if (typeof record.requireFdc !== "boolean") throw new Error("requireFdc must be boolean");
+  if (typeof record.fdcRequireDestinationTag !== "boolean") throw new Error("fdcRequireDestinationTag must be boolean");
   return normalizePolicy({
     schemaVersion: number("schemaVersion"), chainId: quoted("chainId"), registry: hex("registry"),
     vault: hex("vault"), router: hex("router"), owner: hex("owner"), policyId: hex("policyId"),
@@ -102,5 +120,11 @@ export function parsePrivatePolicyV1(serialized: string): PolicyV1 {
     allowTargets: list("allowTargets"), denyTargets: list("denyTargets"), allowRequesters: list("allowRequesters"),
     allowActionTypes: list("allowActionTypes"), requireFtso: record.requireFtso, ftsoFeedId: hex("ftsoFeedId"),
     maxPriceAgeSeconds: quoted("maxPriceAgeSeconds"), privateSalt: hex("privateSalt"), submissionNonce: hex("submissionNonce"),
+    requireFdc: record.requireFdc, fdcAttestationType: hex("fdcAttestationType"), fdcSourceId: hex("fdcSourceId"),
+    fdcSourceAddressHash: hex("fdcSourceAddressHash"), fdcReceivingAddressHash: hex("fdcReceivingAddressHash"),
+    fdcMemoMode: number("fdcMemoMode"), fdcRequireDestinationTag: record.fdcRequireDestinationTag,
+    fdcDestinationTag: number("fdcDestinationTag"), fdcMinReceivedAmount: quoted("fdcMinReceivedAmount"),
+    fdcMaxReceivedAmount: quoted("fdcMaxReceivedAmount"), maxFdcAgeSeconds: quoted("maxFdcAgeSeconds"),
+    fdcConsumer: hex("fdcConsumer"),
   });
 }

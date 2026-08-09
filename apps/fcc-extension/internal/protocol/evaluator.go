@@ -28,6 +28,7 @@ const (
 	ReasonActionDenied          uint8 = 13
 	ReasonFTSOInvalid           uint8 = 14
 	ReasonCooldown              uint8 = 15
+	ReasonFDCInvalid            uint8 = 16
 
 	ViolationPolicyDenied        uint64 = 1 << 0
 	ViolationTargetDenied        uint64 = 1 << 1
@@ -36,9 +37,10 @@ const (
 	ViolationOccurrenceExceeded  uint64 = 1 << 4
 	ViolationCooldown            uint64 = 1 << 5
 	ViolationInsufficientBalance uint64 = 1 << 6
+	ViolationFDCInvalid          uint64 = 1 << 9
 	ViolationFTSOInvalid         uint64 = 1 << 7
 	ViolationCapExceeded         uint64 = 1 << 8
-	policyViolationMaskV1               = ViolationPolicyDenied | ViolationTargetDenied | ViolationRequesterDenied | ViolationActionDenied | ViolationOccurrenceExceeded | ViolationCooldown | ViolationInsufficientBalance | ViolationFTSOInvalid | ViolationCapExceeded
+	policyViolationMaskV1               = ViolationPolicyDenied | ViolationTargetDenied | ViolationRequesterDenied | ViolationActionDenied | ViolationOccurrenceExceeded | ViolationCooldown | ViolationInsufficientBalance | ViolationFTSOInvalid | ViolationCapExceeded | ViolationFDCInvalid
 )
 
 // ComposePolicyDecisionV1 applies one fixed priority to simultaneous rule
@@ -58,6 +60,7 @@ func ComposePolicyDecisionV1(violations uint64) (uint8, uint8) {
 		{ViolationOccurrenceExceeded, ReasonOccurrenceExceeded},
 		{ViolationCooldown, ReasonCooldown},
 		{ViolationInsufficientBalance, ReasonInsufficientBalance},
+		{ViolationFDCInvalid, ReasonFDCInvalid},
 		{ViolationFTSOInvalid, ReasonFTSOInvalid},
 		{ViolationCapExceeded, ReasonCapExceeded},
 	}
@@ -86,6 +89,7 @@ type SpendStateV1 struct {
 	BalanceCheckpoint common.Hash
 	Now               uint64
 	FTSO              *FTSOSnapshotV1
+	FDC               *FDCTriggerSnapshotV1
 }
 
 func zeroHash() common.Hash { return common.Hash{} }
@@ -132,6 +136,51 @@ func ReferenceValueV1(amount, price *big.Int, decimals uint8) (*big.Int, bool) {
 		quotient.Add(quotient, big.NewInt(1))
 	}
 	return quotient, true
+}
+
+func validFDCSnapshot(policy PolicyV1, request ActionRequestV1, snapshot *FDCTriggerSnapshotV1, now uint64) bool {
+	if snapshot == nil || snapshot.ReceivedAmount == nil {
+		return false
+	}
+	if _, err := FDCTriggerSnapshotCommitmentV1(*snapshot); err != nil {
+		return false
+	}
+	requestHash, err := ActionRequestHash(request)
+	if err != nil {
+		return false
+	}
+	memoHash := crypto.Keccak256Hash(request.RequestID.Bytes())
+	return snapshot.AttestationType == policy.FDCAttestationType && snapshot.SourceID == policy.FDCSourceID &&
+		snapshot.TransactionID != (common.Hash{}) && snapshot.InputCommitment != (common.Hash{}) &&
+		snapshot.ProofCommitment != (common.Hash{}) &&
+		snapshot.Consumer == policy.FDCConsumer && snapshot.ProofOwner == policy.FDCConsumer &&
+		snapshot.SourceAddressHash == policy.FDCSourceAddressHash &&
+		snapshot.ReceivingAddressHash == policy.FDCReceivingAddressHash &&
+		snapshot.ReceivedAmount.Cmp(policy.FDCMinReceivedAmount) >= 0 &&
+		snapshot.ReceivedAmount.Cmp(policy.FDCMaxReceivedAmount) <= 0 &&
+		snapshot.HasMemoData && policy.FDCMemoMode == 1 && snapshot.MemoDataHash == memoHash &&
+		snapshot.HasDestinationTag == policy.FDCRequireDestinationTag &&
+		snapshot.DestinationTag == policy.FDCDestinationTag &&
+		snapshot.BlockNumber > 0 && snapshot.BlockTimestamp <= now &&
+		now-snapshot.BlockTimestamp <= policy.MaxFDCAgeSecs &&
+		snapshot.TransactionConsumed && snapshot.ProofConsumed &&
+		snapshot.RequestID == request.RequestID && snapshot.RouterRequestHash == requestHash &&
+		snapshot.RouterRequestStatus == 1
+}
+
+func inputCommitmentMatches(policy PolicyV1, request ActionRequestV1, ftso *FTSOSnapshotV1, fdc *FDCTriggerSnapshotV1) bool {
+	if (!policy.RequireFTSO && ftso != nil) || (!policy.RequireFDC && fdc != nil) {
+		return false
+	}
+	var ftsoCheckpoint, fdcInput common.Hash
+	if policy.RequireFTSO && ftso != nil {
+		ftsoCheckpoint = ftso.Checkpoint
+	}
+	if policy.RequireFDC && fdc != nil {
+		fdcInput = fdc.InputCommitment
+	}
+	expected, err := PolicyInputCommitmentV1(ftsoCheckpoint, fdcInput)
+	return err == nil && request.InputCommitment == expected
 }
 
 func calculateNextCheckpoint(request ActionRequestV1, amount *big.Int, occurrence uint32, now uint64) (common.Hash, error) {
@@ -230,7 +279,7 @@ func EvaluatePolicy(policy PolicyV1, request ActionRequestV1, state SpendStateV1
 	}
 	referenceValue := new(big.Int).Set(request.Amount)
 	if normalized.RequireFTSO {
-		if state.FTSO == nil || state.FTSO.Value == nil || state.FTSO.FeedID != normalized.FTSOFeedID || state.FTSO.Timestamp > state.Now || state.Now-state.FTSO.Timestamp > normalized.MaxPriceAgeSecs || state.FTSO.Checkpoint == zeroHash() || request.InputCommitment != state.FTSO.Checkpoint {
+		if state.FTSO == nil || state.FTSO.Value == nil || state.FTSO.FeedID != normalized.FTSOFeedID || state.FTSO.Timestamp > state.Now || state.Now-state.FTSO.Timestamp > normalized.MaxPriceAgeSecs || state.FTSO.Checkpoint == zeroHash() {
 			violations |= ViolationFTSOInvalid
 		} else {
 			value, valid := ReferenceValueV1(request.Amount, state.FTSO.Value, state.FTSO.Decimals)
@@ -239,6 +288,18 @@ func EvaluatePolicy(policy PolicyV1, request ActionRequestV1, state SpendStateV1
 			} else {
 				referenceValue = value
 			}
+		}
+	}
+	if normalized.RequireFDC && !validFDCSnapshot(normalized, request, state.FDC, state.Now) {
+		violations |= ViolationFDCInvalid
+	}
+	if (!normalized.RequireFDC && state.FDC != nil) || !inputCommitmentMatches(normalized, request, state.FTSO, state.FDC) {
+		if normalized.RequireFDC {
+			violations |= ViolationFDCInvalid
+		} else if normalized.RequireFTSO {
+			violations |= ViolationFTSOInvalid
+		} else {
+			return denied(request, ReasonMalformed, state.Now), nil
 		}
 	}
 	if violations&ViolationFTSOInvalid == 0 && ((normalized.MaxPerAction.Sign() != 0 && referenceValue.Cmp(normalized.MaxPerAction) > 0) || (normalized.DailyCap.Sign() != 0 && new(big.Int).Add(new(big.Int).Set(historyTotals.DailySpend), referenceValue).Cmp(normalized.DailyCap) > 0) || (normalized.RollingCap.Sign() != 0 && new(big.Int).Add(new(big.Int).Set(historyTotals.RollingSpend), referenceValue).Cmp(normalized.RollingCap) > 0)) {

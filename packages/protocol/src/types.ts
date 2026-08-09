@@ -20,7 +20,8 @@ export type PublicReasonClass =
   | "REQUESTER_DENIED"
   | "ACTION_DENIED"
   | "FTSO_INVALID"
-  | "COOLDOWN";
+  | "COOLDOWN"
+  | "FDC_INVALID";
 
 /** Private policy material. It is never a contract or event field. */
 export interface PolicyV1 {
@@ -51,6 +52,18 @@ export interface PolicyV1 {
   requireFtso: boolean;
   ftsoFeedId: Hex;
   maxPriceAgeSeconds: bigint;
+  requireFdc: boolean;
+  fdcAttestationType: Hex;
+  fdcSourceId: Hex;
+  fdcSourceAddressHash: Hex;
+  fdcReceivingAddressHash: Hex;
+  fdcMemoMode: number;
+  fdcRequireDestinationTag: boolean;
+  fdcDestinationTag: number;
+  fdcMinReceivedAmount: bigint;
+  fdcMaxReceivedAmount: bigint;
+  maxFdcAgeSeconds: bigint;
+  fdcConsumer: Hex;
   privateSalt: Hex;
   submissionNonce: Hex;
 }
@@ -119,11 +132,37 @@ export interface FtsoSnapshotV1 {
   checkpoint: Hex;
 }
 
+/** Public FDC facts independently reconstructed by each policy machine. */
+export interface FdcTriggerSnapshotV1 {
+  attestationType: Hex;
+  sourceId: Hex;
+  transactionId: Hex;
+  proofOwner: Hex;
+  consumer: Hex;
+  inputCommitment: Hex;
+  proofCommitment: Hex;
+  sourceAddressHash: Hex;
+  receivingAddressHash: Hex;
+  receivedAmount: bigint;
+  hasMemoData: boolean;
+  memoDataHash: Hex;
+  hasDestinationTag: boolean;
+  destinationTag: number;
+  blockNumber: bigint;
+  blockTimestamp: bigint;
+  transactionConsumed: boolean;
+  proofConsumed: boolean;
+  requestId: Hex;
+  routerRequestHash: Hex;
+  routerRequestStatus: number;
+}
+
 /** Public inputs needed to replay one canonical spend-checkpoint transition. */
 export interface SpendHistoryEntryV1 {
   request: ActionRequestV1;
   accountedAt: bigint;
   ftso?: FtsoSnapshotV1;
+  fdc?: FdcTriggerSnapshotV1;
 }
 
 export interface SpendStateV1 {
@@ -135,6 +174,7 @@ export interface SpendStateV1 {
   balanceCheckpoint: Hex;
   now: bigint;
   ftso?: FtsoSnapshotV1;
+  fdc?: FdcTriggerSnapshotV1;
 }
 
 export interface EvaluationResultV1 {

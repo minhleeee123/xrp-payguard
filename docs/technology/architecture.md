@@ -197,8 +197,13 @@ requests evaluated from the same snapshot.
 Public `SpendStateV1` carries ordered executed requests and their canonical
 accounting times, not caller-asserted aggregate totals. For FTSO-denominated
 policies, each history entry also carries the request-bound public snapshot.
+For FDC-gated policies, the current request and every history entry carry the
+canonical trigger snapshot, including proof/transaction replay state and exact
+router request binding. When both FTSO and FDC are required, their inputs are
+combined under `POLICY_INPUT_V1`; one required input keeps its direct commitment
+for compatibility with the deployed consumer.
 Every machine independently replays the root and derives UTC calendar/rolling
-totals; any history or snapshot drift denies.
+totals; any history or FTSO/FDC snapshot drift denies.
 
 ## 6. Funding architecture
 
