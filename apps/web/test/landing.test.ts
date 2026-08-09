@@ -13,6 +13,8 @@ describe("editorial landing page", () => {
     expect(html).toContain("Local simulated only");
     expect(html).toContain("Not yet verified");
     expect(html).toContain("PRODUCT MODEL · NOT PILOTED");
+    expect(html).toContain('<a class="landing-brand" href="#landing"><span class="brand-mark" aria-hidden="true">P</span><span>PayGuard</span><span class="brand-beta" aria-hidden="true">LOCAL</span></a>');
+    expect(html).not.toContain('class="landing-brand" href="#landing" aria-label=');
     expect(html.match(/class="neon-divider"/g)).toHaveLength(1);
     expect(html.match(/<details/g)).toHaveLength(4);
   });

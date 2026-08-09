@@ -3,7 +3,7 @@ type GuardianKind = "cipher" | "quorum" | "ledger";
 export function landingView(): string {
   return `<div class="landing-shell">
     <header class="landing-topbar">
-      <a class="landing-brand" href="#landing" aria-label="PayGuard home"><span class="brand-mark">P</span><span>PayGuard</span><span class="brand-beta">LOCAL</span></a>
+      <a class="landing-brand" href="#landing"><span class="brand-mark" aria-hidden="true">P</span><span>PayGuard</span><span class="brand-beta" aria-hidden="true">LOCAL</span></a>
       <nav class="landing-nav" aria-label="Landing navigation">
         <a href="#why">WHY</a><a href="#guardians">GUARDIANS</a><a href="#journey">ARCHITECTURE</a><a href="#use-cases">USE CASES</a><a href="#evidence">EVIDENCE</a>
       </nav>
