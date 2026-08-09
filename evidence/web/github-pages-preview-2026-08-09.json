@@ -16,7 +16,13 @@
     "javascriptHttpStatus": 200,
     "stylesheetHttpStatus": 200,
     "htmlTitleObserved": true,
-    "repositoryBasePathObserved": true
+    "repositoryBasePathObserved": true,
+    "headlessChromeDomEntryObserved": true,
+    "headlessChromeDesktopViewport": "1440x1200",
+    "headlessChromeMobileViewport": "390x844",
+    "headlessChromeDesktopScreenshotBytes": 106173,
+    "headlessChromeMobileScreenshotBytes": 38823,
+    "keyboardSmokeRecorded": false
   },
   "assertions": {
     "workflowBuildSucceeded": true,
@@ -38,6 +44,7 @@
   ],
   "notes": [
     "This evidence proves only the public-safe Vite shell deployment and HTTP asset reachability.",
+    "Headless Chrome rendered desktop and mobile viewport captures from the deployed URL; keyboard interaction was not recorded in this run.",
     "The hosted shell intentionally remains unavailable for wallet, FCC, relay, policy, and authorization operations.",
     "This deployment is not a verified PayGuard release or production-value service."
   ]
