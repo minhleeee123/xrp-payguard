@@ -35,6 +35,7 @@ import { landingView } from "./landing.js";
 import {
   COSTON2_CHAIN,
   PAYGUARD_COSTON2,
+  REVIEWED_PENDING_REQUEST_ID,
   VaultTransactionError,
   WalletConnectionError,
   connectCoston2Wallet,
@@ -44,6 +45,7 @@ import {
   explorerTransaction,
   injectedProvider,
   loadCoston2AccountSnapshot,
+  loadCoston2PublicRequest,
   parseFTestXrpAmount,
   readWalletSession,
   validateVaultTransaction,
@@ -103,6 +105,11 @@ let liveReadSequence = 0;
 let vaultAmountInput = "1";
 let vaultIntent: { kind: VaultTransactionKind; amount: bigint } | null = null;
 let vaultTransactionState: VaultTransactionUiState = { status: "IDLE" };
+let requestInput: string = REVIEWED_PENDING_REQUEST_ID;
+let requestLoading = false;
+let requestNotice = "Loading the reviewed Coston2 request from the finalized router…";
+let requestFinalizedBlock: bigint | null = null;
+let requestReadSequence = 0;
 
 const esc = (value: string): string => value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character] ?? character));
 const short = (value: string): string => value.length > 18 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value;
@@ -183,6 +190,12 @@ function sidebarUserRow(): string {
 
 function token(value: bigint): string {
   return displayUnits(formatUnits(value, 6), 6);
+}
+
+function utc(value: bigint): string {
+  if (value <= 0n || value > BigInt(Number.MAX_SAFE_INTEGER)) return "—";
+  const date = new Date(Number(value) * 1000);
+  return Number.isNaN(date.getTime()) ? "—" : date.toISOString().replace("T", " ").replace(".000Z", " UTC");
 }
 
 function nativeToken(value: bigint): string {
@@ -304,18 +317,22 @@ function vaultTransactionPanel(live: Coston2AccountSnapshot | null, account: Add
 
 function requestsView(): string {
   const snapshot = requestState.status === "UNAVAILABLE" ? undefined : requestState.snapshot;
-  const unavailable = requestState.status === "UNAVAILABLE";
-  const unavailableReason = unavailable ? requestUnavailableReason(requestState.reason) : "Finalized public request";
+  const unavailableReason = requestState.status === "UNAVAILABLE" ? requestUnavailableReason(requestState.reason) : "Finalized public request";
   const liveReadiness = requestState.status === "UNAVAILABLE" ? undefined : requestState.readiness;
   const readiness = snapshot && liveReadiness ? requestReadinessLabel(liveReadiness) : "UNAVAILABLE";
   const requestCell = snapshot ? `<strong>${esc(short(snapshot.requestId))}</strong><small>Occurrence ${snapshot.occurrence} · nonce ${snapshot.requestNonce}</small>` : `<strong>—</strong><small>No verified request ID</small>`;
-  const actionCell = snapshot ? `<strong>${esc(short(snapshot.target))}</strong><small>${snapshot.amount} FTestXRP · public transfer</small>` : `<strong>—</strong><small>Target and amount unavailable</small>`;
-  const checkpointCell = snapshot ? `<strong>${esc(short(snapshot.spendCheckpoint))}</strong><small>Slot ${snapshot.scheduleSlot} · expires ${snapshot.expiry}</small>` : `<strong>—</strong><small>Waiting for RPC</small>`;
+  const actionCell = snapshot ? `<strong>${esc(short(snapshot.target))}</strong><small>${token(snapshot.amount)} FTestXRP · public transfer</small>` : `<strong>—</strong><small>Target and amount unavailable</small>`;
+  const checkpointCell = snapshot ? `<strong>${esc(short(snapshot.spendCheckpoint))}</strong><small>${snapshot.scheduleSlot > 0n ? `Slot ${snapshot.scheduleSlot}` : "Ad-hoc"} · expires ${utc(snapshot.expiry)}</small>` : `<strong>—</strong><small>Waiting for RPC</small>`;
   const publicState = snapshot
     ? `<div class="request-public-state"><div><span>Readiness</span><strong>${readiness}</strong></div><div><span>Decision evidence</span><strong>${snapshot.decision === "PENDING" ? "Waiting for threshold" : snapshot.decision === "ALLOW" ? "Threshold ALLOW · public" : `DENY · ${snapshot.publicReasonClass ?? "UNKNOWN"}`}</strong></div><div><span>Attempt</span><strong>${snapshot.attempt}</strong></div><div><span>Checkpoint</span><strong class="mono-value">${esc(short(snapshot.requestHash))}</strong></div></div>`
     : `<div class="request-public-state"><div><span>Readiness</span><strong>Unavailable</strong></div><div><span>Decision evidence</span><strong>No chain result</strong></div><div><span>Attempt</span><strong>—</strong></div><div><span>Checkpoint</span><strong>—</strong></div></div>`;
-  return `${pageIntro("PUBLIC REQUEST QUEUE", "Requests & schedules", "Executors can advance public checkpoints. They cannot choose ALLOW, read private rules, or bypass the result threshold.", "new-request")}
-    <section class="panel table-panel"><div class="panel-heading"><div><div class="eyebrow">ACTION REQUESTS</div><h2>${snapshot ? "Public request state" : "Nothing can execute yet"}</h2></div><div class="table-tools"><button class="filter-button" type="button">All statuses⌄</button><button class="icon-button" type="button" aria-label="Refresh">↻</button></div></div><div class="request-table"><div class="table-head"><span>REQUEST</span><span>PUBLIC ACTION</span><span>CHECKPOINT</span><span>STATUS</span><span></span></div><div class="table-row"><span>${requestCell}</span><span>${actionCell}</span><span>${checkpointCell}</span><span><span class="state-tag ${snapshot ? (liveReadiness === "READY_TO_EXECUTE" ? "green-tag" : "gray-tag") : "amber-tag"}">${esc(readiness)}</span></span><span>···</span></div></div>${publicState}<div class="table-footer"><span>Showing public finalized state only</span><span class="muted">${esc(unavailableReason)} · no browser cache</span></div></section><div class="recovery-strip"><div class="recovery-icon">↻</div><div><strong>Fresh-process recovery is built in</strong><p>A relay restart reconstructs work from chain checkpoints, not a private policy database.</p></div><button class="text-button" type="button" data-action="details">See checkpoint model ↗</button></div>`;
+  return `${pageIntro("PUBLIC REQUEST QUEUE", "Requests & schedules", "Load any canonical request directly from the finalized Coston2 router. No wallet is required to inspect public state.")}
+    ${requestLookup()}
+    <section class="panel table-panel"><div class="panel-heading"><div><div class="eyebrow">ACTION REQUEST</div><h2>${snapshot ? "Public request state" : requestLoading ? "Reading finalized state…" : "No verified request loaded"}</h2></div><div class="table-tools"><button class="icon-button" type="button" data-action="load-request" aria-label="Refresh request">↻</button></div></div><div class="request-table"><div class="table-head"><span>REQUEST</span><span>PUBLIC ACTION</span><span>CHECKPOINT</span><span>STATUS</span><span></span></div><div class="table-row"><span>${requestCell}</span><span>${actionCell}</span><span>${checkpointCell}</span><span><span class="state-tag ${snapshot ? (liveReadiness === "READY_TO_EXECUTE" ? "green-tag" : "gray-tag") : "amber-tag"}">${esc(readiness)}</span></span><span>···</span></div></div>${publicState}<div class="table-footer"><span>Showing public finalized state only</span><span class="muted">${requestFinalizedBlock ? `Coston2 block ${requestFinalizedBlock}` : esc(unavailableReason)} · no browser cache</span></div></section><div class="recovery-strip"><div class="recovery-icon">↻</div><div><strong>Fresh-process recovery is built in</strong><p>A relay restart reconstructs work from chain checkpoints, not a private policy database.</p></div><button class="text-button" type="button" data-action="details">See checkpoint model ↗</button></div>`;
+}
+
+function requestLookup(): string {
+  return `<section class="panel request-lookup"><div><div class="eyebrow">FINALIZED ROUTER LOOKUP</div><h2>Inspect a request ID</h2><p class="panel-copy">The prefilled ID is the reviewed XRPL/FDC-triggered Coston2 request. Paste another bytes32 request ID to inspect it without a wallet.</p></div><label>Request ID<input id="request-id" value="${esc(requestInput)}" autocomplete="off" spellcheck="false" placeholder="0x…" /></label><button class="primary-button" type="button" data-action="load-request" ${requestLoading ? "disabled" : ""}>${requestLoading ? "Reading finalized block…" : "Load public state"}</button><small>${esc(requestNotice)}</small></section>`;
 }
 
 function requestUnavailableReason(reason: string): string {
@@ -335,9 +352,10 @@ function payeeView(): string {
   const receipt = payeeState.status === "UNAVAILABLE" ? undefined : payeeState.receipt;
   const unavailableReason = payeeState.status === "UNAVAILABLE" ? payeeUnavailableReason(payeeState.reason) : "Finalized public settlement";
   const expectedPanel = receipt
-    ? `<h2>${receipt.status === "SETTLED" ? "Payment settled" : "Expected payment"}</h2><p class="panel-copy">The payee sees only the public amount, destination, timing window, and settlement checkpoint. Private policy rules remain outside this receipt.</p><div class="request-public-state payee-public-state"><div><span>Amount</span><strong>${receipt.expectedAmount} FTestXRP</strong></div><div><span>Target</span><strong class="mono-value">${esc(short(receipt.payee))}</strong></div><div><span>Expected at</span><strong>${receipt.expectedAt}</strong></div><div><span>Expiry</span><strong>${receipt.expiry}</strong></div></div><div class="unavailable-box"><span class="status-dot"></span><div><strong>${receipt.status}</strong><small>${receipt.status === "SETTLED" ? `Transaction ${esc(short(receipt.settlementTransactionHash))} · checkpoint ${esc(short(receipt.settlementCheckpoint))}` : unavailableReason}</small></div></div>`
+    ? `<h2>${receipt.status === "SETTLED" ? "Payment settled" : "Expected payment"}</h2><p class="panel-copy">The payee sees only the public amount, destination, timing window, and settlement checkpoint. Private policy rules remain outside this receipt.</p><div class="request-public-state payee-public-state"><div><span>Amount</span><strong>${token(receipt.expectedAmount)} FTestXRP</strong></div><div><span>Target</span><strong class="mono-value">${esc(short(receipt.payee))}</strong></div><div><span>Expected at</span><strong>${utc(receipt.expectedAt)}</strong></div><div><span>Expiry</span><strong>${utc(receipt.expiry)}</strong></div></div><div class="unavailable-box"><span class="status-dot ${receipt.status === "SETTLED" ? "green" : ""}"></span><div><strong>${receipt.status}</strong><small>${receipt.status === "SETTLED" ? `Transaction ${esc(short(receipt.settlementTransactionHash))} · checkpoint ${esc(short(receipt.settlementCheckpoint))}` : `Finalized request ${esc(short(receipt.requestId))} · policy details remain private.`}</small></div></div>`
     : `<h2>No verified request yet</h2><p class="panel-copy">A payee can inspect only a finalized public request, transfer receipt, and supported redemption status. Policy rules, caps, delegates, and private denial reasons stay in FCC custody.</p><div class="unavailable-box"><span class="status-dot amber"></span><div><strong>Public request endpoint unavailable</strong><small>${esc(unavailableReason)}. No amount, recipient, timing, or transaction is asserted in this local preview.</small></div></div>`;
   return `${pageIntro("PUBLIC SETTLEMENT VIEW", "Payee status", "See the expected public amount, timing, and settlement receipt without learning the private policy behind the request.")}
+    ${requestLookup()}
     <div class="section-grid"><section class="panel"><div class="eyebrow">EXPECTED PAYMENT</div>${expectedPanel}</section><section class="panel"><div class="eyebrow">WHAT REMAINS PRIVATE</div><h2>Policy boundary</h2><ul class="evidence-list"><li><span class="evidence-icon">▣</span><div><strong>Target groups</strong><small>Not exposed to the payee</small></div><span class="state-tag gray-tag">PRIVATE</span></li><li><span class="evidence-icon">#</span><div><strong>Caps and schedules</strong><small>Only request timing is public</small></div><span class="state-tag gray-tag">PRIVATE</span></li><li><span class="evidence-icon">↗</span><div><strong>Settlement receipt</strong><small>Appears only after finalized public evidence</small></div><span class="state-tag gray-tag">WAITING</span></li></ul></section></div>`;
 }
 
@@ -356,8 +374,12 @@ function auditorView(): string {
   const checklist = evidence
     ? `<li><span class="evidence-icon">#</span><div><strong>Policy commitment</strong><small>${esc(short(evidence.policy.policyCommitment))} · schema ${esc(short(evidence.policy.schema))}</small></div><span class="state-tag green-tag">VERIFIED</span></li><li><span class="evidence-icon">♧</span><div><strong>Machine/key binding</strong><small>3 frozen identities · ${evidence.policy.resultThreshold}-of-${evidence.policy.machineIds.length} result threshold</small></div><span class="state-tag green-tag">VERIFIED</span></li><li><span class="evidence-icon">↗</span><div><strong>Decision digest</strong><small>${evidence.decision} · ${esc(short(evidence.resultDigest))} · ${evidence.executionStatus}</small></div><span class="state-tag green-tag">VERIFIED</span></li><li><span class="evidence-icon">∑</span><div><strong>Conservation</strong><small>${evidence.conservation.deposited} = ${evidence.conservation.available} + ${evidence.conservation.reserved} + ${evidence.conservation.spent} + ${evidence.conservation.withdrawn} + ${evidence.conservation.refunded}</small></div><span class="state-tag green-tag">VERIFIED</span></li><li><span class="evidence-icon">◇</span><div><strong>External input</strong><small>${evidence.inputKind} · ${evidence.inputFinalized ? "finalized" : "not required"}</small></div><span class="state-tag green-tag">VERIFIED</span></li>`
     : `<li><span class="evidence-icon">#</span><div><strong>Policy commitment</strong><small>Hash only · no rules or ciphertext</small></div><span class="state-tag gray-tag">WAITING</span></li><li><span class="evidence-icon">♧</span><div><strong>Machine/key binding</strong><small>Three frozen identities · 2-of-3 result threshold</small></div><span class="state-tag gray-tag">WAITING</span></li><li><span class="evidence-icon">↗</span><div><strong>Decision digest</strong><small>Exact request, checkpoint, expiry, and signers</small></div><span class="state-tag gray-tag">WAITING</span></li><li><span class="evidence-icon">∑</span><div><strong>Conservation</strong><small>Deposited = available + reserved + spent + withdrawn + refunded</small></div><span class="state-tag gray-tag">WAITING</span></li><li><span class="evidence-icon">◇</span><div><strong>External input</strong><small>FTSO/FDC commitment and finalization status</small></div><span class="state-tag gray-tag">WAITING</span></li>`;
+  const request = requestState.status === "UNAVAILABLE" ? undefined : requestState.snapshot;
+  const chainCheckpoint = request
+    ? `<div class="unavailable-box live-request-box"><span class="status-dot green"></span><div><strong>Canonical request verified</strong><small>Finalized block ${requestFinalizedBlock ?? "—"} · ${request.status} · hash ${esc(short(request.requestHash))}. This is request-state verification, not FCC evidence.</small></div></div>`
+    : `<div class="unavailable-box"><span class="status-dot amber"></span><div><strong>No canonical request verified</strong><small>${esc(requestNotice)} No transaction, proof, signer, or authorization result is asserted.</small></div></div>`;
   return `${pageIntro("WALLET-FREE VERIFIER", "Auditor view", "Inspect public commitments and conservation without connecting a wallet or revealing the policy.")}
-    <div class="auditor-grid"><section class="panel verify-card"><div class="eyebrow">PUBLIC EVIDENCE</div><h2>Verify a PayGuard action</h2><p>Paste a request ID or transaction hash from a verified release. Private policy material is never requested.</p><label>Request or transaction ID<input placeholder="0x…" spellcheck="false" /></label><button class="primary-button" type="button" data-action="verify">Check finalized state</button><div class="unavailable-box"><span class="status-dot amber"></span><div><strong>${evidence ? "Public evidence verified" : "Live evidence endpoint unavailable"}</strong><small>${esc(unavailableReason)}. ${evidence ? `Block ${evidence.evidenceBlock} · ${evidence.executionStatus} · no private payload.` : "This preview cannot assert a transaction, block, proof, or signer."}</small></div></div></section><section class="panel evidence-card"><div class="eyebrow">ASSERTION CHECKLIST</div><h2>What an auditor will see</h2><ul class="evidence-list">${checklist}</ul></section></div>
+    <div class="auditor-grid"><section class="panel verify-card"><div class="eyebrow">PUBLIC REQUEST CHECKPOINT</div><h2>Verify a PayGuard request</h2><p>Read a bytes32 request ID directly from the deployed Coston2 router. Private policy material is never requested.</p><label>Request ID<input id="request-id" value="${esc(requestInput)}" placeholder="0x…" autocomplete="off" spellcheck="false" /></label><button class="primary-button" type="button" data-action="load-request" ${requestLoading ? "disabled" : ""}>${requestLoading ? "Checking…" : "Check finalized state"}</button>${chainCheckpoint}<div class="audit-boundary"><strong>Full FCC evidence</strong><small>${evidence ? `Verified at block ${evidence.evidenceBlock}` : `${esc(unavailableReason)}. Request reads do not invent machine signatures or threshold results.`}</small></div></section><section class="panel evidence-card"><div class="eyebrow">ASSERTION CHECKLIST</div><h2>What an auditor will see</h2><ul class="evidence-list">${checklist}</ul></section></div>
     ${publicEvidenceMirrorView()}`;
 }
 
@@ -444,6 +466,9 @@ function wireEvents(): void {
     });
   });
   app.querySelectorAll<HTMLButtonElement>("[data-template]").forEach((button) => button.addEventListener("click", () => selectTemplate(button.dataset.template ?? "")));
+  app.querySelector<HTMLInputElement>("#request-id")?.addEventListener("input", (event) => {
+    requestInput = (event.currentTarget as HTMLInputElement).value;
+  });
   app.querySelectorAll<HTMLButtonElement>("[data-vault-kind]").forEach((button) => button.addEventListener("click", () => prepareVaultTransaction(button.dataset.vaultKind ?? "")));
   app.querySelector<HTMLInputElement>("#vault-amount")?.addEventListener("input", (event) => {
     vaultAmountInput = (event.currentTarget as HTMLInputElement).value;
@@ -496,6 +521,7 @@ function handleAction(action: string): void {
   if (action === "export-notifications") { exportNotifications(); return; }
   if (action === "connect") { void connectWallet(); return; }
   if (action === "refresh") { void refreshCoston2State(); return; }
+  if (action === "load-request") { void refreshPublicRequest(); return; }
   if (action === "cancel-vault-intent") { vaultIntent = null; vaultTransactionState = { status: "IDLE" }; render(); return; }
   if (action === "submit-vault-intent") { void submitVaultTransaction(); return; }
   if (action === "verify") appNotice = "Live evidence is unavailable; the static mirror cannot assert a transaction, proof, signer, or authorization result.";
@@ -503,6 +529,37 @@ function handleAction(action: string): void {
   else if (action === "help") appNotice = "PayGuard keeps policy rules in FCC custody while public requests and settlement remain visible.";
   else appNotice = "This action remains planned for a verified PayGuard release.";
   render();
+}
+
+async function refreshPublicRequest(): Promise<void> {
+  const sequence = ++requestReadSequence;
+  const requestedId = requestInput.trim();
+  requestLoading = true;
+  requestFinalizedBlock = null;
+  requestState = unavailableRequestState("RPC_UNAVAILABLE");
+  payeeState = unavailablePayeeState("RPC_UNAVAILABLE");
+  requestNotice = "Reading one finalized Coston2 block and verifying runtime, wiring, domain and request hash…";
+  render();
+  try {
+    const result = await loadCoston2PublicRequest(requestedId);
+    if (sequence !== requestReadSequence || requestedId !== requestInput.trim()) return;
+    requestState = result.request;
+    payeeState = result.payee;
+    requestFinalizedBlock = result.finalizedBlock;
+    requestNotice = `Canonical public state verified at Coston2 block ${result.finalizedBlock}.`;
+    appNotice = "Request runtime, wiring, domain, request hash and finalized state matched the deployed Coston2 router.";
+  } catch {
+    if (sequence !== requestReadSequence) return;
+    requestState = unavailableRequestState("SNAPSHOT_INVALID");
+    payeeState = unavailablePayeeState("RECEIPT_INVALID");
+    requestNotice = "The request was not found or failed finalized runtime/domain/schema validation.";
+    appNotice = "No request fact is being asserted because the finalized lookup failed closed.";
+  } finally {
+    if (sequence === requestReadSequence) {
+      requestLoading = false;
+      render();
+    }
+  }
 }
 
 function prepareVaultTransaction(value: string): void {
@@ -710,6 +767,7 @@ render();
 walletProvider?.on?.("accountsChanged", walletChanged);
 walletProvider?.on?.("chainChanged", walletChanged);
 void restoreWalletSession();
+void refreshPublicRequest();
 void fetchPublicWebEvidenceIndex()
   .then((index) => { publicEvidenceMirrorState = { status: "READY", index }; if (!landingOpen) render(); })
   .catch(() => { publicEvidenceMirrorState = { status: "UNAVAILABLE", reason: "NOT_PUBLISHED" }; if (!landingOpen) render(); });

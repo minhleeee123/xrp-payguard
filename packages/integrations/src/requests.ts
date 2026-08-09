@@ -135,7 +135,7 @@ const DECISIONS = new Set<PublicRequestDecision>(["PENDING", "ALLOW", "DENY"]);
 const REASONS = new Set<PublicReasonClass>([
   "OK", "POLICY_DENIED", "MALFORMED", "WRONG_DOMAIN", "STALE_INPUT", "DEPENDENCY_UNAVAILABLE", "EXPIRED", "STOPPED",
   "INSUFFICIENT_BALANCE", "CAP_EXCEEDED", "OCCURRENCE_EXCEEDED", "TARGET_DENIED", "REQUESTER_DENIED", "ACTION_DENIED",
-  "FTSO_INVALID", "COOLDOWN",
+  "FTSO_INVALID", "COOLDOWN", "FDC_INVALID",
 ]);
 
 export function decodePublicRequestSnapshot(value: unknown): PublicRequestSnapshotV1 {

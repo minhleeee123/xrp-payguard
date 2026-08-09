@@ -133,6 +133,7 @@ describe("public request snapshot", () => {
     expect(decoded.publicReasonClass).toBe("CAP_EXCEEDED");
     expect(decoded.approvedAmount).toBe(0n);
     expect(decoded.approvedCheckpoint).toBe(request.spendCheckpoint.toLowerCase());
+    expect(decodePublicRequestSnapshot({ ...deniedWire, publicReasonClass: "FDC_INVALID" }).publicReasonClass).toBe("FDC_INVALID");
   });
 
   it("rejects hash drift, private fields, numeric JSON, unsupported actions, and invalid threshold fields", () => {

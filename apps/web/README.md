@@ -40,13 +40,21 @@ RPC is unconfigured, unavailable, unfinalized, or invalid. Transaction signing
 stays in the injected wallet, and the page never asks for or handles a private
 key. Unit coverage and a browser preview smoke are complete; a fresh owner-wallet
 transaction submitted from this UI is not yet recorded as release evidence.
-Requests & schedules applies the same boundary to request hashes, checkpoints,
-occurrence windows, threshold-derived decisions, expiry, and recovery states;
-it never creates an approval when the public request endpoint is unavailable.
-Auditor evidence is schema-checked against the request/evaluation digest,
-frozen machine set, finalized input marker, execution status, and vault
-conservation equation; signatures and private policy material are not accepted
-by the public evidence wire.
+Requests & schedules accepts an exact bytes32 request ID and reads the canonical
+router tuple at one finalized Coston2 block without requiring a wallet. It
+verifies reviewed runtime hashes, router wiring, the full contract domain, the
+cross-language request hash, status/decision consistency, occurrence window,
+threshold fields, and expiry before publishing any fact. The reviewed
+XRPL/FDC-triggered request is prefilled as a public example. The Payee view
+derives its pending/ready/denied/expired/cancelled projection from that same
+validated tuple; executed settlement remains unavailable until its exact
+transaction receipt is also proven.
+Auditor request lookup uses the same wallet-free finalized router read and labels
+it only as canonical request-state verification. Full auditor evidence remains
+schema-checked against the request/evaluation digest, frozen machine set,
+finalized input marker, execution status, and vault conservation equation;
+signatures and private policy material are not accepted by the public evidence
+wire, and a Pending request is never upgraded into FCC evidence.
 Payee receipts bind the public target, asset, amount, expected timing, request
 hash, settlement transaction, and resulting checkpoint; missing or drifting
 receipts remain unavailable.

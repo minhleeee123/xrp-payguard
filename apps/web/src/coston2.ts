@@ -3,6 +3,16 @@ import {
   PayGuardVaultAbi,
 } from "@xrp-payguard/bindings";
 import {
+  payeeReceiptHash,
+  publicPayeeReadState,
+  publicRequestReadState,
+  unavailablePayeeState,
+  type PublicPayeeReadState,
+  type PublicRequestReadState,
+  type PublicRequestSnapshotV1,
+} from "@xrp-payguard/integrations";
+import { REASON_CODE, type PublicReasonClass } from "@xrp-payguard/protocol";
+import {
   createWalletClient,
   createPublicClient,
   custom,
@@ -12,6 +22,7 @@ import {
   http,
   keccak256,
   parseUnits,
+  zeroHash,
   type Address,
   type Hash,
   type Hex,
@@ -130,6 +141,15 @@ export interface VaultReceiptLog {
   topics: [] | [Hex, ...Hex[]];
 }
 
+export const REVIEWED_PENDING_REQUEST_ID = "0x6d86ce129ccdda6ba24770f99dd7dca5e4a77436b20f2477d5bb1abe8f9c240b" as const;
+
+export interface Coston2PublicRequestResult {
+  request: PublicRequestReadState;
+  payee: PublicPayeeReadState;
+  finalizedBlock: bigint;
+  finalizedAt: bigint;
+}
+
 export interface RuntimeCodeHashes {
   registry: Hex;
   vault: Hex;
@@ -158,6 +178,56 @@ const publicClient = createPublicClient({
   chain: COSTON2_CHAIN,
   transport: http(COSTON2_CHAIN.rpcUrls.default.http[0], { retryCount: 2, timeout: 15_000 }),
 });
+
+const REQUEST_STATUSES = ["NONE", "PENDING", "ALLOWED", "DENIED", "EXECUTED", "EXPIRED", "CANCELLED"] as const;
+const REASON_BY_CODE = new Map<number, PublicReasonClass>(
+  Object.entries(REASON_CODE).map(([reason, code]) => [code, reason as PublicReasonClass]),
+);
+
+export function parseRequestId(value: string): Hex {
+  const normalized = value.trim().toLowerCase();
+  if (!/^0x[0-9a-f]{64}$/.test(normalized) || normalized === zeroHash) throw new Error("REQUEST_ID_INVALID");
+  return normalized as Hex;
+}
+
+export async function loadCoston2PublicRequest(
+  input: string,
+  client: Coston2ReadClient = publicClient as unknown as Coston2ReadClient,
+  runtimeCodeHashes: RuntimeCodeHashes = PAYGUARD_COSTON2.runtimeCodeHashes,
+): Promise<Coston2PublicRequestResult> {
+  const requestId = parseRequestId(input);
+  const block = await client.getBlock({ blockTag: "finalized" });
+  if (block.number === null || block.number <= 0n || block.timestamp <= 0n) throw new Error("FINALIZED_BLOCK_UNAVAILABLE");
+  const blockNumber = block.number;
+  await verifyRuntimeCode(client, blockNumber, runtimeCodeHashes);
+  const read = (address: Address, abi: readonly unknown[], functionName: string, args?: readonly unknown[]): Promise<unknown> =>
+    client.readContract({ address, abi, functionName, ...(args ? { args } : {}), blockNumber });
+  const [stored, routerRegistry, routerVault] = await Promise.all([
+    read(PAYGUARD_COSTON2.router, PayGuardActionRouterAbi, "getRequest", [requestId]),
+    read(PAYGUARD_COSTON2.router, PayGuardActionRouterAbi, "registry"),
+    read(PAYGUARD_COSTON2.router, PayGuardActionRouterAbi, "vault"),
+  ]);
+  if (parseAddress(routerRegistry, "ROUTER_REGISTRY_INVALID") !== PAYGUARD_COSTON2.registry
+    || parseAddress(routerVault, "ROUTER_VAULT_INVALID") !== PAYGUARD_COSTON2.vault) {
+    throw new Error("CONTRACT_WIRING_MISMATCH");
+  }
+  const snapshot = parseStoredRequest(stored);
+  if (snapshot.requestId.toLowerCase() !== requestId) throw new Error("REQUEST_ID_MISMATCH");
+  if (snapshot.chainId !== BigInt(COSTON2_CHAIN.id)
+    || getAddress(snapshot.registry) !== PAYGUARD_COSTON2.registry
+    || getAddress(snapshot.vault) !== PAYGUARD_COSTON2.vault
+    || getAddress(snapshot.router) !== PAYGUARD_COSTON2.router
+    || getAddress(snapshot.asset) !== PAYGUARD_COSTON2.asset) {
+    throw new Error("REQUEST_DOMAIN_MISMATCH");
+  }
+  const request = publicRequestReadState(snapshot, block.timestamp);
+  return {
+    request,
+    payee: derivePayeeReadState(snapshot),
+    finalizedBlock: blockNumber,
+    finalizedAt: block.timestamp,
+  };
+}
 
 export function parseFTestXrpAmount(value: string): bigint {
   const normalized = value.trim();
@@ -334,18 +404,7 @@ export async function loadCoston2AccountSnapshot(
   const block = await client.getBlock({ blockTag: "finalized" });
   if (block.number === null || block.number <= 0n || block.timestamp <= 0n) throw new Error("FINALIZED_BLOCK_UNAVAILABLE");
   const blockNumber = block.number;
-  const contractEntries = [
-    ["registry", PAYGUARD_COSTON2.registry],
-    ["vault", PAYGUARD_COSTON2.vault],
-    ["router", PAYGUARD_COSTON2.router],
-  ] as const;
-  const code = await Promise.all(contractEntries.map(([, address]) => client.getBytecode({ address, blockNumber })));
-  contractEntries.forEach(([name], index) => {
-    const runtime = code[index];
-    if (!runtime || runtime === "0x" || keccak256(runtime).toLowerCase() !== runtimeCodeHashes[name].toLowerCase()) {
-      throw new Error(`RUNTIME_${name.toUpperCase()}_MISMATCH`);
-    }
-  });
+  await verifyRuntimeCode(client, blockNumber, runtimeCodeHashes);
 
   const read = (address: Address, abi: readonly unknown[], functionName: string, args?: readonly unknown[]): Promise<unknown> =>
     client.readContract({ address, abi, functionName, ...(args ? { args } : {}), blockNumber });
@@ -450,6 +509,119 @@ function parseAccounting(value: unknown): VaultAccounting {
   }
   if (deposited !== available + reserved + spent + withdrawn + refunded) throw new Error("VAULT_CONSERVATION_MISMATCH");
   return { deposited, available, reserved, spent, withdrawn, refunded };
+}
+
+async function verifyRuntimeCode(client: Coston2ReadClient, blockNumber: bigint, runtimeCodeHashes: RuntimeCodeHashes): Promise<void> {
+  const contractEntries = [
+    ["registry", PAYGUARD_COSTON2.registry],
+    ["vault", PAYGUARD_COSTON2.vault],
+    ["router", PAYGUARD_COSTON2.router],
+  ] as const;
+  const code = await Promise.all(contractEntries.map(([, address]) => client.getBytecode({ address, blockNumber })));
+  contractEntries.forEach(([name], index) => {
+    const runtime = code[index];
+    if (!runtime || runtime === "0x" || keccak256(runtime).toLowerCase() !== runtimeCodeHashes[name].toLowerCase()) {
+      throw new Error(`RUNTIME_${name.toUpperCase()}_MISMATCH`);
+    }
+  });
+}
+
+function parseStoredRequest(value: unknown): PublicRequestSnapshotV1 {
+  const request = tupleField(value, "request", 0);
+  const statusCode = parseSmallUint(tupleField(value, "status", 1), "REQUEST_STATUS_INVALID");
+  const status = REQUEST_STATUSES[statusCode];
+  if (!status || status === "NONE") throw new Error("REQUEST_STATUS_INVALID");
+  const approvedDigest = parseBytes32(tupleField(value, "approvedDigest", 3), "APPROVED_DIGEST_INVALID");
+  const approvedDecision = parseSmallUint(tupleField(value, "approvedDecision", 5), "APPROVED_DECISION_INVALID");
+  const decision = approvedDigest === zeroHash ? "PENDING" : approvedDecision === 1 ? "ALLOW" : approvedDecision === 0 ? "DENY" : null;
+  if (decision === null) throw new Error("APPROVED_DECISION_INVALID");
+  const reasonCode = parseSmallUint(tupleField(value, "approvedReason", 6), "APPROVED_REASON_INVALID");
+  const publicReasonClass = decision === "PENDING" ? null : REASON_BY_CODE.get(reasonCode);
+  if (decision !== "PENDING" && publicReasonClass === undefined) throw new Error("APPROVED_REASON_INVALID");
+  return {
+    chainId: parseUint(tupleField(request, "chainId", 0), "REQUEST_CHAIN_INVALID"),
+    registry: parseAddress(tupleField(request, "registry", 1), "REQUEST_REGISTRY_INVALID"),
+    vault: parseAddress(tupleField(request, "vault", 2), "REQUEST_VAULT_INVALID"),
+    router: parseAddress(tupleField(request, "router", 3), "REQUEST_ROUTER_INVALID"),
+    policyId: parseBytes32(tupleField(request, "policyId", 4), "POLICY_ID_INVALID"),
+    policyVersion: parseSmallUint(tupleField(request, "policyVersion", 5), "POLICY_VERSION_INVALID"),
+    policyCommitment: parseBytes32(tupleField(request, "policyCommitment", 6), "POLICY_COMMITMENT_INVALID"),
+    requestId: parseBytes32(tupleField(request, "requestId", 7), "REQUEST_ID_INVALID"),
+    requestNonce: parseUint(tupleField(request, "requestNonce", 8), "REQUEST_NONCE_INVALID"),
+    attempt: parseSmallUint(tupleField(request, "attempt", 9), "REQUEST_ATTEMPT_INVALID"),
+    requester: parseAddress(tupleField(request, "requester", 10), "REQUESTER_INVALID"),
+    target: parseAddress(tupleField(request, "target", 11), "TARGET_INVALID"),
+    asset: parseAddress(tupleField(request, "asset", 12), "ASSET_INVALID"),
+    actionType: parseBytes32(tupleField(request, "actionType", 13), "ACTION_TYPE_INVALID"),
+    amount: parseUint(tupleField(request, "amount", 14), "REQUEST_AMOUNT_INVALID"),
+    scheduleSlot: parseUint(tupleField(request, "scheduleSlot", 15), "SCHEDULE_SLOT_INVALID"),
+    occurrence: parseSmallUint(tupleField(request, "occurrence", 16), "OCCURRENCE_INVALID"),
+    spendCheckpoint: parseBytes32(tupleField(request, "spendCheckpoint", 17), "SPEND_CHECKPOINT_INVALID"),
+    balanceCheckpoint: parseBytes32(tupleField(request, "balanceCheckpoint", 18), "BALANCE_CHECKPOINT_INVALID"),
+    inputCommitment: parseBytes32(tupleField(request, "inputCommitment", 19), "INPUT_COMMITMENT_INVALID"),
+    createdAt: parseUint(tupleField(request, "createdAt", 20), "CREATED_AT_INVALID"),
+    graceDeadline: parseUint(tupleField(request, "graceDeadline", 21), "GRACE_DEADLINE_INVALID"),
+    expiry: parseUint(tupleField(request, "expiry", 22), "EXPIRY_INVALID"),
+    status,
+    requestHash: parseBytes32(tupleField(value, "requestHash", 2), "REQUEST_HASH_INVALID"),
+    approvedDigest,
+    matchingCount: parseSmallUint(tupleField(value, "matchingCount", 4), "MATCHING_COUNT_INVALID"),
+    decision,
+    publicReasonClass: publicReasonClass ?? null,
+    approvedAmount: parseUint(tupleField(value, "approvedAmount", 7), "APPROVED_AMOUNT_INVALID"),
+    approvedCheckpoint: parseBytes32(tupleField(value, "approvedCheckpoint", 8), "APPROVED_CHECKPOINT_INVALID"),
+    approvedNonce: parseBytes32(tupleField(value, "approvedNonce", 9), "APPROVED_NONCE_INVALID"),
+    approvedAttempt: parseSmallUint(tupleField(value, "approvedAttempt", 10), "APPROVED_ATTEMPT_INVALID"),
+    approvedIssuedAt: parseUint(tupleField(value, "approvedIssuedAt", 11), "APPROVED_ISSUED_AT_INVALID"),
+    approvedExpiry: parseUint(tupleField(value, "approvedExpiry", 12), "APPROVED_EXPIRY_INVALID"),
+  };
+}
+
+function derivePayeeReadState(request: PublicRequestSnapshotV1): PublicPayeeReadState {
+  if (request.status === "EXECUTED") return unavailablePayeeState("RECEIPT_UNFINALIZED");
+  const status = request.status === "PENDING" ? "PENDING"
+    : request.status === "ALLOWED" ? "READY"
+      : request.status === "DENIED" ? "DENIED"
+        : request.status === "EXPIRED" ? "EXPIRED" : "CANCELLED";
+  const base = {
+    chainId: request.chainId,
+    router: request.router,
+    vault: request.vault,
+    requestId: request.requestId,
+    requestHash: request.requestHash,
+    payee: request.target,
+    asset: request.asset,
+    expectedAmount: request.amount,
+    expectedAt: request.scheduleSlot > 0n ? request.scheduleSlot : request.createdAt,
+    expiry: request.expiry,
+    status,
+    settlementTransactionHash: zeroHash,
+    settlementCheckpoint: zeroHash,
+    settledAt: 0n,
+  } as const;
+  return publicPayeeReadState({ ...base, receiptHash: payeeReceiptHash(base), request });
+}
+
+function tupleField(value: unknown, key: string, index: number): unknown {
+  if (Array.isArray(value)) return value[index];
+  if (typeof value === "object" && value !== null && Object.prototype.hasOwnProperty.call(value, key)) {
+    return (value as Record<string, unknown>)[key];
+  }
+  throw new Error("REQUEST_SCHEMA_INVALID");
+}
+
+function parseSmallUint(value: unknown, error: string): number {
+  const parsed = typeof value === "number" && Number.isSafeInteger(value) && value >= 0
+    ? value
+    : typeof value === "bigint" && value >= 0n && value <= BigInt(Number.MAX_SAFE_INTEGER)
+      ? Number(value) : null;
+  if (parsed === null) throw new Error(error);
+  return parsed;
+}
+
+function parseBytes32(value: unknown, error: string): Hex {
+  if (typeof value !== "string" || !/^0x[0-9a-fA-F]{64}$/.test(value)) throw new Error(error);
+  return value.toLowerCase() as Hex;
 }
 
 function providerErrorCode(error: unknown): number | null {

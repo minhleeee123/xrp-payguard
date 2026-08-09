@@ -386,14 +386,17 @@ evidence, and live role journeys remain open.
   unit and browser preview checks pass, while a fresh UI-submitted transaction
   remains outside the current evidence set.
 - [x] Build the local Schedule/Requests surface with occurrence readiness,
-  public threshold decisions, expiry, and recovery; live executor actions
+  public threshold decisions, expiry, and recovery. Connect wallet-free exact-ID
+  lookup to one finalized Coston2 block with runtime/wiring/domain/request-hash
+  validation and shared Payee/Auditor request projection; live executor actions
   remain open.
 - [x] Build the local Payee view with expected public amount/timing and
-  schema-checked receipt status, without policy reveal; live settlement remains
-  open.
+  schema-checked receipt status derived from the finalized router request,
+  without policy reveal; executed settlement transaction proof remains open.
 - [x] Build the local wallet-free Auditor view with policy commitment,
   machine/code binding, FTSO/FDC facts, decision digest, and conservation
-  verification; live finalized evidence remains open.
+  verification. Add finalized canonical request-state verification while keeping
+  full FCC/evaluation evidence unavailable until its independent facts exist.
 - [x] Build the local Team/Treasury workspace and role-aware public controls;
   no client role can authorize, and live governance remains open.
 - [x] Build a strict public notification feed and export with finalized block/time

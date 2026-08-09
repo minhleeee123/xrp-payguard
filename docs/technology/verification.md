@@ -121,6 +121,14 @@ balance/allowance preflight, Approval/Deposited/Withdrawn event matching, and
 post-finalization state changes. This validates the safety boundary and UI
 workflow, not a newly submitted owner-wallet transaction or FCC authorization.
 
+The connected request smoke loaded the reviewed XRPL/FDC-triggered request from
+the finalized Coston2 router without a wallet and projected the same validated
+state into Requests, Payee, and Auditor. Desktop and 390px mobile checks showed
+the exact public `0.0001 FTestXRP` action, its time-derived expired readiness,
+zero horizontal overflow after the responsive table fix, and zero browser
+storage. The Auditor explicitly reported request-state verification rather than
+FCC evidence; no threshold decision or settlement was inferred.
+
 Separate Lighthouse 13.0.1 lab runs against the production landing and Overview
 route scored 100 performance, accessibility, best practices, and SEO for both
 routes. The landing measured FCP 1,085 ms, LCP 1,139 ms, TBT 4 ms, and CLS 0;

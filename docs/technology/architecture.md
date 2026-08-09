@@ -223,6 +223,14 @@ Deposited, or Withdrawn event, and then checks exact balance/allowance/vault
 postconditions. It fails closed on wallet rejection, revert, event drift,
 provider failure, or state mismatch and never accepts a private key.
 
+The wallet-free request reader accepts only a non-zero bytes32 ID. It pins the
+router tuple, deployed runtime hashes, registry/vault wiring, and finalized block
+timestamp to one read checkpoint, then re-computes the canonical request hash
+through the shared protocol package. Requests, Payee, and Auditor consume that
+same validated public state. A request lookup never becomes a threshold-result
+or FCC-evidence claim; executed Payee status additionally requires an exact
+settlement transaction receipt.
+
 ### XRPL-native path
 
 The XRPL owner commits a Smart Account operation in a supported Payment/mint

@@ -1,15 +1,19 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { PayGuardVaultAbi } from "@xrp-payguard/bindings";
+import { ACTION_FTESTXRP_TRANSFER, actionRequestHash } from "@xrp-payguard/protocol";
 import { encodeAbiParameters, encodeEventTopics, erc20Abi, getAddress, keccak256, type Hex } from "viem";
 import {
   COSTON2_CHAIN_HEX,
   PAYGUARD_COSTON2,
+  REVIEWED_PENDING_REQUEST_ID,
   WalletConnectionError,
   VaultTransactionError,
   connectCoston2Wallet,
   loadCoston2AccountSnapshot,
+  loadCoston2PublicRequest,
   parseFTestXrpAmount,
+  parseRequestId,
   readWalletSession,
   validateVaultTransaction,
   verifyVaultPostcondition,
@@ -83,12 +87,67 @@ const testRuntimeHashes = {
   router: keccak256(runtime("PayGuardActionRouter")),
 };
 
+function requestFixture() {
+  const request = {
+    chainId: 114n,
+    registry: PAYGUARD_COSTON2.registry,
+    vault: PAYGUARD_COSTON2.vault,
+    router: PAYGUARD_COSTON2.router,
+    policyId: `0x${"11".repeat(32)}` as Hex,
+    policyVersion: 1,
+    policyCommitment: `0x${"22".repeat(32)}` as Hex,
+    requestId: `0x${"33".repeat(32)}` as Hex,
+    requestNonce: 9n,
+    attempt: 0,
+    requester: account,
+    target: getAddress("0x1111111111111111111111111111111111111111"),
+    asset: PAYGUARD_COSTON2.asset,
+    actionType: ACTION_FTESTXRP_TRANSFER,
+    amount: 500_000n,
+    scheduleSlot: 0n,
+    occurrence: 1,
+    spendCheckpoint: `0x${"44".repeat(32)}` as Hex,
+    balanceCheckpoint: `0x${"55".repeat(32)}` as Hex,
+    inputCommitment: `0x${"66".repeat(32)}` as Hex,
+    createdAt: 1_799_999_900n,
+    graceDeadline: 1_800_000_100n,
+    expiry: 1_800_000_600n,
+  };
+  return { ...request, requestHash: actionRequestHash(request) };
+}
+
+function storedRequestFixture(request: ReturnType<typeof requestFixture>) {
+  const { requestHash, ...actionRequest } = request;
+  return {
+    request: actionRequest,
+    status: 1,
+    requestHash,
+    approvedDigest: `0x${"00".repeat(32)}` as Hex,
+    matchingCount: 0,
+    approvedDecision: 0,
+    approvedReason: 0,
+    approvedAmount: 0n,
+    approvedCheckpoint: `0x${"00".repeat(32)}` as Hex,
+    approvedNonce: `0x${"00".repeat(32)}` as Hex,
+    approvedAttempt: 0,
+    approvedIssuedAt: 0n,
+    approvedExpiry: 0n,
+  };
+}
+
 describe("Coston2 browser integration", () => {
   it.runIf(process.env.PAYGUARD_LIVE_COSTON2 === "1")("passes the credential-free finalized public read boundary", async () => {
     const snapshot = await loadCoston2AccountSnapshot(account);
     expect(snapshot.account).toBe(account);
     expect(snapshot.finalizedBlock).toBeGreaterThan(0n);
     expect(snapshot.contracts.runtimeVerified).toBe(true);
+  }, 30_000);
+
+  it.runIf(process.env.PAYGUARD_LIVE_COSTON2 === "1")("loads the reviewed canonical Pending request from the finalized router", async () => {
+    const result = await loadCoston2PublicRequest(REVIEWED_PENDING_REQUEST_ID);
+    expect(result.request.status).toBe("PENDING");
+    expect(result.payee.status).toBe("PENDING");
+    expect(result.finalizedBlock).toBeGreaterThan(0n);
   }, 30_000);
 
   it("reads an already-authorized wallet without requesting access", async () => {
@@ -135,6 +194,41 @@ describe("Coston2 browser integration", () => {
       routerRegistry: PAYGUARD_COSTON2.registry,
       routerVault: PAYGUARD_COSTON2.vault,
     });
+  });
+
+  it("decodes and validates a finalized public request and payee projection", async () => {
+    const request = requestFixture();
+    const stored = storedRequestFixture(request);
+    const base = readClient();
+    const blocks: bigint[] = [];
+    const client = readClient({
+      readContract: async (args) => {
+        blocks.push(args.blockNumber);
+        if (args.functionName === "getRequest") return stored;
+        return base.readContract(args);
+      },
+    });
+    const result = await loadCoston2PublicRequest(request.requestId, client, testRuntimeHashes);
+    expect(result.request.status).toBe("PENDING");
+    if (result.request.status === "UNAVAILABLE") throw new Error("request unexpectedly unavailable");
+    expect(result.request.snapshot.requestHash).toBe(request.requestHash);
+    expect(result.request.readiness).toBe("WAITING_FOR_THRESHOLD");
+    expect(result.payee.status).toBe("PENDING");
+    expect(new Set(blocks)).toEqual(new Set([1234n]));
+  });
+
+  it("rejects malformed request IDs and canonical request-hash drift", async () => {
+    for (const invalid of ["", "0x01", `0x${"00".repeat(32)}`, `0x${"gg".repeat(32)}`]) {
+      expect(() => parseRequestId(invalid)).toThrow("REQUEST_ID_INVALID");
+    }
+    const request = requestFixture();
+    const base = readClient();
+    const client = readClient({
+      readContract: async (args) => args.functionName === "getRequest"
+        ? { ...storedRequestFixture(request), requestHash: `0x${"99".repeat(32)}` }
+        : base.readContract(args),
+    });
+    await expect(loadCoston2PublicRequest(request.requestId, client, testRuntimeHashes)).rejects.toThrow("request hash mismatch");
   });
 
   it("accepts viem named-tuple accounting without weakening conservation", async () => {
