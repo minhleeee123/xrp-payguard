@@ -79,9 +79,9 @@ owner, payee, executor, and auditor inspect public execution evidence
   judging requirements with the organizer rather than relying on copied dates.
 - [ ] Conduct at least five XRPL-user interviews, five treasury/DAO interviews,
   and five payment-recipient usability sessions.
-- [ ] Select the first narrow policy problem and record why private policy
+- [x] Select the first narrow policy problem and record why private policy
   evaluation is necessary instead of an ordinary public smart contract.
-- [ ] Freeze product non-claims, data map, threat model, and one-sentence demo.
+- [x] Freeze product non-claims, data map, threat model, and one-sentence demo.
 - [ ] Record all pre-existing/reused/new work before implementation begins.
 
 Exit: one validated policy journey and one real design partner target exist.

@@ -8,6 +8,8 @@
   claim boundaries.
 - [`product/product-plan.md`](product/product-plan.md): complete product vision,
   users, capabilities, and acceptance criteria.
+- [`product/discovery.md`](product/discovery.md): frozen first problem,
+  one-sentence demo, data map, and explicit zero-session validation record.
 - [`product/user-journeys.md`](product/user-journeys.md): end-to-end journeys
   for policy owner, payee, executor, and auditor.
 - [`technology/requirements.md`](technology/requirements.md): required Flare
