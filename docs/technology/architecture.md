@@ -274,17 +274,28 @@ addresses/hashes, amount or value, memo/input/events, voting round, block, and
 freshness are sealed into a domain-separated input commitment. Dynamic bytes
 are bounded and that commitment is recomputed after the asynchronous verifier
 call to reject in-memory proof drift. Local replay sets are preflight guards.
-The `PayGuardXrplFdcTrigger` contract now supplies the locally verified
+The `PayGuardXrplFdcTrigger` contract supplies the locally verified
 canonical XRPL consumer: it runtime-binds `FdcVerification`, verifies the
 official proof, requires a consumer-owned proof plus an exact request-ID memo,
 and atomically consumes transaction/proof commitments while creating one
 `Pending` router request. A router failure reverts the replay markers, and the
-contract has no `ALLOW` path. Its Coston2 deployment/runtime bindings are
-verified, while live proof consumption and canonical request creation remain
-open. V1 FCC evaluators also do not yet interpret private FDC
-source/destination descriptors, so the consumer proves only safe canonical
-request creation—not private trigger-policy authorization. Web2Json is not
-implemented.
+contract has no `ALLOW` path. Its Coston2 deployment/runtime bindings and one
+live proof consumption into a canonical `Pending` request are verified. V1 FCC
+evaluators locally enforce the frozen private FDC descriptor and public trigger
+snapshot before either machine can sign `ALLOW`; the recorded Coston2 policy
+custody is still simulated, so no live FCC authorization is claimed.
+
+The integration layer now also has a local fail-closed `Web2Json` boundary. It
+models the official `PublicWeb2` request/response fields and commits the exact
+HTTPS source, method, canonical public JSON inputs, deterministic jq transform,
+tuple ABI schema with `observedAt:uint64`, MIC, response data hash, round,
+required `uint64.max` FDC timestamp sentinel, source-asserted freshness,
+semantic-trust statement, and replay domain. A consumer-managed source
+commitment allowlist and an injected positive verifier are mandatory, and the
+full input is recomputed after the asynchronous verifier call. The repository
+intentionally configures no production Web2 source: local `.invalid` fixtures
+establish adapter behavior only, not a live supported source/proof, source
+truthfulness, private policy evaluation of Web2 data, or an on-chain consumer.
 
 ### Official Flare dependency resolution
 

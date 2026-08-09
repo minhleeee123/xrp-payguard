@@ -20,7 +20,21 @@ amount/value, memo/input/event, status, round, block, and freshness fields, cap
 dynamic byte inputs, and recompute the public input commitment after the async
 verification call. The replay sets are preflight guards only: a live consumer
 must atomically consume the transaction and input commitment in canonical
-on-chain state. Web2Json is intentionally absent.
+on-chain state.
+
+The local `Web2Json` adapter is narrower and has no production source configured.
+It accepts only `PublicWeb2`, HTTPS URLs without credentials/query fragments,
+canonical public JSON request fields, a deterministic pinned jq transform, and
+a canonical tuple ABI schema containing `observedAt:uint64`. The complete source
+descriptor must match a consumer-managed commitment allowlist; an empty
+allowlist fails closed. It also binds the non-zero MIC, exact response bytes/hash,
+FDC round and required `uint64.max` timestamp sentinel, source-asserted
+`observedAt` freshness, replay key, semantic disclosure, and an injected proof
+verifier.
+Secret-shaped public request fields are rejected because every Web2Json request
+field is public. Local `.invalid` fixtures test the boundary and do not claim a
+live supported source, FDC proof, truthful API assertion, or canonical
+on-chain consumption.
 
 The FAssets exit model binds `redeemAmount`/`redeemWithTag` intent to the exact
 Asset Manager receipt and every public `RedemptionRequested` leg. It preserves

@@ -28,6 +28,9 @@ export const FDC_XRP_PAYMENT_V1 = padHex(stringToHex("XRPPayment"), { dir: "righ
 export type TriggerFailure =
   | "ATTESTATION_TYPE"
   | "NOT_FINALIZED"
+  | "NOT_ALLOWLISTED"
+  | "SCHEMA_MISMATCH"
+  | "SEMANTIC_TRUST"
   | "VERIFIER_UNAVAILABLE"
   | "PROOF_INVALID"
   | "REPLAY"

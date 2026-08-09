@@ -75,7 +75,8 @@ owner, payee, executor, and auditor inspect public execution evidence
 - Policy SDK and deterministic codec.
 - Simulation endpoint that never returns success when FCC is unavailable.
 - Action adapters for FAssets transfer/redeem and allowlisted EVM calls.
-- FDC trigger adapters for XRPL Payment, EVMTransaction, and later Web2Json.
+- FDC trigger adapters for XRPL Payment and EVMTransaction, plus a deliberately
+  local-only Web2Json boundary until a production source and consumer exist.
 - Webhooks/notifications carrying only public-safe state.
 - Public evidence API and independent verification CLI.
 
@@ -332,8 +333,12 @@ verified on Coston2. External review and registered FCC execution remain open.
   binds the validated XRPL Testnet payment, finalized round, on-chain proof,
   replay markers, request hash, and router readback. Policy custody is explicitly
   simulated, and no FCC evaluation, `ALLOW`, reserve, or execution is claimed.
-- [ ] Add Web2Json only after source allowlisting, transform/schema pinning, and
-  semantic trust are explicit.
+- [x] Add a local fail-closed Web2Json boundary only after source allowlisting,
+  transform/schema pinning, and semantic trust are explicit. The adapter now
+  requires an exact source commitment allowlist, canonical public request
+  fields, jq/ABI/MIC/response/freshness/replay binding, and an injected verifier;
+  production source configuration, live proof, private-policy evaluation, and
+  canonical on-chain consumption remain open and are not claimed.
 - [x] Implement a local official-field FAssets redemption checkpoint model that
   distinguishes request, partial/multi-agent obligations, verified underlying
   payment, and verified collateral default without claiming instant XRP.

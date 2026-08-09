@@ -42,6 +42,9 @@
   atomic XRPL FDC consumer contract, deployment/verification workflow, and
   live `Pending` request evidence with explicit simulated-policy/private-
   evaluator limits.
+- [`technology/web2-json-trigger.md`](technology/web2-json-trigger.md): local
+  fail-closed Web2Json source/transform/schema boundary and its explicit
+  source-truth and live-adoption limits.
 - [`technology/fcc-attestation-domain.md`](technology/fcc-attestation-domain.md):
   pinned tee-node sign-port behavior and PayGuard cross-language signature domain.
 - [`technology/fcc-private-policy-wire.md`](technology/fcc-private-policy-wire.md):

@@ -49,6 +49,11 @@ Important operational facts:
 - requests require the current fee/configuration and supported source/type;
 - PayGuard must validate response fields, confirmations, MIC/domain, freshness,
   owner, amount, destination, memo/reference, and replay state.
+- mainnet Web2Json URLs require network governance allowlisting, while current
+  testnets accept endpoints through `PublicWeb2`; PayGuard requires its own
+  source-descriptor commitment allowlist in either case and freezes the jq
+  transform, tuple ABI schema, source-asserted freshness field, response hash,
+  and explicit statement that attestation does not establish source truth.
 
 ## 3. FTSOv2
 

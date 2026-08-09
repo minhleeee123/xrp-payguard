@@ -69,6 +69,8 @@ closed. Owner recovery is time-bounded and cannot race execution.
 | Double scheduled payment | Unique schedule slot/occurrence plus atomic checkpoint advance |
 | FTSO manipulation/staleness | Official feed, freshness/bounds, deterministic rounding, fail closed |
 | FDC proof substitution or replay | Verify type/source/response fields, exact consumer `proofOwner`, request-ID memo, amount, runtime verifier, domain/freshness, and atomically consume transaction plus full proof-calldata commitment before one pending request |
+| Web2 source/transform substitution | Governance-frozen source commitment allowlist; exact public URL/method/JSON/jq/ABI/MIC/response binding; freshness and atomic replay; no configured source fails closed |
+| Truthful proof of a false Web2 assertion | UI, policy, evidence, and result domains state `ATTESTED_RESPONSE_ONLY_SOURCE_TRUTH_NOT_GUARANTEED`; source selection remains explicit residual trust |
 | XRPL operation substitution | Bind owner, PersonalAccount, memo/user-op hash, nonce, fees, target, events |
 | Ingress/proxy logs private payload | Structured redaction, bodyless logs, output scans, access controls |
 | Malicious target/reentrancy | Adapter allowlist, CEI/reentrancy guard, atomic accounting, bounded gas |

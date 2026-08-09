@@ -83,6 +83,12 @@ Forbidden evidence:
 - Private FDC descriptor/snapshot parity across TypeScript and Go, including
   source/destination, memo/tag, amount, freshness, proof commitment, consumer,
   replay markers, request hash/status, missing input, and historical drift.
+- Local Web2Json adapter source-allowlist commitment, canonical public request
+  JSON, deterministic jq/ABI schema, MIC/response/freshness/replay binding,
+  `uint64.max` Web2 timestamp sentinel, source-asserted `observedAt:uint64`,
+  semantic-trust disclosure, negative verifier behavior, and async drift. No
+  live supported source, proof, policy evaluation, or on-chain consumer is
+  inferred from these tests.
 - Fresh/stale/unavailable/negative FTSO value.
 - Direct mint success, delayed mint, callback/event mismatch, quote drift.
 - FAssets approve/transfer/redeem request and non-instant exit semantics.
