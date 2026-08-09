@@ -35,6 +35,8 @@ const ARTIFACTS = {
 const CHAIN_ID = 114;
 const AMOUNT = 10_000n;
 const CAP = 15_000n;
+export const SIMULATED_SCHEDULE_INTERVAL_SECONDS = 30n;
+export const SIMULATED_SCHEDULE_GRACE_SECONDS = 29n;
 const MIN_NATIVE_BALANCE = 1_000_000_000_000_000_000n;
 const FORBIDDEN_EVIDENCE_FIELD = /^(?:privateKey|private_key|secret|seed|ciphertext|policyPlaintext|credential|password|mnemonic|signature)$/iu;
 
@@ -104,12 +106,13 @@ export async function compileProtocolRuntime(executor = execFileAsync) {
       directory,
     ], { cwd: root, encoding: "utf8", timeout: 30_000 });
     const cacheBust = `?v=${Date.now()}`;
-    const [codec, evaluator, constants] = await Promise.all([
+    const [codec, evaluator, constants, schedule] = await Promise.all([
       import(`${pathToFileURL(resolve(directory, "codec.js")).href}${cacheBust}`),
       import(`${pathToFileURL(resolve(directory, "evaluator.js")).href}${cacheBust}`),
       import(`${pathToFileURL(resolve(directory, "constants.js")).href}${cacheBust}`),
+      import(`${pathToFileURL(resolve(directory, "schedule.js")).href}${cacheBust}`),
     ]);
-    const runtime = { ...constants, ...codec, ...evaluator };
+    const runtime = { ...constants, ...codec, ...evaluator, ...schedule };
     for (const name of [
       "policyCommitment",
       "genesisSpendCheckpoint",
@@ -256,9 +259,9 @@ function lifecyclePolicy(runtime, context, startAt, runNonce, submissionNonce) {
     rollingCap: CAP,
     rollingWindowSeconds: 86_400n,
     startAt,
-    endAt: startAt + 14_400n,
-    scheduleIntervalSeconds: 1n,
-    scheduleGraceSeconds: 7_200n,
+    endAt: startAt + 3_600n,
+    scheduleIntervalSeconds: SIMULATED_SCHEDULE_INTERVAL_SECONDS,
+    scheduleGraceSeconds: SIMULATED_SCHEDULE_GRACE_SECONDS,
     cooldownSeconds: 0n,
     maxOccurrences: 5,
     allowTargets: [context.owner],
@@ -339,6 +342,16 @@ async function sourceState() {
 
 async function chainTimestamp(client) {
   return (await client.getBlock({ blockTag: "latest" })).timestamp;
+}
+
+async function waitForChainTimestamp(client, target, { timeoutMs = 120_000, pollMs = 1_000 } = {}) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() <= deadline) {
+    const timestamp = await chainTimestamp(client);
+    if (timestamp >= target) return timestamp;
+    await new Promise((resolvePromise) => setTimeout(resolvePromise, pollMs));
+  }
+  throw new Error("timed out waiting for the recurring schedule slot");
 }
 
 async function writeStep({ client, wallet, account, address: contractAddress, abi, functionName, args, eventName }) {
@@ -514,7 +527,7 @@ export async function runSimulatedLifecycle({ rpcUrl = DEFAULT_RPC_URL } = {}) {
     const runNonce = randomHash();
     const submissionNonce = randomHash();
     const machines = machineDescriptors(Array.from({ length: 3 }, () => privateKeyToAccount(generatePrivateKey())), runNonce);
-    const startAt = await chainTimestamp(client);
+    const startAt = await chainTimestamp(client) + 10n;
     const policy = lifecyclePolicy(runtime, context, startAt, runNonce, submissionNonce);
     const commitment = runtime.policyCommitment(policy);
     const policyNonce = BigInt(`0x${runNonce.slice(2, 18)}`) || 1n;
@@ -596,7 +609,7 @@ export async function runSimulatedLifecycle({ rpcUrl = DEFAULT_RPC_URL } = {}) {
       functionName: "policyStatus", args: [commitment] }) !== 1) throw new Error("policy registration readback mismatch");
 
     const firstBlock = await client.getBlockNumber();
-    const firstCreatedAt = await chainTimestamp(client);
+    const firstCreatedAt = await waitForChainTimestamp(client, policy.startAt);
     const firstRequest = actionRequest(runtime, context, policy, commitment, {
       requestId: hash("PAYGUARD_SIMULATED_TEE_ONCHAIN_ALLOW_REQUEST_V1", runNonce),
       requestNonce: BigInt(`0x${runNonce.slice(18, 34)}`) || 1n,
@@ -644,7 +657,10 @@ export async function runSimulatedLifecycle({ rpcUrl = DEFAULT_RPC_URL } = {}) {
     }));
 
     const secondBlock = await client.getBlockNumber();
-    const secondCreatedAt = await chainTimestamp(client);
+    const secondCreatedAt = await waitForChainTimestamp(
+      client,
+      policy.startAt + SIMULATED_SCHEDULE_INTERVAL_SECONDS,
+    );
     const secondRequest = actionRequest(runtime, context, policy, commitment, {
       requestId: hash("PAYGUARD_SIMULATED_TEE_ONCHAIN_DENY_REQUEST_V1", runNonce),
       requestNonce: BigInt(`0x${runNonce.slice(34, 50)}`) || 2n,

@@ -5,6 +5,8 @@ import {
   buildSimulatedLifecycleEvidence,
   compileProtocolRuntime,
   parseSimulatedLifecycleCLI,
+  SIMULATED_SCHEDULE_GRACE_SECONDS,
+  SIMULATED_SCHEDULE_INTERVAL_SECONDS,
 } from "./coston2-simulated-lifecycle.mjs";
 import { assertPublicSafe, assertSimulationEvidence } from "./public-web-evidence.mjs";
 
@@ -75,6 +77,12 @@ describe("Coston2 simulated TEE lifecycle CLI", () => {
       assert.equal(typeof compiled.runtime.evaluatePolicy, "function");
       assert.equal(typeof compiled.runtime.policyReceiptAttestationDigest, "function");
       assert.equal(compiled.runtime.publicReasonCode("CAP_EXCEEDED"), 9);
+      assert.deepEqual(compiled.runtime.scheduleWindowV1(
+        1_000n,
+        SIMULATED_SCHEDULE_INTERVAL_SECONDS,
+        SIMULATED_SCHEDULE_GRACE_SECONDS,
+        2n,
+      ), { slot: 1_030n, deadline: 1_059n });
     } finally {
       await compiled.cleanup();
     }
