@@ -359,7 +359,15 @@ function workspaceUnavailableReason(reason: string): string {
 
 function wireEvents(): void {
   app.querySelectorAll<HTMLButtonElement>("[data-view]").forEach((button) => button.addEventListener("click", () => { activeView = button.dataset.view as View; mobileMenuOpen = false; render(); }));
-  app.querySelectorAll<HTMLButtonElement>("[data-action]").forEach((button) => button.addEventListener("click", () => handleAction(button.dataset.action ?? "")));
+  app.querySelectorAll<HTMLButtonElement>("[data-action]").forEach((button) => {
+    const activate = (): void => handleAction(button.dataset.action ?? "");
+    button.addEventListener("click", activate);
+    button.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      activate();
+    });
+  });
   app.querySelectorAll<HTMLButtonElement>("[data-template]").forEach((button) => button.addEventListener("click", () => selectTemplate(button.dataset.template ?? "")));
   const form = app.querySelector<HTMLFormElement>("#studio-form");
   form?.addEventListener("submit", (event) => { event.preventDefault(); computeStudio(form); });
