@@ -39,6 +39,9 @@ evidence without publishing the policy rules themselves.
   hardware confidentiality.
 - A public Vercel product shell exposes a reviewed evidence mirror and labels
   unavailable providers instead of mocking success.
+- A repository-only production-corpus audit fetched all 13 hosted evidence
+  assets, required HTTP/JSON boundaries, and matched each body byte-for-byte to
+  its reviewed local source without recursively publishing its own audit.
 
 ## How PayGuard uses Flare
 

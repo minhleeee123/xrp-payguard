@@ -113,6 +113,15 @@ an explicit performance optimization rather than a completed claim. This audit
 covers the landing and Overview routes, not every authenticated or
 provider-bound application state.
 
+The production evidence-corpus audit recorded on 2026-08-09 fetched the pinned
+Vercel origin, required JSON content types and HTTP 200, and matched the
+metadata-only index plus all 13 listed bodies byte-for-byte with the reviewed
+local sources. It reran recursive public-field checks and both simulation
+boundaries. The repository-only result is
+[`public-evidence-deployment-audit-2026-08-09.json`](../../evidence/web/public-evidence-deployment-audit-2026-08-09.json);
+it is intentionally excluded from the hosted index and does not upgrade the
+static shell or FCC/release claims.
+
 ## 4. Release manifest
 
 A future `coston2.release.json` becomes authoritative only after it records and

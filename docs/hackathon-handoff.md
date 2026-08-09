@@ -1,10 +1,10 @@
 # XRP PayGuard hackathon handoff
 
-> Current web/tooling validation run: `2026-08-09T08:04:26Z` against source
-> commit `b20e7ac9ca707b084f8edadda865e6e922c76600` plus the demo recorder and
-> documentation in this subsequent commit. The unchanged full Go/Forge baseline
-> was last rerun at `2026-08-09T07:37:29Z`. This is a testnet/simulation
-> handoff, not a verified PayGuard release.
+> Current web/tooling validation run: `2026-08-09T08:11:01Z` against source
+> commit `dd2741ee6d132499a936ffa7d3de49cb1e31d6c1` plus the deployment-audit
+> evidence and documentation in this subsequent commit. The unchanged full
+> Go/Forge baseline was last rerun at `2026-08-09T07:37:29Z`. This is a
+> testnet/simulation handoff, not a verified PayGuard release.
 
 ## Delivery boundary
 
@@ -40,6 +40,12 @@ chain-114 artifacts because the on-chain simulated lifecycle belongs to both
 the Coston2 and simulation categories; those counts are not additive. The index
 does not embed the Vercel deployment record in itself, avoiding a
 self-referential identifier that would always be one deployment stale.
+
+A later repository-only audit independently fetched that production index and
+all 13 listed JSON assets, required HTTP 200 plus JSON content types, reran the
+forbidden-field and explicit-simulation checks, and matched every body
+byte-for-byte to its reviewed local source. Its own record is excluded from the
+hosted index by design.
 
 ### Suggested walkthrough
 
@@ -79,14 +85,14 @@ Observed results on the current baseline:
   Foundry `1.7.1`, and Solidity `0.8.25` requirements.
 - 141 workspace package tests passed: bindings 2, protocol 35, relay 13,
   integrations 74, web 13, and SDK examples 4. The top-level gate also passed
-  the separate public-web evidence, three demo-recorder tests, and
-  deployment/release/FCC tooling suites.
+  the separate public-web evidence, four deployment-corpus auditor tests,
+  three demo-recorder tests, and deployment/release/FCC tooling suites.
 - All workspace TypeScript typechecks and all Go packages passed.
 - Forge passed 31 tests, including 256 fuzz runs and a 128-run/8192-call
   conservation invariant with zero reverts.
 - Secret scan inspected 326 current files and 141 revisions with zero history
-  findings on the earlier baseline. The current run inspected 334 files and
-  146 revisions with zero history findings. Privacy scan inspected 40
+  findings on the earlier baseline. The current run inspected 337 files and
+  148 revisions with zero history findings. Privacy scan inspected 40
   browser/relay/FCC source and build files and found no browser persistence API;
   the Coston2 evidence gate retained 11 testnet-only records, while the public
   web validator separately accepted two explicitly limited simulation records.
@@ -130,7 +136,7 @@ favicon/JavaScript/CSS, the index, and all 13 evidence assets. Desktop and
 mobile rendering, Enter-key activation, the 13/12/2 Auditor counts, zero
 browser storage, zero HTTP/console errors, and no horizontal overflow passed.
 The index retained `staticShellOnly: true` and `testnetOnly: true`. `PLAN.md`
-records 96 checked and 26 open checkboxes (78.7%). The open items are not
+records 97 checked and 25 open checkboxes (79.5%). The open items are not
 silently promoted:
 organizer/account actions, user research/pilots, live FCC
 infrastructure/lifecycle, remaining canonical live drills, external review,
@@ -145,7 +151,7 @@ release, and mainnet work remain outstanding.
 | FAssets exits | Public amount and destination-tag redemption observations | Canonical PayGuard consumption/default recovery remain limited as recorded |
 | FCC foundation | Sender/extension binding exists and local `PING_V1` vectors pass | No registered production machine or signed live FCC result |
 | FCC policy path | Three-machine local simulation, deterministic threshold/replay tests, and one 14-transaction Coston2 simulated-signer lifecycle pass | No hardware TEE confidentiality, official FCC registration, stable HTTPS origins, authenticated indexer, or live custody |
-| Web | Vercel shell, responsive/keyboard smoke, and public evidence mirror pass | Wallet, relay, policy provider, and live audit remain unavailable |
+| Web | Vercel shell, responsive/keyboard smoke, public evidence mirror, and byte-exact 13-asset deployment audit pass | Wallet, relay, policy provider, and live audit remain unavailable |
 | Release | Release validators and fail-closed checks pass | No verified release manifest exists |
 | SDK | Compile-tested XRPL-wallet and Flare-dApp preview examples plus integration guide | Package remains private; no live writer or release domain is exposed |
 | Competition | Public deadline, prize/track direction, package, and existing-project policy were refreshed from DoraHacks | Enabled final form, owner eligibility, bounty selection, submission receipt, and FCC grant remain owner/organizer-only |
@@ -172,6 +178,7 @@ release, and mainnet work remain outstanding.
 - `40986ec` — guarded solution-3 Coston2 simulated-policy lifecycle runner.
 - `b0cc48b` — canonical recurring schedule correction for that runner.
 - `00d04ed` — sanitized 14-transaction lifecycle evidence and claim boundary.
+- `dd2741e` — fail-closed deployed public-evidence corpus auditor.
 
 This list is a handoff-oriented index, not the complete implementation history;
 the remote Git history is authoritative.

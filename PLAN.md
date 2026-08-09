@@ -428,8 +428,11 @@ Exit: failure is resumable or explicitly denied, never represented as success.
   governance, machines, key fingerprints, and signer mapping.
 - [ ] Record live personal recurring-payment, cap-denial, emergency-stop,
   recovery, Smart Account funding, and redemption lifecycles.
-- [ ] Publish only sanitized public identifiers, hashes, blocks, transactions,
-  timings, and assertion booleans.
+- [x] Publish only sanitized public identifiers, hashes, blocks, transactions,
+  timings, and assertion booleans; the production-corpus audit fetched all 13
+  listed assets, matched every JSON body byte-for-byte to its reviewed source,
+  reran the public-field/simulation guards, and remains repository-only to avoid
+  recursive evidence publication.
 - [ ] Post-hackathon: deploy stable FCC origins and proxy/relay, connect the
   hosted web to the verified release, and run complete production
   desktop/mobile/keyboard smokes against the exact deployed commit.

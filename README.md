@@ -46,6 +46,10 @@ registration, two-of-three recurring authorization, cap denial,
 stop/resume/revoke, and vault conservation. The sanitized record is
 [`coston2-simulated-policy-lifecycle-2026-08-09.json`](evidence/simulation/coston2-simulated-policy-lifecycle-2026-08-09.json);
 it is on-chain simulation evidence, not a registered FCC result.
+The production evidence mirror is also independently audited against its local
+reviewed sources: all 13 hosted JSON bodies match byte-for-byte, while the
+repository-only audit record remains outside its own hosted corpus to avoid a
+recursive deployment claim.
 
 ## Start here
 
