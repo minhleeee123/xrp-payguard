@@ -1,7 +1,7 @@
 # XRP PayGuard hackathon handoff
 
 > Validation baseline: source commit
-> `203b56ec05588fb576ac2725a2242c594852cae8`, 2026-08-09. This is a
+> `1c5b668b6d92b17d7a7ecb3a8b3b617a14001ea9`, 2026-08-09. This is a
 > testnet/local-simulation handoff, not a verified PayGuard release.
 
 ## Delivery boundary
@@ -65,10 +65,10 @@ pnpm fcc:container:smoke
 pnpm fcc:image:repro
 ```
 
-Observed results:
+Observed results on the current baseline:
 
-- 130 workspace package tests passed: bindings 2, protocol 35, relay 10,
-  integrations 74, and web 9.
+- 134 workspace package tests passed: bindings 2, protocol 35, relay 10,
+  integrations 74, web 9, and SDK examples 4.
 - All workspace TypeScript typechecks and all Go packages passed.
 - Forge passed 31 tests, including 256 fuzz runs and a 128-run/8192-call
   conservation invariant with zero reverts.
@@ -77,13 +77,20 @@ Observed results:
   rotation, and cleanup. Its reviewed record is
   [`../evidence/simulation/fcc-local-three-machine-2026-08-09.json`](../evidence/simulation/fcc-local-three-machine-2026-08-09.json).
 - Two no-cache `linux/amd64` FCC image builds produced the same local image
-  digest `sha256:9f31e832d9cf247bef12b0e7f5b1aa287527bc24f0d94619e641596a1fcbdb69`.
-- Secret scan inspected 306 current files and 124 revisions with zero history
+  digest `sha256:8b62d0b9eb714d433b0b2eb6de7640462893f87f0d2994af36b8d76888c848bd`.
+- Secret scan inspected 317 current files and 128 revisions with zero history
   findings. Privacy scan inspected 38 browser/relay/FCC source and build files
   and found no browser persistence API.
 - Production Chrome verified desktop `1440x1200`, mobile `390x844`, Enter-key
   landing activation, the Auditor evidence mirror, and the explicit simulation
   count.
+- A final HTTPS read returned 200 for the application and evidence index; the
+  index still reported ten Coston2 entries, one simulation entry,
+  `staticShellOnly: true`, and `testnetOnly: true`.
+- `PLAN.md` records 91 checked and 27 open checkboxes (77.1%). The open items
+  are not silently promoted: organizer/account actions, user research/pilots,
+  live FCC infrastructure/lifecycle, remaining canonical live drills, external
+  review, release, and mainnet work remain outstanding.
 
 ## Verified facts versus limitations
 
@@ -96,6 +103,7 @@ Observed results:
 | FCC policy path | Three-machine local simulation and deterministic threshold/replay tests pass | No hardware TEE confidentiality, stable HTTPS origins, or live custody |
 | Web | Vercel shell, responsive/keyboard smoke, and public evidence mirror pass | Wallet, relay, policy provider, and live audit remain unavailable |
 | Release | Release validators and fail-closed checks pass | No verified release manifest exists |
+| SDK | Compile-tested XRPL-wallet and Flare-dApp preview examples plus integration guide | Package remains private; no live writer or release domain is exposed |
 
 ## Pushed scope commits
 
@@ -107,6 +115,10 @@ Observed results:
 - `f2150c9` — simulated evidence mirror deployment record.
 - `d2628a3` — removal of self-referential web evidence.
 - `203b56e` — final non-recursive evidence deployment record.
+- `51b94e2` — fail-closed XRPL-wallet/Flare-dApp SDK examples and guide.
+- `13430f7` — post-hackathon audit, liveness, pricing, support, and mainnet plan.
+- `1c5b668` — evidence-backed submission draft and Interoperable Asset Products
+  target decision.
 
 The remote `main` branch must match the local HEAD before recording any later
 demo or submission claim.
