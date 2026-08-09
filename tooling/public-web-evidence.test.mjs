@@ -11,11 +11,11 @@ import {
 
 const root = resolve(import.meta.dirname, "..");
 
-test("collects current public-safe Coston2, simulation, and Vercel evidence", async () => {
+test("collects public-safe Coston2 and simulation evidence without self-reference", async () => {
   const entries = await collectPublicWebEvidence(root);
-  assert.ok(entries.length >= 12);
-  assert.ok(entries.some((entry) => entry.path === "evidence/web/vercel-preview-2026-08-09.json"));
+  assert.ok(entries.length >= 11);
   assert.ok(entries.some((entry) => entry.path === "evidence/simulation/fcc-local-three-machine-2026-08-09.json"));
+  assert.equal(entries.some((entry) => entry.path.startsWith("evidence/web/")), false);
   assert.equal(entries.some((entry) => entry.path.includes("github-pages")), false);
   for (const entry of entries) assert.equal(entry.data.testnetOnly === true || entry.data.assertions?.testnetOnly === true, true);
 });
@@ -75,4 +75,5 @@ test("plugin emits each evidence asset and the index", async () => {
   assert.ok(emitted.some((file) => file.fileName === "evidence/index.json"));
   assert.ok(emitted.some((file) => file.fileName === "evidence/coston2/contracts-deployment.json"));
   assert.ok(emitted.some((file) => file.fileName === "evidence/simulation/fcc-local-three-machine-2026-08-09.json"));
+  assert.equal(emitted.some((file) => file.fileName?.startsWith("evidence/web/")), false);
 });

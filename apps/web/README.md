@@ -62,7 +62,9 @@ The build also emits only the allowlisted public evidence files under
 `/evidence/`, with [`/evidence/index.json`](https://xrp-payguard.vercel.app/evidence/index.json)
 as the metadata entry point. This endpoint contains testnet identifiers,
 hashes, statuses, and assertion booleans; it never contains policy plaintext,
-ciphertext, keys, credentials, or private denial details.
+ciphertext, keys, credentials, or private denial details. The Vercel deployment
+record stays repository-only rather than recursively embedding an inevitably
+stale deployment identifier in its own artifact.
 
 The Auditor view may display this index as a static evidence mirror. It keeps
 the live audit state unavailable until a verified RPC/provider supplies a

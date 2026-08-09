@@ -4,7 +4,6 @@ import { join, relative, resolve } from "node:path";
 const PUBLIC_EVIDENCE_SOURCES = [
   { directory: "evidence/coston2", include: () => true },
   { directory: "evidence/simulation", include: () => true },
-  { directory: "evidence/web", include: (name) => /^vercel-preview-.*\.json$/u.test(name) },
 ];
 const FORBIDDEN_FIELD = /(?:ciphertext|plaintext|password|mnemonic|private[_-]?key|secret|api[_-]?key|credential|seed)/iu;
 const SAFETY_ASSERTION = /^no(?:private|policy|api|credential)/iu;

@@ -49,7 +49,9 @@ provider, wallet flow, or verified PayGuard release.
 `web/vercel-preview-2026-08-09.json` records the current public-safe Vercel
 static-shell deployment and its HTTP HTML/JS/CSS smoke. It is a static preview
 only and does not represent a hosted relay, FCC origin, policy provider, wallet
-flow, or verified PayGuard release.
+flow, or verified PayGuard release. The record remains repository-only and is
+not embedded in its own deployment, avoiding a recursive artifact whose
+deployment identifier would always be one release stale.
 
 `simulation/fcc-local-three-machine-2026-08-09.json` records the disposable
 credential-free three-machine Docker smoke selected for the hackathon demo. It
