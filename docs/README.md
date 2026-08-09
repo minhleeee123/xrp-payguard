@@ -33,6 +33,9 @@
   and direct-mint quote boundary.
 - [`technology/coston2-contract-deployment.md`](technology/coston2-contract-deployment.md):
   fail-closed, resumable contract deployment and independent runtime/wiring checks.
+- [`technology/coston2-simulated-policy-lifecycle.md`](technology/coston2-simulated-policy-lifecycle.md):
+  guarded solution-3 Coston2 lifecycle with ephemeral simulated signers and
+  explicit non-FCC/non-release evidence boundaries.
 - [`technology/fcc-attestation-domain.md`](technology/fcc-attestation-domain.md):
   pinned tee-node sign-port behavior and PayGuard cross-language signature domain.
 - [`technology/fcc-private-policy-wire.md`](technology/fcc-private-policy-wire.md):

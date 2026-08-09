@@ -27,8 +27,14 @@ export function assertPublicSafe(value, path = "$", field = "") {
 
 export function assertSimulationEvidence(value, path = "evidence/simulation") {
   const assertions = value?.assertions;
-  if (value?.status !== "local-simulated-pass" || value?.mode !== "SIMULATED_TEE"
-    || value?.network?.publicChainConnected !== false || !assertions
+  const localOnly = value?.status === "local-simulated-pass" && value?.mode === "SIMULATED_TEE"
+    && value?.network?.publicChainConnected === false;
+  const coston2OnChain = value?.status === "coston2-simulated-pass" && value?.mode === "SIMULATED_TEE_ONCHAIN"
+    && value?.network?.name === "flare-coston2" && value?.network?.chainId === 114
+    && value?.network?.publicChainConnected === true
+    && assertions?.payGuardLocalMachineEntriesVerified === true
+    && assertions?.onChainTransactionsVerified === true;
+  if ((!localOnly && !coston2OnChain) || !assertions
     || assertions.simulationOnly !== true || assertions.hardwareTeeVerified !== false
     || assertions.registeredMachinesVerified !== false || assertions.stableHttpsOriginsVerified !== false
     || assertions.authenticatedIndexerVerified !== false || assertions.noLiveFccResultClaimed !== true

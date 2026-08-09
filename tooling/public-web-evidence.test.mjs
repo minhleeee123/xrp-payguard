@@ -32,7 +32,7 @@ test("manifest exposes public metadata without copying evidence payload into the
   assert.equal(manifest.entries.every((entry) => entry.noPrivateKeyRecorded
     && entry.noCredentialRecorded && entry.noPolicyPlaintextOrCiphertextRecorded), true);
   assert.equal(manifest.entries.find((entry) => entry.path === "/evidence/coston2/contracts-deployment.json")?.chainId, "114");
-  assert.equal(manifest.entries.find((entry) => entry.path.startsWith("/evidence/simulation/"))?.chainId, null);
+  assert.equal(manifest.entries.find((entry) => entry.path === "/evidence/simulation/fcc-local-three-machine-2026-08-09.json")?.chainId, null);
   assert.throws(() => buildPublicWebEvidenceManifest([{
     path: "evidence/coston2/unsafe.json",
     data: { secret: "not-public" },
@@ -65,6 +65,21 @@ test("rejects simulation evidence that upgrades a live FCC claim", () => {
   assert.throws(() => assertSimulationEvidence({
     ...simulation,
     assertions: { ...simulation.assertions, hardwareTeeVerified: true },
+  }), /explicit non-live simulation/);
+  const onChain = {
+    status: "coston2-simulated-pass",
+    mode: "SIMULATED_TEE_ONCHAIN",
+    network: { name: "flare-coston2", chainId: 114, publicChainConnected: true },
+    assertions: {
+      ...simulation.assertions,
+      payGuardLocalMachineEntriesVerified: true,
+      onChainTransactionsVerified: true,
+    },
+  };
+  assert.doesNotThrow(() => assertSimulationEvidence(onChain));
+  assert.throws(() => assertSimulationEvidence({
+    ...onChain,
+    assertions: { ...onChain.assertions, registeredMachinesVerified: true },
   }), /explicit non-live simulation/);
 });
 

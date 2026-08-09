@@ -34,6 +34,9 @@
     "coston2:funding-resume:test": "node --test tooling/coston2-funding-resume.test.mjs",
     "coston2:funding-resume:observe": "node tooling/coston2-funding-resume.mjs observe",
     "coston2:funding-resume:record": "node tooling/coston2-funding-resume.mjs observe --write",
+    "coston2:simulated-lifecycle:test": "node --test tooling/coston2-simulated-lifecycle.test.mjs",
+    "coston2:simulated-lifecycle:plan": "node tooling/coston2-simulated-lifecycle.mjs plan",
+    "coston2:simulated-lifecycle:run": "node tooling/coston2-simulated-lifecycle.mjs run --broadcast --confirm-simulated-tee-onchain",
     "coston2:endpoints:observe": "node tooling/coston2-public-endpoints.mjs observe",
     "coston2:endpoints:record": "node tooling/coston2-public-endpoints.mjs observe --write",
     "fcc:container:smoke": "node tooling/fcc-container-smoke.mjs",
@@ -57,6 +60,6 @@
     "fcc:ping:plan": "node tooling/fcc-foundation-ping.mjs plan",
     "fcc:ping:send": "node tooling/fcc-foundation-ping.mjs send --broadcast",
     "fcc:ping:test": "node --test tooling/fcc-foundation-ping.test.mjs",
-    "check": "pnpm toolchain:check && pnpm docs:check && pnpm secret:scan && pnpm privacy:scan && pnpm evidence:check && pnpm web:evidence:test && pnpm web:test && pnpm release:check && pnpm release:test && pnpm deploy:coston2:test && pnpm coston2:dependencies:test && pnpm coston2:endpoints:test && pnpm coston2:direct-mint:test && pnpm coston2:funding-resume:test && pnpm fcc:container:test && pnpm fcc:foundation:test && pnpm fcc:machine:preflight:test && pnpm fcc:version:test && pnpm fcc:machine:registration:test && pnpm fcc:result:test && pnpm fcc:ping:test && pnpm bindings:check"
+    "check": "pnpm toolchain:check && pnpm docs:check && pnpm secret:scan && pnpm privacy:scan && pnpm evidence:check && pnpm web:evidence:test && pnpm web:test && pnpm release:check && pnpm release:test && pnpm deploy:coston2:test && pnpm coston2:dependencies:test && pnpm coston2:endpoints:test && pnpm coston2:direct-mint:test && pnpm coston2:funding-resume:test && pnpm coston2:simulated-lifecycle:test && pnpm fcc:container:test && pnpm fcc:foundation:test && pnpm fcc:machine:preflight:test && pnpm fcc:version:test && pnpm fcc:machine:registration:test && pnpm fcc:result:test && pnpm fcc:ping:test && pnpm bindings:check"
   }
 }
