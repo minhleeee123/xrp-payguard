@@ -2,22 +2,22 @@
   "schemaVersion": 1,
   "suite": "payguard-vercel-public-safe-web-preview",
   "status": "deployed-static-preview",
-  "recordedAt": "2026-08-09T05:00:53Z",
+  "recordedAt": "2026-08-09T05:11:22Z",
   "platform": {
     "name": "vercel",
     "project": "xrp-payguard",
     "scope": "minh00plus-5489s-projects",
     "url": "https://xrp-payguard.vercel.app/",
-    "deploymentUrl": "https://xrp-payguard-pwsgma24h-minh00plus-5489s-projects.vercel.app",
-    "deploymentId": "dpl_Ee7q7DpkuEbdnUxVV4yavKbo8ps3",
-    "inspectorUrl": "https://vercel.com/minh00plus-5489s-projects/xrp-payguard/Ee7q7DpkuEbdnUxVV4yavKbo8ps3",
+    "deploymentUrl": "https://xrp-payguard-8ak7ra3xx-minh00plus-5489s-projects.vercel.app",
+    "deploymentId": "dpl_HoQrhEthka22YMAheLsQhy6qsV3v",
+    "inspectorUrl": "https://vercel.com/minh00plus-5489s-projects/xrp-payguard/HoQrhEthka22YMAheLsQhy6qsV3v",
     "target": "production",
     "readyState": "READY",
-    "sourceCommit": "a19b0578a3f0619575eb6c09abcc18521e77ff94"
+    "sourceCommit": "d3346e4f7adf0e4939354151c2d32e86cb019d5f"
   },
   "input": {
     "artifactPath": "apps/web/dist",
-    "artifactFileCount": 3,
+    "artifactFileCount": 15,
     "buildCommand": "pnpm --filter @xrp-payguard/web build",
     "nodeVersion": "24.19.0",
     "pnpmVersion": "10.33.0",
@@ -27,6 +27,9 @@
     "indexHttpStatus": 200,
     "javascriptHttpStatus": 200,
     "stylesheetHttpStatus": 200,
+    "evidenceIndexHttpStatus": 200,
+    "evidenceAssetCount": 11,
+    "evidenceAssetsReachable": true,
     "htmlTitleObserved": true,
     "originRootAssetPathsObserved": true,
     "headlessChromeDomEntryObserved": true,
@@ -40,6 +43,8 @@
     "cliDeploymentSucceeded": true,
     "productionAliasReachable": true,
     "publicAssetsReachable": true,
+    "evidenceEndpointReachable": true,
+    "publicEvidenceAssetsReachable": true,
     "artifactOnlyDeployment": true,
     "testnetOnly": true,
     "noPrivateKeyRecorded": true,
@@ -56,8 +61,8 @@
     "PAYGUARD_RELEASE_MANIFEST_NOT_VERIFIED"
   ],
   "notes": [
-    "This evidence proves only the public-safe Vite shell deployed from apps/web/dist and HTTP asset reachability.",
-    "The artifact was built with the repository-pinned Node and pnpm versions; no repository source or ignored environment file was deployed.",
+    "This evidence proves only the public-safe Vite shell and reviewed evidence mirror deployed from apps/web/dist and HTTP asset reachability.",
+    "The artifact contains 15 static files, including the metadata-only /evidence/index.json and 11 reviewed JSON assets; no repository source or ignored environment file was deployed.",
     "Headless Chrome rendered desktop and mobile viewport captures from the production alias; keyboard interaction was not recorded in this run.",
     "The hosted shell intentionally remains unavailable for wallet, FCC, relay, policy, and authorization operations.",
     "This deployment is not a verified PayGuard release or production-value service."
