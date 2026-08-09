@@ -2,18 +2,18 @@
   "schemaVersion": 1,
   "suite": "payguard-vercel-public-safe-web-preview",
   "status": "deployed-static-preview",
-  "recordedAt": "2026-08-09T05:11:22Z",
+  "recordedAt": "2026-08-09T05:17:26Z",
   "platform": {
     "name": "vercel",
     "project": "xrp-payguard",
     "scope": "minh00plus-5489s-projects",
     "url": "https://xrp-payguard.vercel.app/",
-    "deploymentUrl": "https://xrp-payguard-8ak7ra3xx-minh00plus-5489s-projects.vercel.app",
-    "deploymentId": "dpl_HoQrhEthka22YMAheLsQhy6qsV3v",
-    "inspectorUrl": "https://vercel.com/minh00plus-5489s-projects/xrp-payguard/HoQrhEthka22YMAheLsQhy6qsV3v",
+    "deploymentUrl": "https://xrp-payguard-kogonpnmu-minh00plus-5489s-projects.vercel.app",
+    "deploymentId": "dpl_Cf8npQWfX2h9CjMzN1SHFPLuyaB3",
+    "inspectorUrl": "https://vercel.com/minh00plus-5489s-projects/xrp-payguard/Cf8npQWfX2h9CjMzN1SHFPLuyaB3",
     "target": "production",
     "readyState": "READY",
-    "sourceCommit": "d3346e4f7adf0e4939354151c2d32e86cb019d5f"
+    "sourceCommit": "807ee9332862e91a26ca0532faa6c5b1a3315efd"
   },
   "input": {
     "artifactPath": "apps/web/dist",
@@ -63,6 +63,7 @@
   "notes": [
     "This evidence proves only the public-safe Vite shell and reviewed evidence mirror deployed from apps/web/dist and HTTP asset reachability.",
     "The artifact contains 15 static files, including the metadata-only /evidence/index.json and 11 reviewed JSON assets; no repository source or ignored environment file was deployed.",
+    "The Auditor's static evidence-mirror decoder is covered by local unit tests; this browser run records the shell and endpoint smoke, not a live audit result or keyboard interaction.",
     "Headless Chrome rendered desktop and mobile viewport captures from the production alias; keyboard interaction was not recorded in this run.",
     "The hosted shell intentionally remains unavailable for wallet, FCC, relay, policy, and authorization operations.",
     "This deployment is not a verified PayGuard release or production-value service."
