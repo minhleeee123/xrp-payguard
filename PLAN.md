@@ -382,6 +382,9 @@ Exit: failure is resumable or explicitly denied, never represented as success.
 
 ### Phase 8 — Coston2 release and evidence
 
+- [x] Deploy the public-safe static web shell to GitHub Pages from a pinned
+  workflow and verify HTTPS HTML/JS/CSS reachability; FCC, relay, policy
+  provider, and full-release smoke remain open.
 - [ ] Generate and verify a PayGuard release manifest and consumer bindings.
 - [ ] Verify runtime bytecode, constructor/wiring, extension ID, code/image hash,
   governance, machines, key fingerprints, and signer mapping.
