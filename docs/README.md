@@ -8,6 +8,9 @@
   claim boundaries.
 - [`hackathon-handoff.md`](hackathon-handoff.md): solution-3 demo runbook,
   validation results, pushed commits, and exact verified-versus-limited claims.
+- [`submission-draft.md`](submission-draft.md): copy-ready Interoperable Asset
+  Products submission facts, public identifiers, limitations, and owner-only
+  completion steps.
 - [`product/product-plan.md`](product/product-plan.md): complete product vision,
   users, capabilities, and acceptance criteria.
 - [`product/discovery.md`](product/discovery.md): frozen first problem,

@@ -9,9 +9,27 @@ reconfirmed with the organizer before any submission. This document converts
 the supplied brief into PayGuard engineering gates; it does not assert that an
 old date or prize remains current.
 
+On 2026-08-09, a public mirror linked to the
+[DoraHacks event](https://dorahacks.io/hackathon/flaresummersignal) still listed
+an August 14 submission deadline and the supplied submission fields. This is a
+public freshness observation, not direct organizer confirmation. The
+[official FCC overview](https://dev.flare.network/fcc/overview) also states
+that FCC is not yet a fully public production system. Organizer-granted FCC
+capacity and final submission mechanics therefore remain an explicit Gate 0
+confirmation item.
+
 ## 2. Target bounty strategy
 
-### Confidential Compute Apps — primary target
+### Interoperable Asset Products — evidence-backed submission target
+
+This is the primary hackathon target under solution 3. PayGuard has its own
+sanitized Coston2 evidence for one validated XRPL Testnet Payment, finalized
+FDC `XRPPayment` proof and on-chain verification, Smart Account direct mint
+into the PayGuard vault, plus public FAssets redemption observations. The
+submission must preserve each evidence file's limitations: these facts do not
+prove a private-policy authorization or complete release.
+
+### Confidential Compute Apps — post-hackathon live gate
 
 PayGuard qualifies only when a registered FCC extension privately stores and
 evaluates the canonical payment policy in the real authorization path. A public
@@ -26,12 +44,10 @@ Required evidence:
 - denial/replay/domain/recovery tests;
 - no private policy/ciphertext in public artifacts.
 
-### Interoperable Asset Products — conditional secondary target
-
-Select this bounty only after a real XRP-native journey is essential to the
-product: XRPL Payment, FDC proof, Smart Account execution, FAssets mint/funding,
-PayGuard vault/action, and supported redemption. Address display or an unused
-FAssets call does not qualify.
+The local `SIMULATED_TEE` path remains useful architecture and deterministic
+behavior evidence, but it does not satisfy this live bounty gate. Do not select
+or describe the Confidential Compute Apps bounty as live-complete unless the
+post-hackathon machine/custody/result/release gates are independently verified.
 
 ### Current hackathon delivery boundary
 
