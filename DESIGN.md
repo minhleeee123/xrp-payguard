@@ -85,7 +85,7 @@ amber, red, blue, purple, gradients, or colored protocol logos to product UI.
 | `--color-iron` | `#313131` | Hover/focus surface and selected row |
 | `--color-slate` | `#3d3d3d` | Dense table dividers and strong borders |
 | `--color-fog` | `#525252` | Disabled and low-emphasis borders |
-| `--color-ash` | `#7a7a7a` | Helper text, metadata, unavailable copy |
+| `--color-ash` | `#a0a0a0` | Helper text, metadata, unavailable copy; minimum 4.97:1 contrast on the darkest supported raised/hover text surface |
 | `--color-smoke` | `#8a8a8a` | Secondary captions |
 | `--color-pearl` | `#c5c5c5` | Tertiary text |
 | `--color-bone` | `#e5e5e5` | Body text |
