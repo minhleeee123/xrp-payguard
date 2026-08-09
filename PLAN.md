@@ -424,7 +424,9 @@ Exit: source, runtime, bindings, UI, docs, and public-safe evidence agree.
   for XRPL wallets and Flare dApps; keep the package private until a verified
   release manifest exists.
 - [ ] Record feedback and product decisions without invented traction.
-- [ ] Prepare audit, liveness incentives, pricing, support, and mainnet readiness plans.
+- [x] Prepare explicit post-hackathon audit, FCC liveness-incentive, pricing,
+  support/incident, and gated mainnet-readiness plans without claiming those
+  activities have run.
 
 Exit: real users have completed real testnet journeys and the next investment is
 supported by evidence.

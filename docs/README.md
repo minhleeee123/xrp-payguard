@@ -12,6 +12,9 @@
   users, capabilities, and acceptance criteria.
 - [`product/discovery.md`](product/discovery.md): frozen first problem,
   one-sentence demo, data map, and explicit zero-session validation record.
+- [`product/production-readiness-plan.md`](product/production-readiness-plan.md):
+  planned audit, FCC liveness incentives, pricing, support, and gated mainnet
+  adoption without production-readiness claims.
 - [`product/user-journeys.md`](product/user-journeys.md): end-to-end journeys
   for policy owner, payee, executor, and auditor.
 - [`technology/requirements.md`](technology/requirements.md): required Flare
