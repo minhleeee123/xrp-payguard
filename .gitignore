@@ -8,6 +8,7 @@ packages/contracts/cache/
 packages/contracts/out/
 .cache/
 .local/
+.vercel/
 evidence/local/
 *.log
 .DS_Store

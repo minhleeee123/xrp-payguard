@@ -44,11 +44,16 @@ Run locally with the pinned Node toolchain:
 PATH="$PWD/.local/toolchains/bin:$PATH" pnpm --filter @xrp-payguard/web dev
 ```
 
-This UI is a public-safe product shell, not evidence of a live deployment.
+This UI is a public-safe product shell, not evidence of a live PayGuard
+release. Deploy the built static artifact with the Vercel CLI from the
+repository root:
 
-The GitHub Pages workflow deployed the static preview at
-`https://minhleeee123.github.io/xrp-payguard/` from the recorded workflow run
-and public HTTP smoke. This is a deployment fact for the public-safe shell
-only; it does not provide FCC machines, a relay, a policy provider, wallet
-signing, or a verified PayGuard release. See the sanitized
-[`github-pages-preview-2026-08-09.json`](../../evidence/web/github-pages-preview-2026-08-09.json).
+```sh
+pnpm --filter @xrp-payguard/web build
+vercel deploy apps/web/dist --prod --yes --project xrp-payguard
+```
+
+The deployment contains only `apps/web/dist`; it does not provide FCC
+machines, a relay, a policy provider, wallet signing, or a verified PayGuard
+release. The latest sanitized deployment record is
+recorded under `evidence/web/` after each verified deployment.

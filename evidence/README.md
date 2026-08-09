@@ -38,10 +38,15 @@ an XRP payment, FDC request, or mint transaction.
 credential-free Coston2 RPC, Explorer/API, and faucet page reachability. It
 does not represent a faucet grant, FCC indexer access, or a PayGuard release.
 
-`web/github-pages-preview-2026-08-09.json` records the successful public-safe
-GitHub Pages static-shell deployment and its HTTP HTML/JS/CSS smoke. It does
-not represent a hosted relay, FCC origin, policy provider, wallet flow, or
-verified PayGuard release.
+`web/github-pages-preview-2026-08-09.json` is a historical record of the
+retired public-safe GitHub Pages static-shell deployment and its HTTP
+HTML/JS/CSS smoke. The site was removed before the Vercel deployment; the
+record does not represent a current URL, hosted relay, FCC origin, policy
+provider, wallet flow, or verified PayGuard release.
+
+Vercel deployment evidence is recorded under `web/` after each verified
+deployment. It is a static preview only and does not represent a hosted relay,
+FCC origin, policy provider, wallet flow, or verified PayGuard release.
 
 Never store private policies, ciphertext, wallet/XRPL/FCC keys, signatures
 forbidden by policy, proxy/indexer credentials, authenticated raw responses, or
