@@ -400,6 +400,8 @@ Exit: failure is resumable or explicitly denied, never represented as success.
 - [x] Freeze the hackathon demo to the local three-machine simulated FCC mode
   and document that it proves deterministic/fail-closed behavior, not TEE
   confidentiality, registered custody, or a live PayGuard release.
+- [x] Publish a hackathon handoff with the exact demo boundary, production-web
+  smoke, local validation commands/results, limitations, and pushed commits.
 - [ ] Generate and verify a PayGuard release manifest and consumer bindings.
 - [ ] Verify runtime bytecode, constructor/wiring, extension ID, code/image hash,
   governance, machines, key fingerprints, and signer mapping.

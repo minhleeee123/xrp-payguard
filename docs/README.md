@@ -6,6 +6,8 @@
   the landing, application, and public-safe evidence surfaces.
 - [`competition.md`](competition.md): supplied competition requirements and
   claim boundaries.
+- [`hackathon-handoff.md`](hackathon-handoff.md): solution-3 demo runbook,
+  validation results, pushed commits, and exact verified-versus-limited claims.
 - [`product/product-plan.md`](product/product-plan.md): complete product vision,
   users, capabilities, and acceptance criteria.
 - [`product/discovery.md`](product/discovery.md): frozen first problem,
