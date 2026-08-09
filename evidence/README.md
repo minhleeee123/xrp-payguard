@@ -18,6 +18,12 @@ payment, FDC request/finalized round/proof commitment, direct mint receipt, and
 verified FTestXRP deposit accounting. It contains no raw proof, memo payload,
 wallet seed, API key, or private policy, and it is not a complete release claim.
 
+`coston2/fassets-redemption-2026-08-09.json` records one public amount-based
+FXRP redemption request, the validated XRPL payout with matching payment
+reference, and the Coston2 `RedemptionPerformed` receipt. It deliberately marks
+PayGuard canonical event consumption, destination-tag redemption, and default
+recovery as open; it is not a complete release claim.
+
 `coston2/coston2-public-endpoint-reachability.json` records only
 credential-free Coston2 RPC, Explorer/API, and faucet page reachability. It
 does not represent a faucet grant, FCC indexer access, or a PayGuard release.

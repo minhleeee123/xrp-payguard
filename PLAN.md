@@ -304,6 +304,10 @@ verified on Coston2. External review and registered FCC execution remain open.
   Coston2 event (positive `spentUnderlyingUBA` and deployed uint256 request
   ID), while retaining a uint64 compatibility decoder and rejecting blocked or
   failed-event spend semantics on the successful path.
+- [x] Execute one live minimum amount-based FXRP redemption on Coston2 and
+  observe a validated XRPL payout plus matching `RedemptionPerformed` event;
+  the sanitized public identifiers are in the redemption evidence file. The
+  canonical PayGuard verifier-consumption, tag, and default paths remain open.
 - [ ] Execute and verify an official live FAssets redemption/default exit on
   Coston2, including partial fulfillment and destination-tag behavior.
 

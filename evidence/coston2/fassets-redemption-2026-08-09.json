@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "suite": "payguard-coston2-fassets-redemption-2026-08-09",
+  "status": "request-payout-settlement-observed",
+  "recordedAt": "2026-08-09T00:13:18Z",
+  "network": {
+    "name": "flare-coston2",
+    "chainId": 114,
+    "observedBlock": "33801039"
+  },
+  "publicIdentifiers": {
+    "assetManager": "0xc1Ca88b937d0b528842F95d5731ffB586f4fbDFA",
+    "fAsset": "0x0b6A3645c240605887a5532109323A3E12273dc7",
+    "redeemer": "0xDC1cc527423C882156a632C250528D1922d18Fc7",
+    "agentVault": "0x5b89514d1F060AdbEA8B7294AFf81ed8dbAa7fC5",
+    "xrplDestination": "rsNuQhwCTGosz9PTb6kBmhGKHnwzqNqhC2",
+    "method": "redeemAmount",
+    "requestedAmountUBA": "5000000",
+    "minimumRedeemAmountUBA": "5000000",
+    "approval": {
+      "transactionHash": "0x7b144018fc179ec03878e9f916aefeed9fe59b7767e440223d1ae383c2f2eed0",
+      "block": "33800976",
+      "status": "success",
+      "gasUsed": "51217"
+    },
+    "redemptionRequest": {
+      "transactionHash": "0x8ea197457277a9b55eb7b238ab4934e151387b5cf20520f72a7fdfdd9e0a5e87",
+      "block": "33800977",
+      "status": "success",
+      "gasUsed": "427092",
+      "requestId": "44296098",
+      "valueUBA": "5000000",
+      "feeUBA": "25000",
+      "firstUnderlyingBlock": "19749475",
+      "lastUnderlyingBlock": "19750019",
+      "lastUnderlyingTimestamp": "1786234613",
+      "paymentReference": "0x4642505266410002000000000000000000000000000000000000000002a3e7a2",
+      "executor": "0x0000000000000000000000000000000000000000",
+      "remainingAmountUBA": "0"
+    },
+    "underlyingPayment": {
+      "network": "xrpl-testnet",
+      "transactionHash": "0x4b4676adee706630b8af22635e45dc1dcfae3b7f975fb084526a3fdfa9e8202f",
+      "ledgerIndex": "19749562",
+      "source": "r4GHJwGSaGmJy9BBXS9osFXqRjqdSm7v83",
+      "destination": "rsNuQhwCTGosz9PTb6kBmhGKHnwzqNqhC2",
+      "deliveredAmountDrops": "4975000",
+      "transactionResult": "tesSUCCESS",
+      "lastLedgerSequence": "19750019",
+      "memoData": "4642505266410002000000000000000000000000000000000000000002A3E7A2"
+    },
+    "redemptionPerformed": {
+      "transactionHash": "0x55acbc4ea215da3033e9bfd47376724295f52ad7fc53896b0e768e8c56d03fdd",
+      "block": "33801039",
+      "status": "success",
+      "gasUsed": "155189",
+      "underlyingTransactionHash": "0x4b4676adee706630b8af22635e45dc1dcfae3b7f975fb084526a3fdfa9e8202f",
+      "redemptionAmountUBA": "5000000",
+      "spentUnderlyingUBA": "4975012"
+    },
+    "fAssetBalancesAfter": {
+      "redeemer": "99145265",
+      "payGuardVault": "1000000"
+    }
+  },
+  "assertions": {
+    "runtimeAssetAndMinimumResolved": true,
+    "approvalReceiptSuccessful": true,
+    "redemptionRequestReceiptSuccessful": true,
+    "redemptionRequestLegParsed": true,
+    "underlyingPaymentValidated": true,
+    "paymentReferenceMatched": true,
+    "redemptionPerformedReceiptSuccessful": true,
+    "settlementAmountAndUnderlyingHashMatched": true,
+    "fAssetBalanceDecreasedByRequestedAmount": true,
+    "testnetOnly": true,
+    "noPrivateKeyRecorded": true,
+    "noApiKeyRecorded": true,
+    "noPolicyPlaintextOrCiphertextRecorded": true,
+    "noPayGuardReleaseClaimed": true,
+    "payGuardCanonicalSettlementConsumption": false,
+    "destinationTagFlowExercised": false,
+    "defaultRecoveryFlowExercised": false
+  },
+  "blockers": [
+    "CANONICAL_EVENT_VERIFIER_AND_ATOMIC_PAYGUARD_CONSUMPTION_NOT_WIRED",
+    "DESTINATION_TAG_REDEMPTION_NOT_LIVE_VERIFIED",
+    "REDEMPTION_DEFAULT_RECOVERY_NOT_LIVE_VERIFIED"
+  ],
+  "notes": [
+    "A disposable XRPL Testnet destination was generated in memory; only public identifiers are recorded.",
+    "The amount redemption request, validated underlying payout, matching memo reference, and Coston2 RedemptionPerformed receipt were observed and parsed.",
+    "The evidence does not claim private-policy execution, FCC custody, destination-tag behavior, default recovery, or a verified PayGuard release.",
+    "The positive spentUnderlyingUBA is the successful deployed Coston2 event value and includes the underlying transaction fee in the observed run."
+  ]
+}
