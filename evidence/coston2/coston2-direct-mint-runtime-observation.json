@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "suite": "payguard-coston2-direct-mint-runtime-observation",
   "status": "runtime-quote-address-observed",
-  "recordedAt": "2026-08-09T00:35:20.249Z",
+  "recordedAt": "2026-08-09T00:46:02.143Z",
   "network": {
     "name": "flare-coston2",
     "chainId": 114,
     "rpcUrl": "https://coston2-api.flare.network/ext/C/rpc",
-    "observedBlock": "33801659"
+    "observedBlock": "33801932"
   },
   "publicIdentifiers": {
     "registry": "0xaD67FE66660Fb8dFE9d6b1b4240d8650e30F6019",
