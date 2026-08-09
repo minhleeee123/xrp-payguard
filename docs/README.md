@@ -40,7 +40,8 @@
   explicit non-FCC/non-release evidence boundaries.
 - [`technology/coston2-xrpl-fdc-trigger.md`](technology/coston2-xrpl-fdc-trigger.md):
   atomic XRPL FDC consumer contract, deployment/verification workflow, and
-  explicit private-evaluator/live-proof limits.
+  live `Pending` request evidence with explicit simulated-policy/private-
+  evaluator limits.
 - [`technology/fcc-attestation-domain.md`](technology/fcc-attestation-domain.md):
   pinned tee-node sign-port behavior and PayGuard cross-language signature domain.
 - [`technology/fcc-private-policy-wire.md`](technology/fcc-private-policy-wire.md):

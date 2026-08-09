@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "suite": "payguard-coston2-live-xrpl-fdc-pending-request",
+  "status": "coston2-live-pass",
+  "recordedAt": "2026-08-09T09:07:20.811Z",
+  "mode": "LIVE_XRPL_FDC_PENDING_SIMULATED_TEE",
+  "network": {
+    "name": "flare-coston2",
+    "chainId": 114,
+    "observedBlock": "33814220",
+    "xrplNetwork": "xrpl-testnet"
+  },
+  "publicIdentifiers": {
+    "sourceCommit": "5f7dc53a8a00e970b0235928f001839e37624e1b",
+    "owner": "0xDC1cc527423C882156a632C250528D1922d18Fc7",
+    "asset": "0x0b6A3645c240605887a5532109323A3E12273dc7",
+    "flareContractRegistry": "0xaD67FE66660Fb8dFE9d6b1b4240d8650e30F6019",
+    "contracts": {
+      "registry": "0x8DFb2D7D7a2608Ee7Cd78983fbe28cCE00e1D4A4",
+      "vault": "0xFFe7522075412B2eBA5b8B91c9aA4E1c2c6f84dB",
+      "router": "0x28A969018975Fb40aEd0BfA98f6d1c3023B6a7Da",
+      "trigger": "0x4b626E2DA4D45034C8fAA38D10AbDfD4921486b2",
+      "fdcVerification": "0x906507E0B64bcD494Db73bd0459d1C667e14B933",
+      "fdcHub": "0x48aC463d7975828989331F4De43341627b9c5f1D",
+      "relay": "0xa10B672D1c62e5457b17af63d4302add6A99d7dE"
+    },
+    "coreDeploymentSourceCommit": "17ff0bc1eb135195a94d0d261bc491f006730720",
+    "triggerDeploymentSourceCommit": "aa75eda1bd7248be82bc3d70640d3aa247e1af0e"
+  },
+  "xrplPayment": {
+    "network": "xrpl-testnet",
+    "transactionHash": "0x7785fa661a8fcd2cd6e4e70a34d94a9d4dffd00776d6cb7d470e606839c03040",
+    "ledgerIndex": "19760053",
+    "source": "rsLgiqFPLvPUYMBctxwvX1zvg7R4HFHN7k",
+    "destination": "rnJsfbhFVbq9j4VQYwtW6SAFi84pDLxVqr",
+    "amountDrops": "100",
+    "requestIdMemo": "0x6d86ce129ccdda6ba24770f99dd7dca5e4a77436b20f2477d5bb1abe8f9c240b",
+    "validated": true
+  },
+  "fdc": {
+    "requestTransactionHash": "0x29081a38fd20378c0a52284655f1fb338bcde1845e34a7f6ccffbb4a21ee46d5",
+    "requestBlockNumber": "33814163",
+    "requestBlockTimestamp": "1786266344",
+    "votingRound": "1420403",
+    "merkleRoot": "0xbf0a8bac293dd6aa71cecd8d9df6fabeb28c16cc0cd5b3f0b7a10874510be763",
+    "proofCommitment": "0x16261b070f4c48274bddb9b1c62010c8e3a7bf6645a21a9fbd7bb855302d6873",
+    "proofOwner": "0x4b626E2DA4D45034C8fAA38D10AbDfD4921486b2",
+    "onChainVerified": true
+  },
+  "simulatedPolicy": {
+    "policyId": "0x70f06943e85ce8cfaf9bbd1311d2e4eaf7b58ae37f292149f470379e5f3562f9",
+    "policyCommitment": "0x7f129c978e34f7f627d1a702c3d9eeaf31074d52d2b77a644af3b7bce6681b85",
+    "extensionId": "0x99391c47b6a8202565a1060eadc6abededef65eeb79a1c8ba981f751d719ce3a",
+    "codeVersion": "0xa71259b8181b7f5abe36034628ea986c108ef284b7c2bf818e2bdd44c302f7ce",
+    "machineEntries": [
+      {
+        "machineId": "0x584d533197759489a26a0a796fa465203799851ea79290bb120d2aa7bd1161f2",
+        "keyFingerprint": "0x5bf727538fc427d3379ba69cf980c6ba07211cbce799587bc4c26e2f1cb41f79",
+        "signer": "0x431468165935295D7d39CA35ED5Cbf05B494D708",
+        "registrationTransactionHash": "0x11f7392d3b5effd146c3f8e6f14f702ef1cff64c703d994792b8a5287d775e14",
+        "registrationBlockNumber": "33814204"
+      },
+      {
+        "machineId": "0x7fd9ff8bdda053c6e1f6b6a48c3311b46b64774103ced64bdbfc87622d895f40",
+        "keyFingerprint": "0x15c1456d7dc983823a86190758c2b5bc6f041345277eff0d4be69d5c9f2693cf",
+        "signer": "0x2efA12B97cE198A5B8129C441501f3a4B4E16625",
+        "registrationTransactionHash": "0x17e77eecee8a46c6addafe4e9262ecfeadcdfdfbd4f48d90b85de2e79bcc0b1c",
+        "registrationBlockNumber": "33814207"
+      },
+      {
+        "machineId": "0xcb7d03a2a03ddfae9268b462515a02b5de99a33e66e923f0ced709fa3608deda",
+        "keyFingerprint": "0xfe0a356676d289062b687d518f650d03471d55164e4e139bb777a61192fecb73",
+        "signer": "0xC4511578A942081e8618C8df7277391c4eD7Bb9C",
+        "registrationTransactionHash": "0xf172ca74557203b1228bece0847adf383b09aa9e478dad5979a94b05be5853e3",
+        "registrationBlockNumber": "33814209"
+      }
+    ],
+    "registrationTransactionHash": "0x82efdb3d1106fe74f5fc041c49e0dac196d843adfeaf58deedab37615bc5ee44",
+    "registrationBlockNumber": "33814211",
+    "status": "Active",
+    "mode": "SIMULATED_TEE_ONCHAIN"
+  },
+  "request": {
+    "requestId": "0x6d86ce129ccdda6ba24770f99dd7dca5e4a77436b20f2477d5bb1abe8f9c240b",
+    "requestNonce": "3760928101811218699660234278802365230747718585990092640166976862447636824004",
+    "amountUBA": "100",
+    "inputCommitment": "0x1157d1aae0dccfd78876ccd52bd18a602a103e8604be0500b46f0b7712e413a2",
+    "proofCommitment": "0x16261b070f4c48274bddb9b1c62010c8e3a7bf6645a21a9fbd7bb855302d6873",
+    "requestHash": "0x68484878240ab16fc8f9080454f1212fb8c17ff64d5f61c885eff35b787f459b",
+    "transactionHash": "0xbc494823fff2a8d58d7e383c010692954809b73bb8eb03710f10d186b9da268e",
+    "blockNumber": "33814216",
+    "status": "Pending",
+    "statusCode": 1,
+    "transactionConsumed": true,
+    "proofConsumed": true,
+    "triggerEventVerified": true,
+    "routerEventVerified": true
+  },
+  "assertions": {
+    "xrplPaymentValidated": true,
+    "fdcRequestReceiptSuccessful": true,
+    "fdcRoundFinalized": true,
+    "fdcProofVerifiedOnChain": true,
+    "runtimeFdcVerificationBound": true,
+    "proofOwnerBoundToTrigger": true,
+    "exactAmountAndMemoBound": true,
+    "triggerReceiptSuccessful": true,
+    "transactionReplayMarkerVerified": true,
+    "proofReplayMarkerVerified": true,
+    "routerPendingRequestVerified": true,
+    "requestHashVerified": true,
+    "atomicProofConsumptionVerified": true,
+    "simulatedPolicyOnly": true,
+    "hardwareTeeVerified": false,
+    "stableHttpsOriginsVerified": false,
+    "authenticatedIndexerVerified": false,
+    "liveFccResultVerified": false,
+    "requestExecuted": false,
+    "sourceCommitCleanAtBroadcast": true,
+    "ephemeralXrplWalletsDiscarded": true,
+    "testnetOnly": true,
+    "noPrivateKeyRecorded": true,
+    "noCredentialRecorded": true,
+    "noPolicyPlaintextOrCiphertextRecorded": true,
+    "noFccResultClaimed": true,
+    "noReleaseClaimed": true
+  },
+  "blockers": [
+    "PRIVATE_FDC_DESCRIPTOR_EVALUATION_NOT_IMPLEMENTED",
+    "LIVE_FCC_THRESHOLD_RESULT_NOT_VERIFIED",
+    "STABLE_HTTPS_FCC_ORIGINS_NOT_DEPLOYED",
+    "AUTHENTICATED_FCC_INDEXER_NOT_CONFIGURED"
+  ],
+  "notes": [
+    "This record proves a real XRPL Testnet payment, finalized Coston2 FDC proof, and atomic creation of one canonical Pending PayGuard request.",
+    "The policy custody entries use three ephemeral in-memory simulated signers and do not prove hardware TEE or official FCC machine registration.",
+    "No evaluation was submitted and no value was executed. The request remains Pending until the private FDC schema/evaluator and live FCC threshold path exist.",
+    "XRPL seeds, EVM keys, receipt signatures, private policy fields, verifier access headers, and raw proofs are not recorded."
+  ]
+}

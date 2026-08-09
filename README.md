@@ -20,8 +20,12 @@ their FTestXRP vault wiring are deployed and independently re-verified on
 Coston2 from source commit `17ff0bc1eb135195a94d0d261bc491f006730720`.
 A separate atomic XRPL FDC trigger consumer is deployed and runtime/binding-
 verified on Coston2 from source commit
-`aa75eda1bd7248be82bc3d70640d3aa247e1af0e`; it has not yet consumed a live
-proof or created a live request, and it cannot provide `ALLOW`.
+`aa75eda1bd7248be82bc3d70640d3aa247e1af0e`. A live XRPL Testnet payment and
+finalized FDC proof have now been consumed atomically into one canonical
+`Pending` request; the public-safe record is
+[`xrpl-fdc-trigger-pending-2026-08-09.json`](evidence/coston2/xrpl-fdc-trigger-pending-2026-08-09.json).
+Its policy entries use ephemeral simulated signers, no evaluation was
+submitted, and the consumer cannot provide `ALLOW` or execute value.
 A foundation-only FCC sender is deployed, extension-registered, explicitly
 bound, and runtime/configuration-verified on Coston2 as extension `66037`; its
 typed `PING_V1` handler passes local cross-language tests. No registered TEE

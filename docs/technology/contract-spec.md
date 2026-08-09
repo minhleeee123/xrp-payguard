@@ -5,8 +5,10 @@
 > on Coston2 in `evidence/coston2/contracts-deployment.json`. This document does
 > not assert registered FCC execution, a complete release, or a production audit.
 > The separate XRPL FDC trigger consumer is deployed and binding-verified in
-> `evidence/coston2/xrpl-fdc-trigger-deployment.json`, without a live proof or
-> request claim.
+> `evidence/coston2/xrpl-fdc-trigger-deployment.json`. One live proof was later
+> consumed into a canonical `Pending` request in
+> `evidence/coston2/xrpl-fdc-trigger-pending-2026-08-09.json`; its policy custody
+> is simulated and no FCC evaluation or execution is claimed.
 
 ## 1. Contracts
 
@@ -70,9 +72,10 @@ Responsibilities:
   and the existing two-of-three FCC threshold remains mandatory for `ALLOW`.
 
 This consumer and its real-router integration are locally tested, and its
-Coston2 runtime/constructor bindings are independently verified. No live proof
-consumption or request is yet claimed. The consumer checks the public
-payment/request binding only; V1 evaluators do
+Coston2 runtime/constructor bindings are independently verified. One validated
+XRPL Testnet payment, finalized FDC proof, both replay markers, and the resulting
+router `Pending` request are recorded in public-safe Coston2 evidence. The
+consumer checks the public payment/request binding only; V1 evaluators do
 not yet interpret private FDC source/destination descriptors. A policy that
 requires those private semantics must therefore fail closed until the private
 schema, snapshot verification, and cross-language evaluator path are added.

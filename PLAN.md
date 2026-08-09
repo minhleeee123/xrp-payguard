@@ -327,8 +327,11 @@ verified on Coston2. External review and registered FCC execution remain open.
   trigger descriptors/snapshots so source, destination, memo/tag, amount,
   freshness, proof commitment, and consumer state are independently enforced
   before either machine can sign `ALLOW`.
-- [ ] Consume a verified live FDC trigger commitment while atomically advancing
-  one canonical PayGuard request on Coston2.
+- [x] Consume a verified live FDC trigger commitment while atomically advancing
+  one canonical PayGuard request to `Pending` on Coston2; the sanitized record
+  binds the validated XRPL Testnet payment, finalized round, on-chain proof,
+  replay markers, request hash, and router readback. Policy custody is explicitly
+  simulated, and no FCC evaluation, `ALLOW`, reserve, or execution is claimed.
 - [ ] Add Web2Json only after source allowlisting, transform/schema pinning, and
   semantic trust are explicit.
 - [x] Implement a local official-field FAssets redemption checkpoint model that
