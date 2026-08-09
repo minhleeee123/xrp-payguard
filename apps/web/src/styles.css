@@ -350,6 +350,8 @@ h1, h2, h3 { font-family: var(--font-pt-serif); font-weight: 300; }
 .audit-boundary strong, .audit-boundary small { display: block; }
 .audit-boundary strong { color: var(--color-bone); font-size: 11px; }
 .audit-boundary small { margin-top: 4px; color: var(--color-ash); font-size: 10px; line-height: 1.6; }
+.request-transaction-panel { margin: 17px 0; }
+.request-connect { margin-top: 16px; }
 
 .table-panel { padding: 24px 0 0; }
 .table-panel .panel-heading { padding: 0 24px; }

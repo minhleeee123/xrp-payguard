@@ -15,6 +15,7 @@ import {
   type PublicNotificationReadState,
   type PublicPayeeReadState,
   type PublicRequestReadState,
+  type PublicRequestSnapshotV1,
   type PublicWorkspaceReadState,
 } from "@xrp-payguard/integrations";
 import { formatEther, formatUnits, type Address } from "viem";
@@ -36,10 +37,12 @@ import {
   COSTON2_CHAIN,
   PAYGUARD_COSTON2,
   REVIEWED_PENDING_REQUEST_ID,
+  RequestTransactionError,
   VaultTransactionError,
   WalletConnectionError,
   connectCoston2Wallet,
   coston2ReadFailureMessage,
+  executeRequestTransaction,
   executeVaultTransaction,
   explorerAddress,
   explorerTransaction,
@@ -48,10 +51,13 @@ import {
   loadCoston2PublicRequest,
   parseFTestXrpAmount,
   readWalletSession,
+  requestTransactionFailureMessage,
+  validateRequestTransaction,
   validateVaultTransaction,
   vaultTransactionFailureMessage,
   walletFailureMessage,
   type Coston2AccountSnapshot,
+  type RequestTransactionKind,
   type VaultTransactionKind,
 } from "./coston2.js";
 
@@ -75,6 +81,11 @@ type VaultTransactionUiState =
   | { status: "IDLE" }
   | { status: "SUBMITTING"; kind: VaultTransactionKind; amount: bigint }
   | { status: "SUCCESS"; kind: VaultTransactionKind; amount: bigint; hash: `0x${string}`; blockNumber: bigint }
+  | { status: "ERROR"; message: string };
+type RequestTransactionUiState =
+  | { status: "IDLE" }
+  | { status: "SUBMITTING"; kind: RequestTransactionKind }
+  | { status: "SUCCESS"; kind: RequestTransactionKind; hash: `0x${string}`; blockNumber: bigint }
   | { status: "ERROR"; message: string };
 
 const appElement = document.querySelector<HTMLDivElement>("#app");
@@ -109,7 +120,11 @@ let requestInput: string = REVIEWED_PENDING_REQUEST_ID;
 let requestLoading = false;
 let requestNotice = "Loading the reviewed Coston2 request from the finalized router…";
 let requestFinalizedBlock: bigint | null = null;
+let requestFinalizedAt: bigint | null = null;
+let requestPolicyOwner: Address | null = null;
 let requestReadSequence = 0;
+let requestIntent: RequestTransactionKind | null = null;
+let requestTransactionState: RequestTransactionUiState = { status: "IDLE" };
 
 const esc = (value: string): string => value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character] ?? character));
 const short = (value: string): string => value.length > 18 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value;
@@ -328,11 +343,32 @@ function requestsView(): string {
     : `<div class="request-public-state"><div><span>Readiness</span><strong>Unavailable</strong></div><div><span>Decision evidence</span><strong>No chain result</strong></div><div><span>Attempt</span><strong>—</strong></div><div><span>Checkpoint</span><strong>—</strong></div></div>`;
   return `${pageIntro("PUBLIC REQUEST QUEUE", "Requests & schedules", "Load any canonical request directly from the finalized Coston2 router. No wallet is required to inspect public state.")}
     ${requestLookup()}
-    <section class="panel table-panel"><div class="panel-heading"><div><div class="eyebrow">ACTION REQUEST</div><h2>${snapshot ? "Public request state" : requestLoading ? "Reading finalized state…" : "No verified request loaded"}</h2></div><div class="table-tools"><button class="icon-button" type="button" data-action="load-request" aria-label="Refresh request">↻</button></div></div><div class="request-table"><div class="table-head"><span>REQUEST</span><span>PUBLIC ACTION</span><span>CHECKPOINT</span><span>STATUS</span><span></span></div><div class="table-row"><span>${requestCell}</span><span>${actionCell}</span><span>${checkpointCell}</span><span><span class="state-tag ${snapshot ? (liveReadiness === "READY_TO_EXECUTE" ? "green-tag" : "gray-tag") : "amber-tag"}">${esc(readiness)}</span></span><span>···</span></div></div>${publicState}<div class="table-footer"><span>Showing public finalized state only</span><span class="muted">${requestFinalizedBlock ? `Coston2 block ${requestFinalizedBlock}` : esc(unavailableReason)} · no browser cache</span></div></section><div class="recovery-strip"><div class="recovery-icon">↻</div><div><strong>Fresh-process recovery is built in</strong><p>A relay restart reconstructs work from chain checkpoints, not a private policy database.</p></div><button class="text-button" type="button" data-action="details">See checkpoint model ↗</button></div>`;
+    <section class="panel table-panel"><div class="panel-heading"><div><div class="eyebrow">ACTION REQUEST</div><h2>${snapshot ? "Public request state" : requestLoading ? "Reading finalized state…" : "No verified request loaded"}</h2></div><div class="table-tools"><button class="icon-button" type="button" data-action="load-request" aria-label="Refresh request">↻</button></div></div><div class="request-table"><div class="table-head"><span>REQUEST</span><span>PUBLIC ACTION</span><span>CHECKPOINT</span><span>STATUS</span><span></span></div><div class="table-row"><span>${requestCell}</span><span>${actionCell}</span><span>${checkpointCell}</span><span><span class="state-tag ${snapshot ? (liveReadiness === "READY_TO_EXECUTE" ? "green-tag" : "gray-tag") : "amber-tag"}">${esc(readiness)}</span></span><span>···</span></div></div>${publicState}<div class="table-footer"><span>Showing public finalized state only</span><span class="muted">${requestFinalizedBlock ? `Coston2 block ${requestFinalizedBlock}` : esc(unavailableReason)} · no browser cache</span></div></section>${requestTransactionPanel(snapshot)}<div class="recovery-strip"><div class="recovery-icon">↻</div><div><strong>Fresh-process recovery is built in</strong><p>A relay restart reconstructs work from chain checkpoints, not a private policy database.</p></div><button class="text-button" type="button" data-action="details">See checkpoint model ↗</button></div>`;
 }
 
 function requestLookup(): string {
   return `<section class="panel request-lookup"><div><div class="eyebrow">FINALIZED ROUTER LOOKUP</div><h2>Inspect a request ID</h2><p class="panel-copy">The prefilled ID is the reviewed XRPL/FDC-triggered Coston2 request. Paste another bytes32 request ID to inspect it without a wallet.</p></div><label>Request ID<input id="request-id" value="${esc(requestInput)}" autocomplete="off" spellcheck="false" placeholder="0x…" /></label><button class="primary-button" type="button" data-action="load-request" ${requestLoading ? "disabled" : ""}>${requestLoading ? "Reading finalized block…" : "Load public state"}</button><small>${esc(requestNotice)}</small></section>`;
+}
+
+function requestTransactionPanel(snapshot: PublicRequestSnapshotV1 | undefined): string {
+  const account = connectedAccount();
+  const busy = requestTransactionState.status === "SUBMITTING";
+  const can = (kind: RequestTransactionKind): boolean => {
+    if (!snapshot || !account || !requestPolicyOwner || requestFinalizedAt === null) return false;
+    try { validateRequestTransaction(kind, account, snapshot, requestPolicyOwner, requestFinalizedAt); return true; } catch { return false; }
+  };
+  const result = requestTransactionState.status === "SUCCESS"
+    ? `<div class="transaction-result success-result"><span class="status-dot green"></span><div><strong>${requestTransactionState.kind} finalized</strong><small>Coston2 block ${requestTransactionState.blockNumber}</small><a href="${explorerTransaction(requestTransactionState.hash)}" target="_blank" rel="noreferrer">Open transaction ↗</a></div></div>`
+    : requestTransactionState.status === "ERROR"
+      ? `<div class="transaction-result error-result"><span class="status-dot amber"></span><div><strong>Router transaction not verified</strong><small>${esc(requestTransactionState.message)}</small></div></div>` : "";
+  const reviewCopy = requestIntent === "EXECUTE"
+    ? "Execute the exact threshold-approved public transfer. The browser cannot choose or override ALLOW."
+    : requestIntent === "EXPIRE"
+      ? "Finalize this expired request and release any reservation held by an ALLOWED request."
+      : "Cancel this request as its creator or policy owner and release any reservation.";
+  const review = requestIntent && snapshot
+    ? `<div class="transaction-review"><div class="eyebrow">EXACT ROUTER PREVIEW</div><h3>${requestIntent} · ${esc(short(snapshot.requestId))}</h3><p>${reviewCopy}</p><dl><div><dt>Network</dt><dd>Coston2 · chain 114</dd></div><div><dt>Router</dt><dd>${PAYGUARD_COSTON2.router}</dd></div><div><dt>Request hash</dt><dd>${snapshot.requestHash}</dd></div><div><dt>Success gate</dt><dd>Receipt + exact event + finalized terminal state</dd></div></dl><div class="transaction-warning">No policy rule or ALLOW flag is supplied by this action.</div><div class="vault-actions"><button class="outline-button" type="button" data-action="cancel-request-intent" ${busy ? "disabled" : ""}>Back</button><button class="primary-button" type="button" data-action="submit-request-intent" ${busy ? "disabled" : ""}>${busy ? "Waiting for wallet / finality…" : "Confirm in wallet"}</button></div></div>` : "";
+  return `<section class="panel request-transaction-panel"><div class="panel-heading"><div><div class="eyebrow">PUBLIC ROUTER CONTROLS</div><h2>Advance only the canonical state</h2></div><span class="state-tag ${account ? "green-tag" : "amber-tag"}">${account ? "WALLET CONNECTED" : "CONNECT WALLET"}</span></div><p class="panel-copy">Execute and expire are permissionless only in their exact contract states. Cancel additionally requires the requester or policy owner.</p><div class="transaction-actions"><button class="primary-button" type="button" data-request-kind="EXECUTE" ${!can("EXECUTE") || busy ? "disabled" : ""}>Prepare execution</button><button class="outline-button" type="button" data-request-kind="EXPIRE" ${!can("EXPIRE") || busy ? "disabled" : ""}>Prepare expiry</button><button class="outline-button" type="button" data-request-kind="CANCEL" ${!can("CANCEL") || busy ? "disabled" : ""}>Prepare cancellation</button></div>${!account ? `<button class="text-button request-connect" type="button" data-action="connect">Connect Coston2 wallet ↗</button>` : ""}${review}${result}</section>`;
 }
 
 function requestUnavailableReason(reason: string): string {
@@ -466,8 +502,11 @@ function wireEvents(): void {
     });
   });
   app.querySelectorAll<HTMLButtonElement>("[data-template]").forEach((button) => button.addEventListener("click", () => selectTemplate(button.dataset.template ?? "")));
+  app.querySelectorAll<HTMLButtonElement>("[data-request-kind]").forEach((button) => button.addEventListener("click", () => prepareRequestTransaction(button.dataset.requestKind ?? "")));
   app.querySelector<HTMLInputElement>("#request-id")?.addEventListener("input", (event) => {
     requestInput = (event.currentTarget as HTMLInputElement).value;
+    requestIntent = null;
+    requestTransactionState = { status: "IDLE" };
   });
   app.querySelectorAll<HTMLButtonElement>("[data-vault-kind]").forEach((button) => button.addEventListener("click", () => prepareVaultTransaction(button.dataset.vaultKind ?? "")));
   app.querySelector<HTMLInputElement>("#vault-amount")?.addEventListener("input", (event) => {
@@ -522,6 +561,8 @@ function handleAction(action: string): void {
   if (action === "connect") { void connectWallet(); return; }
   if (action === "refresh") { void refreshCoston2State(); return; }
   if (action === "load-request") { void refreshPublicRequest(); return; }
+  if (action === "cancel-request-intent") { requestIntent = null; requestTransactionState = { status: "IDLE" }; render(); return; }
+  if (action === "submit-request-intent") { void submitRequestTransaction(); return; }
   if (action === "cancel-vault-intent") { vaultIntent = null; vaultTransactionState = { status: "IDLE" }; render(); return; }
   if (action === "submit-vault-intent") { void submitVaultTransaction(); return; }
   if (action === "verify") appNotice = "Live evidence is unavailable; the static mirror cannot assert a transaction, proof, signer, or authorization result.";
@@ -531,11 +572,74 @@ function handleAction(action: string): void {
   render();
 }
 
+function prepareRequestTransaction(value: string): void {
+  if (value !== "EXECUTE" && value !== "EXPIRE" && value !== "CANCEL") return;
+  const account = connectedAccount();
+  const snapshot = requestState.status === "UNAVAILABLE" ? null : requestState.snapshot;
+  if (!account || !snapshot || !requestPolicyOwner || requestFinalizedAt === null) {
+    requestIntent = null;
+    requestTransactionState = { status: "ERROR", message: "Connect the wallet and load a finalized request first." };
+    render();
+    return;
+  }
+  try {
+    validateRequestTransaction(value, account, snapshot, requestPolicyOwner, requestFinalizedAt);
+    requestIntent = value;
+    requestTransactionState = { status: "IDLE" };
+    appNotice = "Review the exact public router transition below. The wallet has not opened yet.";
+  } catch (error) {
+    const message = error instanceof RequestTransactionError
+      ? requestTransactionFailureMessage(error.reason) : "The router action could not be prepared safely.";
+    requestIntent = null;
+    requestTransactionState = { status: "ERROR", message };
+    appNotice = message;
+  }
+  render();
+}
+
+async function submitRequestTransaction(): Promise<void> {
+  const kind = requestIntent;
+  const account = connectedAccount();
+  if (!kind || !account || walletState.status !== "CONNECTED") {
+    requestIntent = null;
+    requestTransactionState = { status: "ERROR", message: "The wallet or finalized request changed. Prepare the action again." };
+    render();
+    return;
+  }
+  requestTransactionState = { status: "SUBMITTING", kind };
+  appNotice = "Confirm the exact Coston2 router call in your wallet, then wait for finalized state verification.";
+  render();
+  try {
+    const result = await executeRequestTransaction(kind, requestInput, account, walletProvider);
+    if (connectedAccount()?.toLowerCase() !== account.toLowerCase()) throw new RequestTransactionError("POSTCONDITION_FAILED");
+    requestState = result.after.request;
+    payeeState = result.after.payee;
+    requestFinalizedBlock = result.after.finalizedBlock;
+    requestFinalizedAt = result.after.finalizedAt;
+    requestPolicyOwner = result.after.policyOwner;
+    requestIntent = null;
+    requestTransactionState = { status: "SUCCESS", kind, hash: result.hash, blockNumber: result.blockNumber };
+    requestNotice = `${kind} verified in finalized Coston2 state at block ${result.after.finalizedBlock}.`;
+    appNotice = `${kind} receipt, exact router event, and finalized request state matched.`;
+  } catch (error) {
+    const message = error instanceof RequestTransactionError
+      ? requestTransactionFailureMessage(error.reason) : "The router transaction could not be verified safely.";
+    requestIntent = null;
+    requestTransactionState = { status: "ERROR", message };
+    appNotice = message;
+  }
+  render();
+}
+
 async function refreshPublicRequest(): Promise<void> {
   const sequence = ++requestReadSequence;
   const requestedId = requestInput.trim();
   requestLoading = true;
   requestFinalizedBlock = null;
+  requestFinalizedAt = null;
+  requestPolicyOwner = null;
+  requestIntent = null;
+  requestTransactionState = { status: "IDLE" };
   requestState = unavailableRequestState("RPC_UNAVAILABLE");
   payeeState = unavailablePayeeState("RPC_UNAVAILABLE");
   requestNotice = "Reading one finalized Coston2 block and verifying runtime, wiring, domain and request hash…";
@@ -546,12 +650,16 @@ async function refreshPublicRequest(): Promise<void> {
     requestState = result.request;
     payeeState = result.payee;
     requestFinalizedBlock = result.finalizedBlock;
+    requestFinalizedAt = result.finalizedAt;
+    requestPolicyOwner = result.policyOwner;
     requestNotice = `Canonical public state verified at Coston2 block ${result.finalizedBlock}.`;
     appNotice = "Request runtime, wiring, domain, request hash and finalized state matched the deployed Coston2 router.";
   } catch {
     if (sequence !== requestReadSequence) return;
     requestState = unavailableRequestState("SNAPSHOT_INVALID");
     payeeState = unavailablePayeeState("RECEIPT_INVALID");
+    requestFinalizedAt = null;
+    requestPolicyOwner = null;
     requestNotice = "The request was not found or failed finalized runtime/domain/schema validation.";
     appNotice = "No request fact is being asserted because the finalized lookup failed closed.";
   } finally {
@@ -693,6 +801,8 @@ function walletChanged(): void {
   appNotice = "Wallet account or network changed. Revalidating the public session…";
   vaultIntent = null;
   vaultTransactionState = { status: "IDLE" };
+  requestIntent = null;
+  requestTransactionState = { status: "IDLE" };
   render();
   void restoreWalletSession();
 }
@@ -766,8 +876,7 @@ function readStudioDraft(form: HTMLFormElement): StudioDraft {
 render();
 walletProvider?.on?.("accountsChanged", walletChanged);
 walletProvider?.on?.("chainChanged", walletChanged);
-void restoreWalletSession();
-void refreshPublicRequest();
+void refreshPublicRequest().finally(() => restoreWalletSession());
 void fetchPublicWebEvidenceIndex()
   .then((index) => { publicEvidenceMirrorState = { status: "READY", index }; if (!landingOpen) render(); })
   .catch(() => { publicEvidenceMirrorState = { status: "UNAVAILABLE", reason: "NOT_PUBLISHED" }; if (!landingOpen) render(); });

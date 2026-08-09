@@ -1,12 +1,13 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { PayGuardVaultAbi } from "@xrp-payguard/bindings";
+import { PayGuardActionRouterAbi, PayGuardVaultAbi } from "@xrp-payguard/bindings";
 import { ACTION_FTESTXRP_TRANSFER, actionRequestHash } from "@xrp-payguard/protocol";
 import { encodeAbiParameters, encodeEventTopics, erc20Abi, getAddress, keccak256, type Hex } from "viem";
 import {
   COSTON2_CHAIN_HEX,
   PAYGUARD_COSTON2,
   REVIEWED_PENDING_REQUEST_ID,
+  RequestTransactionError,
   WalletConnectionError,
   VaultTransactionError,
   connectCoston2Wallet,
@@ -16,6 +17,9 @@ import {
   parseRequestId,
   readWalletSession,
   validateVaultTransaction,
+  validateRequestTransaction,
+  verifyRequestPostcondition,
+  verifyRequestReceiptEvent,
   verifyVaultPostcondition,
   verifyVaultReceiptEvent,
   type Coston2ReadClient,
@@ -75,6 +79,10 @@ function readClient(overrides: Partial<Coston2ReadClient> = {}): Coston2ReadClie
       if (functionName === "router") return PAYGUARD_COSTON2.router;
       if (functionName === "registry") return PAYGUARD_COSTON2.registry;
       if (functionName === "vault" && address === PAYGUARD_COSTON2.router) return PAYGUARD_COSTON2.vault;
+      if (functionName === "getPolicy") {
+        const request = requestFixture();
+        return { binding: { ...request, owner: account }, status: 1 };
+      }
       throw new Error(`unsupported read ${functionName}`);
     },
   };
@@ -229,6 +237,38 @@ describe("Coston2 browser integration", () => {
         : base.readContract(args),
     });
     await expect(loadCoston2PublicRequest(request.requestId, client, testRuntimeHashes)).rejects.toThrow("request hash mismatch");
+  });
+
+  it("permits only contract-derived execute, expire, and authorized cancel transitions", () => {
+    const pending = { ...requestFixture(), status: "PENDING", approvedDigest: `0x${"00".repeat(32)}`, matchingCount: 0,
+      decision: "PENDING", publicReasonClass: null, approvedAmount: 0n, approvedCheckpoint: `0x${"00".repeat(32)}`,
+      approvedNonce: `0x${"00".repeat(32)}`, approvedAttempt: 0, approvedIssuedAt: 0n, approvedExpiry: 0n } as const;
+    expect(() => validateRequestTransaction("EXPIRE", account, pending, account, pending.expiry + 1n)).not.toThrow();
+    expect(() => validateRequestTransaction("EXECUTE", account, pending, account, pending.expiry - 1n)).toThrow(RequestTransactionError);
+    expect(() => validateRequestTransaction("CANCEL", account, pending, account, pending.expiry - 1n)).not.toThrow();
+    expect(() => validateRequestTransaction("CANCEL", getAddress("0x2222222222222222222222222222222222222222"), pending,
+      getAddress("0x3333333333333333333333333333333333333333"), pending.expiry - 1n)).toThrow("NOT_AUTHORIZED");
+
+    const allowed = { ...pending, status: "ALLOWED", approvedDigest: `0x${"77".repeat(32)}`, matchingCount: 2,
+      decision: "ALLOW", publicReasonClass: "OK", approvedAmount: pending.amount, approvedCheckpoint: `0x${"88".repeat(32)}`,
+      approvedNonce: pending.requestId, approvedExpiry: pending.expiry } as const;
+    expect(() => validateRequestTransaction("EXECUTE", account, allowed, account, allowed.expiry)).not.toThrow();
+    expect(() => validateRequestTransaction("EXECUTE", account, allowed, account, allowed.expiry + 1n)).toThrow("INVALID_STATE");
+  });
+
+  it("requires the exact router event and terminal postcondition", () => {
+    const pending = { ...requestFixture(), status: "PENDING", approvedDigest: `0x${"00".repeat(32)}`, matchingCount: 0,
+      decision: "PENDING", publicReasonClass: null, approvedAmount: 0n, approvedCheckpoint: `0x${"00".repeat(32)}`,
+      approvedNonce: `0x${"00".repeat(32)}`, approvedAttempt: 0, approvedIssuedAt: 0n, approvedExpiry: 0n } as const;
+    const expiryLog = {
+      address: PAYGUARD_COSTON2.router,
+      data: "0x" as Hex,
+      topics: encodeEventTopics({ abi: PayGuardActionRouterAbi, eventName: "RequestExpired", args: { requestId: pending.requestId } }) as [Hex, ...Hex[]],
+    };
+    expect(() => verifyRequestReceiptEvent("EXPIRE", pending, [expiryLog])).not.toThrow();
+    expect(() => verifyRequestReceiptEvent("CANCEL", pending, [expiryLog])).toThrow("EVENT_MISMATCH");
+    expect(() => verifyRequestPostcondition("EXPIRE", pending, { ...pending, status: "EXPIRED" })).not.toThrow();
+    expect(() => verifyRequestPostcondition("EXPIRE", pending, { ...pending, status: "CANCELLED" })).toThrow("POSTCONDITION_FAILED");
   });
 
   it("accepts viem named-tuple accounting without weakening conservation", async () => {

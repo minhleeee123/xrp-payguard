@@ -1,5 +1,6 @@
 import {
   PayGuardActionRouterAbi,
+  PayGuardPolicyRegistryAbi,
   PayGuardVaultAbi,
 } from "@xrp-payguard/bindings";
 import {
@@ -148,6 +149,27 @@ export interface Coston2PublicRequestResult {
   payee: PublicPayeeReadState;
   finalizedBlock: bigint;
   finalizedAt: bigint;
+  policyOwner: Address;
+}
+
+export type RequestTransactionKind = "EXECUTE" | "EXPIRE" | "CANCEL";
+export type RequestTransactionFailure = "INVALID_STATE" | "NOT_AUTHORIZED" | "USER_REJECTED" | "TRANSACTION_REVERTED" | "EVENT_MISMATCH" | "POSTCONDITION_FAILED" | "PROVIDER_ERROR";
+
+export class RequestTransactionError extends Error {
+  readonly reason: RequestTransactionFailure;
+
+  constructor(reason: RequestTransactionFailure) {
+    super(reason);
+    this.name = "RequestTransactionError";
+    this.reason = reason;
+  }
+}
+
+export interface RequestTransactionResult {
+  kind: RequestTransactionKind;
+  hash: Hash;
+  blockNumber: bigint;
+  after: Coston2PublicRequestResult;
 }
 
 export interface RuntimeCodeHashes {
@@ -202,11 +224,11 @@ export async function loadCoston2PublicRequest(
   await verifyRuntimeCode(client, blockNumber, runtimeCodeHashes);
   const read = (address: Address, abi: readonly unknown[], functionName: string, args?: readonly unknown[]): Promise<unknown> =>
     client.readContract({ address, abi, functionName, ...(args ? { args } : {}), blockNumber });
-  const [stored, routerRegistry, routerVault] = await Promise.all([
-    read(PAYGUARD_COSTON2.router, PayGuardActionRouterAbi, "getRequest", [requestId]),
-    read(PAYGUARD_COSTON2.router, PayGuardActionRouterAbi, "registry"),
-    read(PAYGUARD_COSTON2.router, PayGuardActionRouterAbi, "vault"),
-  ]);
+  // The official credential-free RPC is rate limited, so keep this wallet-free
+  // checkpoint deterministic and avoid a burst of parallel eth_call requests.
+  const stored = await read(PAYGUARD_COSTON2.router, PayGuardActionRouterAbi, "getRequest", [requestId]);
+  const routerRegistry = await read(PAYGUARD_COSTON2.router, PayGuardActionRouterAbi, "registry");
+  const routerVault = await read(PAYGUARD_COSTON2.router, PayGuardActionRouterAbi, "vault");
   if (parseAddress(routerRegistry, "ROUTER_REGISTRY_INVALID") !== PAYGUARD_COSTON2.registry
     || parseAddress(routerVault, "ROUTER_VAULT_INVALID") !== PAYGUARD_COSTON2.vault) {
     throw new Error("CONTRACT_WIRING_MISMATCH");
@@ -220,13 +242,95 @@ export async function loadCoston2PublicRequest(
     || getAddress(snapshot.asset) !== PAYGUARD_COSTON2.asset) {
     throw new Error("REQUEST_DOMAIN_MISMATCH");
   }
+  const policy = await read(PAYGUARD_COSTON2.registry, PayGuardPolicyRegistryAbi, "getPolicy", [snapshot.policyCommitment]);
+  const binding = tupleField(policy, "binding", 0);
+  const policyOwner = parseAddress(tupleField(binding, "owner", 4), "POLICY_OWNER_INVALID");
+  if (parseUint(tupleField(binding, "chainId", 0), "POLICY_CHAIN_INVALID") !== snapshot.chainId
+    || parseAddress(tupleField(binding, "registry", 1), "POLICY_REGISTRY_INVALID") !== PAYGUARD_COSTON2.registry
+    || parseAddress(tupleField(binding, "vault", 2), "POLICY_VAULT_INVALID") !== PAYGUARD_COSTON2.vault
+    || parseAddress(tupleField(binding, "router", 3), "POLICY_ROUTER_INVALID") !== PAYGUARD_COSTON2.router
+    || parseBytes32(tupleField(binding, "policyId", 5), "POLICY_ID_INVALID") !== snapshot.policyId
+    || parseSmallUint(tupleField(binding, "policyVersion", 6), "POLICY_VERSION_INVALID") !== snapshot.policyVersion
+    || parseBytes32(tupleField(binding, "policyCommitment", 7), "POLICY_COMMITMENT_INVALID") !== snapshot.policyCommitment) {
+    throw new Error("POLICY_DOMAIN_MISMATCH");
+  }
   const request = publicRequestReadState(snapshot, block.timestamp);
   return {
     request,
     payee: derivePayeeReadState(snapshot),
     finalizedBlock: blockNumber,
     finalizedAt: block.timestamp,
+    policyOwner,
   };
+}
+
+export function validateRequestTransaction(
+  kind: RequestTransactionKind,
+  account: Address,
+  request: PublicRequestSnapshotV1,
+  policyOwner: Address,
+  now: bigint,
+): void {
+  if (kind === "EXECUTE") {
+    if (request.status !== "ALLOWED" || request.approvedDigest === zeroHash || now > request.approvedExpiry) {
+      throw new RequestTransactionError("INVALID_STATE");
+    }
+    return;
+  }
+  if (kind === "EXPIRE") {
+    if ((request.status !== "PENDING" && request.status !== "ALLOWED") || now <= request.expiry) {
+      throw new RequestTransactionError("INVALID_STATE");
+    }
+    return;
+  }
+  if (request.status !== "PENDING" && request.status !== "ALLOWED") throw new RequestTransactionError("INVALID_STATE");
+  if (account.toLowerCase() !== request.requester.toLowerCase() && account.toLowerCase() !== policyOwner.toLowerCase()) {
+    throw new RequestTransactionError("NOT_AUTHORIZED");
+  }
+}
+
+export async function executeRequestTransaction(
+  kind: RequestTransactionKind,
+  input: string,
+  account: Address,
+  provider: Eip1193Provider | null,
+): Promise<RequestTransactionResult> {
+  if (!provider) throw new RequestTransactionError("PROVIDER_ERROR");
+  const before = await loadCoston2PublicRequest(input);
+  if (before.request.status === "UNAVAILABLE") throw new RequestTransactionError("INVALID_STATE");
+  validateRequestTransaction(kind, account, before.request.snapshot, before.policyOwner, before.finalizedAt);
+  const functionName = kind === "EXECUTE" ? "execute" : kind === "EXPIRE" ? "expire" : "cancel";
+  const wallet = createWalletClient({ account, chain: COSTON2_CHAIN, transport: custom(provider) });
+  let hash: Hash;
+  try {
+    const { request } = await publicClient.simulateContract({
+      account,
+      address: PAYGUARD_COSTON2.router,
+      abi: PayGuardActionRouterAbi,
+      functionName,
+      args: [before.request.snapshot.requestId],
+    });
+    hash = await wallet.writeContract(request);
+  } catch (error) {
+    if (hasProviderErrorCode(error, 4001)) throw new RequestTransactionError("USER_REJECTED");
+    throw new RequestTransactionError("PROVIDER_ERROR");
+  }
+  const receipt = await waitForFinalizedReceipt(hash, (reason) => new RequestTransactionError(reason));
+  verifyRequestReceiptEvent(kind, before.request.snapshot, receipt.logs);
+  const after = await loadCoston2PublicRequest(input);
+  if (after.request.status === "UNAVAILABLE") throw new RequestTransactionError("POSTCONDITION_FAILED");
+  verifyRequestPostcondition(kind, before.request.snapshot, after.request.snapshot);
+  return { kind, hash, blockNumber: receipt.blockNumber, after };
+}
+
+export function requestTransactionFailureMessage(reason: RequestTransactionFailure): string {
+  if (reason === "INVALID_STATE") return "The finalized request state does not permit this action.";
+  if (reason === "NOT_AUTHORIZED") return "Only the request creator or policy owner can cancel this request.";
+  if (reason === "USER_REJECTED") return "The wallet request was cancelled. No router success is being asserted.";
+  if (reason === "TRANSACTION_REVERTED") return "The Coston2 router transaction reverted.";
+  if (reason === "EVENT_MISMATCH") return "The receipt did not contain the exact expected router event.";
+  if (reason === "POSTCONDITION_FAILED") return "The finalized router state did not match the submitted action.";
+  return "The wallet or Coston2 provider could not complete the router transaction safely.";
 }
 
 export function parseFTestXrpAmount(value: string): bigint {
@@ -517,13 +621,12 @@ async function verifyRuntimeCode(client: Coston2ReadClient, blockNumber: bigint,
     ["vault", PAYGUARD_COSTON2.vault],
     ["router", PAYGUARD_COSTON2.router],
   ] as const;
-  const code = await Promise.all(contractEntries.map(([, address]) => client.getBytecode({ address, blockNumber })));
-  contractEntries.forEach(([name], index) => {
-    const runtime = code[index];
+  for (const [name, address] of contractEntries) {
+    const runtime = await client.getBytecode({ address, blockNumber });
     if (!runtime || runtime === "0x" || keccak256(runtime).toLowerCase() !== runtimeCodeHashes[name].toLowerCase()) {
       throw new Error(`RUNTIME_${name.toUpperCase()}_MISMATCH`);
     }
-  });
+  }
 }
 
 function parseStoredRequest(value: unknown): PublicRequestSnapshotV1 {
@@ -648,14 +751,17 @@ function sameAccounting(left: VaultAccounting, right: VaultAccounting): boolean 
     && left.refunded === right.refunded;
 }
 
-async function waitForFinalizedReceipt(hash: Hash): Promise<TransactionReceipt> {
+async function waitForFinalizedReceipt(
+  hash: Hash,
+  failure: (reason: "PROVIDER_ERROR" | "TRANSACTION_REVERTED") => Error = (reason) => new VaultTransactionError(reason),
+): Promise<TransactionReceipt> {
   let receipt: TransactionReceipt;
   try {
     receipt = await publicClient.waitForTransactionReceipt({ hash, confirmations: 1, timeout: 90_000 });
   } catch {
-    throw new VaultTransactionError("PROVIDER_ERROR");
+    throw failure("PROVIDER_ERROR");
   }
-  if (receipt.status !== "success") throw new VaultTransactionError("TRANSACTION_REVERTED");
+  if (receipt.status !== "success") throw failure("TRANSACTION_REVERTED");
   for (let attempt = 0; attempt < 60; attempt += 1) {
     try {
       const finalized = await publicClient.getBlock({ blockTag: "finalized" });
@@ -665,7 +771,7 @@ async function waitForFinalizedReceipt(hash: Hash): Promise<TransactionReceipt> 
     }
     await new Promise((resolve) => setTimeout(resolve, 1_000));
   }
-  throw new VaultTransactionError("PROVIDER_ERROR");
+  throw failure("PROVIDER_ERROR");
 }
 
 export function verifyVaultReceiptEvent(kind: VaultTransactionKind, amount: bigint, account: Address, logs: readonly VaultReceiptLog[]): void {
@@ -696,4 +802,43 @@ export function verifyVaultReceiptEvent(kind: VaultTransactionKind, amount: bigi
     }
   }
   throw new VaultTransactionError("EVENT_MISMATCH");
+}
+
+export function verifyRequestReceiptEvent(
+  kind: RequestTransactionKind,
+  request: PublicRequestSnapshotV1,
+  logs: readonly VaultReceiptLog[],
+): void {
+  const expectedEvent = kind === "EXECUTE" ? "RequestExecuted" : kind === "EXPIRE" ? "RequestExpired" : "RequestCancelled";
+  for (const log of logs) {
+    if (log.address.toLowerCase() !== PAYGUARD_COSTON2.router.toLowerCase()) continue;
+    try {
+      const decoded = decodeEventLog({ abi: PayGuardActionRouterAbi, data: log.data, topics: log.topics });
+      if (decoded.eventName !== expectedEvent || decoded.args.requestId.toLowerCase() !== request.requestId.toLowerCase()) continue;
+      if (kind !== "EXECUTE") return;
+      if (decoded.eventName === "RequestExecuted"
+        && decoded.args.target.toLowerCase() === request.target.toLowerCase()
+        && decoded.args.amount === request.amount
+        && decoded.args.checkpoint.toLowerCase() === request.approvedCheckpoint.toLowerCase()) return;
+    } catch {
+      // Ignore unrelated or malformed logs; one exact event is mandatory below.
+    }
+  }
+  throw new RequestTransactionError("EVENT_MISMATCH");
+}
+
+export function verifyRequestPostcondition(
+  kind: RequestTransactionKind,
+  before: PublicRequestSnapshotV1,
+  after: PublicRequestSnapshotV1,
+): void {
+  const expected = kind === "EXECUTE" ? "EXECUTED" : kind === "EXPIRE" ? "EXPIRED" : "CANCELLED";
+  if (after.status !== expected
+    || after.requestId.toLowerCase() !== before.requestId.toLowerCase()
+    || after.requestHash.toLowerCase() !== before.requestHash.toLowerCase()
+    || after.policyCommitment.toLowerCase() !== before.policyCommitment.toLowerCase()
+    || after.amount !== before.amount
+    || after.target.toLowerCase() !== before.target.toLowerCase()) {
+    throw new RequestTransactionError("POSTCONDITION_FAILED");
+  }
 }

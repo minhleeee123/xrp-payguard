@@ -129,6 +129,15 @@ zero horizontal overflow after the responsive table fix, and zero browser
 storage. The Auditor explicitly reported request-state verification rather than
 FCC evidence; no threshold decision or settlement was inferred.
 
+The router-action browser preview used an injected public Coston2 account and
+the live reviewed request. Its finalized state disabled Execute, enabled Expire,
+and disabled Cancel for the non-owner/non-requester account. Preparing Expire
+displayed the exact router/request hash and the no-client-ALLOW boundary without
+calling `eth_sendTransaction`; storage and horizontal-overflow checks remained
+zero/false. Deterministic tests cover state/time/authorization eligibility,
+exact router events, and terminal postconditions. No new router transaction was
+broadcast from this UI during the check.
+
 Separate Lighthouse 13.0.1 lab runs against the production landing and Overview
 route scored 100 performance, accessibility, best practices, and SEO for both
 routes. The landing measured FCP 1,085 ms, LCP 1,139 ms, TBT 4 ms, and CLS 0;

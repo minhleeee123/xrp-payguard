@@ -388,8 +388,11 @@ evidence, and live role journeys remain open.
 - [x] Build the local Schedule/Requests surface with occurrence readiness,
   public threshold decisions, expiry, and recovery. Connect wallet-free exact-ID
   lookup to one finalized Coston2 block with runtime/wiring/domain/request-hash
-  validation and shared Payee/Auditor request projection; live executor actions
-  remain open.
+  validation and shared Payee/Auditor request projection. Add two-step router
+  execute/expire/cancel controls whose eligibility comes only from finalized
+  status/time and registry requester/owner facts, followed by simulation,
+  receipt/event, and terminal-state checks; browser preview passes, while a new
+  UI-submitted router transaction remains outside the evidence set.
 - [x] Build the local Payee view with expected public amount/timing and
   schema-checked receipt status derived from the finalized router request,
   without policy reveal; executed settlement transaction proof remains open.

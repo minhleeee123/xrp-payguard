@@ -231,6 +231,15 @@ same validated public state. A request lookup never becomes a threshold-result
 or FCC-evidence claim; executed Payee status additionally requires an exact
 settlement transaction receipt.
 
+The router writer cannot create a request or submit an evaluation. It can only
+call `execute`, `expire`, or `cancel` after reloading the finalized request and
+registry policy owner. Execute requires an existing threshold-derived Allowed
+state and unexpired approved result; expire requires the canonical request
+expiry to have passed; cancel requires the connected account to equal the
+requester or policy owner. The writer then simulates, signs in the injected
+wallet, validates the exact router event, and re-reads the expected terminal
+state. No caller-supplied decision exists in this path.
+
 ### XRPL-native path
 
 The XRPL owner commits a Smart Account operation in a supported Payment/mint

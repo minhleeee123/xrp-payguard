@@ -49,6 +49,15 @@ XRPL/FDC-triggered request is prefilled as a public example. The Payee view
 derives its pending/ready/denied/expired/cancelled projection from that same
 validated tuple; executed settlement remains unavailable until its exact
 transaction receipt is also proven.
+
+The Requests writer exposes only the router's existing public transitions:
+execute a chain-derived `ALLOWED` request before its approved expiry, expire a
+`PENDING`/`ALLOWED` request after its request expiry, or cancel as the exact
+requester/policy owner. The policy owner is read from the bound registry policy,
+not supplied by the browser. Each action uses a separate preview, preflight
+simulation, injected-wallet signature, exact router-event verification, and
+finalized terminal-state check. There is no create/submit-evaluation control and
+no browser-supplied decision or `ALLOW` field.
 Auditor request lookup uses the same wallet-free finalized router read and labels
 it only as canonical request-state verification. Full auditor evidence remains
 schema-checked against the request/evaluation digest, frozen machine set,
