@@ -157,7 +157,7 @@ mainnet work; they are not silently promoted by local tests.
 | Solution-3 lifecycle | Fourteen successful Coston2 transactions cover simulated three-machine registration, policy registration, recurring allow, cap denial, stop/resume/revoke, and exact vault conservation | Machine identities and result signers are explicitly ephemeral simulation |
 | FAssets exit | Amount-based and `redeemWithTag` Coston2 requests have matching validated XRPL payouts and `RedemptionPerformed` observations | Partial/default recovery and canonical PayGuard settlement consumption remain open |
 | Web2Json | Local source commitment allowlist, exact public request, jq/tuple ABI, MIC/response, source-asserted freshness, replay, and verifier failure tests pass | No production source, live proof, source-truth guarantee, private policy evaluation, or on-chain consumer |
-| Web | Vercel static shell, 15-asset reviewed evidence mirror, desktop/mobile/keyboard smoke, and Lighthouse audit pass | Wallet, relay, policy provider, FCC, and live auditor providers are unavailable |
+| Web | Interactive Vercel Coston2 dApp, finalized wallet/vault/request reads, guarded vault/router writes, strict lifecycle demo, 15-asset evidence mirror, and production browser/Lighthouse pass | Production FCC/relay/policy providers and fresh user-wallet broadcast evidence are unavailable |
 | Release | Release validators fail closed | `pnpm release:check` correctly reports `planned`; no verified release manifest exists |
 
 ## Coston2 public identifiers
@@ -204,9 +204,10 @@ Suggested five-minute walkthrough:
    false. Policy Studio commitment generation remains local and is not a custody
    receipt or activation.
 
-The deployed artifact is a public-safe static shell and evidence mirror. It
-contains no `.env.local`, key, credential, private policy, ciphertext, or raw
-signature.
+The deployed artifact is a public-safe static Vite bundle with an interactive
+injected-wallet Coston2 client and evidence mirror. It contains no `.env.local`,
+key, credential, private policy, ciphertext, or raw signature. No server-side
+wallet, relay, or production FCC service is hidden behind the deployment.
 
 ## Evidence map
 

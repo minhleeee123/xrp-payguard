@@ -118,9 +118,10 @@ pnpm --filter @xrp-payguard/web build
 vercel deploy apps/web/dist --prod --yes --project xrp-payguard
 ```
 
-The deployment contains only `apps/web/dist`; wallet signing stays in the
-injected wallet, while FCC machines, a relay, a policy provider, and a verified
-PayGuard release remain external. The latest sanitized deployment record is
+The current production deployment at <https://xrp-payguard.vercel.app/> contains
+only `apps/web/dist`; wallet signing stays in the injected wallet, while FCC
+machines, a relay, a policy provider, and a verified PayGuard release remain
+external. The latest sanitized deployment record is
 [`vercel-preview-2026-08-09.json`](../../evidence/web/vercel-preview-2026-08-09.json).
 
 The build also emits only the allowlisted public evidence files under

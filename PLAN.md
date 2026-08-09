@@ -365,17 +365,18 @@ verified on Coston2. External review and registered FCC execution remain open.
 
 Exit: one XRPL Testnet payment funds a canonical Coston2 PayGuard vault and an
 FDC-attested trigger safely advances one request. A single live testnet run
-passes this funding exit; FCC custody/evaluation, hosted deployment, and
-redemption remain separate release gates.
+passes this funding exit; FCC custody/evaluation and redemption remain separate
+release gates.
 
 ### Phase 6 — full application
 
-The checked items describe the reviewed source application. Fresh user-wallet
-broadcast evidence, the next Vercel deployment, production FCC, and live editable
-governance remain open.
+The checked items describe the reviewed source application and the current
+Vercel deployment. Fresh user-wallet broadcast evidence, production FCC, and
+live editable governance remain open.
 
-- [x] Build the local laptop-first application shell and standalone landing
-  page; hosted deployment and production smoke remain open.
+- [x] Build the laptop-first application shell and standalone landing page;
+  deploy the exact reviewed artifact with Vercel CLI and pass production
+  HTML/assets/evidence, desktop/mobile, keyboard, and Lighthouse smoke.
 - [x] Build the local Policy Studio with templates, exact public/private
   preview, local validation, schema-checked custody receipt progress, and an
   activation block; live ingress and activation evidence remain open.
@@ -415,8 +416,9 @@ governance remain open.
   neutral evidence-checkpoint observation from the validated Coston2 request;
   never infer Ready/Allowed from Pending readiness.
 - [x] Make laptop UX primary with responsive/mobile layout, focus states, and
-  explicit loading/error/recovery copy; full accessibility and reduced-motion
-  review remains open.
+  explicit loading/error/recovery copy. Production landing/Overview Lighthouse
+  and all-view responsive/reduced-motion checks pass; manual assistive-technology
+  testing remains open.
 
 Exit: every user role can complete its canonical journey without a mock or
 manual database edit.

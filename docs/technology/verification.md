@@ -107,8 +107,8 @@ Forbidden evidence:
   policy/key fields.
 
 The local Vite browser smoke run on 2026-08-09 covered the landing page and all
-seven application views at 1440px and 390px. It found no horizontal overflow;
-the mobile shell exposed five primary destinations plus a three-item secondary
+eight application views at 1440px and 390px. It found no horizontal overflow;
+the mobile shell exposed five primary destinations plus a four-item secondary
 menu. The separate Vercel evidence record covers public HTML/JS/CSS and evidence
 reachability, desktop/mobile Chrome captures, and Enter-key activation from the
 landing page to the Overview view. Neither run is a live FCC or release smoke.
@@ -160,13 +160,13 @@ primary action and described wallet reads/guarded writes without upgrading the
 simulated FCC boundary. Visual inspection found no clipped horizontal content;
 the placeholder Team invite and generic detail-toast controls were absent.
 
-Separate Lighthouse 13.0.1 lab runs against the production landing and Overview
-route scored 100 performance, accessibility, best practices, and SEO for both
-routes. The landing measured FCP 1,085 ms, LCP 1,139 ms, TBT 4 ms, and CLS 0;
-the Overview measured FCP 1,082 ms, LCP 1,139 ms, TBT 7 ms, and CLS 0. The specific
+Fresh Lighthouse 13.4.1 lab runs against the production landing and Overview
+route scored 99 performance and 100 accessibility, best practices, and SEO for
+both routes. The landing measured FCP/LCP 1,578 ms, TBT 25 ms, and CLS 0; the
+Overview measured FCP/LCP 1,570 ms, TBT 19 ms, and CLS 0. The specific
 visible-label/accessibility-name mismatch and color-contrast audits both have
 zero remaining nodes after aligning the brand name and raising the canonical
-muted-text token to `#a0a0a0`. Lighthouse estimated zero landing and 23,373
+muted-text token to `#a0a0a0`. Lighthouse estimated 53,714 landing and 55,555
 Overview bytes of unused first-load JavaScript in this run; lab results remain
 environment-dependent.
 This audit covers the landing and Overview routes, not every authenticated or
@@ -179,7 +179,7 @@ local sources. It reran recursive public-field checks and both simulation
 boundaries. The repository-only result is
 [`public-evidence-deployment-audit-2026-08-09.json`](../../evidence/web/public-evidence-deployment-audit-2026-08-09.json);
 it is intentionally excluded from the hosted index and does not upgrade the
-static shell or FCC/release claims.
+interactive testnet client into an FCC or verified-release claim.
 
 ## 4. Release manifest
 
