@@ -35,4 +35,12 @@ describe("editorial landing page", () => {
     expect(css).toContain(".reveal-ready .landing-reveal { opacity: 1; transform: none; }");
     expect(css).not.toMatch(/(?:linear|radial|conic)-gradient/i);
   });
+
+  it("ships a local SVG favicon instead of causing a production asset miss", () => {
+    const document = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+    const favicon = readFileSync(new URL("../public/favicon.svg", import.meta.url), "utf8");
+    expect(document).toContain('rel="icon" type="image/svg+xml" href="/favicon.svg"');
+    expect(favicon).toContain('fill="#c5ff4a"');
+    expect(favicon).not.toMatch(/gradient|<image\b|href="https?:\/\//i);
+  });
 });
