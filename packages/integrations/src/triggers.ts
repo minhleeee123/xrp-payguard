@@ -214,7 +214,8 @@ function evmInputCommitment(proof: EvmTransactionTriggerProofV1): Hex {
   ));
 }
 
-function xrpInputCommitment(proof: XrplPaymentTriggerProofV1): Hex {
+/** Canonical public commitment shared with PayGuardXrplFdcTrigger.sol. */
+export function xrplPaymentInputCommitmentV1(proof: XrplPaymentTriggerProofV1): Hex {
   const response = proof.responseBody;
   return keccak256(encodeAbiParameters(
     [{ type: "bytes32" }, { type: "bytes32" }, { type: "bytes32" }, { type: "address" }, { type: "uint64" },
@@ -364,13 +365,13 @@ export async function verifyXrplPaymentTrigger(
       || signedAmounts.some((amount) => amount < MIN_INT256 || amount > MAX_INT256)
       || response.receivedAmount !== expected.receivedAmount || response.intendedReceivedAmount !== expected.receivedAmount
       || !memoMatches || !destinationTagMatches) return { ok: false, reason: "RESPONSE_MISMATCH" };
-    const inputCommitment = xrpInputCommitment(proof);
+    const inputCommitment = xrplPaymentInputCommitmentV1(proof);
     const verified = await verifyCryptographicProof(proof, verifier, usedProofCommitments);
     if (typeof verified !== "string") return verified;
     if (usedTransactions.has(request.transactionId.toLowerCase())) return { ok: false, reason: "REPLAY" };
     if (proof.finalized !== true || !isHex32(proof.attestationType)
       || proof.attestationType.toLowerCase() !== FDC_XRP_PAYMENT_V1.toLowerCase()
-      || xrpInputCommitment(proof).toLowerCase() !== inputCommitment.toLowerCase()) return { ok: false, reason: "MALFORMED" };
+      || xrplPaymentInputCommitmentV1(proof).toLowerCase() !== inputCommitment.toLowerCase()) return { ok: false, reason: "MALFORMED" };
     return { ok: true, inputCommitment, proofCommitment: verified };
   } catch {
     return { ok: false, reason: "MALFORMED" };

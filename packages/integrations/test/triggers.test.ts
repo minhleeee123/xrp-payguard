@@ -5,6 +5,7 @@ import {
   FDC_XRP_PAYMENT_V1,
   verifyEvmTransactionTrigger,
   verifyXrplPaymentTrigger,
+  xrplPaymentInputCommitmentV1,
   type EvmTransactionTriggerProofV1,
   type ExpectedEvmTransactionTriggerV1,
   type ExpectedXrplPaymentTriggerV1,
@@ -106,6 +107,37 @@ const xrpProof = (patch: Partial<XrplPaymentTriggerProofV1> = {}): XrplPaymentTr
 });
 
 describe("FDC external trigger adapters", () => {
+  it("matches the Solidity XRPPayment input-commitment golden vector", () => {
+    const requestId = keccak256(stringToHex("payguard-request"));
+    const vector = xrpProof({
+      sourceId: padHex(stringToHex("testXRP"), { dir: "right", size: 32 }),
+      votingRound: 42n,
+      lowestUsedTimestamp: 1_900n,
+      requestBody: {
+        transactionId: keccak256(stringToHex("xrpl-transaction")),
+        proofOwner: "0x00000000000000000000000000000000000000c3",
+      },
+      responseBody: {
+        blockNumber: 99n,
+        blockTimestamp: 1_900n,
+        sourceAddress: "rSource",
+        sourceAddressHash: keccak256(stringToHex("rSource")),
+        receivingAddressHash: keccak256(stringToHex("rDestination")),
+        intendedReceivingAddressHash: keccak256(stringToHex("rDestination")),
+        spentAmount: 100n,
+        intendedSpentAmount: 100n,
+        receivedAmount: 100n,
+        intendedReceivedAmount: 100n,
+        hasMemoData: true,
+        firstMemoData: requestId,
+        hasDestinationTag: false,
+        destinationTag: 0n,
+        status: 0,
+      },
+    });
+    expect(xrplPaymentInputCommitmentV1(vector)).toBe("0x0b5a30154dc9ca903d642d9d67136ca5e6104fdcafdac7c270d3370ab96b67f6");
+  });
+
   it("binds the official EVMTransaction request and response fields", async () => {
     const verifier = { verify: async () => id("verified-evm-proof") };
     const accepted = await verifyEvmTransactionTrigger(evmProof(), expectedEvm, 120n, verifier);

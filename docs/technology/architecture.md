@@ -268,9 +268,16 @@ returns a non-zero canonical proof commitment. Exact request, success status,
 addresses/hashes, amount or value, memo/input/events, voting round, block, and
 freshness are sealed into a domain-separated input commitment. Dynamic bytes
 are bounded and that commitment is recomputed after the asynchronous verifier
-call to reject in-memory proof drift. Local replay sets are preflight guards;
-the Coston2 consumer must atomically consume the transaction and commitment in
-canonical state. That live path is not yet verified, and Web2Json is not
+call to reject in-memory proof drift. Local replay sets are preflight guards.
+The `PayGuardXrplFdcTrigger` contract now supplies the locally verified
+canonical XRPL consumer: it runtime-binds `FdcVerification`, verifies the
+official proof, requires a consumer-owned proof plus an exact request-ID memo,
+and atomically consumes transaction/proof commitments while creating one
+`Pending` router request. A router failure reverts the replay markers, and the
+contract has no `ALLOW` path. Its Coston2 deployment/live proof receipt remains
+unverified. V1 FCC evaluators also do not yet interpret private FDC
+source/destination descriptors, so the consumer proves only safe canonical
+request creation—not private trigger-policy authorization. Web2Json is not
 implemented.
 
 ### Official Flare dependency resolution

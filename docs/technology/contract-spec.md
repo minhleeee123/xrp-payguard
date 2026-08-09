@@ -50,6 +50,29 @@ Responsibilities:
 - expose no evaluation command, policy field, decision input, or fund-moving
   path.
 
+### `PayGuardXrplFdcTrigger`
+
+Responsibilities:
+
+- bind the current `FdcVerification` address through the supported Flare
+  Contract Registry boundary and fail closed on runtime drift;
+- verify one official `IXRPPayment.Proof` and accept only Coston2 `testXRP`, a
+  successful payment, a consumer-owned proof, a fresh timestamp, matching
+  received amount, and an exact 32-byte PayGuard request-ID memo;
+- derive the same public FDC input commitment as the TypeScript adapter and
+  atomically mark both transaction ID and full proof-calldata commitment used;
+- call `PayGuardActionRouter.createRequest` in the same transaction, so a
+  verifier or router failure rolls replay state back;
+- create only a `Pending` request. It has no decision or execution function,
+  and the existing two-of-three FCC threshold remains mandatory for `ALLOW`.
+
+This consumer and its real-router integration are locally tested. They are not
+a Coston2 deployment or live-trigger claim until separate public evidence exists.
+The consumer checks the public payment/request binding only; V1 evaluators do
+not yet interpret private FDC source/destination descriptors. A policy that
+requires those private semantics must therefore fail closed until the private
+schema, snapshot verification, and cross-language evaluator path are added.
+
 ### Adapter interfaces
 
 V1 adapters are intentionally narrow:
@@ -79,10 +102,12 @@ receipted policy version; the replacement signer is rejected for the old
 commitment, whose frozen set is unchanged and fails closed when its threshold
 is unavailable.
 
-The separately generated `PayGuardFoundationSender` is not one of the original
-three public-state contracts. It is now deployed and extension-registered on
-Coston2 under independently checked public evidence. Its canonical request
-binding is shared with the Go extension through a hard-coded golden digest.
+The separately generated `PayGuardFoundationSender` and locally tested
+`PayGuardXrplFdcTrigger` are not among the original three public-state
+contracts. The sender is deployed and extension-registered on Coston2 under
+independently checked public evidence. The trigger consumer is not yet deployed.
+Their canonical request/commitment bindings are protected by hard-coded
+cross-language golden digests.
 Production machine registration and live result verification remain mandatory
 before Gate A can pass.
 

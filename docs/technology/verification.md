@@ -77,6 +77,9 @@ Forbidden evidence:
 
 - Correct and wrong XRPL payment, destination, memo, owner, amount, fee, nonce.
 - FDC request/finalization/DA proof/checkpoint resume and duplicate transaction.
+- XRPL FDC consumer golden commitment, payment/memo/owner/freshness,
+  runtime-verifier drift, transaction/proof replay, and verifier/router atomic
+  rollback against both a rejecting mock and the real local router.
 - Fresh/stale/unavailable/negative FTSO value.
 - Direct mint success, delayed mint, callback/event mismatch, quote drift.
 - FAssets approve/transfer/redeem request and non-instant exit semantics.
