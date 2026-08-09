@@ -9,6 +9,10 @@
 
 **Selected bounty:** Interoperable Asset Products
 
+The owner confirmed this track selection on 2026-08-09. DoraHacks account
+eligibility, final form availability, submission, acceptance, and any award
+remain unverified until evidenced from the owner's session.
+
 **One-sentence description:** XRP PayGuard lets an XRPL-native user fund a
 public Flare vault and define a confidential recurring-payment policy whose
 future authorization is designed to require matching results from a frozen FCC

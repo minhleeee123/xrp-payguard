@@ -37,6 +37,11 @@ submission.
 
 ## 2. Target bounty strategy
 
+The owner confirmed **Interoperable Asset Products** as PayGuard's selected
+hackathon track on 2026-08-09. This records the project decision only; it does
+not prove account eligibility, an enabled or submitted form, organizer
+acceptance, bounty selection receipt, or an award.
+
 ### Interoperable Asset Products — evidence-backed submission target
 
 This is the primary hackathon target under solution 3. PayGuard has its own
