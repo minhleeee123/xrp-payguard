@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import type { ActionRequestV1, Hex, SpendStateV1 } from "@xrp-payguard/protocol";
 import { getAddress, isAddress, zeroAddress } from "viem";
@@ -24,6 +25,7 @@ export interface RelayServerOptions {
   rateLimit?: { maxRequests: number; windowMs: number };
   maxTrackedClients?: number;
   nowMs?: () => number;
+  metrics?: { bearerToken: string };
 }
 
 interface RateWindow {
@@ -36,6 +38,7 @@ export function createRelayServer(relay: Relay, options: RelayServerOptions): Se
   const rateLimit = normalizeRateLimit(options.rateLimit);
   const maxTrackedClients = positiveInteger(options.maxTrackedClients ?? DEFAULT_MAX_TRACKED_CLIENTS, "maxTrackedClients");
   const nowMs = options.nowMs ?? Date.now;
+  const metricsToken = normalizeMetricsToken(options.metrics);
   const windows = new Map<string, RateWindow>();
   return createServer(async (request, response) => {
     try {
@@ -48,6 +51,13 @@ export function createRelayServer(relay: Relay, options: RelayServerOptions): Se
           dependencyStatus: "not-probed",
           limits: { ...relay.healthBinding(), rateLimit },
         });
+      }
+      if (request.method === "GET" && request.url === "/metrics") {
+        if (!metricsToken) return sendJson(response, 404, { error: "not found" });
+        if (!authorizedMetricsRequest(request.headers.authorization, metricsToken)) {
+          return sendJson(response, 401, { error: "metrics unavailable" }, { "www-authenticate": "Bearer" });
+        }
+        return sendText(response, 200, relay.prometheusMetrics(), "text/plain; version=0.0.4; charset=utf-8");
       }
       if (request.method !== "POST" || request.url !== "/v1/evaluate") return sendJson(response, 404, { error: "not found" });
       if (!request.headers["content-type"]?.toLowerCase().startsWith("application/json")) {
@@ -137,6 +147,16 @@ function sendJson(response: ServerResponse, status: number, value: unknown, head
   response.end(body);
 }
 
+function sendText(response: ServerResponse, status: number, body: string, contentType: string): void {
+  response.writeHead(status, {
+    "content-type": contentType,
+    "content-length": Buffer.byteLength(body),
+    "cache-control": "no-store",
+    "x-content-type-options": "nosniff",
+  });
+  response.end(body);
+}
+
 function stringifyPublic(value: unknown): string {
   return JSON.stringify(value, (_, item) => typeof item === "bigint" ? item.toString() : item);
 }
@@ -180,6 +200,20 @@ function normalizeRateLimit(value: RelayServerOptions["rateLimit"]): { maxReques
     maxRequests: positiveInteger(value?.maxRequests ?? DEFAULT_RATE_LIMIT_MAX, "rateLimit.maxRequests"),
     windowMs: positiveInteger(value?.windowMs ?? DEFAULT_RATE_LIMIT_WINDOW_MS, "rateLimit.windowMs"),
   };
+}
+
+function normalizeMetricsToken(value: RelayServerOptions["metrics"]): string | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value.bearerToken !== "string" || value.bearerToken.length < 32 || value.bearerToken.length > 4_096
+    || /[\r\n]/.test(value.bearerToken)) throw new Error("metrics bearer token is invalid");
+  return value.bearerToken;
+}
+
+function authorizedMetricsRequest(authorization: string | undefined, token: string): boolean {
+  if (typeof authorization !== "string" || !authorization.startsWith("Bearer ")) return false;
+  const supplied = Buffer.from(authorization.slice("Bearer ".length));
+  const expected = Buffer.from(token);
+  return supplied.length === expected.length && timingSafeEqual(supplied, expected);
 }
 
 function positiveInteger(value: number, label: string): number {

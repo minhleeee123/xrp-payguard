@@ -14,6 +14,7 @@ import type {
   RelayOutcome,
   RouterSubmitter,
 } from "./types.js";
+import { RelayTelemetry } from "./observability.js";
 
 const HEX32 = /^0x[0-9a-fA-F]{64}$/;
 const DEFAULT_TIMEOUT_MS = 8_000;
@@ -24,6 +25,7 @@ export interface RelayOptions {
   timeoutMs?: number;
   maxConcurrentEvaluations?: number;
   now?: () => bigint;
+  telemetry?: RelayTelemetry;
 }
 
 export class RelayCapacityError extends Error {
@@ -38,6 +40,7 @@ export class Relay {
   private readonly timeoutMs: number;
   private readonly maxConcurrentEvaluations: number;
   private readonly now: () => bigint;
+  private readonly telemetry: RelayTelemetry;
   private readonly inFlightEvaluations = new Map<Hex, Promise<RelayOutcome>>();
   private readonly inFlightSubmissions = new Map<string, Promise<number>>();
   private activeEvaluations = 0;
@@ -54,6 +57,7 @@ export class Relay {
     this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     this.maxConcurrentEvaluations = options.maxConcurrentEvaluations ?? DEFAULT_MAX_CONCURRENT_EVALUATIONS;
     this.now = options.now ?? (() => BigInt(Math.floor(Date.now() / 1000)));
+    this.telemetry = options.telemetry ?? new RelayTelemetry();
   }
 
   healthBinding(): { timeoutMs: number; maxConcurrentEvaluations: number } {
@@ -63,6 +67,10 @@ export class Relay {
     };
   }
 
+  prometheusMetrics(): string {
+    return this.telemetry.renderPrometheus();
+  }
+
   evaluate(request: ActionRequestV1, state: SpendStateV1, machines: readonly MachineDescriptor[]): Promise<RelayOutcome> {
     let descriptors: MachineDescriptor[];
     let key: Hex;
@@ -70,28 +78,56 @@ export class Relay {
       descriptors = validateMachines(machines);
       key = evaluationKey(request, state, descriptors);
     } catch (error) {
+      this.telemetry.evaluationRejected("invalid");
       return Promise.reject(error);
     }
     const existing = this.inFlightEvaluations.get(key);
-    if (existing) return existing;
-    if (this.activeEvaluations >= this.maxConcurrentEvaluations) return Promise.reject(new RelayCapacityError());
+    if (existing) {
+      this.telemetry.evaluationWasCoalesced();
+      return existing;
+    }
+    if (this.activeEvaluations >= this.maxConcurrentEvaluations) {
+      this.telemetry.evaluationRejected("capacity");
+      return Promise.reject(new RelayCapacityError());
+    }
     this.activeEvaluations += 1;
-    const operation = this.evaluateOnce(request, state, descriptors).finally(() => {
-      this.inFlightEvaluations.delete(key);
-      this.activeEvaluations -= 1;
-    });
+    this.telemetry.evaluationStarted();
+    const operation = this.evaluateOnce(request, state, descriptors)
+      .then((outcome) => {
+        this.telemetry.evaluationFinished(outcome.status, outcome.valid.length, outcome.failures);
+        return outcome;
+      }, (error: unknown) => {
+        this.telemetry.evaluationFinished("ERROR", 0, 3);
+        throw error;
+      })
+      .finally(() => {
+        this.inFlightEvaluations.delete(key);
+        this.activeEvaluations -= 1;
+      });
     this.inFlightEvaluations.set(key, operation);
     return operation;
   }
 
   submitThreshold(outcome: RelayOutcome, submitter: RouterSubmitter): Promise<number> {
     if (outcome.status !== "THRESHOLD_READY" || !outcome.digest || outcome.matching.length < 2) {
+      this.telemetry.submissionRejected("not_ready");
       return Promise.reject(new Error("evaluation threshold is not ready"));
     }
     const key = `${outcome.requestId.toLowerCase()}:${outcome.digest.toLowerCase()}`;
     const existing = this.inFlightSubmissions.get(key);
-    if (existing) return existing;
-    const operation = this.submitOnce(outcome, submitter).finally(() => this.inFlightSubmissions.delete(key));
+    if (existing) {
+      this.telemetry.submissionWasCoalesced();
+      return existing;
+    }
+    const operation = this.submitOnce(outcome, submitter)
+      .then((count) => {
+        this.telemetry.submissionFinished("success");
+        return count;
+      }, (error: unknown) => {
+        this.telemetry.submissionFinished("error");
+        throw error;
+      })
+      .finally(() => this.inFlightSubmissions.delete(key));
     this.inFlightSubmissions.set(key, operation);
     return operation;
   }

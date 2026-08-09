@@ -20,6 +20,14 @@ so process liveness is never presented as FCC readiness. Evaluation requests
 are rate-limited by the direct socket address, machine responses are bounded,
 and client-supplied proxy headers are not trusted.
 
+`GET /metrics` is disabled unless the process receives a runtime-only bearer
+token of at least 32 characters. When enabled it exposes Prometheus counters
+and a gauge with fixed labels only: aggregate evaluation outcomes/rejections,
+valid/failed machine-result counts, coalescing, and submission outcomes. It
+never exports request/account/machine identifiers, endpoints, decisions,
+policy material, ciphertext, credentials, signatures, or per-request timing.
+The endpoint must still sit behind operator-only network access in production.
+
 Identical concurrent public evaluation/submission work is coalesced in memory.
 That map is only a transient load-control mechanism: it stores no private data,
 is cleared on completion, and is not a replay or correctness authority. After a

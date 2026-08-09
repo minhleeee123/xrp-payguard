@@ -440,7 +440,12 @@ supported by evidence.
 - [ ] External security audits and remediation.
 - [ ] Mainnet protocol/address re-resolution and a disposable canary release.
 - [ ] Hardware-backed multi-operator FCC policy and economic liveness design.
-- [ ] Production observability that exposes no private policy material.
+- [x] Implement aggregate-only relay metrics with fixed labels, disabled-by-
+  default bearer access, and tests excluding identifiers, decisions, policy
+  material, ciphertext, credentials, signatures, and per-request timing.
+- [ ] Deploy operator-only production monitoring with managed credentials,
+  authenticated transport, retention/access controls, alerts, and sanitized
+  incident integration.
 - [ ] Mainnet FXRP pilot with bounded value, support, incident, and rollback plans.
 - [ ] Additional policy primitives only after compatibility and privacy review.
 

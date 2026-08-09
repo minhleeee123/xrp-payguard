@@ -72,6 +72,44 @@ describe("relay HTTP boundary", () => {
     });
   });
 
+  it("keeps aggregate metrics disabled by default and bearer-protected when enabled", async () => {
+    const metricsFixture = "local-test-metrics-credential-32-bytes-minimum";
+    const disabled = createRelayServer(new Relay({ transport: unavailableTransport }), { binding });
+    await withServer(disabled, async (origin) => {
+      expect((await fetch(`${origin}/metrics`)).status).toBe(404);
+    });
+
+    const relay = new Relay({ transport: unavailableTransport });
+    const enabled = createRelayServer(relay, { binding, metrics: { bearerToken: metricsFixture } });
+    await withServer(enabled, async (origin) => {
+      const missing = await fetch(`${origin}/metrics`);
+      expect(missing.status).toBe(401);
+      expect(await missing.text()).not.toContain(metricsFixture);
+      const wrong = await fetch(`${origin}/metrics`, { headers: { authorization: `Bearer ${"x".repeat(metricsFixture.length)}` } });
+      expect(wrong.status).toBe(401);
+
+      await fetch(`${origin}/v1/evaluate`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: stringify({ request, state, machines }),
+      });
+      const metrics = await fetch(`${origin}/metrics`, { headers: { authorization: `Bearer ${metricsFixture}` } });
+      expect(metrics.status).toBe(200);
+      expect(metrics.headers.get("content-type")).toContain("text/plain");
+      expect(metrics.headers.get("cache-control")).toBe("no-store");
+      const body = await metrics.text();
+      expect(body).toContain('payguard_relay_evaluations_total{outcome="unavailable"} 1');
+      expect(body).not.toContain(metricsFixture);
+      expect(body).not.toContain(request.requestId);
+      expect(body).not.toContain(registry);
+
+      const health = await (await fetch(`${origin}/healthz`)).text();
+      expect(health).not.toContain(metricsFixture);
+    });
+
+    expect(() => createRelayServer(relay, { binding, metrics: { bearerToken: "too-short" } })).toThrow(/metrics bearer token/);
+  });
+
   it("enforces the configured domain and a bounded per-client rate window", async () => {
     let now = 10_000;
     const server = createRelayServer(new Relay({ transport: unavailableTransport }), {
