@@ -153,6 +153,13 @@ Coston2 checkpoints with explicit `SIMULATION ONLY`, ALLOW execution,
 horizontal overflow and browser storage remained empty. The development evidence
 route returned JSON with `no-store` and `nosniff`, matching the build artifact.
 
+The final local onboarding smoke rendered the first-time path at 1440×1200 and
+390×844, with direct routes to Demo, Vaults, Requests, and Policy Studio plus the
+official Flare faucet. The landing at 1440×1000 exposed the Coston2 demo as the
+primary action and described wallet reads/guarded writes without upgrading the
+simulated FCC boundary. Visual inspection found no clipped horizontal content;
+the placeholder Team invite and generic detail-toast controls were absent.
+
 Separate Lighthouse 13.0.1 lab runs against the production landing and Overview
 route scored 100 performance, accessibility, best practices, and SEO for both
 routes. The landing measured FCP 1,085 ms, LCP 1,139 ms, TBT 4 ms, and CLS 0;

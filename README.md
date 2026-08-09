@@ -189,11 +189,14 @@ Suggested five-minute walkthrough:
    public transfer and settlement.
 2. Press **Open app** with Enter and inspect the explicit provider-availability
    states. The shell never turns an unavailable dependency into mock success.
-3. In **Vaults**, connect an injected Coston2 wallet, inspect finalized balances,
+3. Follow **First-time test path** on Overview. The lifecycle and request read
+   need no wallet; the official faucet link supplies C2FLR and FTestXRP for the
+   optional injected-wallet path.
+4. In **Vaults**, connect an injected Coston2 wallet, inspect finalized balances,
    then use the two-step FTestXRP transaction preview without exposing a key.
-4. In **Requests**, load the prefilled canonical request; compare its router
+5. In **Requests**, load the prefilled canonical request; compare its router
    status, Payee projection, Auditor boundary, and guarded expiry action.
-5. Open **Demo lifecycle** to inspect the three distinct simulated machines,
+6. Open **Demo lifecycle** to inspect the three distinct simulated machines,
    fourteen Coston2 checkpoints, allow execution, cap denial, conservation, and
    the false live assertions:
    `hardwareTeeVerified`, `stableHttpsOriginsVerified`,

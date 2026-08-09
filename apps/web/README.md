@@ -34,6 +34,14 @@ policy use cases, public-safe evidence scope, FAQ/limitations, and
 reduced-motion-compatible ambient effects. It makes no remote image request and
 never upgrades the local FCC simulation into a live release claim.
 
+Overview begins with a no-persistence first-time test path. It routes directly
+to the wallet-free lifecycle, injected-wallet verification, vault controls, and
+canonical request lookup, and links to Flare's official Coston2 faucet for
+C2FLR and FTestXRP. It labels policy activation as a separate three-receipt FCC
+gate. Team has no invite control while no standalone role registry is deployed;
+the remaining buttons either navigate to a real view, open reviewed evidence,
+or prepare a verified Coston2 operation.
+
 Demo lifecycle parses the reviewed solution-3 artifact instead of rendering
 hard-coded success copy. It requires exactly three distinct simulated machine
 identities, two matching results per decision, fourteen successful Coston2
