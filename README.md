@@ -4,6 +4,7 @@
 > independently verifiable execution on Flare.
 
 [Live application](https://xrp-payguard.vercel.app/) ·
+[Five-minute judge walkthrough](#live-application-and-judge-walkthrough) ·
 [Public evidence index](https://xrp-payguard.vercel.app/evidence/index.json) ·
 [Hackathon handoff](docs/hackathon-handoff.md) ·
 [Architecture](docs/technology/architecture.md) ·
@@ -376,23 +377,59 @@ production FCC machine.
 ## Repository layout
 
 ```text
-apps/
-  fcc-extension/       Go private-policy handler, ingress, sealed store, admission
-  relay/               stateless threshold collection and executor orchestration
-  web/                 landing, live vault/request views, demo, Auditor, evidence UI
-packages/
-  protocol/            canonical TypeScript types, codecs, math, fixtures, evaluator
-  contracts/           Solidity registry, vault, router, FCC sender, FDC consumer
-  integrations/        XRPL, FDC, FTSO, Smart Accounts, FAssets, Web2Json boundaries
-  bindings/            deterministically generated PayGuard consumer bindings
-  sdk-examples/         compile-tested wallet and Flare dApp integration previews
-docs/                   product, architecture, security, verification, runbooks
-evidence/
-  coston2/              reviewed public-safe live testnet observations
-  simulation/           reviewed records explicitly barred from live FCC claims
-  web/                  repository-only deployment and corpus audits
-tooling/                fail-closed deployment, recovery, evidence, and drift gates
+xrp-payguard/
+├── api/
+│   └── demo/                  thin Vercel function adapters; no policy engine
+├── apps/
+│   ├── web/                   Vite product, wallet views, Demo, Auditor, evidence UI
+│   ├── demo-api/              HTTP boundary for the three isolated demo actors
+│   ├── relay/                 stateless threshold/result orchestration
+│   └── fcc-extension/         Go FCC ingress, evaluator, admission, ciphertext store
+├── packages/
+│   ├── protocol/              canonical schemas, codecs, hashes, policy math/evaluator
+│   ├── contracts/             Solidity registry, vault, router, FCC/FDC consumers, tests
+│   ├── bindings/              deterministic generated contract ABIs
+│   ├── integrations/          XRPL, FDC, FTSO, Smart Accounts, FAssets, Web2Json
+│   ├── demo/                  shared simulated lifecycle and actor implementation
+│   └── sdk-examples/          compile-tested wallet and dApp integration examples
+├── evidence/
+│   ├── coston2/               reviewed public-safe live testnet observations
+│   ├── simulation/            explicitly simulated FCC/lifecycle records
+│   ├── web/                   deployment, browser, and public-corpus audits
+│   └── local/                 ignored generated local records
+├── releases/
+│   └── candidates/            planned V2 inputs; never an authoritative manifest
+├── tooling/                   build, deployment, FCC, evidence, release, and safety gates
+├── docs/
+│   ├── product/               product plans, journeys, readiness, user validation
+│   ├── technology/            architecture, contracts, security, verification, runbooks
+│   ├── lessons/               implementation lessons carried into PayGuard
+│   └── reference/             supplied/read-only material; not release authority
+├── .github/workflows/         pinned release CI
+├── README.md                  reviewer entry point and current evidence boundary
+├── PLAN.md                    phase gates and remaining work
+├── DESIGN.md                  canonical product visual/interaction system
+└── AGENTS.md                  mandatory contributor privacy and release invariants
 ```
+
+The three similarly named demo paths are intentionally different layers:
+
+- `api/demo/` contains only Vercel-compatible route adapters;
+- `apps/demo-api/` validates HTTP input and exposes the isolated actor boundary;
+- `packages/demo/` implements the shared deterministic simulated lifecycle.
+
+For a source review, start with `apps/web/`, `packages/contracts/`,
+`apps/fcc-extension/`, and `packages/protocol/`. For proof of current behavior,
+use `evidence/` and the **What is verified now** table. Files under
+`docs/reference/` are provenance/reference material and do not override the
+canonical product, architecture, threat-model, verification, or release docs.
+
+Tooling remains flat so package scripts and operational commands are directly
+searchable. Prefixes identify their boundary: `coston2-*` for testnet
+deployment/observation, `fcc-*` for confidential-compute operations,
+`candidate-*` and `check-release*` for promotion gates, and `check-*`/`scan-*`
+for repository safety checks. Transaction-writing commands require explicit
+capability flags; ordinary check and plan commands are read-only.
 
 ## Security invariants
 
