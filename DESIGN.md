@@ -227,6 +227,12 @@ domain fields are explicit; a local example is labeled `LOCAL EXAMPLE · NOT
 VERIFIED`. A validation pass computes a commitment only in memory and never
 creates a receipt or authorization.
 
+The separate Interactive Demo may continue from that commitment only after the
+user explicitly enters `SIMULATED FCC · COSTON2 TESTNET` mode. It encrypts the
+draft independently to three demo actors and may display their signed receipts,
+but every receipt row and transaction preview retains the simulation label. The
+production activation panel remains blocked and visually separate.
+
 ## 5. Screen specifications
 
 ### Landing
@@ -301,6 +307,14 @@ The primary action is `VALIDATE & COMPUTE`. After validation, show the commitmen
 exact boundary map, and `0 / 3 VERIFIED` receipt progress. The activation panel
 must remain blocked until three registered, domain-matching machine receipts are
 actually verified. It must never create local receipts or display `ALLOW`.
+
+An adjacent `INTERACTIVE TESTNET DEMO` panel may offer the complete separately
+namespaced lifecycle. Its stepper is `FUND → RECEIPTS → REGISTER → REQUEST →
+QUORUM → EXECUTE/DENY → GOVERNANCE`. It uses the same sharp cards and status
+tags, shows explorer links for real Coston2 transactions, and places
+`SIMULATED FCC · NOT PRODUCTION TEE` above every actor/quorum state. It never
+uses the lime `VERIFIED` treatment for hardware, independence, or production
+custody.
 
 ### Vaults
 

@@ -105,6 +105,12 @@ Forbidden evidence:
 - Production deploy smoke tied to exact source commit.
 - Public web evidence build allowlist, metadata index, and absence of forbidden
   policy/key fields.
+- Interactive-demo actor descriptor, ciphertext-only ingress, wrong-machine,
+  malformed/stale body, signature, split-quorum, RPC/history drift, and
+  production-domain isolation tests.
+- Production browser checks proving the client sends no decision field, keeps
+  policy/ciphertext out of storage/console/evidence, labels every demo state as
+  simulation, and verifies exact testnet receipts before showing success.
 
 The local Vite browser smoke run on 2026-08-09 covered the landing page and all
 eight application views at 1440px and 390px. It found no horizontal overflow;

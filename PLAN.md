@@ -419,6 +419,10 @@ live editable governance remain open.
   explicit loading/error/recovery copy. Production landing/Overview Lighthouse
   and all-view responsive/reduced-motion checks pass; manual assistive-technology
   testing remains open.
+- [ ] Add an isolated Interactive Demo namespace with three stateless
+  ciphertext-only simulated actors, independently computed signed receipts and
+  results, exact wallet previews, two-result threshold submission, lifecycle
+  governance, permanent simulation labels, and no production FCC claim.
 
 Exit: every user role can complete its canonical journey without a mock or
 manual database edit.
@@ -476,6 +480,9 @@ Exit: failure is resumable or explicitly denied, never represented as success.
 - [ ] Post-hackathon: deploy stable FCC origins and proxy/relay, connect the
   hosted web to the verified release, and run complete production
   desktop/mobile/keyboard smokes against the exact deployed commit.
+- [ ] Deploy and audit the separate Interactive Demo contracts/serverless
+  actors, publish sanitized simulation evidence, and verify the production web
+  lifecycle without treating it as Gate A/B/C or a verified release.
 
 Exit: source, runtime, bindings, UI, docs, and public-safe evidence agree.
 

@@ -256,6 +256,27 @@ assertions before rendering. The Vite evidence plugin applies the existing
 recursive public-safety and simulation guards in both development and build
 delivery; any body drift fails the page closed.
 
+### Interactive simulated-FCC demo boundary
+
+The planned hackathon interaction path is additive and isolated from the
+production FCC topology. It uses a separate Coston2 registry, vault, and router
+namespace plus three short-lived serverless actor endpoints. Each actor has a
+distinct demo-only signing/decryption key, independently decrypts the policy in
+memory, runs the canonical deterministic evaluator, and signs only the exact
+receipt or evaluation attestation domain. The browser sends ciphertext rather
+than plaintext and never sends a decision field. A threshold collector may
+compare and transport signed results, but it cannot create or override
+`ALLOW`.
+
+This path is explicitly `SIMULATED FCC · COSTON2 TESTNET`. The actors share one
+hosting/operator trust domain, are not registered hardware TEEs, do not provide
+sealed persistence, and do not satisfy production common-custody or FCC release
+gates. A browser refresh discards the private draft and encrypted copies; the
+actors remain stateless and re-evaluate only after reconstructing the public
+Coston2 request, policy status, vault accounting, and spend history. The
+existing production-FCC code, admission checks, and target topology remain
+unchanged and fail closed while real machines are unavailable.
+
 ### XRPL-native path
 
 The XRPL owner commits a Smart Account operation in a supported Payment/mint
@@ -372,6 +393,11 @@ Target services:
 - static web app;
 - optional public-safe indexer/evidence API;
 - Coston2 contracts and official protocol dependencies.
+
+The hackathon interactive demo may additionally deploy one static Vercel app
+with three serverless simulated-actor routes and a separate simulation-only
+Coston2 contract namespace. This is not a substitute item in the target service
+list above and cannot be copied into a release manifest as FCC infrastructure.
 
 The pinned PayGuard FCC image and disposable three-machine simulated compose
 pass locally. That compose publishes only authenticated ingress on loopback and

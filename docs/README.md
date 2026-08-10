@@ -38,6 +38,9 @@
 - [`technology/coston2-simulated-policy-lifecycle.md`](technology/coston2-simulated-policy-lifecycle.md):
   guarded solution-3 Coston2 lifecycle with ephemeral simulated signers and
   explicit non-FCC/non-release evidence boundaries.
+- [`technology/coston2-interactive-demo.md`](technology/coston2-interactive-demo.md):
+  isolated serverless simulated-actor design for a full interactive Coston2
+  hackathon demo without weakening or relabelling the production FCC path.
 - [`technology/coston2-xrpl-fdc-trigger.md`](technology/coston2-xrpl-fdc-trigger.md):
   atomic XRPL FDC consumer contract, deployment/verification workflow, and
   live `Pending` request evidence with explicit simulated-policy/private-

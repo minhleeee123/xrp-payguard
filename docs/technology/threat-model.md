@@ -79,6 +79,9 @@ closed. Owner recovery is time-bounded and cannot race execution.
 | Caller substitutes FCC foundation domain | Sender constructs chain/sender/extension/code fields; canonical Go decoder and binding hash reject drift |
 | Sender binds a foreign/reserved extension ID | One-time owner call plus authoritative registry mapping and public-ID bounds |
 | Hosted UI lies | Wallet-free independent reader/CLI and verified release manifest |
+| Demo actor is mistaken for FCC | Separate demo contracts and machine domain, permanent simulation label, mandatory false production assertions |
+| Browser supplies a demo decision | Actors decrypt and evaluate independently; API has no decision input; threshold envelopes are signature-verified |
+| Shared serverless operator compromises all demo actors | Explicit common-mode non-claim; demo keys never enter the production registry or release manifest |
 
 ## 5. Residual trust
 
