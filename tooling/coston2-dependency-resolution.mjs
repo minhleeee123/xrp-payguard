@@ -93,7 +93,11 @@ async function readRegistryAddress(client, name) {
   return requireAddress(value, name);
 }
 
-export async function collectDependencyObservation({ client = clientFor(), sourceFetcher = fetch } = {}) {
+export async function collectDependencyObservation({
+  client = clientFor(),
+  sourceFetcher = fetch,
+  sourceResolver = resolveOfficialTeeManager,
+} = {}) {
   const [chainId, observedBlock, registryCode] = await Promise.all([
     client.getChainId(),
     client.getBlockNumber(),
@@ -111,7 +115,7 @@ export async function collectDependencyObservation({ client = clientFor(), sourc
   }
   const response = await sourceFetcher(FCC_DEPLOYMENTS_URL, { signal: AbortSignal.timeout(15_000) });
   if (!response.ok) throw new Error(`official FCC deployment source returned HTTP ${response.status}`);
-  const managerSource = resolveOfficialTeeManager(await response.arrayBuffer());
+  const managerSource = sourceResolver(await response.arrayBuffer());
   if (managerSource.address !== FCC_TEE_MANAGER || managerSource.sha256 !== FCC_DEPLOYMENTS_SHA256) {
     throw new Error("official FCC manager source pin mismatch");
   }

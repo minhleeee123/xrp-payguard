@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import { describe, it } from "node:test";
 import {
   buildDependencyEvidence,
@@ -8,7 +7,7 @@ import {
   FLARE_CONTRACT_REGISTRY,
   parseDependencyCLI,
 } from "./coston2-dependency-resolution.mjs";
-import { FCC_TEE_MANAGER, resolveOfficialTeeManager } from "./fcc-foundation-registration.mjs";
+import { FCC_TEE_MANAGER } from "./fcc-foundation-registration.mjs";
 
 const address = (digit) => `0x${digit.repeat(40)}`;
 const code = (byteCount) => `0x${"aa".repeat(byteCount)}`;
@@ -22,8 +21,7 @@ describe("Coston2 dependency observation", () => {
   });
 
   it("collects every supported dependency and verifies the pinned FCC source", async () => {
-    const source = await readFile(".local/fce-extension-scaffold/config/coston2/deployed-addresses.json");
-    const sourceManager = resolveOfficialTeeManager(source);
+    const source = Buffer.from("unit-test official-source transport bytes");
     const calls = [];
     const client = {
       async getChainId() { return 114; },
@@ -34,12 +32,16 @@ describe("Coston2 dependency observation", () => {
     const observation = await collectDependencyObservation({
       client,
       sourceFetcher: async () => ({ ok: true, status: 200, async arrayBuffer() { return source; } }),
+      sourceResolver: (bytes) => {
+        assert.deepEqual(Buffer.from(bytes), source);
+        return { address: FCC_TEE_MANAGER, sha256: "c158350ea5a9bbba8c6485a680252b8f401bc2e25ea10830101eb6d0b40b022e" };
+      },
     });
     assert.equal(observation.observedBlock, "12345");
     assert.equal(observation.registryRuntimeBytes, 11);
     assert.deepEqual(calls, DEPENDENCY_NAMES);
     assert.equal(observation.fccManager.address, FCC_TEE_MANAGER);
-    assert.equal(observation.fccManager.sourceSha256, sourceManager.sha256);
+    assert.equal(observation.fccManager.sourceSha256, "c158350ea5a9bbba8c6485a680252b8f401bc2e25ea10830101eb6d0b40b022e");
   });
 
   it("builds public-only evidence and rejects wrong chain or incomplete runtime", () => {
