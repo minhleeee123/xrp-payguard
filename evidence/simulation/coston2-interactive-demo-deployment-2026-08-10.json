@@ -3,10 +3,12 @@
   "status": "simulation-only",
   "mode": "SIMULATED_FCC_COSTON2_TESTNET_V1",
   "label": "SIMULATED FCC · COSTON2 TESTNET · NOT PRODUCTION TEE",
+  "testnetOnly": true,
   "sourceCommit": "e7f4972f12111c8dd1c5c629ed617f976153a4d1",
   "network": {
     "name": "flare-coston2",
-    "chainId": 114
+    "chainId": 114,
+    "publicChainConnected": true
   },
   "deployer": "0xDC1cc527423C882156a632C250528D1922d18Fc7",
   "contracts": {
@@ -85,11 +87,18 @@
   },
   "verifiedAt": "2026-08-10T02:48:12.891Z",
   "assertions": {
+    "simulationOnly": true,
     "separateDemoContractNamespaceVerified": true,
     "threeDistinctActorDescriptorsVerified": true,
     "runtimeAndWiringVerified": true,
     "actorRegistrationReadbackVerified": true,
+    "onChainTransactionsVerified": true,
     "noPrivateKeyRecorded": true,
+    "registeredMachinesVerified": false,
+    "stableHttpsOriginsVerified": false,
+    "authenticatedIndexerVerified": false,
+    "noLiveFccResultClaimed": true,
+    "noPayGuardReleaseClaimed": true,
     "hardwareTeeVerified": false,
     "registeredProductionMachinesVerified": false,
     "independentOperatorsVerified": false,

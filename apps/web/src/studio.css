@@ -89,6 +89,12 @@
 .preview-group dd { overflow-wrap: anywhere; margin: 3px 0 0; color: var(--color-pearl); font: 9px/1.5 var(--font-jetbrains-mono); }
 
 .receipt-card h3 { margin: 6px 0 0; color: var(--color-chalk); font-size: 28px; }
+.interactive-studio-card { border-top-color: var(--color-signal-lime); }
+.interactive-studio-card > .state-tag { display: inline-flex; margin-top: 12px; }
+.interactive-studio-card > .panel-copy { margin: 12px 0 15px; }
+.interactive-studio-card > .outline-button,
+.interactive-studio-card > .primary-button { width: 100%; margin-top: 14px; }
+.demo-receipt-row .state-tag { margin-left: auto; }
 .receipt-count { margin: 14px 0 8px; color: var(--color-chalk); font: 300 34px/1 var(--font-pt-serif); }
 .receipt-count span { color: var(--color-ash); font: 400 10px var(--font-inter-tight); }
 .receipt-row { display: flex; align-items: center; gap: 9px; border-top: 1px solid var(--color-graphite); padding: 11px 0; }

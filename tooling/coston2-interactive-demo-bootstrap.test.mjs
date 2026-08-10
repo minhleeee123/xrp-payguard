@@ -49,6 +49,9 @@ test("public config and evidence preserve a separate namespace and false product
   });
   assert.equal(evidence.assertions.hardwareTeeVerified, false);
   assert.equal(evidence.assertions.independentOperatorsVerified, false);
+  assert.equal(evidence.assertions.simulationOnly, true);
+  assert.equal(evidence.assertions.noLiveFccResultClaimed, true);
+  assert.equal(evidence.testnetOnly, true);
   assert.equal(JSON.stringify(evidence).includes("publicKey"), false);
 });
 

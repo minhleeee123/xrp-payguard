@@ -73,6 +73,9 @@ importers:
       '@xrp-payguard/bindings':
         specifier: workspace:*
         version: link:../../packages/bindings
+      '@xrp-payguard/demo':
+        specifier: workspace:*
+        version: link:../../packages/demo
       '@xrp-payguard/integrations':
         specifier: workspace:*
         version: link:../../packages/integrations

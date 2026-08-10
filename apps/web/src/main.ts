@@ -35,6 +35,25 @@ import { fetchPublicWebEvidenceIndex, type PublicWebEvidenceIndex } from "./web-
 import { fetchSimulatedLifecycleEvidence, type SimulatedLifecycleEvidence } from "./demo-evidence.js";
 import { landingView } from "./landing.js";
 import {
+  collectDemoCustody,
+  collectDemoEvaluations,
+  createDemoRequest,
+  executeDemoRequest,
+  executeDemoVaultAction,
+  fetchInteractiveDemoConfig,
+  governDemoPolicy,
+  loadDemoAccount,
+  registerDemoPolicy,
+  submitDemoThreshold,
+  type DemoAccountSnapshot,
+  type DemoPolicyAction,
+  type DemoPolicySession,
+  type DemoRequestResult,
+  type DemoThresholdResult,
+  type DemoTransactionResult,
+} from "./interactive-demo.js";
+import type { DemoDomainConfig } from "@xrp-payguard/demo";
+import {
   COSTON2_CHAIN,
   PAYGUARD_COSTON2,
   REVIEWED_PENDING_REQUEST_ID,
@@ -70,6 +89,7 @@ type PublicEvidenceMirrorState =
   | { status: "READY"; index: PublicWebEvidenceIndex }
   | { status: "UNAVAILABLE"; reason: "NOT_PUBLISHED" | "INVALID" };
 type DemoUiState = { status: "LOADING" } | { status: "READY"; evidence: SimulatedLifecycleEvidence } | { status: "UNAVAILABLE" };
+type InteractiveConfigUiState = { status: "LOADING" } | { status: "READY"; config: DemoDomainConfig } | { status: "UNAVAILABLE" };
 type WalletUiState =
   | { status: "DISCONNECTED" }
   | { status: "CONNECTING" }
@@ -114,6 +134,19 @@ let mobileMenuOpen = false;
 let landingOpen = window.location.hash === "#landing";
 let publicEvidenceMirrorState: PublicEvidenceMirrorState = { status: "LOADING" };
 let demoState: DemoUiState = { status: "LOADING" };
+let interactiveConfigState: InteractiveConfigUiState = { status: "LOADING" };
+let interactiveSession: DemoPolicySession | null = null;
+let interactivePolicyRegistration: DemoTransactionResult | null = null;
+let interactiveAccountSnapshot: DemoAccountSnapshot | null = null;
+let interactiveRequest: DemoRequestResult | null = null;
+let interactiveThreshold: DemoThresholdResult | null = null;
+let interactiveThresholdTransactions: DemoTransactionResult[] = [];
+let interactiveExecution: DemoTransactionResult | null = null;
+let interactiveBusy = "";
+let interactiveNotice = "Connect a disposable Coston2 wallet, then prepare a simulation-only policy domain.";
+let interactiveFundInput = "1";
+let interactiveRequestAmountInput = "0.1";
+let interactiveTransactions: { label: string; hash: `0x${string}`; blockNumber: bigint }[] = [];
 const walletProvider = injectedProvider();
 let walletState: WalletUiState = { status: "DISCONNECTED" };
 let coston2State: Coston2UiState = { status: "IDLE" };
@@ -291,7 +324,33 @@ function studioView(): string {
       <div class="three-col">${studioField("scheduleIntervalSeconds", "Interval seconds", "0 selects ad-hoc mode.", "numeric")}${studioField("scheduleGraceSeconds", "Grace seconds", "0 only in ad-hoc mode.", "numeric")}${studioField("maxOccurrences", "Occurrence limit", "0 means no policy-specific limit.", "numeric")}</div>
       <details class="domain-details"><summary>Exact public contract domain <span>local example · not verified</span></summary><p>These values bind the commitment. Replace them only with addresses resolved from a future verified PayGuard release.</p><div class="two-col">${studioField("registry", "Policy registry", "Public domain field.", "text")}${studioField("vault", "Vault", "Public domain field.", "text")}${studioField("router", "Action router", "Public domain field.", "text")}${studioField("asset", "Supported asset", "Public token address.", "text")}</div></details>
       <div class="form-divider"></div><div class="private-row"><span class="lock-icon">▣</span><div><strong>Confidential draft only</strong><small>The target rule, caps, schedule and fresh cryptographic salt/nonce remain in memory. No browser storage, logs, analytics, public calldata or evidence receives them.</small></div><span class="state-tag gray-tag">IN MEMORY</span></div><div class="form-actions"><span class="form-note" id="studio-notice">${esc(studioNotice)}</span><button class="primary-button" type="submit">Validate & compute ↗</button></div></form>
-      <aside class="studio-side">${studioPreview()}${studioCustodyPanel()}<section class="privacy-note"><span>✦</span><div><strong>Refresh discards the draft</strong><p>Policy plaintext and ciphertext are never placed in browser persistence. A refresh intentionally cannot recover this draft.</p></div></section></aside></div>`;
+      <aside class="studio-side">${studioPreview()}${studioCustodyPanel()}${interactiveStudioPanel()}<section class="privacy-note"><span>✦</span><div><strong>Refresh discards the draft</strong><p>Policy plaintext and ciphertext are never placed in browser persistence. A refresh intentionally cannot recover this draft.</p></div></section></aside></div>`;
+}
+
+function interactiveStudioPanel(): string {
+  const account = connectedAccount();
+  if (interactiveConfigState.status === "LOADING") return `<section class="panel receipt-card interactive-studio-card"><div class="eyebrow">INTERACTIVE TESTNET DEMO</div><h3>Loading isolated demo domain…</h3><p class="panel-copy">No production FCC availability is inferred.</p></section>`;
+  if (interactiveConfigState.status === "UNAVAILABLE") return `<section class="panel receipt-card interactive-studio-card"><div class="eyebrow">INTERACTIVE TESTNET DEMO</div><h3>Serverless actors unavailable</h3><div class="activation-block"><span class="status-dot amber"></span><div><strong>No fallback approval</strong><small>The production FCC panel remains blocked independently.</small></div></div></section>`;
+  const config = interactiveConfigState.config;
+  const exactDomain = studioCompilation
+    && studioCompilation.policy.registry.toLowerCase() === config.registry.toLowerCase()
+    && studioCompilation.policy.vault.toLowerCase() === config.vault.toLowerCase()
+    && studioCompilation.policy.router.toLowerCase() === config.router.toLowerCase()
+    && studioCompilation.policy.asset.toLowerCase() === config.asset.toLowerCase()
+    && account && studioCompilation.policy.owner.toLowerCase() === account.toLowerCase();
+  const rows = interactiveSession
+    ? interactiveSession.custody.map((envelope) => `<div class="receipt-row demo-receipt-row"><span class="machine-index">0${envelope.actor}</span><div><strong>${esc(short(envelope.receipt.machineId))}</strong><small>Signed simulation receipt · ${esc(short(envelope.digest))}</small></div><span class="state-tag gray-tag">SIMULATED</span></div>`).join("")
+    : config.actors.map((actor) => `<div class="receipt-row demo-receipt-row"><span class="machine-index">0${actor.actor}</span><div><strong>${esc(short(actor.machineId))}</strong><small>Distinct serverless actor · not a TEE</small></div><span class="state-tag gray-tag">READY</span></div>`).join("");
+  const action = !account
+    ? `<button class="outline-button" type="button" data-action="connect">Connect Coston2 wallet</button>`
+    : !exactDomain
+      ? `<button class="outline-button" type="button" data-action="prepare-interactive-draft">Use isolated demo domain</button>`
+      : !interactiveSession
+        ? `<button class="primary-button" type="button" data-action="collect-demo-custody" ${interactiveBusy ? "disabled" : ""}>${interactiveBusy === "CUSTODY" ? "Signing & contacting 3 actors…" : "Collect 3 simulated receipts"}</button>`
+        : !interactivePolicyRegistration
+          ? `<button class="primary-button" type="button" data-action="register-demo-policy" ${interactiveBusy ? "disabled" : ""}>${interactiveBusy === "REGISTER" ? "Waiting for wallet / finality…" : "Register in demo contracts"}</button>`
+          : `<button class="outline-button" type="button" data-view="demo">Open interactive lifecycle ↗</button>`;
+  return `<section class="panel receipt-card interactive-studio-card"><div class="eyebrow">INTERACTIVE TESTNET DEMO</div><h3>Separate simulation namespace</h3><span class="state-tag gray-tag">SIMULATED FCC · NOT PRODUCTION TEE</span><p class="panel-copy">Three actor signatures exercise the protocol on Coston2. They share one Vercel operator and do not count as production custody.</p>${rows}<div class="activation-block"><span class="status-dot ${interactivePolicyRegistration ? "green" : "amber"}"></span><div><strong>${interactivePolicyRegistration ? "Demo policy registered" : interactiveSession ? "3 / 3 simulated receipts checked" : "Production activation remains blocked"}</strong><small>${interactivePolicyRegistration ? `Coston2 block ${interactivePolicyRegistration.blockNumber}` : "Policy ciphertext and owner signatures stay memory-only; refresh discards them."}</small></div></div>${action}</section>`;
 }
 
 function studioCustodyPanel(): string {
@@ -319,7 +378,11 @@ function studioField(field: Exclude<keyof StudioDraft, "templateId">, labelText:
 
 function studioPreview(): string {
   const commitment = studioCompilation?.publicEvidence.policyCommitment ?? "Not computed";
-  return `<section class="panel commitment-card"><div class="eyebrow">DOMAIN-BOUND COMMITMENT</div><div class="commitment-value" id="commitment-value">${esc(commitment)}</div><small>${studioCompilation ? "Validated locally · not registered" : "Validate the in-memory draft to compute"}</small><div class="commitment-state"><span class="status-dot amber"></span> Coston2 deployment remains unverified</div></section>
+  const demoDomain = studioCompilation && interactiveConfigState.status === "READY"
+    && studioCompilation.policy.registry.toLowerCase() === interactiveConfigState.config.registry.toLowerCase()
+    && studioCompilation.policy.vault.toLowerCase() === interactiveConfigState.config.vault.toLowerCase()
+    && studioCompilation.policy.router.toLowerCase() === interactiveConfigState.config.router.toLowerCase();
+  return `<section class="panel commitment-card"><div class="eyebrow">DOMAIN-BOUND COMMITMENT</div><div class="commitment-value" id="commitment-value">${esc(commitment)}</div><small>${studioCompilation ? "Validated locally · not registered" : "Validate the in-memory draft to compute"}</small><div class="commitment-state"><span class="status-dot ${demoDomain ? "green" : "amber"}"></span> ${demoDomain ? "Simulation contract domain loaded · not production" : "Production Coston2 release remains unverified"}</div></section>
     <section class="panel boundary-card"><div class="eyebrow">EXACT DATA MAP</div><h3>Public versus private</h3>${studioCompilation ? `${previewGroup("Public at activation", studioCompilation.publicAtActivation, "public")} ${previewGroup("Public at request", studioCompilation.publicAtRequest, "request")} ${previewGroup("Private in FCC", studioCompilation.privateInFcc, "private")}` : `<p class="boundary-empty">Compute the draft to inspect every policy field by when and where it becomes visible.</p>`}</section>`;
 }
 
@@ -373,16 +436,58 @@ function requestLookup(): string {
 }
 
 function demoView(): string {
+  return `${interactiveDemoView()}${recordedDemoView()}`;
+}
+
+function interactiveDemoView(): string {
+  const account = connectedAccount();
+  if (interactiveConfigState.status === "LOADING") return `${pageIntro("INTERACTIVE TESTNET DEMO", "Preparing the isolated lifecycle", "Loading the simulation-only Coston2 contract and actor domain.")}<section class="panel demo-loading"><div class="empty-orbit">◌</div><h2>Checking demo configuration…</h2></section>`;
+  if (interactiveConfigState.status === "UNAVAILABLE") return `${pageIntro("INTERACTIVE TESTNET DEMO", "Interactive actors unavailable", "The website will not replace an unavailable actor quorum with a browser decision.")}<section class="panel"><div class="unavailable-box"><span class="status-dot amber"></span><div><strong>No interactive success asserted</strong><small>The recorded public-safe lifecycle remains available below; production FCC remains blocked independently.</small></div></div></section>`;
+  const config = interactiveConfigState.config;
+  const snapshot = interactiveAccountSnapshot;
+  const policyRegistered = Boolean(interactiveSession && interactivePolicyRegistration);
+  const policyReady = policyRegistered && snapshot?.policyStatus === 1;
+  const policyLabel = snapshot?.policyStatus === 3 ? "Demo policy revoked"
+    : snapshot?.policyStatus === 2 ? "Demo policy stopped"
+      : policyReady ? "Demo policy active" : interactiveSession ? "Receipts ready" : "Prepare in Policy Studio";
+  const request = interactiveRequest?.request;
+  const decision = interactiveThreshold?.status === "THRESHOLD_READY" ? interactiveThreshold.matching[0]?.result : undefined;
+  const requestStatus = interactiveExecution ? "EXECUTED" : decision?.decision === "DENY" && interactiveThresholdTransactions.length >= 2 ? "DENIED" : interactiveThresholdTransactions.length >= 2 ? "ALLOWED" : request ? "PENDING" : "NOT CREATED";
+  const transactionRows = interactiveTransactions.length === 0
+    ? `<div class="boundary-empty">No wallet transaction has been submitted from this interactive session.</div>`
+    : `<ol class="interactive-transaction-list">${interactiveTransactions.map((item, index) => `<li><span class="demo-step-index">${String(index + 1).padStart(2, "0")}</span><div><strong>${esc(item.label)}</strong><small>Block ${item.blockNumber} · ${esc(short(item.hash))}</small></div><a href="${explorerTransaction(item.hash)}" target="_blank" rel="noreferrer">↗</a></li>`).join("")}</ol>`;
+  return `${pageIntro("INTERACTIVE TESTNET DEMO", "Run PayGuard end to end", "Use faucet FTestXRP and an injected wallet. Three serverless actors compute signed results; the browser never supplies ALLOW.")}
+    <div class="demo-boundary interactive-boundary"><span class="state-tag gray-tag">SIMULATED FCC · COSTON2 TESTNET</span><strong>Real testnet transactions · shared serverless trust domain</strong><span>Not production TEE · not Gate A/B/C</span></div>
+    <div class="interactive-stepper" aria-label="Interactive demo progress">${["FUND", "RECEIPTS", "REGISTER", "REQUEST", "QUORUM", "EXECUTE / DENY", "GOVERNANCE"].map((step, index) => `<span class="${interactiveStepReached(index) ? "reached" : ""}">${String(index + 1).padStart(2, "0")} ${step}</span>`).join("")}</div>
+    <div class="section-grid interactive-demo-grid"><section class="panel"><div class="panel-heading"><div><div class="eyebrow">01 · TEST TOKEN FUNDING</div><h2>Simulation-only vault</h2></div><span class="state-tag ${snapshot ? "green-tag" : "gray-tag"}">${snapshot ? "FINALIZED READ" : "NOT LOADED"}</span></div><p class="panel-copy">Approve and deposit faucet FTestXRP into the separate demo vault. The production-observation vault remains untouched.</p>${account ? `<div class="demo-account-grid"><div><span>Wallet</span><strong>${snapshot ? token(snapshot.tokenBalance) : "—"} FTestXRP</strong></div><div><span>Allowance</span><strong>${snapshot ? token(snapshot.allowance) : "—"}</strong></div><div><span>Demo available</span><strong>${snapshot ? token(snapshot.accounting.available) : "—"}</strong></div></div><label class="demo-amount-label">Funding amount<input id="interactive-fund-amount" value="${esc(interactiveFundInput)}" inputmode="decimal" autocomplete="off" /></label><div class="vault-actions"><button class="outline-button" type="button" data-action="refresh-interactive-account" ${interactiveBusy ? "disabled" : ""}>Refresh finalized state</button><button class="outline-button" type="button" data-action="demo-approve" ${interactiveBusy || !snapshot ? "disabled" : ""}>Approve</button><button class="primary-button" type="button" data-action="demo-deposit" ${interactiveBusy || !snapshot ? "disabled" : ""}>Deposit</button></div>` : `<button class="primary-button" type="button" data-action="connect">Connect Coston2 wallet</button>`}</section>
+    <section class="panel"><div class="panel-heading"><div><div class="eyebrow">02 · POLICY & CUSTODY</div><h2>${policyLabel}</h2></div><span class="state-tag gray-tag">SIMULATION ONLY</span></div>${interactiveSession ? `<div class="commitment-value">${esc(interactiveSession.binding.policyCommitment)}</div><div class="demo-actor-mini">${interactiveSession.custody.map((item) => `<span>ACTOR ${item.actor} · ${esc(short(item.digest))}</span>`).join("")}</div>` : `<p class="panel-copy">Use the adjacent demo panel in Policy Studio to bind your wallet, encrypt the draft three times, and collect owner-authorized receipts.</p>`}<div class="vault-actions"><button class="outline-button" type="button" data-view="studio">Open Policy Studio</button>${interactiveSession && !interactivePolicyRegistration ? `<button class="primary-button" type="button" data-action="register-demo-policy" ${interactiveBusy ? "disabled" : ""}>Register policy</button>` : ""}</div></section></div>
+    <div class="section-grid interactive-demo-grid"><section class="panel"><div class="panel-heading"><div><div class="eyebrow">03 · PUBLIC REQUEST</div><h2>${request ? `Occurrence ${request.occurrence}` : "Create an exact action"}</h2></div><span class="state-tag ${request ? "green-tag" : "gray-tag"}">${esc(requestStatus)}</span></div><p class="panel-copy">The target and amount are public here. Private caps and policy relationships stay inside the three actor evaluations.</p>${policyReady && account ? `<label class="demo-amount-label">Request amount<input id="interactive-request-amount" value="${esc(interactiveRequestAmountInput)}" inputmode="decimal" autocomplete="off" /></label>${request ? `<dl class="demo-request-facts"><div><dt>Request</dt><dd>${esc(short(request.requestId))}</dd></div><div><dt>Amount</dt><dd>${token(request.amount)} FTestXRP</dd></div><div><dt>Checkpoint</dt><dd>${esc(short(request.spendCheckpoint))}</dd></div><div><dt>Expiry</dt><dd>${utc(request.expiry)}</dd></div></dl><button class="outline-button" type="button" data-action="reset-demo-request" ${interactiveBusy ? "disabled" : ""}>Prepare next request</button>` : `<button class="primary-button" type="button" data-action="create-demo-request" ${interactiveBusy || !snapshot || snapshot.accounting.available <= 0n ? "disabled" : ""}>${interactiveBusy === "REQUEST" ? "Waiting for wallet / finality…" : "Create public request"}</button>`}` : `<div class="unavailable-box"><span class="status-dot amber"></span><div><strong>Policy or wallet prerequisite missing</strong><small>Register the demo policy and load a funded finalized account first.</small></div></div>`}</section>
+    <section class="panel"><div class="panel-heading"><div><div class="eyebrow">04 · ACTOR QUORUM</div><h2>${decision ? `${decision.decision} · ${decision.publicReasonClass}` : "Independent evaluation"}</h2></div><span class="state-tag ${interactiveThreshold?.status === "THRESHOLD_READY" ? "green-tag" : "gray-tag"}">${interactiveThreshold?.status ?? "WAITING"}</span></div><div class="demo-actor-mini">${config.actors.map((actor) => { const result = interactiveThreshold?.valid.find((item) => item.actor === actor.actor); return `<span>ACTOR ${actor.actor} · ${result ? `${result.result.decision} · ${esc(short(result.digest))}` : "not evaluated"}</span>`; }).join("")}</div><p class="panel-copy">The API accepts ciphertext and a request ID only. Any client-supplied decision field is rejected.</p><div class="vault-actions">${request && !interactiveThreshold ? `<button class="primary-button" type="button" data-action="evaluate-demo-request" ${interactiveBusy ? "disabled" : ""}>${interactiveBusy === "EVALUATE" ? "Calling 3 actors…" : "Evaluate with 3 actors"}</button>` : ""}${interactiveThreshold?.status === "THRESHOLD_READY" && interactiveThresholdTransactions.length === 0 ? `<button class="primary-button" type="button" data-action="submit-demo-threshold" ${interactiveBusy ? "disabled" : ""}>${interactiveBusy === "THRESHOLD" ? "Submitting 2 signatures…" : "Submit 2 matching results"}</button>` : ""}${decision?.decision === "ALLOW" && interactiveThresholdTransactions.length >= 2 && !interactiveExecution ? `<button class="primary-button" type="button" data-action="execute-demo-request" ${interactiveBusy ? "disabled" : ""}>Execute public transfer</button>` : ""}</div></section></div>
+    <div class="section-grid interactive-demo-grid"><section class="panel"><div class="panel-heading"><div><div class="eyebrow">05 · GOVERNANCE</div><h2>Stop, resume, or revoke</h2></div><span class="state-tag gray-tag">OWNER ONLY</span></div><p class="panel-copy">Governance can stop new requests, but cannot manufacture a decision. Revocation is terminal.</p><div class="vault-actions"><button class="outline-button" type="button" data-policy-action="STOP" ${snapshot?.policyStatus !== 1 || interactiveBusy ? "disabled" : ""}>Stop</button><button class="outline-button" type="button" data-policy-action="RESUME" ${snapshot?.policyStatus !== 2 || interactiveBusy ? "disabled" : ""}>Resume</button><button class="outline-button" type="button" data-policy-action="REVOKE" ${!policyRegistered || snapshot?.policyStatus === 3 || interactiveBusy ? "disabled" : ""}>Revoke</button></div></section><section class="panel"><div class="panel-heading"><div><div class="eyebrow">PUBLIC TRANSACTION LOG</div><h2>${interactiveTransactions.length} finalized writes</h2></div><span class="state-tag gray-tag">THIS TAB ONLY</span></div>${transactionRows}</section></div>
+    <div class="interactive-notice" role="status"><span class="status-dot ${interactiveBusy ? "amber" : "green"}"></span><strong>${esc(interactiveBusy ? `Working: ${interactiveBusy}` : interactiveNotice)}</strong></div>`;
+}
+
+function interactiveStepReached(index: number): boolean {
+  if (index === 0) return Boolean(interactiveAccountSnapshot?.accounting.available && interactiveAccountSnapshot.accounting.available > 0n);
+  if (index === 1) return Boolean(interactiveSession);
+  if (index === 2) return Boolean(interactivePolicyRegistration);
+  if (index === 3) return Boolean(interactiveRequest);
+  if (index === 4) return interactiveThreshold?.status === "THRESHOLD_READY";
+  if (index === 5) return Boolean(interactiveExecution || interactiveThresholdTransactions.length >= 2);
+  return interactiveAccountSnapshot?.policyStatus === 2 || interactiveAccountSnapshot?.policyStatus === 3;
+}
+
+function recordedDemoView(): string {
   if (demoState.status === "LOADING") {
-    return `${pageIntro("SOLUTION 3 · PUBLIC DEMO", "Loading the simulated lifecycle", "Reading a reviewed, public-safe Coston2 evidence artifact. No wallet or private policy is requested.")}<section class="panel demo-loading"><div class="empty-orbit">◌</div><h2>Validating evidence schema…</h2></section>`;
+    return `<section class="panel demo-loading recorded-demo-section"><div class="eyebrow">RECORDED SOLUTION 3 EVIDENCE</div><div class="empty-orbit">◌</div><h2>Validating evidence schema…</h2></section>`;
   }
   if (demoState.status === "UNAVAILABLE") {
-    return `${pageIntro("SOLUTION 3 · PUBLIC DEMO", "Demo evidence unavailable", "The UI will not substitute a mock lifecycle when the reviewed artifact cannot be validated.")}<section class="panel"><div class="unavailable-box"><span class="status-dot amber"></span><div><strong>No simulated success asserted</strong><small>Build or evidence validation failed closed. Live FCC remains unavailable independently.</small></div></div></section>`;
+    return `<section class="panel recorded-demo-section"><div class="eyebrow">RECORDED SOLUTION 3 EVIDENCE</div><div class="unavailable-box"><span class="status-dot amber"></span><div><strong>No recorded success asserted</strong><small>Build or evidence validation failed closed. Live FCC remains unavailable independently.</small></div></div></section>`;
   }
   const evidence = demoState.evidence;
   const machines = evidence.machines.map((machine, index) => `<article class="demo-machine machine-${index + 1}"><div class="machine-glyph">${index === 0 ? "◇" : index === 1 ? "⌁" : "▣"}</div><div><span>SIMULATED MACHINE ${index + 1}</span><strong>${esc(short(machine.machineId))}</strong><small>Key ${esc(short(machine.keyFingerprint))}<br>Signer ${esc(short(machine.signer))}</small></div></article>`).join("");
   const steps = evidence.steps.map((step, index) => `<li><span class="demo-step-index">${String(index + 1).padStart(2, "0")}</span><div><strong>${esc(step.label)}</strong><small>Block ${step.blockNumber} · ${esc(short(step.transactionHash))}</small></div><a href="${explorerTransaction(step.transactionHash)}" target="_blank" rel="noreferrer" aria-label="Open ${esc(step.label)} transaction">↗</a></li>`).join("");
-  return `${pageIntro("SOLUTION 3 · PUBLIC DEMO", "One complete policy lifecycle", "A real Coston2 contract run driven by three ephemeral simulated signers. It proves the contract path, not hardware confidentiality or production FCC.")}
+  return `<div class="page-intro secondary-demo-intro"><div><div class="eyebrow">RECORDED SOLUTION 3 · PUBLIC EVIDENCE</div><h1>One reviewed lifecycle</h1><p>A prior Coston2 contract run driven by three ephemeral simulated signers. It proves the contract path, not hardware confidentiality or production FCC.</p></div></div>
     <div class="demo-boundary"><span class="state-tag amber-tag">SIMULATION ONLY</span><strong>On-chain transactions verified · hardware TEE not present</strong><span>Observed through Coston2 block ${evidence.observedBlock}</span></div>
     <section class="demo-machine-grid">${machines}</section>
     <div class="demo-summary-grid"><section class="panel demo-result allow-result"><div class="eyebrow">2 MATCHING RESULTS</div><h2>Recurring payment allowed</h2><strong>${token(evidence.amount)} FTestXRP</strong><p>Two simulated machines produced one matching ALLOW digest, the vault reserved value, and the router executed the exact transfer.</p><span class="mono-value">${esc(short(evidence.allowRequestId))}</span></section><section class="panel demo-result deny-result"><div class="eyebrow">DETERMINISTIC POLICY RESULT</div><h2>Next request denied</h2><strong>CAP_EXCEEDED</strong><p>Two matching DENY results kept the vault unchanged. The private cap itself is not present in this public evidence.</p><span class="mono-value">${esc(short(evidence.denyRequestId))}</span></section><section class="panel demo-result"><div class="eyebrow">VAULT CONSERVATION</div><h2>Accounting still balances</h2><strong>${token(evidence.deposited)} deposited</strong><p>${token(evidence.availableAfter)} available + ${token(evidence.spentAfter)} spent. Stop, resume, and revoke were also verified.</p></section></div>
@@ -544,6 +649,7 @@ function wireEvents(): void {
     });
   });
   app.querySelectorAll<HTMLButtonElement>("[data-template]").forEach((button) => button.addEventListener("click", () => selectTemplate(button.dataset.template ?? "")));
+  app.querySelectorAll<HTMLButtonElement>("[data-policy-action]").forEach((button) => button.addEventListener("click", () => void submitInteractiveGovernance(button.dataset.policyAction ?? "")));
   app.querySelectorAll<HTMLButtonElement>("[data-request-kind]").forEach((button) => button.addEventListener("click", () => prepareRequestTransaction(button.dataset.requestKind ?? "")));
   app.querySelector<HTMLInputElement>("#request-id")?.addEventListener("input", (event) => {
     requestInput = (event.currentTarget as HTMLInputElement).value;
@@ -556,6 +662,8 @@ function wireEvents(): void {
     vaultIntent = null;
     if (vaultTransactionState.status === "ERROR") vaultTransactionState = { status: "IDLE" };
   });
+  app.querySelector<HTMLInputElement>("#interactive-fund-amount")?.addEventListener("input", (event) => { interactiveFundInput = (event.currentTarget as HTMLInputElement).value; });
+  app.querySelector<HTMLInputElement>("#interactive-request-amount")?.addEventListener("input", (event) => { interactiveRequestAmountInput = (event.currentTarget as HTMLInputElement).value; });
   const form = app.querySelector<HTMLFormElement>("#studio-form");
   form?.addEventListener("submit", (event) => { event.preventDefault(); computeStudio(form); });
   form?.addEventListener("input", () => {
@@ -566,6 +674,7 @@ function wireEvents(): void {
       if (value) value.textContent = "Draft changed — recompute";
       const notice = app.querySelector<HTMLElement>("#studio-notice");
       if (notice) notice.textContent = "Draft changed. The previous commitment is no longer current.";
+      resetInteractivePolicySession("Draft changed. Recompute before collecting new simulated receipts.");
     }
   });
   wireLandingMotion();
@@ -608,6 +717,17 @@ function handleAction(action: string): void {
   if (action === "submit-request-intent") { void submitRequestTransaction(); return; }
   if (action === "cancel-vault-intent") { vaultIntent = null; vaultTransactionState = { status: "IDLE" }; render(); return; }
   if (action === "submit-vault-intent") { void submitVaultTransaction(); return; }
+  if (action === "prepare-interactive-draft") { prepareInteractiveDraft(); return; }
+  if (action === "collect-demo-custody") { void submitInteractiveCustody(); return; }
+  if (action === "register-demo-policy") { void submitInteractivePolicyRegistration(); return; }
+  if (action === "refresh-interactive-account") { void refreshInteractiveAccount(); return; }
+  if (action === "demo-approve") { void submitInteractiveVault("APPROVE"); return; }
+  if (action === "demo-deposit") { void submitInteractiveVault("DEPOSIT"); return; }
+  if (action === "create-demo-request") { void submitInteractiveRequest(); return; }
+  if (action === "evaluate-demo-request") { void submitInteractiveEvaluation(); return; }
+  if (action === "submit-demo-threshold") { void submitInteractiveThreshold(); return; }
+  if (action === "execute-demo-request") { void submitInteractiveExecution(); return; }
+  if (action === "reset-demo-request") { resetInteractiveRequest(); return; }
 }
 
 function prepareRequestTransaction(value: string): void {
@@ -779,6 +899,8 @@ async function connectWallet(): Promise<void> {
     appNotice = `Connected ${short(session.account)} on Coston2. Verifying finalized public state…`;
     render();
     await refreshCoston2State();
+    if (interactiveConfigState.status === "READY") await refreshInteractiveAccount(false);
+    render();
   } catch (error) {
     const message = error instanceof WalletConnectionError
       ? walletFailureMessage(error.reason)
@@ -828,6 +950,8 @@ async function restoreWalletSession(): Promise<void> {
     walletState = { status: "CONNECTED", account: session.account };
     render();
     await refreshCoston2State();
+    if (interactiveConfigState.status === "READY") await refreshInteractiveAccount(false);
+    render();
   } catch {
     walletState = { status: "ERROR", message: "The injected wallet session could not be read safely." };
     coston2State = { status: "IDLE" };
@@ -844,6 +968,9 @@ function walletChanged(): void {
   vaultTransactionState = { status: "IDLE" };
   requestIntent = null;
   requestTransactionState = { status: "IDLE" };
+  interactiveAccountSnapshot = null;
+  interactiveTransactions = [];
+  resetInteractivePolicySession("Wallet changed. Prepare a fresh owner-bound simulation policy.");
   render();
   void restoreWalletSession();
 }
@@ -865,6 +992,252 @@ function exportNotifications(): void {
   URL.revokeObjectURL(url);
   appNotice = exported.status === "AVAILABLE" ? "Exported finalized public notifications; no private payload included." : "Exported an unavailable public-feed report; no event was asserted.";
   render();
+}
+
+function interactiveContext(): { account: Address; config: DemoDomainConfig; provider: NonNullable<typeof walletProvider> } {
+  if (walletState.status !== "CONNECTED" || !walletProvider || interactiveConfigState.status !== "READY") {
+    throw new Error("INTERACTIVE_DEMO_PREREQUISITE_MISSING");
+  }
+  return { account: walletState.account, config: interactiveConfigState.config, provider: walletProvider };
+}
+
+function prepareInteractiveDraft(): void {
+  try {
+    const { account, config } = interactiveContext();
+    const now = BigInt(Math.floor(Date.now() / 1000));
+    studioEntropy = createStudioEntropy();
+    studioDraft = {
+      ...studioTemplateDraft("delegated-allowance"),
+      templateId: "delegated-allowance",
+      policyName: `interactive-demo-${now}`,
+      owner: account,
+      target: account,
+      registry: config.registry,
+      vault: config.vault,
+      router: config.router,
+      asset: config.asset,
+      maxPerAction: "100000",
+      dailyCap: "150000",
+      startAt: (now - 60n).toString(),
+      endAt: (now + 86_400n).toString(),
+      scheduleIntervalSeconds: "0",
+      scheduleGraceSeconds: "0",
+      maxOccurrences: "10",
+    };
+    studioCompilation = null;
+    studioIssues = [];
+    resetInteractivePolicySession("Isolated Coston2 demo domain loaded. Review private rules, then validate and compute.");
+    studioNotice = "Simulation-only domain loaded with fresh in-memory entropy. Validate before contacting actors.";
+  } catch {
+    interactiveNotice = "Connect a Coston2 wallet and wait for the interactive configuration first.";
+  }
+  render();
+}
+
+function resetInteractivePolicySession(notice: string): void {
+  interactiveSession = null;
+  interactivePolicyRegistration = null;
+  interactiveRequest = null;
+  interactiveThreshold = null;
+  interactiveThresholdTransactions = [];
+  interactiveExecution = null;
+  interactiveNotice = notice;
+}
+
+async function submitInteractiveCustody(): Promise<void> {
+  if (!studioCompilation) return;
+  interactiveBusy = "CUSTODY";
+  interactiveNotice = "Confirm three owner signatures. Each binds one ciphertext to one simulated actor.";
+  render();
+  try {
+    const { account, config, provider } = interactiveContext();
+    interactiveSession = await collectDemoCustody(studioCompilation.policy, account, provider, config);
+    interactivePolicyRegistration = null;
+    interactiveRequest = null;
+    interactiveThreshold = null;
+    interactiveThresholdTransactions = [];
+    interactiveExecution = null;
+    interactiveNotice = "Three distinct simulation receipts matched the same policy binding. No production custody is claimed.";
+  } catch {
+    interactiveSession = null;
+    interactiveNotice = "Receipt collection failed closed. No policy was registered and no actor result is asserted.";
+  } finally {
+    interactiveBusy = "";
+    render();
+  }
+}
+
+async function submitInteractivePolicyRegistration(): Promise<void> {
+  if (!interactiveSession) return;
+  interactiveBusy = "REGISTER";
+  interactiveNotice = "Confirm the exact simulation-only registry transaction, then wait for finalized readback.";
+  render();
+  try {
+    const { account, config, provider } = interactiveContext();
+    interactivePolicyRegistration = await registerDemoPolicy(interactiveSession, account, provider, config);
+    addInteractiveTransaction("Register demo policy", interactivePolicyRegistration);
+    interactiveNotice = "Demo policy binding and all three signed receipts are active in the separate Coston2 registry.";
+    await refreshInteractiveAccount(false);
+  } catch {
+    interactivePolicyRegistration = null;
+    interactiveNotice = "Policy registration was rejected or could not be verified at finality. No activation is asserted.";
+  } finally {
+    interactiveBusy = "";
+    render();
+  }
+}
+
+async function refreshInteractiveAccount(showBusy = true): Promise<void> {
+  if (showBusy) { interactiveBusy = "READ"; interactiveNotice = "Verifying the separate contract domain and finalized vault conservation…"; render(); }
+  try {
+    const { account, config } = interactiveContext();
+    interactiveAccountSnapshot = await loadDemoAccount(account, config, interactiveSession?.binding.policyCommitment);
+    interactiveNotice = `Simulation-only account state verified at finalized block ${interactiveAccountSnapshot.finalizedBlock}.`;
+  } catch {
+    interactiveAccountSnapshot = null;
+    interactiveNotice = "Interactive Coston2 state failed verification. No balance or policy status is asserted.";
+  } finally {
+    if (showBusy) { interactiveBusy = ""; render(); }
+  }
+}
+
+async function submitInteractiveVault(kind: "APPROVE" | "DEPOSIT"): Promise<void> {
+  interactiveBusy = kind;
+  interactiveNotice = `Confirm the exact ${kind.toLowerCase()} transaction for the simulation-only vault.`;
+  render();
+  try {
+    const { account, config, provider } = interactiveContext();
+    const amount = parseFTestXrpAmount(interactiveFundInput);
+    const result = await executeDemoVaultAction(kind, amount, account, provider, config);
+    addInteractiveTransaction(kind === "APPROVE" ? "Approve demo vault" : "Deposit demo vault", result);
+    interactiveAccountSnapshot = await loadDemoAccount(account, config, interactiveSession?.binding.policyCommitment);
+    interactiveNotice = `${kind} receipt, event, finalized balances, and conservation matched.`;
+  } catch {
+    interactiveNotice = `${kind} failed closed or was cancelled. No test-token movement is asserted.`;
+  } finally {
+    interactiveBusy = "";
+    render();
+  }
+}
+
+async function submitInteractiveRequest(): Promise<void> {
+  if (!interactiveSession || !interactivePolicyRegistration) return;
+  interactiveBusy = "REQUEST";
+  interactiveNotice = "Confirm the public amount/target request. No decision field is part of this transaction.";
+  render();
+  try {
+    const { account, config, provider } = interactiveContext();
+    const amount = parseFTestXrpAmount(interactiveRequestAmountInput);
+    interactiveRequest = await createDemoRequest(interactiveSession, amount, account, provider, config);
+    addInteractiveTransaction(`Create request ${short(interactiveRequest.request.requestId)}`, interactiveRequest);
+    interactiveThreshold = null;
+    interactiveThresholdTransactions = [];
+    interactiveExecution = null;
+    interactiveNotice = "Public request is Pending at finality. It has not reserved funds and has no decision yet.";
+  } catch {
+    interactiveRequest = null;
+    interactiveNotice = "Request creation failed closed. No pending request or authorization is asserted.";
+  } finally {
+    interactiveBusy = "";
+    render();
+  }
+}
+
+async function submitInteractiveEvaluation(): Promise<void> {
+  if (!interactiveSession || !interactiveRequest || interactiveConfigState.status !== "READY") return;
+  interactiveBusy = "EVALUATE";
+  interactiveNotice = "Each simulated actor is independently reloading finalized Coston2 state and evaluating its ciphertext.";
+  render();
+  try {
+    interactiveThreshold = await collectDemoEvaluations(interactiveSession, interactiveRequest.request, interactiveConfigState.config);
+    interactiveNotice = interactiveThreshold.status === "THRESHOLD_READY"
+      ? `Threshold ready: ${interactiveThreshold.matching[0]?.result.decision} · ${interactiveThreshold.matching[0]?.result.publicReasonClass}. The browser verified signatures but did not choose the result.`
+      : `Actor result status: ${interactiveThreshold.status}. No chain authorization is available.`;
+  } catch {
+    interactiveThreshold = null;
+    interactiveNotice = "Evaluation failed closed. No actor decision or threshold is asserted.";
+  } finally {
+    interactiveBusy = "";
+    render();
+  }
+}
+
+async function submitInteractiveThreshold(): Promise<void> {
+  if (!interactiveThreshold) return;
+  interactiveBusy = "THRESHOLD";
+  interactiveNotice = "Confirm two result submissions. Each carries an actor-computed signed digest; no ALLOW input is exposed.";
+  render();
+  try {
+    const { account, config, provider } = interactiveContext();
+    interactiveThresholdTransactions = await submitDemoThreshold(interactiveThreshold, account, provider, config);
+    interactiveThresholdTransactions.forEach((result, index) => addInteractiveTransaction(`Submit actor result ${index + 1}`, result));
+    const decision = interactiveThreshold.matching[0]!.result;
+    interactiveNotice = decision.decision === "ALLOW"
+      ? "Two matching actor signatures moved the request to Allowed and reserved the exact amount. Execution remains separate."
+      : `Two matching actor signatures finalized Denied · ${decision.publicReasonClass}; vault accounting did not move.`;
+    await refreshInteractiveAccount(false);
+  } catch {
+    interactiveThresholdTransactions = [];
+    interactiveNotice = "Threshold submission failed or final state did not match. No Allowed/Denied state is asserted.";
+  } finally {
+    interactiveBusy = "";
+    render();
+  }
+}
+
+async function submitInteractiveExecution(): Promise<void> {
+  if (!interactiveRequest) return;
+  interactiveBusy = "EXECUTE";
+  interactiveNotice = "Confirm execution of the already threshold-authorized public transfer.";
+  render();
+  try {
+    const { account, config, provider } = interactiveContext();
+    interactiveExecution = await executeDemoRequest(interactiveRequest.request.requestId, account, provider, config);
+    addInteractiveTransaction("Execute public transfer", interactiveExecution);
+    interactiveNotice = "Execution receipt, router event, finalized terminal state, and vault accounting matched.";
+    await refreshInteractiveAccount(false);
+  } catch {
+    interactiveExecution = null;
+    interactiveNotice = "Execution failed closed or was cancelled. No public transfer is asserted.";
+  } finally {
+    interactiveBusy = "";
+    render();
+  }
+}
+
+async function submitInteractiveGovernance(value: string): Promise<void> {
+  if (value !== "STOP" && value !== "RESUME" && value !== "REVOKE" || !interactiveSession) return;
+  interactiveBusy = value;
+  interactiveNotice = `Confirm owner ${value.toLowerCase()} for the simulation-only policy. This action cannot supply ALLOW.`;
+  render();
+  try {
+    const { account, config, provider } = interactiveContext();
+    const result = await governDemoPolicy(value as DemoPolicyAction, interactiveSession.binding.policyCommitment, account, provider, config);
+    addInteractiveTransaction(`${value} demo policy`, result);
+    await refreshInteractiveAccount(false);
+    interactiveNotice = `${value} matched finalized registry state. Authorization integrity remains actor-threshold-only.`;
+  } catch {
+    interactiveNotice = `${value} was rejected, cancelled, or failed finalized verification. No governance change is asserted.`;
+  } finally {
+    interactiveBusy = "";
+    render();
+  }
+}
+
+function resetInteractiveRequest(): void {
+  interactiveRequest = null;
+  interactiveThreshold = null;
+  interactiveThresholdTransactions = [];
+  interactiveExecution = null;
+  interactiveNotice = "Ready to create the next request from the current canonical spend checkpoint.";
+  void refreshInteractiveAccount(false);
+  render();
+}
+
+function addInteractiveTransaction(label: string, result: DemoTransactionResult): void {
+  if (!interactiveTransactions.some((item) => item.hash.toLowerCase() === result.hash.toLowerCase())) {
+    interactiveTransactions.push({ label, hash: result.hash, blockNumber: result.blockNumber });
+  }
 }
 
 function computeStudio(form: HTMLFormElement): void {
@@ -889,6 +1262,7 @@ function selectTemplate(value: string): void {
   studioCompilation = null;
   studioIssues = [];
   studioNotice = "Template loaded with fresh in-memory salt and submission nonce.";
+  resetInteractivePolicySession("Template changed. Compute a fresh policy before collecting simulated receipts.");
   render();
 }
 
@@ -924,6 +1298,17 @@ void fetchPublicWebEvidenceIndex()
 void fetchSimulatedLifecycleEvidence()
   .then((evidence) => { demoState = { status: "READY", evidence }; if (!landingOpen) render(); })
   .catch(() => { demoState = { status: "UNAVAILABLE" }; if (!landingOpen) render(); });
+void fetchInteractiveDemoConfig()
+  .then(async (config) => {
+    interactiveConfigState = { status: "READY", config };
+    if (walletState.status === "CONNECTED") await refreshInteractiveAccount(false);
+    if (!landingOpen) render();
+  })
+  .catch(() => {
+    interactiveConfigState = { status: "UNAVAILABLE" };
+    interactiveAccountSnapshot = null;
+    if (!landingOpen) render();
+  });
 window.addEventListener("hashchange", () => {
   landingOpen = window.location.hash === "#landing";
   render();

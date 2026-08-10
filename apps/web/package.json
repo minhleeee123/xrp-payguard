@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@xrp-payguard/bindings": "workspace:*",
+    "@xrp-payguard/demo": "workspace:*",
     "@xrp-payguard/integrations": "workspace:*",
     "@xrp-payguard/protocol": "workspace:*",
     "viem": "2.55.11"

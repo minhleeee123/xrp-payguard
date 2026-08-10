@@ -34,7 +34,15 @@ export function assertSimulationEvidence(value, path = "evidence/simulation") {
     && value?.network?.publicChainConnected === true
     && assertions?.payGuardLocalMachineEntriesVerified === true
     && assertions?.onChainTransactionsVerified === true;
-  if ((!localOnly && !coston2OnChain) || !assertions
+  const interactiveCoston2 = value?.status === "simulation-only" && value?.mode === "SIMULATED_FCC_COSTON2_TESTNET_V1"
+    && value?.testnetOnly === true && value?.network?.name === "flare-coston2" && value?.network?.chainId === 114
+    && value?.network?.publicChainConnected === true
+    && assertions?.simulationOnly === true && assertions?.separateDemoContractNamespaceVerified === true
+    && assertions?.threeDistinctActorDescriptorsVerified === true && assertions?.runtimeAndWiringVerified === true
+    && assertions?.actorRegistrationReadbackVerified === true && assertions?.onChainTransactionsVerified === true
+    && assertions?.registeredProductionMachinesVerified === false && assertions?.independentOperatorsVerified === false
+    && assertions?.sealedPersistenceVerified === false && assertions?.productionFccReleaseVerified === false;
+  if ((!localOnly && !coston2OnChain && !interactiveCoston2) || !assertions
     || assertions.simulationOnly !== true || assertions.hardwareTeeVerified !== false
     || assertions.registeredMachinesVerified !== false || assertions.stableHttpsOriginsVerified !== false
     || assertions.authenticatedIndexerVerified !== false || assertions.noLiveFccResultClaimed !== true
