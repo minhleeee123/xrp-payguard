@@ -8,6 +8,8 @@
     "node": ">=24 <25"
   },
   "devDependencies": {
+    "@types/node": "24.0.0",
+    "typescript": "5.9.3",
     "viem": "2.55.11",
     "ws": "8.21.0",
     "xrpl": "5.0.0"

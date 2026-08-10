@@ -8,15 +8,46 @@ importers:
 
   .:
     devDependencies:
+      '@types/node':
+        specifier: 24.0.0
+        version: 24.0.0
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
       viem:
         specifier: 2.55.11
-        version: 2.55.11(typescript@7.0.2)
+        version: 2.55.11(typescript@5.9.3)
       ws:
         specifier: 8.21.0
         version: 8.21.0
       xrpl:
         specifier: 5.0.0
         version: 5.0.0
+
+  apps/demo-api:
+    dependencies:
+      '@xrp-payguard/bindings':
+        specifier: workspace:*
+        version: link:../../packages/bindings
+      '@xrp-payguard/demo':
+        specifier: workspace:*
+        version: link:../../packages/demo
+      '@xrp-payguard/protocol':
+        specifier: workspace:*
+        version: link:../../packages/protocol
+      viem:
+        specifier: 2.55.11
+        version: 2.55.11(typescript@7.0.2)
+    devDependencies:
+      '@types/node':
+        specifier: 24.0.0
+        version: 24.0.0
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@types/node@24.0.0)(vite@8.2.1(@types/node@24.0.0))
 
   apps/relay:
     dependencies:
@@ -66,6 +97,31 @@ importers:
         version: 4.1.10(@types/node@24.0.0)(vite@8.2.1(@types/node@24.0.0))
 
   packages/bindings:
+    devDependencies:
+      '@types/node':
+        specifier: 24.0.0
+        version: 24.0.0
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@types/node@24.0.0)(vite@8.2.1(@types/node@24.0.0))
+
+  packages/demo:
+    dependencies:
+      '@noble/curves':
+        specifier: 1.9.1
+        version: 1.9.1
+      '@xrp-payguard/bindings':
+        specifier: workspace:*
+        version: link:../bindings
+      '@xrp-payguard/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+      viem:
+        specifier: 2.55.11
+        version: 2.55.11(typescript@7.0.2)
     devDependencies:
       '@types/node':
         specifier: 24.0.0
@@ -667,6 +723,11 @@ packages:
     resolution: {integrity: sha512-yau8yJdTt989Mm0Bd/236QnzEiPf2xLLTqUZRUJOo/3CB078LSwzei343DgtJVmfJKJE3TMINY1u42SQsP6mXw==}
     engines: {node: '>=14.0.0'}
 
+  typescript@5.9.3:
+    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
   typescript@7.0.2:
     resolution: {integrity: sha512-8FYau96o3NKOhbjKi/qNvG/W5jhzxkbdm5sj9AbZ/5T5sWqn3hJgLfGx27sRKZWTvyzCP8dLRBTf5tBTSRVUNA==}
     engines: {node: '>=16.20.0'}
@@ -1012,6 +1073,10 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
+  abitype@1.2.3(typescript@5.9.3):
+    optionalDependencies:
+      typescript: 5.9.3
+
   abitype@1.2.3(typescript@7.0.2):
     optionalDependencies:
       typescript: 7.0.2
@@ -1106,6 +1171,21 @@ snapshots:
 
   obug@2.1.4: {}
 
+  ox@0.14.33(typescript@5.9.3):
+    dependencies:
+      '@adraffy/ens-normalize': 1.11.1
+      '@noble/ciphers': 1.3.0
+      '@noble/curves': 1.9.1
+      '@noble/hashes': 1.8.0
+      '@scure/bip32': 1.7.0
+      '@scure/bip39': 1.6.0
+      abitype: 1.2.3(typescript@5.9.3)
+      eventemitter3: 5.0.1
+    optionalDependencies:
+      typescript: 5.9.3
+    transitivePeerDependencies:
+      - zod
+
   ox@0.14.33(typescript@7.0.2):
     dependencies:
       '@adraffy/ens-normalize': 1.11.1
@@ -1198,6 +1278,8 @@ snapshots:
 
   tinyrainbow@3.1.1: {}
 
+  typescript@5.9.3: {}
+
   typescript@7.0.2:
     optionalDependencies:
       '@typescript/typescript-aix-ppc64': 7.0.2
@@ -1222,6 +1304,23 @@ snapshots:
       '@typescript/typescript-win32-x64': 7.0.2
 
   undici-types@7.8.0: {}
+
+  viem@2.55.11(typescript@5.9.3):
+    dependencies:
+      '@noble/curves': 1.9.1
+      '@noble/hashes': 1.8.0
+      '@scure/bip32': 1.7.0
+      '@scure/bip39': 1.6.0
+      abitype: 1.2.3(typescript@5.9.3)
+      isows: 1.0.7(ws@8.21.0)
+      ox: 0.14.33(typescript@5.9.3)
+      ws: 8.21.0
+    optionalDependencies:
+      typescript: 5.9.3
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+      - zod
 
   viem@2.55.11(typescript@7.0.2):
     dependencies:

@@ -1,0 +1,25 @@
+{
+  "name": "@xrp-payguard/demo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/server.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@noble/curves": "1.9.1",
+    "@xrp-payguard/bindings": "workspace:*",
+    "@xrp-payguard/protocol": "workspace:*",
+    "viem": "2.55.11"
+  },
+  "devDependencies": {
+    "@types/node": "24.0.0",
+    "typescript": "7.0.2",
+    "vitest": "4.1.10"
+  }
+}
