@@ -45,9 +45,15 @@ evidence without publishing the policy rules themselves.
   demonstrates two-of-three recurring authorization, cap denial,
   stop/resume/revoke, and vault conservation, but not live FCC custody or
   hardware confidentiality.
-- A public Vercel product shell exposes a reviewed evidence mirror and labels
-  unavailable providers instead of mocking success.
-- A repository-only production-corpus audit fetched all 15 hosted evidence
+- A public Vercel dApp exposes a reviewed 16-entry evidence mirror and an
+  isolated interactive testnet lifecycle backed by three simulated serverless
+  actors and separate Coston2 contracts. It permanently labels the shared
+  operator/no-hardware-TEE boundary.
+- The deployed lifecycle passed three custody receipts, policy registration,
+  two matching `ALLOW` results and execution, two matching `CAP_EXCEEDED`
+  results, stop/resume/revoke, and vault conservation. This is simulation-only,
+  not production FCC evidence.
+- A repository-only production-corpus audit fetched all 15 then-hosted evidence
   assets, required HTTP/JSON boundaries, and matched each body byte-for-byte to
   its reviewed local source without recursively publishing its own audit.
 
@@ -69,8 +75,9 @@ evidence without publishing the policy rules themselves.
    snapshot is claimed.
 6. **FCC:** the intended authorization path freezes three compatible machine
    identities and requires two matching evaluations. The hackathon artifact
-   demonstrates this locally in `SIMULATED_TEE` mode only; stable registered
-   hardware-backed machines and live policy custody/results are post-hackathon.
+   demonstrates the protocol locally and through an explicitly simulated
+   three-actor Vercel/Coston2 path; stable registered hardware-backed machines
+   and production policy custody/results are post-hackathon.
 
 ## Public links
 
@@ -119,8 +126,10 @@ The complete retrospective new-work classification is in
   has been verified.
 - No live supported Web2Json source, request/proof, private policy evaluation,
   source-truth guarantee, or canonical Web2 consumer has been verified.
-- The Vercel build is a static shell/evidence mirror; wallet, policy provider,
-  relay, and live audit providers remain unavailable.
+- The Vercel build supports a full isolated testnet demo through three
+  simulated actors. They share one serverless operator and provide no hardware
+  confidentiality, sealed persistence, independent operators, production
+  relay, or production FCC availability.
 - No verified PayGuard release manifest, external audit, mainnet integration,
   user interview, pilot, revenue, partnership, or traction claim exists.
 - Ordinary XRP/FXRP transfers expose amount, recipient, timing, and transaction

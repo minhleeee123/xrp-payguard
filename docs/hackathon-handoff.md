@@ -1,12 +1,12 @@
 # XRP PayGuard hackathon handoff
 
 > Implementation baseline validated before this handoff refresh:
-> `897b54bfd11e236c78903fe5f3f5c3ec99509970`.
-> The production web artifact remains deliberately pinned to source commit
-> `f6d570a1255c9d2608ce81a45410e73a96082898`; its browser/deployment evidence
-> was recorded in `fc92b6a20b7d800ff56cf2e46967d5d742ea37aa`.
+> `d5f81f341843bf9ad71113065d2597ebc36c1f3d`.
+> The production web/API artifact is pinned to source commit
+> `da66c74b1c4f4fc118f5cc268e169b2d5ee2d324`; its interactive lifecycle and
+> browser evidence was recorded in `9305976`.
 > The full workspace, Go, Forge, security, privacy, evidence, release, and build
-> baseline was rerun at `2026-08-09T10:26:10Z`. This is a testnet/simulation
+> baseline was rerun on 2026-08-10. This is a testnet/simulation
 > handoff, not a verified PayGuard release.
 
 ## Delivery boundary
@@ -18,13 +18,15 @@ The hackathon build uses solution 3:
   observations where their individual evidence files say they passed;
 - one real Coston2 contract lifecycle driven by three ephemeral in-memory
   simulated signers and classified as `SIMULATED_TEE_ONCHAIN`;
-- a Vercel public product shell and reviewed static evidence mirror.
+- a separate Coston2 demo registry/vault/router connected to three stateless
+  simulated actors on Vercel; and
+- an interactive Vercel dApp plus reviewed static evidence mirror.
 
 Stable FCC servers, authenticated indexer access, hardware TEE attestation,
-production machine registration, hosted relay/proxy, live policy custody and
-evaluation, and a complete release manifest are post-hackathon work. The local
-simulation must never be presented as hardware-backed confidentiality or a
-live authorization result.
+production machine registration, production relay/proxy, hardware-backed
+policy custody/evaluation, and a complete release manifest are post-hackathon
+work. Neither simulation path may be presented as hardware-backed
+confidentiality or a production FCC authorization result.
 
 ## Public demo
 
@@ -32,21 +34,18 @@ live authorization result.
 - Evidence index: <https://xrp-payguard.vercel.app/evidence/index.json>
 - Demo video: local validated MP4 exists under ignored `evidence/local/`; public
   upload remains owner-only and no public video URL is claimed.
-- Vercel deployment ID: `dpl_DrnxHSajHmvife9S8MshyctPCCrY`
-- Deployed source commit: `f6d570a1255c9d2608ce81a45410e73a96082898`
+- Vercel deployment ID: `dpl_GMecUxEknhpUc6TXF5rGukUN7JUZ`
+- Deployed source commit: `da66c74b1c4f4fc118f5cc268e169b2d5ee2d324`
 
-The deployment is an artifact-only Vercel CLI upload containing 20 static
-files. The recorded smoke observed HTTP 200 for HTML, favicon, JavaScript, CSS,
-the index, and every listed evidence asset. The index contains 14 records under
-`evidence/coston2/` and two explicit simulation records. The Auditor reports 14
-chain-114 artifacts because the on-chain simulated lifecycle belongs to both
-the Coston2 and simulation categories; those counts are not additive. The index
-does not embed the Vercel deployment record in itself, avoiding a
-self-referential identifier that would always be one deployment stale.
+The deployment was built and uploaded through Vercel CLI. It serves the static
+Vite application, a 16-entry reviewed evidence index, configuration API, and
+three actor routes. Actor responses are no-store JSON and the API rejects any
+client-supplied decision. The repository-only Vercel lifecycle record is not
+embedded in the hosted index, avoiding a self-referential deployment identifier.
 
-A later repository-only audit independently fetched that production index and
-all 15 listed JSON assets, required HTTP 200 plus JSON content types, reran the
-forbidden-field and explicit-simulation checks, and matched every body
+A repository-only audit independently fetched the earlier production index and
+all 15 then-listed JSON assets, required HTTP 200 plus JSON content types,
+reran the forbidden-field and explicit-simulation checks, and matched every body
 byte-for-byte to its reviewed local source. Its own record is excluded from the
 hosted index by design.
 
@@ -54,19 +53,18 @@ hosted index by design.
 
 1. Open `/#landing` and explain: private policy is the target boundary; amount,
    recipient, timing, and settlement remain public.
-2. Activate **Open app** with Enter to show the keyboard path and dependency
-   states that remain unavailable rather than mocked.
-3. Open **Policy Studio**, choose a template, and run **Validate & compute**.
-   Explain that the commitment is computed from in-memory local input and is
-   not a custody receipt or activation.
-4. Open **Auditor**. Show `14 Coston2 artifacts`, `2 local simulation artifacts`,
-   and the link to the public index while the live audit provider remains
-   unavailable.
-5. Open the simulation record and point out the false live-gate assertions:
-   no hardware TEE, stable origins, authenticated indexer, or registered
-   production machines.
-6. If a terminal demo is appropriate, run `pnpm fcc:container:smoke`; do not
-   display `.env.local`, wallet material, machine internals, or raw signatures.
+2. Choose **Inspect Coston2 demo**. The wallet-free recorded path shows three
+   visually distinct machines, ALLOW, cap denial, governance, and conservation.
+3. For the interactive path, use only a disposable Coston2 wallet with faucet
+   C2FLR/FTestXRP. Approve and deposit `1` FTestXRP into the isolated demo vault.
+4. In **Policy Studio**, select **Use isolated demo domain**, review the private
+   `0.1` per-action / `0.15` daily test policy, validate it, collect three
+   simulated receipts, and register it.
+5. Create a `0.1` request, call all three actors, submit two matching `ALLOW`
+   results, and execute. Repeat `0.1` to demonstrate canonical
+   `DENY · CAP_EXCEEDED`, then stop/resume/revoke.
+6. Point out the permanent boundary labels: one Vercel operator, no hardware
+   TEE, no registered production machines, and no verified release.
 
 ## Validation actually run
 
@@ -74,7 +72,6 @@ The following commands completed successfully against the stated source
 baseline with the repository-pinned toolchain:
 
 ```sh
-export PATH="$PWD/.local/toolchains/bin:$PATH"
 pnpm check
 pnpm -r typecheck
 pnpm -r test
@@ -86,18 +83,20 @@ Observed results on the current baseline:
 
 - The toolchain gate resolved Node `24.19.0`, pnpm `10.33.0`, Go `1.25.12`,
   Foundry `1.7.1`, and Solidity `0.8.25` requirements.
-- 165 workspace package tests passed: bindings 2, protocol 50, relay 13,
-  integrations 83, web 13, and SDK examples 4. The top-level gate also passed
+- 197 workspace package tests passed: bindings 2, protocol 50, relay 13,
+  demo protocol 7, integrations 83, demo API 4, web 34, and SDK examples 4.
+  Three web-live cases are gated out of the ordinary unit run; the full
+  production-origin Coston2 lifecycle gate passed separately. The top-level gate also passed
   the separate public-web evidence, four deployment-corpus auditor tests,
   three demo-recorder tests, and deployment/release/FCC tooling suites.
 - All workspace TypeScript typechecks and all Go packages passed.
 - Forge passed 43 tests, including 256 fuzz runs and a 128-run/8192-call
   conservation invariant with zero reverts.
-- Secret scan inspected 368 current files and 163 revisions with zero history
-  findings. Privacy scan inspected 40
+- Secret scan inspected 398 current files and 187 revisions with zero history
+  findings. Privacy scan inspected 47
   browser/relay/FCC source and build files and found no browser persistence API;
   the Coston2 evidence gate retained 13 testnet-only records, while the public
-  web validator separately accepted two explicitly limited simulation records.
+  web validator separately accepted three explicitly limited simulation records.
 - The release check returned `planned` because no verified PayGuard Coston2
   release manifest exists; this is the expected fail-closed outcome.
 
@@ -119,6 +118,11 @@ public RPC:
   revoked policy state, executed allow request, denied cap request, and final
   vault accounting of `1,000,000` deposited, `990,000` available, and `10,000`
   spent. The record remains non-FCC simulation evidence.
+- The isolated Vercel/Coston2 run completed in 133.29 seconds: three custody
+  receipts, policy registration, two matching `ALLOW` results and execution,
+  two matching `CAP_EXCEEDED` results, stop/resume/revoke, and vault
+  conservation. Its public-safe record is
+  [`../evidence/web/vercel-interactive-demo-2026-08-10.json`](../evidence/web/vercel-interactive-demo-2026-08-10.json).
 - The guarded live trigger run validated one exact 100-drop XRPL Testnet
   Payment, waited through FDC finality/data availability, verified its proof
   on Coston2, and atomically created one replay-protected `Pending` request.
@@ -129,9 +133,8 @@ public RPC:
   zero storage entries, no HTTP/console errors, and no horizontal overflow.
   The three guardians now have distinct custody/witness/checkpoint silhouettes;
   the reduced-motion CSS gate reran against the deployed source.
-  Lighthouse 13.0.1 scored both Landing and Overview at 100
-  performance and 100 accessibility, best practices, and SEO, with zero
-  recorded contrast failures.
+  Lighthouse 13.4.1 scored both Landing and Overview at 99 performance and 100
+  accessibility, best practices, and SEO, with zero recorded contrast failures.
 - The fixed-origin demo recorder produced a 74-second, 592-frame, 1440×900 H.264
   MP4 with a silent AAC track and burned captions. `ffprobe` verified the media,
   and the current SHA-256 is
@@ -140,12 +143,12 @@ public RPC:
   review/upload.
 
 A fresh HTTPS and Chrome read of deployment
-`dpl_DrnxHSajHmvife9S8MshyctPCCrY` returned 200 for the application, its
-favicon/JavaScript/CSS, the index, and all 15 evidence assets. Desktop and
-mobile rendering, Enter-key activation, the 15/14/2 Auditor counts, zero
-browser storage, zero HTTP/console errors, and no horizontal overflow passed.
-The index retained `staticShellOnly: true` and `testnetOnly: true`. `PLAN.md`
-records 102 checked and 23 open checkboxes (81.6%). The open items are not
+`dpl_GMecUxEknhpUc6TXF5rGukUN7JUZ` returned 200 for the application and demo
+configuration, found 16 hosted evidence assets, and observed HTTP 400 when a
+client attempted to supply `decision: ALLOW`. Landing, Overview, Demo lifecycle,
+and Policy Studio at 1440×1100 had zero browser storage, HTTP/console errors, or
+horizontal overflow. `PLAN.md` records 105 checked and 23 open checkboxes
+(82.0%). The open items are not
 silently promoted:
 organizer/account actions, user research/pilots, live FCC
 infrastructure/lifecycle, remaining canonical live drills, external review,
@@ -180,7 +183,7 @@ policy evaluation, or canonical on-chain Web2 consumer.
 | Web2Json | Local source-commitment allowlist, exact jq/tuple-ABI/MIC/response binding, source-asserted freshness, replay, and fail-closed verifier tests | No production source, live proof, source-truth guarantee, private evaluation, or on-chain consumer |
 | FCC foundation | Sender/extension binding exists and local `PING_V1` vectors pass | No registered production machine or signed live FCC result |
 | FCC policy path | Three-machine local simulation, deterministic threshold/replay tests, and one 14-transaction Coston2 simulated-signer lifecycle pass | No hardware TEE confidentiality, official FCC registration, stable HTTPS origins, authenticated indexer, or live custody |
-| Web | Vercel shell, responsive/keyboard smoke, public evidence mirror, and byte-exact 15-asset deployment audit pass | Wallet, relay, policy provider, and live audit remain unavailable |
+| Web | Interactive Vercel dApp, three simulated actor APIs, separate Coston2 demo contracts, responsive/keyboard smoke, and 16-asset evidence mirror pass | Actors share one operator and are not production FCC machines; production relay/release remains unavailable |
 | Release | Release validators and fail-closed checks pass | No verified release manifest exists |
 | SDK | Compile-tested XRPL-wallet and Flare-dApp preview examples plus integration guide | Package remains private; no live writer or release domain is exposed |
 | Competition | Public deadline, prize/track direction, package, and existing-project policy were refreshed from DoraHacks | Enabled final form, owner eligibility, bounty selection, submission receipt, and FCC grant remain owner/organizer-only |
@@ -214,6 +217,14 @@ policy evaluation, or canonical on-chain Web2 consumer.
 - `f6d570a` — distinct guardian identities, motion, and design alignment.
 - `fc92b6a` — current Vercel guardian browser/Lighthouse/deployment audit.
 - `897b54b` — local fail-closed Web2Json source/transform/schema boundary.
+- `177f5a6` — isolated interactive simulated-FCC architecture boundary.
+- `5532108` — three fail-closed serverless actor API routes.
+- `62007b8` — separate Coston2 demo namespace and sanitized deployment evidence.
+- `1287b80` — interactive wallet policy/ALLOW/DENY/governance lifecycle UI.
+- `6623165` — gated deployed full-lifecycle test.
+- `da66c74` — bounded canonical Coston2 history scans for public RPC limits.
+- `9305976` — deployed interactive lifecycle and laptop browser evidence.
+- `d5f81f3` — direct fail-closed HTTP-boundary tests for the demo API.
 
 This list is a handoff-oriented index, not the complete implementation history;
 the remote Git history is authoritative.

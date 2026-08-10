@@ -337,8 +337,10 @@ forge test --root packages/contracts
 
 The current validated baseline reports:
 
-- 165 workspace tests: bindings 2, protocol 50, relay 13, integrations 83,
-  web 13, and SDK examples 4;
+- 197 workspace tests: bindings 2, protocol 50, relay 13, demo protocol 7,
+  integrations 83, demo API 4, web 34, and SDK examples 4; three explicitly
+  gated web-live cases remain skipped in the ordinary unit run, while the full
+  interactive Coston2 lifecycle gate passed separately;
 - all workspace TypeScript typechecks and all Go packages passing;
 - 43 Forge tests passing, including 256 fuzz runs and a 128-run / 8,192-call
   conservation invariant with zero reverts;
