@@ -69,8 +69,8 @@ function userReport() {
     anonymizedAggregateOnly: true,
     publicOnly: true,
     completedAt: "2026-08-10T00:00:00.000Z",
-    cohorts: { policyOwners: 5, payeesOrExecutors: 3, total: 8 },
-    tasks: USER_TASKS.map((id) => ({ id, attempted: 8, completed: 7, completionRate: 0.875 })),
+    cohorts: { xrplUsers: 5, treasuryOrDaoUsers: 5, paymentRecipientsOrExecutors: 5, total: 15 },
+    tasks: USER_TASKS.map((id) => ({ id, attempted: 15, completed: 13, completionRate: 13 / 15 })),
     metrics: { privateBoundaryComprehension: 0.875, failClosedComprehension: 0.75, redemptionComprehension: 0.625, medianTaskMinutes: 4.5 },
     prioritizedFindings: [{ severity: "medium", summary: "Aggregate participants needed clearer redemption status language", disposition: "planned copy revision" }],
   };
@@ -110,10 +110,10 @@ describe("V2 release-candidate preparation", () => {
   });
 
   it("accepts only consented anonymized aggregate user evidence at the cohort floor", () => {
-    assert.equal(validateUserValidationReport(userReport()).participants, 8);
+    assert.equal(validateUserValidationReport(userReport()).participants, 15);
     const tooSmall = userReport();
-    tooSmall.cohorts.policyOwners = 4;
-    tooSmall.cohorts.total = 7;
+    tooSmall.cohorts.treasuryOrDaoUsers = 4;
+    tooSmall.cohorts.total = 14;
     assert.throws(() => validateUserValidationReport(tooSmall), /at least 5/);
     const raw = userReport();
     raw.rawNotes = ["must stay private"];

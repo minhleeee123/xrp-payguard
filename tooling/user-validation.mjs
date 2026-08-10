@@ -27,8 +27,9 @@ export function validateUserValidationTemplate(value) {
   exact(template.status, "planned", "status");
   exact(template.verified, false, "verified");
   const cohorts = record(template.minimumCohorts, "minimumCohorts");
-  exact(cohorts.policyOwners, 5, "minimumCohorts.policyOwners");
-  exact(cohorts.payeesOrExecutors, 3, "minimumCohorts.payeesOrExecutors");
+  exact(cohorts.xrplUsers, 5, "minimumCohorts.xrplUsers");
+  exact(cohorts.treasuryOrDaoUsers, 5, "minimumCohorts.treasuryOrDaoUsers");
+  exact(cohorts.paymentRecipientsOrExecutors, 5, "minimumCohorts.paymentRecipientsOrExecutors");
   assertExactSet(array(template.requiredTasks, "requiredTasks"), USER_TASKS, "requiredTasks");
   if (array(template.forbiddenPublicFields, "forbiddenPublicFields").length < 6) throw new Error("forbiddenPublicFields is incomplete");
   publicOnly(template, "user validation template");
@@ -58,9 +59,10 @@ export function validateUserValidationReport(value) {
   timestamp(report.completedAt, "completedAt");
 
   const cohorts = record(report.cohorts, "cohorts");
-  if (!Number.isInteger(cohorts.policyOwners) || cohorts.policyOwners < 5) throw new Error("cohorts.policyOwners must be at least 5");
-  if (!Number.isInteger(cohorts.payeesOrExecutors) || cohorts.payeesOrExecutors < 3) throw new Error("cohorts.payeesOrExecutors must be at least 3");
-  exact(cohorts.total, cohorts.policyOwners + cohorts.payeesOrExecutors, "cohorts.total");
+  if (!Number.isInteger(cohorts.xrplUsers) || cohorts.xrplUsers < 5) throw new Error("cohorts.xrplUsers must be at least 5");
+  if (!Number.isInteger(cohorts.treasuryOrDaoUsers) || cohorts.treasuryOrDaoUsers < 5) throw new Error("cohorts.treasuryOrDaoUsers must be at least 5");
+  if (!Number.isInteger(cohorts.paymentRecipientsOrExecutors) || cohorts.paymentRecipientsOrExecutors < 5) throw new Error("cohorts.paymentRecipientsOrExecutors must be at least 5");
+  exact(cohorts.total, cohorts.xrplUsers + cohorts.treasuryOrDaoUsers + cohorts.paymentRecipientsOrExecutors, "cohorts.total");
 
   const tasks = array(report.tasks, "tasks", USER_TASKS.length);
   const seen = new Set();
@@ -102,7 +104,7 @@ export function userValidationPlan() {
     protocol: "docs/product/user-validation-protocol.md",
     template: "docs/product/user-validation-aggregate.template.json",
     tasks: USER_TASKS,
-    minimumCohorts: { policyOwners: 5, payeesOrExecutors: 3 },
+    minimumCohorts: { xrplUsers: 5, treasuryOrDaoUsers: 5, paymentRecipientsOrExecutors: 5 },
     command: "pnpm candidate:user-validation:verify -- <aggregate-report.json>",
     rule: "Consent records and raw notes remain in access-controlled research storage; only a checked anonymized aggregate may become public evidence",
   };

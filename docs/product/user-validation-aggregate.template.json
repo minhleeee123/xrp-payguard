@@ -6,8 +6,9 @@
   "instructions": "Copy this file to access-controlled research storage, replace the template kind/status only after real sessions, remove instructions, and validate the anonymized aggregate before considering publication.",
   "requiredCommand": "pnpm candidate:user-validation:verify -- <aggregate-report.json>",
   "minimumCohorts": {
-    "policyOwners": 5,
-    "payeesOrExecutors": 3
+    "xrplUsers": 5,
+    "treasuryOrDaoUsers": 5,
+    "paymentRecipientsOrExecutors": 5
   },
   "requiredTasks": [
     "create-and-freeze-policy",

@@ -6,11 +6,13 @@ repository, so the release-candidate blocker remains open.
 
 ## Participants and consent
 
-Recruit at least five prospective policy owners and three prospective payees
-or executors. Obtain informed consent before observation. Keep consent records,
-participant contact details, recordings, and raw notes in access-controlled
-research storage outside this repository. Assign random research identifiers;
-do not use wallet addresses as participant identifiers.
+Recruit at least five XRPL-native prospective personal users, five prospective
+treasury/DAO policy users, and five prospective payment recipients or
+executors: at least 15 qualifying sessions across the three required cohorts.
+Obtain informed consent before observation. Keep consent records, participant
+contact details, recordings, and raw notes in access-controlled research
+storage outside this repository. Assign random research identifiers; do not use
+wallet addresses as participant identifiers.
 
 Never ask a participant to provide an XRPL seed, EVM key, production wallet,
 private policy, FCC credential, or real funds. Use an isolated test account and
