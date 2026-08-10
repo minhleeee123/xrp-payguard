@@ -3,6 +3,7 @@ import {
   getAddress,
   http,
   parseAbiItem,
+  type Address,
   type Hex,
 } from "viem";
 import {
@@ -16,6 +17,10 @@ import type { DemoAccounting, DemoDomainConfig } from "../../../packages/demo/sr
 
 const COSTON2_RPC_URL = "https://coston2-api.flare.network/ext/C/rpc";
 const requestCreated = parseAbiItem("event RequestCreated(bytes32 indexed requestId, bytes32 indexed policyCommitment, address indexed requester, uint256 amount)");
+const policyRegistered = parseAbiItem("event PolicyRegistered(bytes32 indexed policyCommitment, bytes32 indexed policyId, address indexed owner, uint32 policyVersion)");
+const LOG_BLOCK_SPAN = 30n;
+const MAX_POLICY_HISTORY_BLOCKS = 2_048n;
+const LOG_BATCH_SIZE = 8;
 
 const coston2 = {
   id: 114,
@@ -35,9 +40,13 @@ export function createCoston2DemoStateReader(config: DemoDomainConfig): DemoStat
   const client = coston2Client;
   const readContract = client.readContract as unknown as (parameters: Record<string, unknown>) => Promise<unknown>;
   return {
-    async load(requestId, policyCommitment): Promise<DemoCanonicalEvaluationState> {
+    async load(requestId, policyCommitment, policyRegistrationBlock): Promise<DemoCanonicalEvaluationState> {
       const finalized = await client.getBlock({ blockTag: "finalized" });
       const blockNumber = finalized.number;
+      if (policyRegistrationBlock < config.deploymentBlock || policyRegistrationBlock > blockNumber
+        || blockNumber - policyRegistrationBlock > MAX_POLICY_HISTORY_BLOCKS) {
+        throw new Error("demo policy registration block is outside the bounded history window");
+      }
       const [storedRaw, policyRaw, spendRaw] = await Promise.all([
         readContract({ address: getAddress(config.router), abi: PayGuardActionRouterAbi, functionName: "getRequest", args: [requestId], blockNumber }),
         readContract({ address: getAddress(config.registry), abi: PayGuardPolicyRegistryAbi, functionName: "getPolicy", args: [policyCommitment], blockNumber }),
@@ -57,10 +66,14 @@ export function createCoston2DemoStateReader(config: DemoDomainConfig): DemoStat
         args: [getAddress(binding.owner), getAddress(request.asset)], blockNumber,
       });
       const accounting = normalizeAccounting(accountingRaw);
-      const logs = await client.getLogs({
-        address: getAddress(config.router), event: requestCreated,
-        args: { policyCommitment }, fromBlock: config.deploymentBlock, toBlock: blockNumber,
+      const registrationLogs = await client.getLogs({
+        address: getAddress(config.registry), event: policyRegistered,
+        args: { policyCommitment }, fromBlock: policyRegistrationBlock, toBlock: policyRegistrationBlock,
       });
+      if (registrationLogs.length !== 1) throw new Error("demo policy registration block failed canonical verification");
+      const logs = await getLogsInBatches(client, {
+        address: getAddress(config.router), event: requestCreated, args: { policyCommitment },
+      }, policyRegistrationBlock, blockNumber);
       if (logs.length > 128) throw new Error("demo policy history exceeds the bounded reader");
       const historical = await Promise.all(logs
         .map((log) => log.args.requestId)
@@ -93,6 +106,24 @@ export function createCoston2DemoStateReader(config: DemoDomainConfig): DemoStat
       };
     },
   };
+}
+
+async function getLogsInBatches(
+  client: typeof coston2Client,
+  parameters: { address: Address; event: typeof requestCreated; args: { policyCommitment: Hex } },
+  fromBlock: bigint,
+  toBlock: bigint,
+) {
+  const ranges: { fromBlock: bigint; toBlock: bigint }[] = [];
+  for (let start = fromBlock; start <= toBlock; start += LOG_BLOCK_SPAN) {
+    ranges.push({ fromBlock: start, toBlock: start + LOG_BLOCK_SPAN - 1n > toBlock ? toBlock : start + LOG_BLOCK_SPAN - 1n });
+  }
+  const logs = [];
+  for (let index = 0; index < ranges.length; index += LOG_BATCH_SIZE) {
+    const batch = await Promise.all(ranges.slice(index, index + LOG_BATCH_SIZE).map((range) => client.getLogs({ ...parameters, ...range })));
+    logs.push(...batch.flat());
+  }
+  return logs;
 }
 
 interface StoredRequest {

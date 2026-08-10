@@ -1149,7 +1149,13 @@ async function submitInteractiveEvaluation(): Promise<void> {
   interactiveNotice = "Each simulated actor is independently reloading finalized Coston2 state and evaluating its ciphertext.";
   render();
   try {
-    interactiveThreshold = await collectDemoEvaluations(interactiveSession, interactiveRequest.request, interactiveConfigState.config);
+    if (!interactivePolicyRegistration) throw new Error("DEMO_POLICY_REGISTRATION_UNAVAILABLE");
+    interactiveThreshold = await collectDemoEvaluations(
+      interactiveSession,
+      interactiveRequest.request,
+      interactiveConfigState.config,
+      interactivePolicyRegistration.blockNumber,
+    );
     interactiveNotice = interactiveThreshold.status === "THRESHOLD_READY"
       ? `Threshold ready: ${interactiveThreshold.matching[0]?.result.decision} · ${interactiveThreshold.matching[0]?.result.publicReasonClass}. The browser verified signatures but did not choose the result.`
       : `Actor result status: ${interactiveThreshold.status}. No chain authorization is available.`;

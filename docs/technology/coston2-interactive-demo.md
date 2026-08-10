@@ -91,7 +91,9 @@ quorum failure remains unavailable/denied; no local fallback becomes success.
 - Custody accepts encrypted policy wire only and checks commitment/binding.
 - Evaluation accepts encrypted policy plus a public request ID. It reconstructs
   state from finalized Coston2 reads rather than accepting a client decision or
-  caller-declared totals.
+  caller-declared totals. The browser also supplies the public policy-registration
+  block as a scan hint; every actor verifies the exact `PolicyRegistered` event
+  at that block before using it to bound 30-block RPC log queries.
 - Unknown schema, malformed ciphertext, wrong actor, stale/expired request,
   RPC failure, history drift, split results, or fewer than two valid results
   fails closed.

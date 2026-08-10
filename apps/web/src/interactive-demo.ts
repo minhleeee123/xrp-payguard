@@ -348,6 +348,7 @@ export async function collectDemoEvaluations(
   session: DemoPolicySession,
   request: ActionRequestV1,
   config: DemoDomainConfig,
+  policyRegistrationBlock: bigint,
   fetcher: typeof fetch = fetch,
 ): Promise<DemoThresholdResult> {
   const requestId = request.requestId;
@@ -359,7 +360,13 @@ export async function collectDemoEvaluations(
       method: "POST",
       cache: "no-store",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: stringifyDemoWire({ operation: "EVALUATE", ciphertext: session.ciphertexts[index], authorization: session.authorizations[index], requestId }),
+      body: stringifyDemoWire({
+        operation: "EVALUATE",
+        ciphertext: session.ciphertexts[index],
+        authorization: session.authorizations[index],
+        requestId,
+        policyRegistrationBlock,
+      }),
     });
     const text = await boundedResponse(response);
     if (!response.ok) continue;

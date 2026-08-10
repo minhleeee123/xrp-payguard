@@ -29,11 +29,12 @@ describe.skipIf(!enabled)("deployed interactive demo lifecycle", () => {
     const account = privateKeyToAccount(key);
     const provider = localAccountProvider(key);
     const sameOriginFetch: typeof fetch = (input, init) => fetch(new URL(String(input), origin), init);
+    const actorFailureReasons = new Set<string>();
     const actorFetch: typeof fetch = async (input, init) => {
       const response = await fetch(input, init);
       if (!response.ok) {
         const body = await response.clone().json().catch(() => null) as { reason?: unknown } | null;
-        if (typeof body?.reason === "string" && /^[A-Z_]+$/.test(body.reason)) stage = `${stage}-${body.reason}`;
+        if (typeof body?.reason === "string" && /^[A-Z_]+$/.test(body.reason)) actorFailureReasons.add(body.reason);
       }
       return response;
     };
@@ -41,9 +42,11 @@ describe.skipIf(!enabled)("deployed interactive demo lifecycle", () => {
 
     stage = "funding";
     const before = await loadDemoAccount(account.address, config);
-    expect(before.tokenBalance).toBeGreaterThanOrEqual(300_000n);
-    await executeDemoVaultAction("APPROVE", 300_000n, account.address, provider, config);
-    await executeDemoVaultAction("DEPOSIT", 300_000n, account.address, provider, config);
+    if (before.accounting.available < 300_000n) {
+      expect(before.tokenBalance).toBeGreaterThanOrEqual(300_000n);
+      await executeDemoVaultAction("APPROVE", 300_000n, account.address, provider, config);
+      await executeDemoVaultAction("DEPOSIT", 300_000n, account.address, provider, config);
+    }
 
     const now = BigInt(Math.floor(Date.now() / 1000));
     const compilation = compileStudioDraft({
@@ -66,13 +69,14 @@ describe.skipIf(!enabled)("deployed interactive demo lifecycle", () => {
     stage = "custody";
     const session = await collectDemoCustody(compilation.policy, account.address, provider, config, actorFetch);
     stage = "registration";
-    await registerDemoPolicy(session, account.address, provider, config);
+    const registration = await registerDemoPolicy(session, account.address, provider, config);
 
     stage = "allow-request";
     const allowRequest = await createDemoRequest(session, 100_000n, account.address, provider, config);
     stage = "allow-evaluation";
-    const allow = await collectDemoEvaluations(session, allowRequest.request, config, actorFetch);
-    stage = `allow-evaluation-${allow.status.toLowerCase()}-${allow.valid.length}`;
+    actorFailureReasons.clear();
+    const allow = await collectDemoEvaluations(session, allowRequest.request, config, registration.blockNumber, actorFetch);
+    stage = `allow-evaluation-${allow.status.toLowerCase()}-${allow.valid.length}-${[...actorFailureReasons].join("-") || "NO_CODE"}`;
     expect(allow.status).toBe("THRESHOLD_READY");
     expect(allow.matching[0]?.result.decision).toBe("ALLOW");
     stage = "allow-threshold";
@@ -84,8 +88,9 @@ describe.skipIf(!enabled)("deployed interactive demo lifecycle", () => {
     stage = "deny-request";
     const denyRequest = await createDemoRequest(session, 100_000n, account.address, provider, config);
     stage = "deny-evaluation";
-    const deny = await collectDemoEvaluations(session, denyRequest.request, config, actorFetch);
-    stage = `deny-evaluation-${deny.status.toLowerCase()}-${deny.valid.length}`;
+    actorFailureReasons.clear();
+    const deny = await collectDemoEvaluations(session, denyRequest.request, config, registration.blockNumber, actorFetch);
+    stage = `deny-evaluation-${deny.status.toLowerCase()}-${deny.valid.length}-${[...actorFailureReasons].join("-") || "NO_CODE"}`;
     expect(deny.status).toBe("THRESHOLD_READY");
     expect(deny.matching[0]?.result.decision).toBe("DENY");
     expect(deny.matching[0]?.result.publicReasonClass).toBe("CAP_EXCEEDED");

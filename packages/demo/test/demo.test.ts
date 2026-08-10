@@ -133,7 +133,7 @@ async function actorRequest(f: ReturnType<typeof fixture>, actor: 1 | 2 | 3, ope
     operation,
     ciphertext,
     authorization: { issuedAt: issuedAt.toString(), expiry: expiry.toString(), signature },
-    ...(requestId ? { requestId } : {}),
+    ...(requestId ? { requestId, policyRegistrationBlock: "10" } : {}),
   };
 }
 
@@ -191,6 +191,15 @@ describe("interactive demo wire", () => {
     const f = fixture();
     const request = await actorRequest(f, 1, "CUSTODY");
     expect(() => parseDemoActorRequest({ ...request, decision: "ALLOW" })).toThrow(/unknown field/);
+  });
+
+  it("requires and normalizes an on-chain registration-block hint for evaluation", async () => {
+    const f = fixture();
+    const state = canonicalState(f);
+    const request = await actorRequest(f, 1, "EVALUATE", state.request.requestId);
+    const { policyRegistrationBlock: _block, ...missing } = request;
+    expect(() => parseDemoActorRequest(missing)).toThrow(/policyRegistrationBlock/);
+    expect(parseDemoActorRequest(request).policyRegistrationBlock).toBe(10n);
   });
 });
 

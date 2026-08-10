@@ -61,7 +61,7 @@ export interface DemoCanonicalEvaluationState {
 }
 
 export interface DemoStateReader {
-  load(requestId: Hex, policyCommitment: Hex): Promise<DemoCanonicalEvaluationState>;
+  load(requestId: Hex, policyCommitment: Hex, policyRegistrationBlock: bigint): Promise<DemoCanonicalEvaluationState>;
 }
 
 export interface ProcessDemoActorOptions {
@@ -133,8 +133,8 @@ export async function processDemoActorRequest(options: ProcessDemoActorOptions):
       };
     }
 
-    if (!options.stateReader || !request.requestId) throw new Error("canonical demo state reader is unavailable");
-    const canonical = await options.stateReader.load(request.requestId, binding.policyCommitment);
+    if (!options.stateReader || !request.requestId || !request.policyRegistrationBlock) throw new Error("canonical demo state reader is unavailable");
+    const canonical = await options.stateReader.load(request.requestId, binding.policyCommitment, request.policyRegistrationBlock);
     if (canonical.policyStatus !== 1) throw new Error("demo policy is not active");
     if (canonical.request.createdAt > canonical.finalizedAt || canonical.finalizedAt > canonical.request.expiry) {
       throw new Error("canonical demo request time is invalid or expired");

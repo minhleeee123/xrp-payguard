@@ -97,6 +97,7 @@ export interface DemoActorRequest {
   ciphertext: Hex;
   authorization: DemoIngressAuthorization;
   requestId?: Hex;
+  policyRegistrationBlock?: bigint;
 }
 
 export function demoPolicyNonceV1(submissionNonce: Hex): bigint {
@@ -176,14 +177,16 @@ export function parseDemoConfig(value: unknown): DemoDomainConfig {
 
 export function parseDemoActorRequest(value: unknown): DemoActorRequest {
   const record = object(value, "actor request");
-  exactKeys(record, ["operation", "ciphertext", "authorization", "requestId"], "actor request");
+  exactKeys(record, ["operation", "ciphertext", "authorization", "requestId", "policyRegistrationBlock"], "actor request");
   const operation = record.operation;
   if (operation !== "CUSTODY" && operation !== "EVALUATE") throw new Error("unknown demo operation");
   const authorization = object(record.authorization, "authorization");
   exactKeys(authorization, ["issuedAt", "expiry", "signature"], "authorization");
   const requestId = record.requestId === undefined ? undefined : bytes32(record.requestId, "requestId");
-  if (operation === "EVALUATE" && !requestId) throw new Error("evaluation requestId is required");
-  if (operation === "CUSTODY" && requestId) throw new Error("custody request cannot include requestId");
+  const policyRegistrationBlock = record.policyRegistrationBlock === undefined
+    ? undefined : decimal(record.policyRegistrationBlock, "policyRegistrationBlock");
+  if (operation === "EVALUATE" && (!requestId || !policyRegistrationBlock)) throw new Error("evaluation requestId and policyRegistrationBlock are required");
+  if (operation === "CUSTODY" && (requestId || policyRegistrationBlock)) throw new Error("custody request cannot include evaluation fields");
   return {
     operation,
     ciphertext: hex(record.ciphertext, "ciphertext", 65 + 16 + 1 + 32, 64 * 1024),
@@ -193,6 +196,7 @@ export function parseDemoActorRequest(value: unknown): DemoActorRequest {
       signature: hex(authorization.signature, "authorization.signature", 65, 65),
     },
     ...(requestId ? { requestId } : {}),
+    ...(policyRegistrationBlock ? { policyRegistrationBlock } : {}),
   };
 }
 
