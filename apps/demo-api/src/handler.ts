@@ -58,8 +58,25 @@ export async function handleDemoActor(actor: 1 | 2 | 3, request: RequestLike, re
     json(response, 200, result);
   } catch (error) {
     const invalid = error instanceof Error && /(?:invalid|malformed|outside|stale|mismatch|unknown|required|cannot|failed|expired|not active)/i.test(error.message);
-    json(response, invalid ? 400 : 503, { status: invalid ? "INVALID_REQUEST" : "UNAVAILABLE" });
+    json(response, invalid ? 400 : 503, {
+      status: invalid ? "INVALID_REQUEST" : "UNAVAILABLE",
+      reason: safeFailureReason(error),
+    });
   }
+}
+
+function safeFailureReason(error: unknown): string {
+  const message = error instanceof Error ? error.message : "";
+  if (/authorization/i.test(message)) return "AUTHORIZATION_INVALID";
+  if (/ciphertext|decrypt/i.test(message)) return "CIPHERTEXT_INVALID";
+  if (/policy is not active/i.test(message)) return "POLICY_INACTIVE";
+  if (/request time|expired/i.test(message)) return "REQUEST_EXPIRED";
+  if (/balance checkpoint/i.test(message)) return "BALANCE_CHECKPOINT_INVALID";
+  if (/spend history|history/i.test(message)) return "HISTORY_INVALID";
+  if (/canonical request/i.test(message)) return "REQUEST_STATE_INVALID";
+  if (/binding|domain|descriptor/i.test(message)) return "DOMAIN_INVALID";
+  if (/actor unavailable/i.test(message)) return "ACTOR_UNAVAILABLE";
+  return "DEPENDENCY_OR_INPUT_INVALID";
 }
 
 function secureHeaders(response: ResponseLike): void {
