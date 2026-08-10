@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "kind": "payguard-coston2-v2-release-candidate-plan",
+  "status": "planned",
+  "verified": false,
+  "network": {
+    "name": "flare-coston2",
+    "chainId": 114
+  },
+  "authoritativeManifest": "releases/coston2.release.json",
+  "candidate": {
+    "registryContract": "PayGuardPolicyRegistryV2",
+    "machineAuthorization": "official-manager-live-recheck",
+    "custodyThreshold": 3,
+    "resultThreshold": 2,
+    "buildCommand": "pnpm candidate:build",
+    "checkCommand": "pnpm candidate:check"
+  },
+  "boundaries": {
+    "deployed": false,
+    "liveFccVerified": false,
+    "canonicalLifecycleVerified": false,
+    "outageDrillsVerified": false,
+    "canonicalRedemptionVerified": false,
+    "userValidationVerified": false
+  },
+  "requiredLiveInputs": [
+    {
+      "id": "official-fcc-manager-and-three-machines",
+      "status": "blocked",
+      "requiredEvidence": "Official TeeManager source, extension/code binding, three distinct production machine identities, HTTPS origins, and live manager status checks"
+    },
+    {
+      "id": "coston2-v2-deployment",
+      "status": "blocked",
+      "requiredEvidence": "Deployment transactions, blocks, addresses, independently observed runtime hashes, wiring, roles, and source commit"
+    },
+    {
+      "id": "canonical-live-lifecycle",
+      "status": "blocked",
+      "requiredEvidence": "Funding, all-three custody, allow, deny, stop, resume, revoke, and redemption bound to one verified release"
+    },
+    {
+      "id": "outage-drills",
+      "status": "blocked",
+      "requiredEvidence": "Public-safe fail-closed and recovery observations for every required dependency and FCC identity drill"
+    },
+    {
+      "id": "canonical-redemption",
+      "status": "blocked",
+      "requiredEvidence": "Vault settlement, FAssets redemption request, XRPL payout or default path, and conservation reconciliation"
+    },
+    {
+      "id": "user-validation",
+      "status": "blocked",
+      "requiredEvidence": "Consented anonymized sessions and aggregate usability results under the checked-in protocol"
+    }
+  ],
+  "preparedArtifacts": [
+    "packages/contracts/src/PayGuardPolicyRegistryV2.sol",
+    "packages/contracts/src/interfaces/IFlareTeeManager.sol",
+    "packages/contracts/test/PayGuardPolicyRegistryV2.t.sol",
+    "apps/fcc-extension/internal/ingress/store.go",
+    "packages/bindings/src/generated.ts",
+    "package.json",
+    ".github/workflows/release-ci.yml",
+    "tooling/check-bindings.mjs",
+    "tooling/check-release.mjs",
+    "tooling/check-release.test.mjs",
+    "tooling/candidate-public.mjs",
+    "tooling/candidate-build.mjs",
+    "tooling/release-candidate.mjs",
+    "tooling/release-candidate.test.mjs",
+    "tooling/coston2-v2-lifecycle.mjs",
+    "tooling/coston2-v2-outage-drills.mjs",
+    "tooling/coston2-v2-redemption.mjs",
+    "tooling/user-validation.mjs",
+    "docs/technology/coston2-v2-promotion-runbook.md",
+    "docs/product/user-validation-protocol.md",
+    "docs/product/user-validation-aggregate.template.json"
+  ],
+  "promotionRules": [
+    "Never copy this plan to the authoritative manifest path",
+    "Never substitute simulated FCC, placeholder addresses, mock approvals, or unverified transactions for live evidence",
+    "Promote only after every live blocker is independently verified against the same clean source commit",
+    "Keep policies, ciphertext, credentials, keys, and signatures out of candidate and release artifacts"
+  ]
+}

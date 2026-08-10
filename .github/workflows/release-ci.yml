@@ -1,0 +1,78 @@
+name: release-ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+          run_install: false
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.19.0
+          cache: pnpm
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.25.12
+          cache-dependency-path: apps/fcc-extension/go.sum
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.7.1
+
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify pinned toolchain
+        run: pnpm toolchain:check
+
+      - name: Build non-authoritative V2 candidate
+        run: pnpm candidate:build
+
+      - name: Run repository safety and drift gates
+        run: pnpm check
+
+      - name: Typecheck workspaces
+        run: pnpm -r typecheck
+
+      - name: Test workspaces
+        run: pnpm -r test
+
+      - name: Build production web artifact
+        run: pnpm --filter @xrp-payguard/web build
+
+      - name: Test FCC extension
+        working-directory: apps/fcc-extension
+        run: go test ./...
+
+      - name: Check Solidity formatting
+        run: forge fmt --check --root packages/contracts
+
+      - name: Test contracts
+        run: forge test --root packages/contracts

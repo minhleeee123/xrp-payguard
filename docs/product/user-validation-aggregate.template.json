@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "kind": "payguard-user-validation-aggregate-template",
+  "status": "planned",
+  "verified": false,
+  "instructions": "Copy this file to access-controlled research storage, replace the template kind/status only after real sessions, remove instructions, and validate the anonymized aggregate before considering publication.",
+  "requiredCommand": "pnpm candidate:user-validation:verify -- <aggregate-report.json>",
+  "minimumCohorts": {
+    "policyOwners": 5,
+    "payeesOrExecutors": 3
+  },
+  "requiredTasks": [
+    "create-and-freeze-policy",
+    "recognize-public-versus-private-data",
+    "submit-allow-request",
+    "understand-deny-and-fail-closed",
+    "stop-resume-and-revoke-policy",
+    "trace-redemption-status"
+  ],
+  "forbiddenPublicFields": [
+    "participant identity",
+    "contact details",
+    "raw notes or recordings",
+    "policy content or ciphertext",
+    "wallet or FCC credentials",
+    "signatures"
+  ]
+}

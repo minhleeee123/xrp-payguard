@@ -4,7 +4,9 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
-execFileSync("forge", ["build", "--root", "packages/contracts"], { cwd: root, stdio: "ignore" });
+const skipBuild = process.argv.slice(2).includes("--skip-build");
+if (process.argv.slice(2).some((argument) => argument !== "--skip-build")) throw new Error("usage: check-bindings.mjs [--skip-build]");
+if (!skipBuild) execFileSync("forge", ["build", "--root", "packages/contracts"], { cwd: root, stdio: "ignore" });
 const temporary = await mkdtemp(resolve(tmpdir(), "payguard-bindings-"));
 const expected = resolve(temporary, "generated.ts");
 try {
@@ -14,7 +16,7 @@ try {
     readFile(expected, "utf8"),
   ]);
   if (actualText !== expectedText) throw new Error("generated bindings are stale; run pnpm bindings:generate");
-  console.log(JSON.stringify({ status: "ok", source: "packages/contracts/out", target: "packages/bindings/src/generated.ts" }));
+  console.log(JSON.stringify({ status: "ok", source: "packages/contracts/out", target: "packages/bindings/src/generated.ts", build: skipBuild ? "prebuilt" : "forge" }));
 } finally {
   await rm(temporary, { recursive: true, force: true });
 }
