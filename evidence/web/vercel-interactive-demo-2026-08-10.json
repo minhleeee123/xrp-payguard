@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 1,
+  "suite": "payguard-vercel-interactive-simulated-fcc-coston2",
+  "status": "PASS",
+  "recordedAt": "2026-08-10T03:45:00Z",
+  "testnetOnly": true,
+  "sourceCommit": "da66c74b1c4f4fc118f5cc268e169b2d5ee2d324",
+  "deployment": {
+    "platform": "vercel",
+    "target": "production",
+    "deploymentId": "dpl_GMecUxEknhpUc6TXF5rGukUN7JUZ",
+    "deploymentUrl": "https://xrp-payguard-l81ookvr9-minh00plus-5489s-projects.vercel.app",
+    "alias": "https://xrp-payguard.vercel.app",
+    "inspectorUrl": "https://vercel.com/minh00plus-5489s-projects/xrp-payguard/GMecUxEknhpUc6TXF5rGukUN7JUZ"
+  },
+  "simulationDomain": {
+    "mode": "SIMULATED_FCC_COSTON2_TESTNET_V1",
+    "chainId": 114,
+    "registry": "0xc5e18B97ca556B25e41FA0e0F3a6ba05B3Da2a49",
+    "vault": "0xF8e3A4516f63b09c2D3e02E5F1e7188308AA13F4",
+    "router": "0x01c91b3E11D85068A6898876e270bdFA2Fab0c09",
+    "asset": "0x0b6A3645c240605887a5532109323A3E12273dc7",
+    "sharedOperator": true,
+    "hardwareTee": false
+  },
+  "automatedLiveGate": {
+    "status": "PASS",
+    "durationSeconds": 133.29,
+    "observedFinalizedBlock": "33845691",
+    "owner": "0xDC1cc527423C882156a632C250528D1922d18Fc7",
+    "policyCommitment": "0x2e3b0df9e44083fe94ddd6007ca813abb3e34667293688fb59f99adba1aeb495",
+    "policyId": "0x879c00683ea8306ec0d0d65916d8293bf5fc97faf1714741f5f3aac7de0eb41b",
+    "allowRequestId": "0xb2f9f787c87ebfa3d5f85e421680c9c2be4c3e1b129209b66a6e51ecb21e65b0",
+    "deniedRequestId": "0xfc0aa4d30324943578d61640943fe38d762b9f3ddcf4638208b3a1859e0d9610",
+    "publicAmountBaseUnitsPerRequest": "100000",
+    "publicDenialReason": "CAP_EXCEEDED",
+    "publicDenialReasonCode": 9,
+    "transactions": [
+      {
+        "step": "POLICY_REGISTERED",
+        "blockNumber": "33845596",
+        "transactionHash": "0x6da124cd03109ff8d9d6502b464283aa737a0f05755a46bc1faaa3fbb5ec2f7c"
+      },
+      {
+        "step": "ALLOW_REQUEST_CREATED",
+        "blockNumber": "33845600",
+        "transactionHash": "0x0acfe990c333b1c23a479f21dd79cd5ecd249f0ab92b835758f40d7718f17992"
+      },
+      {
+        "step": "ALLOW_ACTOR_1_SUBMITTED",
+        "blockNumber": "33845610",
+        "transactionHash": "0xc3bad10f540bc14f449244f814c9fae69a3d9496154d848296d04e1e412ef08c"
+      },
+      {
+        "step": "ALLOW_ACTOR_2_THRESHOLD_REACHED",
+        "blockNumber": "33845613",
+        "transactionHash": "0x0e9d0f16d4c73b1cc731fd04e10c2b6174901f0491f3cb9d800aef36cca6fd76"
+      },
+      {
+        "step": "ALLOW_REQUEST_EXECUTED",
+        "blockNumber": "33845623",
+        "transactionHash": "0x067377e2c503c8ce17c5e039692eadb86b0a91f4fa3e35667267b4830626ac45"
+      },
+      {
+        "step": "DENY_REQUEST_CREATED",
+        "blockNumber": "33845634",
+        "transactionHash": "0x1bd5e59bce3075832ffa16fc91f240b8eab7e2d30b3563019bf6dbb74fa5ae71"
+      },
+      {
+        "step": "DENY_ACTOR_1_SUBMITTED",
+        "blockNumber": "33845643",
+        "transactionHash": "0xf8e8258f4847950861c9b16a90ead709c613251a3a21ed810ace599cdd88b0a7"
+      },
+      {
+        "step": "DENY_ACTOR_2_THRESHOLD_REACHED",
+        "blockNumber": "33845649",
+        "transactionHash": "0x7764cb43bcee07bfc5c2807680ef5d4ec5354a5a1123b0c4e7baac758b15d1b8"
+      },
+      {
+        "step": "POLICY_STOPPED",
+        "blockNumber": "33845657",
+        "transactionHash": "0x18cb129fb68a68f1ffad1ac38cebf95c73b1ff0fe8c2d37fb03cafcd5e009f27"
+      },
+      {
+        "step": "POLICY_RESUMED",
+        "blockNumber": "33845663",
+        "transactionHash": "0x5ba88ff1db18518f428ae491910ee0aa88a50c995e0ae03ca85559d3e08d7b4a"
+      },
+      {
+        "step": "POLICY_REVOKED",
+        "blockNumber": "33845665",
+        "transactionHash": "0xa535b750b29fbc6c9cc47a152e6fa570921ebd31258f19838e0899c592dd8500"
+      }
+    ]
+  },
+  "productionSmoke": {
+    "configHttpStatus": 200,
+    "configCacheControl": "no-store, max-age=0",
+    "configNoSniffVerified": true,
+    "actorCount": 3,
+    "clientSuppliedDecisionHttpStatus": 400,
+    "clientSuppliedDecisionRejected": true,
+    "evidenceAssetCount": 16
+  },
+  "laptopBrowserSmoke": {
+    "browser": "Google Chrome 151.0.7922.108",
+    "viewport": "1440x1100",
+    "views": [
+      "landing",
+      "overview",
+      "demo-lifecycle",
+      "policy-studio"
+    ],
+    "horizontalOverflowObserved": false,
+    "browserStorageEntryCount": 0,
+    "httpFailureCount": 0,
+    "consoleErrorCount": 0,
+    "interactiveSimulationLabelObserved": true,
+    "threeActorWaitingStateObserved": true,
+    "visualInspectionPassed": true
+  },
+  "assertions": {
+    "apiConfigVerified": true,
+    "clientDecisionRejected": true,
+    "threeActorCustodyVerified": true,
+    "twoMatchingAllowVerified": true,
+    "executionVerified": true,
+    "twoMatchingCapDenialVerified": true,
+    "stopResumeRevokeVerified": true,
+    "vaultConservationVerified": true,
+    "noPrivateKeyRecorded": true,
+    "noCredentialRecorded": true,
+    "noPolicyPlaintextOrCiphertextRecorded": true,
+    "noRawSignatureRecorded": true,
+    "simulationOnly": true,
+    "hardwareTeeVerified": false,
+    "registeredProductionMachinesVerified": false,
+    "independentOperatorsVerified": false,
+    "sealedPersistenceVerified": false,
+    "productionFccReleaseVerified": false,
+    "payGuardReleaseManifestVerified": false
+  },
+  "limitations": [
+    "All three simulated actors run under one Vercel project and operator trust domain.",
+    "The actor runtimes are stateless serverless processes, not hardware TEEs or registered production FCC machines.",
+    "The passing lifecycle proves the isolated Coston2 demo protocol and UI path only; it does not satisfy production FCC Gates A, B, or C.",
+    "Wallet prompts were exercised by the automated gated client; the laptop browser smoke was wallet-free and did not broadcast additional transactions."
+  ]
+}

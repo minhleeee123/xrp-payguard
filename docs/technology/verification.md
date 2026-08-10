@@ -25,10 +25,10 @@ Forbidden evidence:
 | B — Private policy ingress | sealed policy, three receipts, replay/domain negatives | LOCAL AUTH/ECIES PASS / SEALED LIVE NOT VERIFIED |
 | C — Common custody | all-three matching policy availability and commitment | NOT STARTED |
 | D — Deterministic evaluation | cross-language vectors and private policy result | LOCAL PASS INCLUDING CANONICAL FTSO/FDC INPUTS / LIVE NOT VERIFIED |
-| E — Threshold execution | two distinct exact results authorize one atomic action | LOCAL PASS + SOLUTION-3 COSTON2 SIMULATED-SIGNER LIFECYCLE PASS / CONTRACTS DEPLOYED / LIVE FCC EXECUTION OPEN |
+| E — Threshold execution | two distinct exact results authorize one atomic action | LOCAL PASS + SOLUTION-3 COSTON2 SIMULATED-SIGNER LIFECYCLE PASS + ISOLATED VERCEL 3-ACTOR/COSTON2 DEMO PASS / LIVE HARDWARE FCC EXECUTION OPEN |
 | F — Vault conservation | deposits/reservations/spend/refund and adversarial invariants | LOCAL PASS / VAULT DEPLOYED / LIVE FAssets REQUEST/PAYOUT OBSERVED / CANONICAL SETTLEMENT + DEFAULT RECOVERY OPEN |
 | G — XRP-native funding | XRPL payment, FDC proof, Smart Account deposit | PASS — live PayGuard-owned Coston2 evidence in [`evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json`](../../evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json) covers validated XRPL Testnet payment, FDC request/finalized round/proof commitment, on-chain `verifyXRPPayment`, `executeDirectMintingWithData`, and verified PayGuardVault accounting. The credential-free [`coston2-funding-resume-audit-2026-08-09.json`](../../evidence/coston2/coston2-funding-resume-audit-2026-08-09.json) reconstructs that checkpoint and re-verifies its proof/runtime bindings. The separate [`xrpl-fdc-trigger-pending-2026-08-09.json`](../../evidence/coston2/xrpl-fdc-trigger-pending-2026-08-09.json) binds a second validated XRPL payment and finalized proof to atomic replay consumption and one canonical router `Pending` request. Canonical private FDC evaluation passes locally, but its policy signers are simulated; delayed resubmission, live FCC results, and release gates remain open. |
-| H — Product release | full roles, recovery, accessibility, live deployment | STATIC VERCEL SHELL + PUBLIC-SAFE `/evidence/index.json` + LANDING + DESKTOP/MOBILE/KEYBOARD BROWSER SMOKE + CONTRACT DEPLOYMENT / HOSTED PRIVATE LIFECYCLE, RELAY, FCC, AND RELEASE MANIFEST OPEN |
+| H — Product release | full roles, recovery, accessibility, live deployment | INTERACTIVE VERCEL DAPP + ISOLATED SIMULATED-FCC/COSTON2 LIFECYCLE + PUBLIC-SAFE `/evidence/index.json` + LANDING + DESKTOP/MOBILE/KEYBOARD BROWSER SMOKE / PRODUCTION RELAY, FCC, AND RELEASE MANIFEST OPEN |
 | I — User validation | interviews, usability, and design-partner pilot | NOT STARTED |
 
 ## 3. Test matrix
@@ -180,12 +180,26 @@ provider-bound application state.
 
 The production evidence-corpus audit recorded on 2026-08-09 fetched the pinned
 Vercel origin, required JSON content types and HTTP 200, and matched the
-metadata-only index plus all 15 listed bodies byte-for-byte with the reviewed
+metadata-only index plus all 15 then-listed bodies byte-for-byte with the reviewed
 local sources. It reran recursive public-field checks and both simulation
 boundaries. The repository-only result is
 [`public-evidence-deployment-audit-2026-08-09.json`](../../evidence/web/public-evidence-deployment-audit-2026-08-09.json);
 it is intentionally excluded from the hosted index and does not upgrade the
 interactive testnet client into an FCC or verified-release claim.
+
+On 2026-08-10 the isolated interactive namespace passed a 133.29-second gate
+against the public Vercel actor APIs and separate Coston2 contracts. The test
+verified three actor custody receipts, policy registration, two matching
+`ALLOW` results and execution, a second request denied by two matching
+`CAP_EXCEEDED` results, stop/resume/revoke, and final vault conservation. The
+production API separately returned HTTP 400 for a client payload containing a
+decision field. Chrome 151 inspected landing, Overview, Demo lifecycle, and
+Policy Studio at 1440×1100 with zero horizontal overflow, browser storage,
+failed HTTP requests, or console errors. Public transaction IDs and bounded
+assertions are recorded in
+[`vercel-interactive-demo-2026-08-10.json`](../../evidence/web/vercel-interactive-demo-2026-08-10.json).
+The actors share one Vercel operator and are not hardware TEEs; these results do
+not satisfy production FCC Gates A, B, or C.
 
 ## 4. Release manifest
 

@@ -5,10 +5,11 @@
 > wiring are deployed and runtime/constructor-verified on Coston2; no registered
 > FCC result, private live lifecycle, or complete release is verified.
 >
-> Hackathon delivery decision (2026-08-09): the current demo uses the
-> credential-free local three-machine simulated FCC stack, the verified public
-> Coston2 contract/funding observations, and the Vercel public shell/evidence
-> mirror. Stable FCC servers, authenticated indexer access, hosted relay/proxy,
+> Hackathon delivery decision (updated 2026-08-10): the current demo uses the
+> credential-free local three-machine simulated FCC stack, verified public
+> Coston2 contract/funding observations, and an isolated Vercel serverless
+> three-actor lifecycle connected to separate Coston2 demo contracts. Stable
+> production FCC servers, authenticated indexer access, and hosted relay/proxy,
 > registered production machines, and the private live lifecycle are explicitly
 > post-hackathon work. Simulation must remain labelled `LOCAL` or `SIMULATED`
 > and cannot satisfy a live FCC or release gate.
@@ -419,10 +420,12 @@ live editable governance remain open.
   explicit loading/error/recovery copy. Production landing/Overview Lighthouse
   and all-view responsive/reduced-motion checks pass; manual assistive-technology
   testing remains open.
-- [ ] Add an isolated Interactive Demo namespace with three stateless
+- [x] Add an isolated Interactive Demo namespace with three stateless
   ciphertext-only simulated actors, independently computed signed receipts and
   results, exact wallet previews, two-result threshold submission, lifecycle
-  governance, permanent simulation labels, and no production FCC claim.
+  governance, permanent simulation labels, and no production FCC claim. The
+  deployed API gate, automated Coston2 ALLOW/execute/CAP-denial/governance
+  lifecycle, and wallet-free 1440px browser smoke passed on 2026-08-10.
 
 Exit: every user role can complete its canonical journey without a mock or
 manual database edit.
@@ -480,12 +483,14 @@ Exit: failure is resumable or explicitly denied, never represented as success.
 - [ ] Post-hackathon: deploy stable FCC origins and proxy/relay, connect the
   hosted web to the verified release, and run complete production
   desktop/mobile/keyboard smokes against the exact deployed commit.
-- [ ] Deploy and audit the separate Interactive Demo contracts/serverless
+- [x] Deploy and audit the separate Interactive Demo contracts/serverless
   actors, publish sanitized simulation evidence, and verify the production web
   lifecycle without treating it as Gate A/B/C or a verified release. The three
   simulation-only contracts, actor registrations, environment bindings, and
-  sanitized deployment evidence passed on 2026-08-10; production API/UI deploy
-  and end-to-end browser smoke remain open.
+  sanitized deployment evidence passed on 2026-08-10. The production API
+  rejected a client-supplied decision, the 133.29-second automated testnet
+  lifecycle passed, and the landing/Overview/Demo/Policy Studio laptop smoke
+  reported no HTTP/console failure, browser storage, or horizontal overflow.
 
 Exit: source, runtime, bindings, UI, docs, and public-safe evidence agree.
 

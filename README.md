@@ -143,8 +143,8 @@ On-chain state is the canonical replay and rollback authority.
 
 ## What is verified now
 
-Snapshot: 2026-08-09. [`PLAN.md`](PLAN.md) records **102 of 125 gates
-(81.6%)** complete. The remaining gates require owner/user activity, stable FCC
+Snapshot: 2026-08-10. [`PLAN.md`](PLAN.md) records **105 of 128 gates
+(82.0%)** complete. The remaining gates require owner/user activity, stable FCC
 infrastructure, live protocol conditions, independent audits, or production /
 mainnet work; they are not silently promoted by local tests.
 
@@ -157,7 +157,7 @@ mainnet work; they are not silently promoted by local tests.
 | Solution-3 lifecycle | Fourteen successful Coston2 transactions cover simulated three-machine registration, policy registration, recurring allow, cap denial, stop/resume/revoke, and exact vault conservation | Machine identities and result signers are explicitly ephemeral simulation |
 | FAssets exit | Amount-based and `redeemWithTag` Coston2 requests have matching validated XRPL payouts and `RedemptionPerformed` observations | Partial/default recovery and canonical PayGuard settlement consumption remain open |
 | Web2Json | Local source commitment allowlist, exact public request, jq/tuple ABI, MIC/response, source-asserted freshness, replay, and verifier failure tests pass | No production source, live proof, source-truth guarantee, private policy evaluation, or on-chain consumer |
-| Web | Interactive Vercel Coston2 dApp, finalized wallet/vault/request reads, guarded vault/router writes, strict lifecycle demo, 15-asset evidence mirror, and production browser/Lighthouse pass | Production FCC/relay/policy providers and fresh user-wallet broadcast evidence are unavailable |
+| Web | Interactive Vercel Coston2 dApp, finalized wallet/vault/request reads, guarded writes, 3-actor simulated-FCC lifecycle, 16-asset evidence mirror, and production browser/Lighthouse pass | Production FCC/relay providers remain unavailable; the full hosted lifecycle is explicitly simulation-only |
 | Release | Release validators fail closed | `pnpm release:check` correctly reports `planned`; no verified release manifest exists |
 
 ## Coston2 public identifiers
@@ -176,6 +176,44 @@ hashes, wiring, and the exact source commit used for each deployment.
 | FCC foundation sender | [`0xA1e95721aD7F96D7f9bcd1d62b3A38A8625Cf8dC`](https://coston2-explorer.flare.network/address/0xA1e95721aD7F96D7f9bcd1d62b3A38A8625Cf8dC) |
 | FCC foundation extension ID | `66037` — sender/extension binding only, not a production machine or live FCC result |
 | Supported test asset | FTestXRP `0x0b6A3645c240605887a5532109323A3E12273dc7`, resolved and checked through supported Flare runtime sources |
+
+The fully interactive hackathon demo is deliberately isolated from those
+production-target contracts:
+
+| Simulation-only component | Coston2 identifier |
+| --- | --- |
+| Demo registry | [`0xc5e18B97ca556B25e41FA0e0F3a6ba05B3Da2a49`](https://coston2-explorer.flare.network/address/0xc5e18B97ca556B25e41FA0e0F3a6ba05B3Da2a49) |
+| Demo vault | [`0xF8e3A4516f63b09c2D3e02E5F1e7188308AA13F4`](https://coston2-explorer.flare.network/address/0xF8e3A4516f63b09c2D3e02E5F1e7188308AA13F4) |
+| Demo router | [`0x01c91b3E11D85068A6898876e270bdFA2Fab0c09`](https://coston2-explorer.flare.network/address/0x01c91b3E11D85068A6898876e270bdFA2Fab0c09) |
+
+### First-time interactive test
+
+Use only a disposable testnet wallet and faucet assets. Never enter a real
+operational policy or use mainnet value.
+
+1. Open the live application and choose **Inspect Coston2 demo**.
+2. Add/select Coston2 (chain ID `114`) in an injected EVM wallet. Obtain C2FLR
+   for gas and FTestXRP from the official Flare faucet linked in Overview.
+3. In **Demo lifecycle**, connect the wallet, leave the funding amount at `1`,
+   press **Approve**, confirm finality, then press **Deposit**.
+4. Open **Policy Studio** and press **Use isolated demo domain**. Review the
+   generated test-only target, `0.1` FTestXRP per-action limit and `0.15`
+   FTestXRP daily cap; then press **Validate & compute**.
+5. Press **Collect 3 simulated receipts** and approve the three owner-signature
+   prompts. No transaction is broadcast during custody. Then press
+   **Register in demo contracts** and confirm the registry transaction.
+6. Return to **Demo lifecycle**, create a `0.1` FTestXRP request, press
+   **Evaluate with 3 actors**, submit two matching results, and execute the
+   public transfer. Each confirmed write appears with a Coston2 explorer link.
+7. Press **Prepare next request** and repeat with `0.1`. The actors must return
+   `DENY · CAP_EXCEEDED`; submitting two matching denials must not move value.
+8. Exercise **Stop**, **Resume**, and finally **Revoke**. Revocation is terminal.
+
+The browser never sends an `ALLOW`/`DENY` choice to an actor; the deployed API
+rejects a client-supplied decision. Refresh intentionally discards the private
+draft, ciphertexts, and this-tab transaction log. Three actors share one Vercel
+operator and are not hardware TEEs, so this flow demonstrates the complete
+testnet product mechanics without satisfying production FCC custody gates.
 
 ## Live application and judge walkthrough
 
@@ -196,9 +234,11 @@ Suggested five-minute walkthrough:
    then use the two-step FTestXRP transaction preview without exposing a key.
 5. In **Requests**, load the prefilled canonical request; compare its router
    status, Payee projection, Auditor boundary, and guarded expiry action.
-6. Open **Demo lifecycle** to inspect the three distinct simulated machines,
-   fourteen Coston2 checkpoints, allow execution, cap denial, conservation, and
-   the false live assertions:
+6. Open **Demo lifecycle** for either the wallet-free recorded lifecycle or the
+   operational isolated testnet flow above. The latter has passed three actor
+   receipts, policy registration, matching ALLOW execution, matching cap denial,
+   conservation, and governance against the public Vercel origin. The false
+   production assertions remain:
    `hardwareTeeVerified`, `stableHttpsOriginsVerified`,
    `authenticatedIndexerVerified`, and `registeredMachinesVerified` remain
    false. Policy Studio commitment generation remains local and is not a custody
@@ -225,6 +265,8 @@ Public evidence is allowlisted, sanitized, and testnet-only. Start with
 | [`fassets-tagged-redemption-2026-08-09.json`](evidence/coston2/fassets-tagged-redemption-2026-08-09.json) | Tagged redemption and validated XRPL destination tag |
 | [`fcc-local-three-machine-2026-08-09.json`](evidence/simulation/fcc-local-three-machine-2026-08-09.json) | Disposable local three-machine identity, ingress, hardening, restart, and cleanup smoke |
 | [`coston2-simulated-policy-lifecycle-2026-08-09.json`](evidence/simulation/coston2-simulated-policy-lifecycle-2026-08-09.json) | Real Coston2 contract lifecycle with explicitly simulated policy signers |
+| [`coston2-interactive-demo-deployment-2026-08-10.json`](evidence/simulation/coston2-interactive-demo-deployment-2026-08-10.json) | Separate demo contracts, three public actor descriptors, registrations, wiring, and mandatory false production assertions |
+| [`vercel-interactive-demo-2026-08-10.json`](evidence/web/vercel-interactive-demo-2026-08-10.json) | Production-origin API, full automated Coston2 ALLOW/DENY/governance lifecycle, and laptop browser smoke |
 | [`vercel-preview-2026-08-09.json`](evidence/web/vercel-preview-2026-08-09.json) | Current Vercel artifact, browser, keyboard, responsive, evidence, and Lighthouse audit |
 
 Evidence may contain only public addresses, hashes, blocks, transaction IDs,

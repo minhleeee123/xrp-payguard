@@ -2,12 +2,16 @@
 
 > Status: the separate simulation-only registry, vault, router, three actor
 > registrations, and Vercel environment bindings were deployed and read back on
-> Coston2 on 2026-08-10. Production API/UI lifecycle smoke remains pending.
+> Coston2 on 2026-08-10. The production Vercel API and automated full lifecycle
+> gate passed against this isolated namespace; wallet-free laptop browser smoke
+> also passed. A hardware-backed production FCC lifecycle remains unavailable.
 > Nothing in this document is a production FCC, hardware TEE,
 > registered-production-machine, or verified-release claim.
 
 Public simulation evidence:
 [`evidence/simulation/coston2-interactive-demo-deployment-2026-08-10.json`](../../evidence/simulation/coston2-interactive-demo-deployment-2026-08-10.json).
+The deployed lifecycle and browser record is
+[`evidence/web/vercel-interactive-demo-2026-08-10.json`](../../evidence/web/vercel-interactive-demo-2026-08-10.json).
 
 | Component | Simulation-only Coston2 identifier |
 | --- | --- |
@@ -82,6 +86,13 @@ process isolation only, not production confidentiality.
 Every write uses an exact preview, injected-wallet signing, receipt/event
 verification, finalized readback, and a visible explorer link. Dependency or
 quorum failure remains unavailable/denied; no local fallback becomes success.
+
+The automated production-origin gate completed this sequence in 133.29 seconds:
+three custody calls and a policy registration, one `100000`-base-unit request
+authorized by two matching actor results and executed, a second identical
+request canonically denied as `CAP_EXCEEDED`, then stop, resume, revoke, and a
+final vault-conservation read. The evidence stores only public identifiers,
+blocks, transactions, amounts, and assertions.
 
 ## Actor request rules
 
