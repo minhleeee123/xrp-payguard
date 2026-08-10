@@ -92,3 +92,15 @@ The final toolchain will pin Node, pnpm, Go, Foundry, Solidity, and official
 Flare dependencies. Code changes must run applicable unit, lint/type, build,
 privacy-output, secret, binding-drift, and live-gate checks. FCC/contracts also
 require replay/domain, threshold, recovery, conservation, and evidence tests.
+
+## 8. Gate reporting convention
+
+- Default progress reports to the owner must count only gates inside the
+  current pre-hackathon/submission boundary defined in `PLAN.md`.
+- Exclude every explicitly post-hackathon gate from both the completed count
+  and the denominator. Do not use the full-product roadmap percentage as the
+  headline hackathon progress number.
+- Report pre-submission owner actions and pre-submission user-validation
+  targets separately when that distinction affects what the owner must do.
+- Report full-roadmap totals only when the owner explicitly requests them, and
+  label them `full product roadmap`, never `hackathon progress`.
