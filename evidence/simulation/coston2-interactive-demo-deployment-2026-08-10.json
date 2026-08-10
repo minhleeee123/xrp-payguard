@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "status": "simulation-only",
+  "mode": "SIMULATED_FCC_COSTON2_TESTNET_V1",
+  "label": "SIMULATED FCC · COSTON2 TESTNET · NOT PRODUCTION TEE",
+  "sourceCommit": "e7f4972f12111c8dd1c5c629ed617f976153a4d1",
+  "network": {
+    "name": "flare-coston2",
+    "chainId": 114
+  },
+  "deployer": "0xDC1cc527423C882156a632C250528D1922d18Fc7",
+  "contracts": {
+    "registry": "0xc5e18B97ca556B25e41FA0e0F3a6ba05B3Da2a49",
+    "vault": "0xF8e3A4516f63b09c2D3e02E5F1e7188308AA13F4",
+    "router": "0x01c91b3E11D85068A6898876e270bdFA2Fab0c09"
+  },
+  "asset": "0x0b6A3645c240605887a5532109323A3E12273dc7",
+  "deploymentBlock": "33844431",
+  "extensionId": "0x1c824ebf57b4d78e9ff50526087e37b6984a11035ce93a8f487d79fb45b037d4",
+  "codeVersion": "0x457b90914cf2baee001d27bb7727c8ccf4d902170f7310eeaf95056d65f16610",
+  "actors": [
+    {
+      "actor": 1,
+      "machineId": "0x9499e6dd2b93254218745753ae390da2b5515ff4145be74108c74aa6485669ed",
+      "keyFingerprint": "0xd006a7fbb788266baf1222457e6dcae4226717ccf86baed6d7c15b4a6a6a7a40",
+      "signer": "0x7e6DCAe4226717CCF86BAeD6d7c15b4A6A6a7A40",
+      "endpoint": "https://xrp-payguard.vercel.app/api/demo/machine-1"
+    },
+    {
+      "actor": 2,
+      "machineId": "0x505f934fd129386f30ebd13c3a3266e7e06309a533927050043777899445a90f",
+      "keyFingerprint": "0xc0aa6f3a6aefcc64b333077cdab6c77eef93b55ee680830eb3ffc1ab2377c1b9",
+      "signer": "0xDAB6c77EEf93b55ee680830eb3FFc1Ab2377c1b9",
+      "endpoint": "https://xrp-payguard.vercel.app/api/demo/machine-2"
+    },
+    {
+      "actor": 3,
+      "machineId": "0x480fd5d6c635dbf49689ae419cada0b2a882f8df63f4df1ca072f6f766639af1",
+      "keyFingerprint": "0xccab12626ff6d5e829b48603ffd691b3fd62d2ba2fcdb8bd18b2fe96380cb6be",
+      "signer": "0xffd691b3Fd62d2BA2Fcdb8bD18B2fe96380cb6be",
+      "endpoint": "https://xrp-payguard.vercel.app/api/demo/machine-3"
+    }
+  ],
+  "transactions": {
+    "deployRegistry": {
+      "transactionHash": "0x2ed6da59c63dbfcdaddb1fbc6bdde16a959f71b0794b3b9006ac55ee18397522",
+      "blockNumber": "33844431",
+      "status": "success"
+    },
+    "deployVault": {
+      "transactionHash": "0xfbc2cc68400978cf119d30b6efd71f601179830755a60a0ec164d18f087f7b36",
+      "blockNumber": "33844434",
+      "status": "success"
+    },
+    "deployRouter": {
+      "transactionHash": "0xc40fbb418ad1748cdc69496a3465516aee23255039e030652e98f26318da76fa",
+      "blockNumber": "33844439",
+      "status": "success"
+    },
+    "supportAsset": {
+      "transactionHash": "0x48810526ec33866d68453ad51753e356d223f9143d59c3e44707317545198990",
+      "blockNumber": "33844441",
+      "status": "success"
+    },
+    "wireRouter": {
+      "transactionHash": "0x4b74062c7c247d471404e4235dff781bfa5812a6abcba4d2d153afe037359005",
+      "blockNumber": "33844443",
+      "status": "success"
+    },
+    "registerActor1": {
+      "transactionHash": "0xcaebe87dce158bf24ca34a4fc97e78a364c014c07bbfea1b5cf362a262557d11",
+      "blockNumber": "33844447",
+      "status": "success"
+    },
+    "registerActor2": {
+      "transactionHash": "0x4aae478731f27cdaa7956a8f0d293b147431ebabf7cf959a01d938982e57a2e2",
+      "blockNumber": "33844453",
+      "status": "success"
+    },
+    "registerActor3": {
+      "transactionHash": "0xa2ae2f81be8dd5324aad6f237bd219c1565fdc80c40b7ef2ccbc5ad84859e812",
+      "blockNumber": "33844456",
+      "status": "success"
+    }
+  },
+  "verifiedAt": "2026-08-10T02:48:12.891Z",
+  "assertions": {
+    "separateDemoContractNamespaceVerified": true,
+    "threeDistinctActorDescriptorsVerified": true,
+    "runtimeAndWiringVerified": true,
+    "actorRegistrationReadbackVerified": true,
+    "noPrivateKeyRecorded": true,
+    "hardwareTeeVerified": false,
+    "registeredProductionMachinesVerified": false,
+    "independentOperatorsVerified": false,
+    "sealedPersistenceVerified": false,
+    "productionFccReleaseVerified": false
+  },
+  "limitations": [
+    "Three actors share one Vercel project and operator trust domain.",
+    "Actors are stateless serverless simulations, not hardware TEEs or production FCC machines.",
+    "This deployment is excluded from PayGuard release manifests and production FCC claims."
+  ]
+}

@@ -1,7 +1,25 @@
 # Coston2 interactive simulated-FCC demo
 
-> Status: implementation plan. Nothing in this document is a production FCC,
-> hardware TEE, registered-machine, or verified-release claim.
+> Status: the separate simulation-only registry, vault, router, three actor
+> registrations, and Vercel environment bindings were deployed and read back on
+> Coston2 on 2026-08-10. Production API/UI lifecycle smoke remains pending.
+> Nothing in this document is a production FCC, hardware TEE,
+> registered-production-machine, or verified-release claim.
+
+Public simulation evidence:
+[`evidence/simulation/coston2-interactive-demo-deployment-2026-08-10.json`](../../evidence/simulation/coston2-interactive-demo-deployment-2026-08-10.json).
+
+| Component | Simulation-only Coston2 identifier |
+| --- | --- |
+| Registry | `0xc5e18B97ca556B25e41FA0e0F3a6ba05B3Da2a49` |
+| Vault | `0xF8e3A4516f63b09c2D3e02E5F1e7188308AA13F4` |
+| Router | `0x01c91b3E11D85068A6898876e270bdFA2Fab0c09` |
+
+The evidence records eight successful deployment/wiring/registration
+transactions, distinct public actor descriptors, runtime/wiring readbacks, and
+all mandatory false production assertions. Actor private keys remain only in
+the ignored mode-`0600` local environment and encrypted Vercel Production
+environment; they are absent from source and evidence.
 
 ## Objective
 

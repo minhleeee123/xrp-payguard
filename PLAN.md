@@ -482,7 +482,10 @@ Exit: failure is resumable or explicitly denied, never represented as success.
   desktop/mobile/keyboard smokes against the exact deployed commit.
 - [ ] Deploy and audit the separate Interactive Demo contracts/serverless
   actors, publish sanitized simulation evidence, and verify the production web
-  lifecycle without treating it as Gate A/B/C or a verified release.
+  lifecycle without treating it as Gate A/B/C or a verified release. The three
+  simulation-only contracts, actor registrations, environment bindings, and
+  sanitized deployment evidence passed on 2026-08-10; production API/UI deploy
+  and end-to-end browser smoke remain open.
 
 Exit: source, runtime, bindings, UI, docs, and public-safe evidence agree.
 
