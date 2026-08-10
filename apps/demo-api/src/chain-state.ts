@@ -9,10 +9,10 @@ import {
   PayGuardActionRouterAbi,
   PayGuardPolicyRegistryAbi,
   PayGuardVaultAbi,
-} from "@xrp-payguard/bindings";
-import { actionRequestHash, type ActionRequestV1, type PolicyBindingV1 } from "@xrp-payguard/protocol";
-import type { DemoCanonicalEvaluationState, DemoStateReader } from "@xrp-payguard/demo/server";
-import type { DemoAccounting, DemoDomainConfig } from "@xrp-payguard/demo";
+} from "../../../packages/bindings/src/index.js";
+import { actionRequestHash, type ActionRequestV1, type PolicyBindingV1 } from "../../../packages/protocol/src/index.js";
+import type { DemoCanonicalEvaluationState, DemoStateReader } from "../../../packages/demo/src/server.js";
+import type { DemoAccounting, DemoDomainConfig } from "../../../packages/demo/src/index.js";
 
 const COSTON2_RPC_URL = "https://coston2-api.flare.network/ext/C/rpc";
 const requestCreated = parseAbiItem("event RequestCreated(bytes32 indexed requestId, bytes32 indexed policyCommitment, address indexed requester, uint256 amount)");

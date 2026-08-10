@@ -1,6 +1,6 @@
 import type { Hex } from "viem";
-import { parseDemoConfig, stringifyDemoWire, type DemoDomainConfig } from "@xrp-payguard/demo";
-import { processDemoActorRequest } from "@xrp-payguard/demo/server";
+import { parseDemoConfig, stringifyDemoWire, type DemoDomainConfig } from "../../../packages/demo/src/index.js";
+import { processDemoActorRequest } from "../../../packages/demo/src/server.js";
 import { createCoston2DemoStateReader } from "./chain-state.js";
 
 interface RequestLike {

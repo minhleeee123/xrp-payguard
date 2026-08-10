@@ -14,7 +14,7 @@ import {
   type PolicyReceiptV1,
   type PolicyV1,
   type TeePublicKeyV1,
-} from "@xrp-payguard/protocol";
+} from "../../protocol/src/index.js";
 
 export const INTERACTIVE_DEMO_MODE = "SIMULATED_FCC_COSTON2_TESTNET_V1" as const;
 export const INTERACTIVE_DEMO_LABEL = "SIMULATED FCC · COSTON2 TESTNET · NOT PRODUCTION TEE";

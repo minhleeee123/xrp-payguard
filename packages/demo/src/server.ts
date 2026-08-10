@@ -28,7 +28,7 @@ import {
   type ActionRequestV1,
   type PolicyBindingV1,
   type SpendHistoryEntryV1,
-} from "@xrp-payguard/protocol";
+} from "../../protocol/src/index.js";
 import {
   INTERACTIVE_DEMO_MODE,
   demoBalanceCheckpointV1,
