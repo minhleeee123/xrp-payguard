@@ -9,10 +9,12 @@ x-payguard-fcc: &payguard-fcc
     SIGN_PORT: "7701"
     EXTENSION_PORT: "7702"
     PRIVATE_INGRESS_PORT: "7703"
+    PAYGUARD_POLICY_STORE_DIR: /var/lib/payguard/policies
     LOG_LEVEL: ERROR
   read_only: true
   tmpfs:
     - /tmp:size=16m,mode=1777
+    - /var/lib/payguard:size=16m,mode=0700
   cap_drop:
     - ALL
   security_opt:

@@ -20,8 +20,12 @@ func main() {
 	signPort := intEnv("SIGN_PORT", 7701)
 	extensionPort := intEnv("EXTENSION_PORT", 7702)
 	ingressPort := intEnv("PRIVATE_INGRESS_PORT", 7703)
+	policyStoreRoot := os.Getenv("PAYGUARD_POLICY_STORE_DIR")
+	if policyStoreRoot == "" {
+		panic("PAYGUARD_POLICY_STORE_DIR is required")
+	}
 	go teeServer.StartServerExtension(configPort, signPort, extensionPort)
-	machine, err := waitForMachine(signPort, 15*time.Second)
+	machine, err := waitForMachine(signPort, policyStoreRoot, 15*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -59,11 +63,11 @@ func intEnv(key string, fallback int) int {
 	return fallback
 }
 
-func waitForMachine(signPort int, timeout time.Duration) (*ingress.Machine, error) {
+func waitForMachine(signPort int, policyStoreRoot string, timeout time.Duration) (*ingress.Machine, error) {
 	deadline := time.Now().Add(timeout)
 	var lastErr error
 	for time.Now().Before(deadline) {
-		machine, _, err := ingress.NewTeeMachine(signPort)
+		machine, _, err := ingress.NewTeeMachineWithStoreRoot(signPort, policyStoreRoot)
 		if err == nil {
 			return machine, nil
 		}

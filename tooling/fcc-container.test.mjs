@@ -27,6 +27,8 @@ test("local compose is explicit simulation with loopback-only hardened ingress",
   for (const service of ["payguard-fcc-a", "payguard-fcc-b", "payguard-fcc-c"]) assert.match(compose, new RegExp(`^  ${service}:`, "m"));
   assert.match(compose, /MODE: "1"/);
   assert.match(compose, /SIMULATED_TEE: "true"/);
+  assert.match(compose, /PAYGUARD_POLICY_STORE_DIR: \/var\/lib\/payguard\/policies/);
+  assert.match(compose, /\/var\/lib\/payguard:size=16m,mode=0700/);
   assert.match(compose, /pull_policy: never/);
   assert.match(compose, /read_only: true/);
   assert.match(compose, /cap_drop:\n\s+- ALL/);

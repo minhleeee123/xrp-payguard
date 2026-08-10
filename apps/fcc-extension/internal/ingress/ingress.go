@@ -11,7 +11,6 @@ import (
 	"io"
 	"net/http"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts"
@@ -44,19 +43,12 @@ type EvaluationEnvelope struct {
 	Signature hexutil.Bytes               `json:"signature"`
 }
 
-type sealedPolicy struct {
-	ciphertextHash common.Hash
-	policy         protocol.PolicyV1
-	receipt        ReceiptEnvelope
-}
-
 type Machine struct {
-	mu          sync.RWMutex
 	id          common.Hash
 	fingerprint common.Hash
 	signer      AttestationSigner
 	resolver    PolicyResolver
-	policies    map[common.Hash]sealedPolicy
+	store       policyStore
 }
 
 func NewMachine(id, fingerprint common.Hash, signer *ecdsa.PrivateKey, resolver PolicyResolver) (*Machine, error) {
@@ -68,10 +60,14 @@ func NewMachine(id, fingerprint common.Hash, signer *ecdsa.PrivateKey, resolver 
 }
 
 func NewMachineWithSigner(id, fingerprint common.Hash, signer AttestationSigner, resolver PolicyResolver) (*Machine, error) {
-	if id == (common.Hash{}) || fingerprint == (common.Hash{}) || signer == nil || signer.Address() == (common.Address{}) || resolver == nil {
+	return newMachineWithSignerAndStore(id, fingerprint, signer, resolver, newMemoryPolicyStore())
+}
+
+func newMachineWithSignerAndStore(id, fingerprint common.Hash, signer AttestationSigner, resolver PolicyResolver, store policyStore) (*Machine, error) {
+	if id == (common.Hash{}) || fingerprint == (common.Hash{}) || signer == nil || signer.Address() == (common.Address{}) || resolver == nil || store == nil {
 		return nil, errors.New("machine requires identity, signer, and sealed resolver")
 	}
-	return &Machine{id: id, fingerprint: fingerprint, signer: signer, resolver: resolver, policies: make(map[common.Hash]sealedPolicy)}, nil
+	return &Machine{id: id, fingerprint: fingerprint, signer: signer, resolver: resolver, store: store}, nil
 }
 
 func (m *Machine) ID() common.Hash          { return m.id }
@@ -108,6 +104,23 @@ func (m *Machine) submit(binding protocol.PolicyBindingV1, submissionNonce commo
 	if !matchedMachine {
 		return ReceiptEnvelope{}, errors.New("machine is not frozen in policy binding")
 	}
+	ciphertextDigest := sha256.Sum256(ciphertext)
+	ciphertextHash := common.BytesToHash(ciphertextDigest[:])
+	receipt := protocol.PolicyReceiptV1{Binding: binding, MachineID: m.id, KeyFingerprint: m.fingerprint, SubmissionNonce: submissionNonce, ReceiptNonce: binding.PolicyNonce, IssuedAt: issuedAt, Expiry: expiry}
+	digest, err := protocol.PolicyReceiptDigest(receipt)
+	if err != nil {
+		return ReceiptEnvelope{}, err
+	}
+	existing, ok, err := m.store.Load(binding.PolicyCommitment)
+	if err != nil {
+		return ReceiptEnvelope{}, fmt.Errorf("load sealed policy: %w", err)
+	}
+	if ok {
+		if existing.CiphertextHash != ciphertextHash || existing.Receipt.Digest != digest || !m.validStoredReceipt(existing.Receipt) {
+			return ReceiptEnvelope{}, errors.New("policy nonce already occupied by different ciphertext or receipt")
+		}
+		return existing.Receipt, nil
+	}
 	policy, err := m.resolver(append([]byte(nil), ciphertext...))
 	if err != nil {
 		return ReceiptEnvelope{}, fmt.Errorf("sealed policy unavailable: %w", err)
@@ -119,21 +132,6 @@ func (m *Machine) submit(binding protocol.PolicyBindingV1, submissionNonce commo
 	if commitment != binding.PolicyCommitment || policy.SubmissionNonce != submissionNonce || policy.Owner != binding.Owner || policy.ChainID.Cmp(binding.ChainID) != 0 || policy.Registry != binding.Registry || policy.Vault != binding.Vault || policy.Router != binding.Router || policy.PolicyID != binding.PolicyID || policy.PolicyVersion != binding.PolicyVersion {
 		return ReceiptEnvelope{}, errors.New("sealed policy does not match frozen binding")
 	}
-	ciphertextDigest := sha256.Sum256(ciphertext)
-	ciphertextHash := common.BytesToHash(ciphertextDigest[:])
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	if existing, ok := m.policies[binding.PolicyCommitment]; ok {
-		if existing.ciphertextHash != ciphertextHash || existing.receipt.Receipt.ReceiptNonce != binding.PolicyNonce {
-			return ReceiptEnvelope{}, errors.New("policy nonce already occupied by different ciphertext")
-		}
-		return existing.receipt, nil
-	}
-	receipt := protocol.PolicyReceiptV1{Binding: binding, MachineID: m.id, KeyFingerprint: m.fingerprint, SubmissionNonce: submissionNonce, ReceiptNonce: binding.PolicyNonce, IssuedAt: issuedAt, Expiry: expiry}
-	digest, err := protocol.PolicyReceiptDigest(receipt)
-	if err != nil {
-		return ReceiptEnvelope{}, err
-	}
 	attestationMessage, err := protocol.PolicyReceiptAttestationMessage(receipt)
 	if err != nil {
 		return ReceiptEnvelope{}, err
@@ -143,8 +141,18 @@ func (m *Machine) submit(binding protocol.PolicyBindingV1, submissionNonce commo
 		return ReceiptEnvelope{}, fmt.Errorf("sign receipt: %w", err)
 	}
 	envelope := ReceiptEnvelope{Receipt: receipt, Digest: digest, Signer: m.Signer(), Signature: signature}
-	m.policies[binding.PolicyCommitment] = sealedPolicy{ciphertextHash: ciphertextHash, policy: policy, receipt: envelope}
-	return envelope, nil
+	stored, _, err := m.store.Put(binding.PolicyCommitment, policyStoreRecord{
+		CiphertextHash: ciphertextHash,
+		Ciphertext:     append([]byte(nil), ciphertext...),
+		Receipt:        envelope,
+	})
+	if err != nil {
+		return ReceiptEnvelope{}, fmt.Errorf("persist sealed policy: %w", err)
+	}
+	if !m.validStoredReceipt(stored.Receipt) {
+		return ReceiptEnvelope{}, errors.New("persisted policy receipt failed validation")
+	}
+	return stored.Receipt, nil
 }
 
 func (m *Machine) SubmitAuthorized(binding protocol.PolicyBindingV1, submissionNonce common.Hash, issuedAt, expiry uint64, ciphertext, authorization []byte) (ReceiptEnvelope, error) {
@@ -171,13 +179,29 @@ func verifyOwnerAuthorization(digest common.Hash, authorization []byte, owner co
 }
 
 func (m *Machine) Evaluate(request protocol.ActionRequestV1, state protocol.SpendStateV1) (EvaluationEnvelope, error) {
-	m.mu.RLock()
-	sealed, ok := m.policies[request.PolicyCommitment]
-	m.mu.RUnlock()
+	sealed, ok, err := m.store.Load(request.PolicyCommitment)
+	if err != nil {
+		return EvaluationEnvelope{}, fmt.Errorf("load sealed policy: %w", err)
+	}
 	if !ok {
 		return EvaluationEnvelope{}, errors.New("policy is not in sealed custody")
 	}
-	result, err := protocol.EvaluatePolicy(sealed.policy, request, state)
+	if !m.validStoredReceipt(sealed.Receipt) {
+		return EvaluationEnvelope{}, errors.New("sealed policy receipt is invalid")
+	}
+	binding := sealed.Receipt.Receipt.Binding
+	if binding.ChainID == nil || request.ChainID == nil || binding.PolicyCommitment != request.PolicyCommitment || binding.ChainID.Cmp(request.ChainID) != 0 || binding.Registry != request.Registry || binding.Vault != request.Vault || binding.Router != request.Router || binding.PolicyID != request.PolicyID || binding.PolicyVersion != request.PolicyVersion {
+		return EvaluationEnvelope{}, errors.New("sealed policy binding does not match request")
+	}
+	policy, err := m.resolver(append([]byte(nil), sealed.Ciphertext...))
+	if err != nil {
+		return EvaluationEnvelope{}, fmt.Errorf("sealed policy unavailable: %w", err)
+	}
+	commitment, err := protocol.PolicyCommitment(policy)
+	if err != nil || commitment != request.PolicyCommitment {
+		return EvaluationEnvelope{}, errors.New("sealed policy commitment is invalid")
+	}
+	result, err := protocol.EvaluatePolicy(policy, request, state)
 	if err != nil {
 		return EvaluationEnvelope{}, err
 	}
@@ -195,6 +219,18 @@ func (m *Machine) Evaluate(request protocol.ActionRequestV1, state protocol.Spen
 		return EvaluationEnvelope{}, fmt.Errorf("sign evaluation: %w", err)
 	}
 	return EvaluationEnvelope{Result: result, Digest: digest, Signer: m.Signer(), Signature: signature}, nil
+}
+
+func (m *Machine) validStoredReceipt(envelope ReceiptEnvelope) bool {
+	if envelope.Signer != m.Signer() || envelope.Receipt.MachineID != m.id || envelope.Receipt.KeyFingerprint != m.fingerprint {
+		return false
+	}
+	digest, err := protocol.PolicyReceiptDigest(envelope.Receipt)
+	if err != nil || digest != envelope.Digest {
+		return false
+	}
+	attestationDigest, err := protocol.PolicyReceiptAttestationDigest(envelope.Receipt)
+	return err == nil && VerifySignature(attestationDigest, envelope.Signature, envelope.Signer)
 }
 
 type CustodyBundle struct {

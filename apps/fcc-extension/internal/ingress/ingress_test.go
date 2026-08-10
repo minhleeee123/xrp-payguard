@@ -240,18 +240,14 @@ func TestThresholdEvaluationFailsClosed(t *testing.T) {
 	}
 
 	// Losing one result machine is recoverable after common custody.
-	machines[2].mu.Lock()
-	delete(machines[2].policies, request.PolicyCommitment)
-	machines[2].mu.Unlock()
+	machines[2].store.(*memoryPolicyStore).delete(request.PolicyCommitment)
 	results, err = coordinator.Evaluate(request, testState(request))
 	if err != nil || len(results) != 2 {
 		t.Fatalf("one-machine outage did not preserve threshold: %v", err)
 	}
 
 	// Losing two frozen machines fails closed; no synthetic decision is returned.
-	machines[1].mu.Lock()
-	delete(machines[1].policies, request.PolicyCommitment)
-	machines[1].mu.Unlock()
+	machines[1].store.(*memoryPolicyStore).delete(request.PolicyCommitment)
 	if _, err = coordinator.Evaluate(request, testState(request)); err == nil {
 		t.Fatal("two-machine outage produced an evaluation")
 	}
@@ -303,9 +299,7 @@ func TestReplacementCustodyIsLimitedToNewPolicyVersion(t *testing.T) {
 	}
 
 	for index := 1; index < len(oldMachines); index++ {
-		oldMachines[index].mu.Lock()
-		delete(oldMachines[index].policies, oldRequest.PolicyCommitment)
-		oldMachines[index].mu.Unlock()
+		oldMachines[index].store.(*memoryPolicyStore).delete(oldRequest.PolicyCommitment)
 	}
 	if _, err := oldCoordinator.Evaluate(oldRequest, testState(oldRequest)); err == nil {
 		t.Fatal("replacement availability manufactured an old-policy threshold")

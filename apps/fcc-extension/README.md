@@ -16,8 +16,18 @@ plaintext bytes are cleared after parsing. The internal port `7703` accepts only
 canonical, bounded, machine-specific ciphertext requests authorized by the
 policy owner's Ethereum signed-message signature over the full public binding.
 It returns a receipt only; the former unauthenticated coordinator HTTP surface
-is not present. A stable TLS proxy/origin, proxy rate limits, and sealed restart
-recovery remain live gates; this adapter alone is not custody evidence.
+is not present.
+
+The runtime store is namespaced by the discovered machine identity and writes
+only ciphertext plus public receipt metadata. It uses a non-symlink `0700`
+directory, `0600` records, temp-file `fsync`, no-overwrite link, directory
+`fsync`, bounded strict decoding, and exact-record idempotency. Reconstructing a
+process with the same identity can decrypt and evaluate the record again;
+corrupt, truncated, permissive, symlinked, or conflicting records fail closed.
+If restart rotates the TEE identity/key, the new identity receives a separate
+empty namespace: it cannot claim old custody, and the owner must activate a new
+policy version. Stable TLS/proxy controls and production-volume/recovery
+evidence remain live gates; this local adapter alone is not custody evidence.
 The public Go/TypeScript HTTP boundary uses lower-camel field names, named
 decision/reason enums, and quoted unsigned decimal strings for every bigint or
 `uint64`; numeric JSON bigints and unknown enums are rejected before hashing.

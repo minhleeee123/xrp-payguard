@@ -10,6 +10,8 @@ import (
 	"math/big"
 	"net/http"
 	"net/url"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts"
@@ -278,6 +280,17 @@ func (d *TeeDecryptor) ResolvePolicy(ciphertext []byte) (protocol.PolicyV1, erro
 }
 
 func NewTeeMachine(signPort int) (*Machine, TeeIdentity, error) {
+	return newTeeMachine(signPort, "")
+}
+
+func NewTeeMachineWithStoreRoot(signPort int, storeRoot string) (*Machine, TeeIdentity, error) {
+	if storeRoot == "" || !filepath.IsAbs(storeRoot) || filepath.Clean(storeRoot) != storeRoot {
+		return nil, TeeIdentity{}, errors.New("TEE policy store root must be a clean absolute path")
+	}
+	return newTeeMachine(signPort, storeRoot)
+}
+
+func newTeeMachine(signPort int, storeRoot string) (*Machine, TeeIdentity, error) {
 	signer, identity, publicKey, err := discoverTeeSignPortSigner(signPort)
 	if err != nil {
 		return nil, TeeIdentity{}, err
@@ -304,7 +317,17 @@ func NewTeeMachine(signPort int) (*Machine, TeeIdentity, error) {
 	if !probeMatches {
 		return nil, TeeIdentity{}, errors.New("TEE decrypt-readiness response mismatch")
 	}
-	machine, err := NewMachineWithSigner(identity.MachineID, identity.KeyFingerprint, signer, decryptor.ResolvePolicy)
+	var store policyStore = newMemoryPolicyStore()
+	if storeRoot != "" {
+		identityDirectory := filepath.Join(storeRoot, strings.ToLower(identity.MachineID.Hex()[2:]))
+		store, err = NewFilePolicyStore(identityDirectory)
+		if err != nil {
+			return nil, TeeIdentity{}, fmt.Errorf("initialize identity-bound policy store: %w", err)
+		}
+	}
+	machine, err := newMachineWithSignerAndStore(
+		identity.MachineID, identity.KeyFingerprint, signer, decryptor.ResolvePolicy, store,
+	)
 	if err != nil {
 		return nil, TeeIdentity{}, err
 	}

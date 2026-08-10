@@ -32,16 +32,20 @@ function gitValue(args) {
 async function waitForHealth(port, previousMachineId) {
   let lastError;
   for (let attempt = 0; attempt < 80; attempt += 1) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 750);
     try {
-      const response = await fetch(`http://127.0.0.1:${port}/private/health`, { signal: AbortSignal.timeout(750) });
+      const response = await fetch(`http://127.0.0.1:${port}/private/health`, { signal: controller.signal });
       if (!response.ok) throw new Error(`health returned ${response.status}`);
       const body = await response.json();
       if (previousMachineId && body.machineId === previousMachineId) throw new Error("machine identity has not rotated yet");
       return body;
     } catch (error) {
       lastError = error;
-      await new Promise((resolve) => setTimeout(resolve, 250));
+    } finally {
+      clearTimeout(timeout);
     }
+    await new Promise((resolve) => setTimeout(resolve, 250));
   }
   throw lastError ?? new Error("machine health timed out");
 }
@@ -62,7 +66,7 @@ function assertContainerHardening(containerId) {
   const published = inspected.NetworkSettings?.Ports?.["7703/tcp"] ?? [];
   if (published.length !== 1 || published[0].HostIp !== "127.0.0.1") throw new Error("private ingress is not loopback-only");
   const environmentNames = (inspected.Config?.Env ?? []).map((entry) => entry.split("=", 1)[0]);
-  const allowed = new Set(["PATH", "SSL_CERT_FILE", "MODE", "SIMULATED_TEE", "CHAIN_ID", "CONFIG_PORT", "SIGN_PORT", "EXTENSION_PORT", "PRIVATE_INGRESS_PORT", "LOG_LEVEL"]);
+  const allowed = new Set(["PATH", "SSL_CERT_FILE", "MODE", "SIMULATED_TEE", "CHAIN_ID", "CONFIG_PORT", "SIGN_PORT", "EXTENSION_PORT", "PRIVATE_INGRESS_PORT", "PAYGUARD_POLICY_STORE_DIR", "LOG_LEVEL"]);
   if (environmentNames.some((name) => !allowed.has(name))) throw new Error("unexpected container environment variable");
 }
 
