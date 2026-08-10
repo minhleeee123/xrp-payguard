@@ -22,6 +22,7 @@ const origin = process.env.PAYGUARD_INTERACTIVE_DEMO_ORIGIN ?? "https://xrp-payg
 
 describe.skipIf(!enabled)("deployed interactive demo lifecycle", () => {
   it("executes an actor-authorized allow, cap denial, and owner governance", async () => {
+    try {
     const key = process.env.PAYGUARD_DEPLOYER_PRIVATE_KEY as Hex | undefined;
     if (!key || !/^0x[0-9a-fA-F]{64}$/.test(key)) throw new Error("live smoke test wallet is unavailable");
     const account = privateKeyToAccount(key);
@@ -80,6 +81,11 @@ describe.skipIf(!enabled)("deployed interactive demo lifecycle", () => {
       after.accounting.available + after.accounting.reserved + after.accounting.spent
       + after.accounting.withdrawn + after.accounting.refunded,
     );
+    } catch {
+      // Never let a provider error serialize calldata, ciphertext, signatures,
+      // or wallet internals into CI output.
+      throw new Error("deployed interactive lifecycle failed closed");
+    }
   }, 600_000);
 });
 

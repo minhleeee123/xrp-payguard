@@ -1,7 +1,7 @@
 import type { Hex } from "viem";
 import { parseDemoConfig, stringifyDemoWire, type DemoDomainConfig } from "../../../packages/demo/src/index.js";
 import { processDemoActorRequest } from "../../../packages/demo/src/server.js";
-import { createCoston2DemoStateReader } from "./chain-state.js";
+import { createCoston2DemoStateReader, loadCoston2FinalizedTimestamp } from "./chain-state.js";
 
 interface RequestLike {
   method?: string;
@@ -46,12 +46,14 @@ export async function handleDemoActor(actor: 1 | 2 | 3, request: RequestLike, re
     const config = loadDemoConfig();
     const privateKey = process.env[`PAYGUARD_DEMO_ACTOR_${actor}_PRIVATE_KEY`] as Hex | undefined;
     if (!privateKey) throw new Error("actor unavailable");
+    const chainNow = await loadCoston2FinalizedTimestamp();
     const result = await processDemoActorRequest({
       actor,
       privateKey,
       config,
       request: request.body,
       stateReader: createCoston2DemoStateReader(config),
+      now: () => chainNow,
     });
     json(response, 200, result);
   } catch (error) {

@@ -23,9 +23,16 @@ const coston2 = {
   nativeCurrency: { name: "Coston2 Flare", symbol: "C2FLR", decimals: 18 },
   rpcUrls: { default: { http: [COSTON2_RPC_URL] } },
 } as const;
+const coston2Client = createPublicClient({ chain: coston2, transport: http(COSTON2_RPC_URL, { timeout: 8_000, retryCount: 1 }) });
+
+export async function loadCoston2FinalizedTimestamp(): Promise<bigint> {
+  const block = await coston2Client.getBlock({ blockTag: "finalized" });
+  if (!block.number || block.number <= 0n || block.timestamp <= 0n) throw new Error("finalized Coston2 clock is unavailable");
+  return block.timestamp;
+}
 
 export function createCoston2DemoStateReader(config: DemoDomainConfig): DemoStateReader {
-  const client = createPublicClient({ chain: coston2, transport: http(COSTON2_RPC_URL, { timeout: 8_000, retryCount: 1 }) });
+  const client = coston2Client;
   const readContract = client.readContract as unknown as (parameters: Record<string, unknown>) => Promise<unknown>;
   return {
     async load(requestId, policyCommitment): Promise<DemoCanonicalEvaluationState> {
