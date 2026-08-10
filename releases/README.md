@@ -5,3 +5,9 @@ extension/machines, runtime bytecode, signer mapping, and sanitized evidence
 are verified together. `pnpm release:check` reports `planned` while it is
 absent. Reference addresses, bootstrap funding, and local artifacts are not a
 release manifest.
+
+`candidates/coston2-v2.plan.json` is the non-authoritative V2 preparation plan.
+It is deliberately `planned`, `verified: false`, and lists every live blocker.
+`pnpm candidate:build` creates only an ignored local build record; neither that
+record nor the plan may be copied to the authoritative manifest path. Follow
+the [promotion runbook](../docs/technology/coston2-v2-promotion-runbook.md).

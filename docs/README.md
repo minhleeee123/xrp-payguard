@@ -24,6 +24,9 @@
   adoption without production-readiness claims.
 - [`product/user-journeys.md`](product/user-journeys.md): end-to-end journeys
   for policy owner, payee, executor, and auditor.
+- [`product/user-validation-protocol.md`](product/user-validation-protocol.md):
+  planned consented study, privacy boundary, cohort floor, moderated tasks, and
+  anonymized aggregate gate.
 - [`technology/requirements.md`](technology/requirements.md): required Flare
   primitives and current official sources.
 - [`technology/coston2-dependency-resolution.md`](technology/coston2-dependency-resolution.md):
@@ -58,6 +61,9 @@
   fail-closed official-manager resolution and resumable sender registration.
 - [`technology/release-manifest.md`](technology/release-manifest.md): canonical
   public-safe Coston2 release-manifest shape and verification gate.
+- [`technology/coston2-v2-promotion-runbook.md`](technology/coston2-v2-promotion-runbook.md):
+  planned V2 candidate build, lifecycle/outage/redemption evidence, promotion,
+  and abort boundaries.
 - [`technology/foundations.md`](technology/foundations.md): pinned local
   toolchain, official source map, and external Gate 0/1 blockers.
 - [`technology/reuse-ledger.md`](technology/reuse-ledger.md): PayGuard-specific

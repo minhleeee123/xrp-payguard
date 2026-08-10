@@ -160,7 +160,11 @@ registered Coston2 `PING_V1`, receipt, and evaluation proofs remain open.
   testnet evidence that preserves custody/threshold blockers.
 - [ ] Post-hackathon: register a production machine and verify one signed
   Coston2 `PING_V1` result before treating the live FCC path as available.
-- [x] Implement ciphertext-only policy ingress and a sealed local policy store.
+- [x] Implement ciphertext-only policy ingress and an identity-namespaced local
+  store with `0700`/`0600` permissions, no-overwrite atomic writes, exact retry,
+  corruption/symlink rejection, and same-identity process reconstruction. A new
+  TEE identity intentionally sees no old-policy custody and requires a new
+  policy version; production-volume evidence remains open.
 - [x] Return machine-signed `POLICY_RECEIPT_V1` values bound to policy owner,
   commitment, schema, code version, chain, contracts, machine, and nonce.
 - [x] Add a TypeScript public custody-bundle verifier for three frozen receipt
@@ -220,7 +224,12 @@ contract-deployment gates. External review and live FCC protocol wiring remain
 open.
 
 - [x] Implement non-upgradeable `PayGuardPolicyRegistry`, `PayGuardVault`, and
-  `PayGuardActionRouter` contracts with minimal immutable authority.
+  `PayGuardActionRouter` contracts with minimal immutable authority. Add a local
+  `PayGuardPolicyRegistryV2` candidate that constructor-freezes the official
+  manager/extension/code binding, rechecks production machine status and
+  platform at receipt/result time, limits individual lifecycle controls to the
+  owner, and gives governance only a global pause with safe permanent
+  renunciation. V2 deployment/verification remains open.
 - [x] Commit policy hash plus frozen machine/key/code policy after all-three
   receipts; never publish ciphertext.
 - [x] Implement deposit, request, evaluate, execute, deny, expire, revoke,
@@ -435,6 +444,10 @@ manual database edit.
 The checked items are automated local gates; live outage drills and external
 review remain open.
 
+The repository CI workflow now runs locked install, pinned-toolchain checks,
+workspace type/tests/build, Go tests, Forge formatting/tests, and all existing
+privacy, secret, evidence, release, documentation, and binding-drift gates.
+
 - [x] Make relay/executor orchestration stateless and recoverable from public
   checkpoints.
 - [ ] Run proxy, RPC, FDC, FTSO, indexer, one-machine, and executor outage drills.
@@ -471,6 +484,10 @@ Exit: failure is resumable or explicitly denied, never represented as success.
   cap denial, stop/resume/revoke, and vault conservation; keep the evidence
   under `evidence/simulation/` and do not count it as a live FCC lifecycle.
 - [ ] Generate and verify a PayGuard release manifest and consumer bindings.
+  The V2 source candidate, ignored local build digest, explicit blocker plan,
+  promotion runbook, and lifecycle/outage/redemption/user-validation validators
+  are prepared. They remain non-authoritative until real Coston2, FCC,
+  redemption, fault-drill, and consented study evidence passes.
 - [ ] Verify runtime bytecode, constructor/wiring, extension ID, code/image hash,
   governance, machines, key fingerprints, and signer mapping.
 - [ ] Record live personal recurring-payment, cap-denial, emergency-stop,

@@ -107,7 +107,7 @@ different assurance levels:
 | FDC | Verify exact XRPL payments and selected external trigger facts | Live `XRPPayment` funding and one atomic `Pending` trigger pass; Web2Json remains local-only |
 | Smart Accounts | Bind an XRPL user, PersonalAccount, nonce, fee, and exact `0xFE` operation | One direct-mint-to-vault transaction and a credential-free historical reconstruction pass |
 | FTSOv2 | Supply a canonical, bounded, fresh reference value for policies denominated outside the native asset | Deterministic TypeScript/Go/Solidity logic and fail-closed adapters pass locally; no live FCC lifecycle using an FTSO snapshot is claimed |
-| FCC | Store sealed policy copies and produce machine-signed deterministic evaluations | Typed extension, ciphertext-only ingress, sealed local store, reproducible image, and three-machine simulation pass; production machines/results are post-hackathon |
+| FCC | Store sealed policy copies and produce machine-signed deterministic evaluations | Typed extension, ciphertext-only atomic store, reproducible image, local manager-backed V2 registry candidate, and three-machine simulation pass; production machines/results and a V2 deployment are post-hackathon |
 
 ## Policy and authorization model
 
@@ -150,15 +150,15 @@ mainnet work; they are not silently promoted by local tests.
 
 | Area | Verified result | Important limitation |
 | --- | --- | --- |
-| Contracts | Non-upgradeable policy registry, vault, router, and atomic XRPL FDC consumer are deployed and runtime/constructor/wiring checked on Coston2 | This is not a complete release manifest or FCC authorization proof |
+| Contracts | Non-upgradeable V1 policy registry, vault, router, and atomic XRPL FDC consumer are deployed and runtime/constructor/wiring checked on Coston2; a V2 registry candidate now verifies official manager status/extension/code/platform locally | V2 is not deployed, and V1 remains the recorded Coston2 contract; this is not a complete release manifest or FCC authorization proof |
 | XRP-native funding | Validated XRPL Payment → finalized FDC proof → on-chain `verifyXRPPayment` → Smart Account direct mint → `1,000,000` UBA vault deposit | The observed mint did not enter `DirectMintingDelayed` |
 | Canonical FDC trigger | A separate 100-drop payment/proof was atomically replay-consumed into one router request with status `Pending` | No FCC evaluation, `ALLOW`, reserve, or execution followed |
-| Private protocol | Cross-language policy codecs, schedule/spend math, FTSO/FDC composition, threshold domains, replay, and adversarial vectors pass | Registered hardware-backed machine custody/results are absent |
+| Private protocol | Cross-language policy codecs, schedule/spend math, FTSO/FDC composition, threshold domains, replay, atomic ciphertext persistence, and adversarial vectors pass | Registered hardware-backed machine custody/results and production-volume recovery evidence are absent |
 | Solution-3 lifecycle | Fourteen successful Coston2 transactions cover simulated three-machine registration, policy registration, recurring allow, cap denial, stop/resume/revoke, and exact vault conservation | Machine identities and result signers are explicitly ephemeral simulation |
 | FAssets exit | Amount-based and `redeemWithTag` Coston2 requests have matching validated XRPL payouts and `RedemptionPerformed` observations | Partial/default recovery and canonical PayGuard settlement consumption remain open |
 | Web2Json | Local source commitment allowlist, exact public request, jq/tuple ABI, MIC/response, source-asserted freshness, replay, and verifier failure tests pass | No production source, live proof, source-truth guarantee, private policy evaluation, or on-chain consumer |
 | Web | Interactive Vercel Coston2 dApp, finalized wallet/vault/request reads, guarded writes, 3-actor simulated-FCC lifecycle, 16-asset evidence mirror, and production browser/Lighthouse pass | Production FCC/relay providers remain unavailable; the full hosted lifecycle is explicitly simulation-only |
-| Release | Release validators fail closed | `pnpm release:check` correctly reports `planned`; no verified release manifest exists |
+| Release | Release and V2 candidate validators fail closed | `pnpm release:check` reports `planned`; separate V2 plan/build and lifecycle/outage/redemption/user-study validators prepare future promotion without creating a verified manifest |
 
 ## Coston2 public identifiers
 
@@ -335,6 +335,19 @@ pnpm --filter @xrp-payguard/web build
 forge test --root packages/contracts
 ```
 
+Prepare and inspect the non-authoritative V2 candidate with one command:
+
+```sh
+pnpm candidate:build
+pnpm candidate:plan
+```
+
+The build uses the pinned local toolchain when available and pinned containers
+otherwise. It writes only `.local/release-candidate/coston2-v2.build.json`
+(`0600`, ignored, `verified: false`). Live evidence commands and promotion
+conditions are in the
+[V2 runbook](docs/technology/coston2-v2-promotion-runbook.md).
+
 The current validated baseline reports:
 
 - 197 workspace tests: bindings 2, protocol 50, relay 13, demo protocol 7,
@@ -342,7 +355,8 @@ The current validated baseline reports:
   gated web-live cases remain skipped in the ordinary unit run, while the full
   interactive Coston2 lifecycle gate passed separately;
 - all workspace TypeScript typechecks and all Go packages passing;
-- 43 Forge tests passing, including 256 fuzz runs and a 128-run / 8,192-call
+- 50 Forge tests passing, including V2 official-manager/adversarial coverage,
+  256 fuzz runs, and a 128-run / 8,192-call
   conservation invariant with zero reverts;
 - a successful production web build;
 - secret, privacy, public-evidence, deployment-audit, release, FCC tooling,
@@ -412,7 +426,7 @@ authorization. The following remain post-hackathon or owner/external gates:
 
 - three stable HTTPS FCC machine origins and authenticated indexer access;
 - registered production machines, all-three live custody receipts, two matching
-  live evaluation results, and supported replacement recovery;
+  live evaluation results, a verified V2 deployment, and supported replacement recovery;
 - hosted relay/proxy and full dependency-outage drills;
 - a real `DirectMintingDelayed` resume and canonical partial/default FAssets
   recovery;

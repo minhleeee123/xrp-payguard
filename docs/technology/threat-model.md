@@ -62,7 +62,7 @@ closed. Owner recovery is time-bounded and cannot race execution.
 | Receipt for another policy/owner | Full receipt domain, nonce, expiry, registered machine/key check |
 | Mixed policy copies across TEEs | All-three matching custody receipts and commitment |
 | Two machines sign different requests | Exact digest comparison; no threshold across split results |
-| Sealed-store rollback | Bind canonical chain spend/root/nonce and reject stale checkpoint |
+| Sealed-store corruption, substitution, or rollback | Ciphertext-only identity namespace, atomic no-overwrite records, strict mode/symlink/hash/receipt validation, then bind canonical chain spend/root/nonce so an old valid ciphertext cannot authorize stale state |
 | Request replay | Per-policy nonce, request ID, occurrence, attempt, expiry, terminal-state guards |
 | Permissionless request locks owner funds | Pending/deny paths never reserve; reserve only after an exact threshold `ALLOW` |
 | Empty delegate list authorizes public callers | Empty means owner-only; every non-owner must be explicitly listed and still passes all other rules |
@@ -76,6 +76,8 @@ closed. Owner recovery is time-bounded and cannot race execution.
 | Malicious target/reentrancy | Adapter allowlist, CEI/reentrancy guard, atomic accounting, bounded gas |
 | Emergency withdrawal races action | Stop/reservation/grace state machine and atomic terminal transition |
 | Identity restart assumed stable | Replacement registration; frozen old policy fails closed/recovery |
+| Admin registers an arbitrary FCC signer | V2 checks the immutable release-bound official manager at custody and result time; manifest verification must reject a foreign manager constructor binding |
+| Admin disrupts or resumes one owner's policy | V2 makes per-policy stop/resume/revoke owner-only and limits admin to a global pause for new work |
 | Caller substitutes FCC foundation domain | Sender constructs chain/sender/extension/code fields; canonical Go decoder and binding hash reject drift |
 | Sender binds a foreign/reserved extension ID | One-time owner call plus authoritative registry mapping and public-ID bounds |
 | Hosted UI lies | Wallet-free independent reader/CLI and verified release manifest |

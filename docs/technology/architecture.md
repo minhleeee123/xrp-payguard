@@ -1,9 +1,9 @@
 # Target architecture
 
-> Status: the local protocol, FCC custody/adapter, relay, web shell, and
-> registry/vault/router interfaces are implemented and tested. Live addresses,
-> registered machines, and deployment wiring remain design targets until a
-> verified PayGuard release.
+> Status: the local protocol, durable ciphertext custody adapter, relay, web
+> shell, deployed V1 registry/vault/router, and manager-backed V2 registry
+> candidate are implemented and tested. A V2 address, registered machines, and
+> release wiring remain targets until a verified PayGuard release.
 
 ## 1. System model
 
@@ -75,9 +75,12 @@ The machine identity and ECIES decryption key are the fresh tee-node identity,
 not an application key loaded from environment. PayGuard derives its bytes32
 machine ID and full public-key fingerprint from a loopback discovery signature,
 then uses the same node's loopback decrypt port for independently addressed
-policy ciphertext. Owner-authorized ingress is implemented and locally tested;
-authenticated HTTPS deployment and sealed rollback/recovery remain mandatory
-before this local boundary becomes live.
+policy ciphertext. The identity-namespaced store persists only ciphertext and
+public receipt metadata with atomic no-overwrite writes, strict permissions,
+and corruption/symlink rejection. A same-identity process can reconstruct
+custody; a rotated identity sees an empty namespace and cannot evaluate the old
+policy. Authenticated HTTPS deployment and production recovery evidence remain
+mandatory before this local boundary becomes live.
 
 ### Foundation FCC sender
 
@@ -99,6 +102,20 @@ unverified.
 Records owner, policy commitment/version, schema, extension, code version,
 three machine identities/key fingerprints, receipt bitmap, threshold,
 activation/revocation state, and policy nonce. No ciphertext is accepted.
+
+The deployed Coston2 V1 uses an administrator-populated local machine mapping
+and therefore is not a release-grade FCC identity authority. The local V2
+candidate instead freezes the official `FlareTeeManager`, extension ID, and code
+hash in its constructor; checks production status, exact extension,
+TEE/proxy/initial identity, code hash, platform support, and URL agreement for
+all three receipts; and repeats that official check when the router accepts a
+result. V2 policy stop/resume/revoke is owner-only. Governance has only a global
+pause that blocks registrations, new requests, and evaluations without
+rewriting an individual policy or preventing settlement/recovery of an already
+allowed request. Governance can permanently renounce that pause authority only
+while the system is unpaused. A verified release must bind the remaining admin
+to reviewed multisig/timelock governance or prove renunciation. V2 is planned,
+not yet deployed or release-verified.
 
 ### Vault
 
@@ -377,8 +394,11 @@ does not turn a runtime lookup into a PayGuard deployment or release manifest.
 - FDC delay: persist only public transaction/round/proof checkpoint and resume.
 - FTSO stale/unavailable: deny/pause only policies requiring that feed.
 - One TEE result loss: use the remaining threshold if policy custody was common.
-- TEE replacement: new policies/versions use registered replacements; old
-  policy remains frozen or owner uses explicit safe withdrawal after grace.
+- Same-identity FCC process restart: reopen the identity-namespaced ciphertext
+  store and revalidate/decrypt the exact committed record.
+- TEE replacement: a rotated identity cannot read or claim the old namespace;
+  new policies/versions use registered replacements while the old policy
+  remains frozen or the owner uses explicit safe withdrawal after grace.
 - Policy loss/unavailability: never synthesize approval; allow bounded owner
   recovery that cannot steal an already executed/reserved payment.
 - Hosted UI loss: contracts, executor, CLI, and public evidence remain usable.

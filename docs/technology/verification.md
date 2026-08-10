@@ -21,8 +21,8 @@ Forbidden evidence:
 | Gate | Required proof | Status |
 |---|---|---|
 | 0 — Foundations | pinned supported tools, registries, services, three machine capacity | PARTIAL — FUNDING + CONTRACTS + CONTRACT REGISTRY DEPENDENCIES + FCC MANAGER SOURCE + PUBLIC RPC/EXPLORER API/FAUCET REACHABILITY + REGISTERED FOUNDATION SENDER + LOCAL REPRO IMAGE/3 IDs PASS / STABLE LIVE MACHINES AND AUTHENTICATED FCC INDEXER OPEN |
-| A — FCC result | registered extension result verified on Coston2 | REGISTERED SENDER + LOCAL TYPED HANDLER/GOLDEN VECTOR PASS + PRODUCTION ADMISSION/CODE-VERSION/MACHINE-REGISTRATION OPERATIONS IMPLEMENTED/LOCALLY TESTED / LIVE CODE VERSION + MACHINE + RESULT NOT VERIFIED |
-| B — Private policy ingress | sealed policy, three receipts, replay/domain negatives | LOCAL AUTH/ECIES PASS / SEALED LIVE NOT VERIFIED |
+| A — FCC result | registered extension result verified on Coston2 | REGISTERED SENDER + LOCAL TYPED HANDLER/GOLDEN VECTOR + MANAGER-BACKED V2 REGISTRY/ROUTER RECHECK PASS + PRODUCTION ADMISSION/CODE-VERSION/MACHINE-REGISTRATION OPERATIONS IMPLEMENTED/LOCALLY TESTED / V2 DEPLOYMENT + LIVE CODE VERSION + MACHINE + RESULT NOT VERIFIED |
+| B — Private policy ingress | sealed policy, three receipts, replay/domain negatives | LOCAL AUTH/ECIES + IDENTITY-NAMESPACED ATOMIC CIPHERTEXT STORE/RECONSTRUCTION/CORRUPTION TESTS PASS / PRODUCTION VOLUME + SEALED LIVE NOT VERIFIED |
 | C — Common custody | all-three matching policy availability and commitment | NOT STARTED |
 | D — Deterministic evaluation | cross-language vectors and private policy result | LOCAL PASS INCLUDING CANONICAL FTSO/FDC INPUTS / LIVE NOT VERIFIED |
 | E — Threshold execution | two distinct exact results authorize one atomic action | LOCAL PASS + SOLUTION-3 COSTON2 SIMULATED-SIGNER LIFECYCLE PASS + ISOLATED VERCEL 3-ACTOR/COSTON2 DEMO PASS / LIVE HARDWARE FCC EXECUTION OPEN |
@@ -47,6 +47,8 @@ Forbidden evidence:
 - Vault adversarial coverage includes reentrant callbacks, fee-on-transfer and
   false-return rollback, plus conservation/reservation/token-balance invariants.
 - Receipt/signature/domain/machine/code/threshold negatives.
+- V2 official-manager status, extension, code, platform-disable, fingerprint
+  substitution, result-time removal, owner-only lifecycle, and global-pause negatives.
 - Request replay, duplicate occurrence, attempt/expiry/grace behavior.
 - Conservation across execute, deny, expire, stop, revoke, withdraw, refund.
 - Reentrancy, malicious token, callback, adapter, and partial failure.
@@ -62,7 +64,9 @@ Forbidden evidence:
 - Foundation result ABI, action ID/status/version/domain/binding checks plus
   canonical TEE and proxy signatures over their distinct pinned FCC domains.
 - No plaintext/ciphertext in chain, logs, browser persistence, evidence, or output.
-- Sealed restart behavior, rollback check, one-machine result outage.
+- Same-identity ciphertext-store reconstruction; corrupt/truncated,
+  over-permissive, symlink, conflicting, and concurrent records; identity
+  rotation remains a new-version recovery rather than silent restoration.
 - Replacement registration and frozen-policy failure/recovery.
 - Split decisions and wrong result field rejection.
 
@@ -213,7 +217,15 @@ verifies:
 - official protocol discovery sources/addresses;
 - deployment and verification transactions;
 - source commit and generated binding digest;
-- evidence files and pass/fail assertions.
+- SHA-256-bound canonical lifecycle, outage-drill, redemption, and anonymized
+  user-validation evidence files plus pass/fail assertions.
+
+The source-complete V2 preparation layer is checked separately with
+`pnpm candidate:build`. It produces an ignored `local-build` record with
+`verified: false` and cannot satisfy this release section. The structural live
+validators and the human/network re-observation sequence are defined in the
+[V2 promotion runbook](coston2-v2-promotion-runbook.md). The tracked candidate
+plan retains six explicit external blockers until those activities occur.
 
 ## 5. Release acceptance
 
