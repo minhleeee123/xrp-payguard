@@ -201,6 +201,13 @@ h1, h2, h3 { font-family: var(--font-pt-serif); font-weight: 300; }
 .breadcrumbs strong { color: var(--color-chalk); font-weight: 500; }
 .top-actions { display: flex; align-items: center; gap: 16px; }
 
+.header-balances { display: flex; align-items: center; gap: 10px; }
+.header-balance { display: inline-flex; align-items: baseline; gap: 5px; border-right: 1px solid var(--color-graphite); padding-right: 10px; white-space: nowrap; }
+.header-balance small { color: var(--color-ash); font: 500 8px/1 var(--font-inter-tight); letter-spacing: .1em; }
+.header-balance strong { color: var(--color-bone); font: 500 10px/1 var(--font-jetbrains-mono); }
+.header-faucet { color: var(--color-signal-lime); font: 500 9px/1 var(--font-inter-tight); letter-spacing: .08em; text-decoration: none; white-space: nowrap; }
+.header-faucet:hover { text-decoration: underline; }
+
 .network-chip {
   display: flex;
   align-items: center;
@@ -749,11 +756,19 @@ h1, h2, h3 { font-family: var(--font-pt-serif); font-weight: 300; }
   .mobile-secondary-nav .nav-item { display: flex; min-height: 48px; border: 0; }
   .mobile-secondary-nav .nav-item.active { color: var(--color-signal-lime); }
   .topbar { height: 60px; padding: 0 16px; }
+  .breadcrumbs { min-width: 0; flex: 1; }
   .breadcrumbs span, .breadcrumbs b { display: none; }
+  .breadcrumbs strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .top-actions { gap: 7px; }
-  .network-chip { padding: 6px; font-size: 9px; }
+  .header-balances { gap: 5px; }
+  .header-balance { gap: 3px; padding-right: 5px; }
+  .header-balance small { font-size: 7px; }
+  .header-balance strong { font-size: 8px; }
+  .header-faucet { font-size: 0; }
+  .header-faucet::after { content: "↗"; font-size: 11px; }
+  .network-chip { display: none; }
   .top-actions .icon-button { display: none; }
-  .top-actions .outline-button { padding: 8px 9px; font-size: 9px; }
+  .top-actions .outline-button { max-width: 88px; padding: 8px 9px; font-size: 9px; }
   .content { padding: 28px 15px 92px; }
   .page-intro { align-items: flex-start; flex-direction: column; margin-bottom: 22px; }
   .page-intro h1 { font-size: 32px; }

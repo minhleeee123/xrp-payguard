@@ -197,7 +197,7 @@ function render(): void {
         </div>
       </aside>
       <main class="main-area">
-        <header class="topbar"><div class="breadcrumbs"><span>Workspace</span><b>/</b><strong>${label(activeView)}</strong></div><div class="top-actions">${networkChip()}<button class="icon-button" type="button" data-action="notifications" aria-label="Notifications" aria-expanded="${notificationOpen}">♢${notificationState.status === "READY" && notificationState.feed.notifications.length > 0 ? '<span class="notification-dot"></span>' : ""}</button><button class="outline-button wallet-button" type="button" data-action="connect">${walletButtonLabel()}</button></div></header>
+        <header class="topbar"><div class="breadcrumbs"><span>Workspace</span><b>/</b><strong>${label(activeView)}</strong></div><div class="top-actions">${headerBalances()}${networkChip()}<button class="icon-button" type="button" data-action="notifications" aria-label="Notifications" aria-expanded="${notificationOpen}">♢${notificationState.status === "READY" && notificationState.feed.notifications.length > 0 ? '<span class="notification-dot"></span>' : ""}</button><button class="outline-button wallet-button" type="button" data-action="connect">${walletButtonLabel()}</button></div></header>
         ${notificationOpen ? notificationTray() : ""}
         <section class="content">${viewContent()}</section>
         ${appNotice ? `<div class="toast" role="status">${esc(appNotice)}</div>` : ""}
@@ -229,6 +229,11 @@ function networkChip(): string {
   if (coston2State.status === "UNAVAILABLE") return `<span class="network-chip"><span class="status-dot amber"></span>Coston2 <em>read failed</em></span>`;
   if (walletState.status === "WRONG_CHAIN") return `<span class="network-chip"><span class="status-dot amber"></span>Wrong network <em>chain ${walletState.chainId}</em></span>`;
   return `<span class="network-chip"><span class="status-dot amber"></span>Coston2 <em>connect</em></span>`;
+}
+
+function headerBalances(): string {
+  const live = liveSnapshot();
+  return `<div class="header-balances" aria-label="Coston2 wallet balances"><span class="header-balance" title="FTestXRP wallet balance"><small>FTESTXRP</small><strong>${live ? token(live.tokenBalance) : "—"}</strong></span><span class="header-balance" title="C2FLR gas balance"><small>C2FLR</small><strong>${live ? nativeToken(live.nativeBalance) : "—"}</strong></span><a class="header-faucet" href="${COSTON2_FAUCET}" target="_blank" rel="noreferrer" aria-label="Get Coston2 test tokens">FAUCET ↗</a></div>`;
 }
 
 function sidebarNetworkCard(): string {
