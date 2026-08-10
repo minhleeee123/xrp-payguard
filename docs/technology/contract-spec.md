@@ -4,6 +4,8 @@
 > is covered by Foundry tests. Its three contracts and vault wiring are verified
 > on Coston2 in `evidence/coston2/contracts-deployment.json`. This document does
 > not assert registered FCC execution, a complete release, or a production audit.
+> A manager-backed `PayGuardPolicyRegistryV2` is also implemented and tested
+> locally, but it has no verified Coston2 deployment or release status.
 > The separate XRPL FDC trigger consumer is deployed and binding-verified in
 > `evidence/coston2/xrpl-fdc-trigger-deployment.json`. One live proof was later
 > consumed into a canonical `Pending` request in
@@ -21,6 +23,32 @@ Responsibilities:
   custody threshold, result threshold, and policy nonce;
 - activate, stop, revoke, and supersede versions under explicit authority;
 - expose no ciphertext or policy fields.
+
+### `PayGuardPolicyRegistryV2` — local release candidate
+
+Responsibilities:
+
+- constructor-freeze the release-resolved official `FlareTeeManager`, extension
+  ID, and code hash;
+- use the padded official TEE address as canonical machine identity;
+- require production status, exact extension, TEE/proxy/initial identity, code
+  hash, enabled supported platform, and consistent non-empty machine URL for
+  every receipt;
+- recover each custody/result signer as the exact frozen official TEE address
+  and recheck official state when a result is submitted;
+- require the supplied full public-key fingerprint to derive the exact official
+  TEE signer in its low 20 bytes and bind the full fingerprint inside the
+  TEE-signed receipt/result domain; the current manager getter does not expose
+  the full public key, so the signed domain protects the remaining fingerprint
+  bytes;
+- restrict stop/resume/revoke to the policy owner and expose only an
+  administrator global pause for new registration/request/evaluation work;
+- permit permanent admin renunciation only while the global pause is off, so
+  governance cannot renounce into a permanently paused configuration.
+
+The constructor manager address is not self-authenticating: a future release
+manifest must prove it was resolved from the supported Flare source and verify
+the deployed constructor/runtime binding. V2 must remain `planned` until then.
 
 ### `PayGuardVault`
 
@@ -122,6 +150,12 @@ request/commitment bindings are protected by hard-coded cross-language golden
 digests.
 Production machine registration and live result verification remain mandatory
 before Gate A can pass.
+
+The V2 candidate preserves the router-facing V1 selectors, so the unchanged
+router can call `getPolicy`, `policyStatus`, and `isFrozenSigner` against V2.
+Local integration tests prove a result is rejected after the official manager
+removes the frozen machine from production status. This does not alter or
+upgrade the already deployed V1 registry.
 
 ## 2. Schemas
 
@@ -343,7 +377,9 @@ mapping before counting distinct signers.
 
 - `deposited = available + reserved + spent + withdrawn + refunded` per vault/asset.
 - One request reserves/executed amount at most once.
-- Only the frozen policy owner/governance can stop/revoke/supersede.
+- In V1, the frozen policy owner or administrator can stop/resume/revoke. The
+  V2 candidate narrows individual lifecycle authority to the owner; governance
+  can only toggle a global pause for new work.
 - Owner authority cannot manufacture `ALLOW` or bypass result threshold.
 - Router cannot transfer an unsupported asset/target/action.
 - Executor receives no policy or key and cannot choose decision fields.

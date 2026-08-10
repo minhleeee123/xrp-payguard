@@ -2464,6 +2464,678 @@ export const PayGuardPolicyRegistryAbi = [
   }
 ] as const;
 
+export const PayGuardPolicyRegistryV2Abi = [
+  {
+    "type": "constructor",
+    "inputs": [
+      {
+        "name": "admin_",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "teeManager_",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "expectedExtensionId_",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "expectedCodeHash_",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "STATUS_ACTIVE",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "STATUS_NONE",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "STATUS_REVOKED",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "STATUS_STOPPED",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "TEE_STATUS_PRODUCTION",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "admin",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "expectedCodeHash",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "expectedExtensionId",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getPolicy",
+    "inputs": [
+      {
+        "name": "policyCommitment",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "binding",
+        "type": "tuple",
+        "internalType": "struct PayGuardTypes.PolicyBinding",
+        "components": [
+          {
+            "name": "chainId",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "registry",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "vault",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "router",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "policyId",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "policyVersion",
+            "type": "uint32",
+            "internalType": "uint32"
+          },
+          {
+            "name": "policyCommitment",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "schema",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "extensionId",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "codeVersion",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "machineIds",
+            "type": "bytes32[3]",
+            "internalType": "bytes32[3]"
+          },
+          {
+            "name": "keyFingerprints",
+            "type": "bytes32[3]",
+            "internalType": "bytes32[3]"
+          },
+          {
+            "name": "custodyThreshold",
+            "type": "uint8",
+            "internalType": "uint8"
+          },
+          {
+            "name": "resultThreshold",
+            "type": "uint8",
+            "internalType": "uint8"
+          },
+          {
+            "name": "policyNonce",
+            "type": "uint64",
+            "internalType": "uint64"
+          }
+        ]
+      },
+      {
+        "name": "status",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "globallyPaused",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "isFrozenSigner",
+    "inputs": [
+      {
+        "name": "policyCommitment",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "machineId",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "keyFingerprint",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "signer",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "policyStatus",
+    "inputs": [
+      {
+        "name": "policyCommitment",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "registerPolicy",
+    "inputs": [
+      {
+        "name": "binding",
+        "type": "tuple",
+        "internalType": "struct PayGuardTypes.PolicyBinding",
+        "components": [
+          {
+            "name": "chainId",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "registry",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "vault",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "router",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "policyId",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "policyVersion",
+            "type": "uint32",
+            "internalType": "uint32"
+          },
+          {
+            "name": "policyCommitment",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "schema",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "extensionId",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "codeVersion",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "machineIds",
+            "type": "bytes32[3]",
+            "internalType": "bytes32[3]"
+          },
+          {
+            "name": "keyFingerprints",
+            "type": "bytes32[3]",
+            "internalType": "bytes32[3]"
+          },
+          {
+            "name": "custodyThreshold",
+            "type": "uint8",
+            "internalType": "uint8"
+          },
+          {
+            "name": "resultThreshold",
+            "type": "uint8",
+            "internalType": "uint8"
+          },
+          {
+            "name": "policyNonce",
+            "type": "uint64",
+            "internalType": "uint64"
+          }
+        ]
+      },
+      {
+        "name": "receipts",
+        "type": "tuple[3]",
+        "internalType": "struct PayGuardTypes.PolicyReceipt[3]",
+        "components": [
+          {
+            "name": "machineId",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "keyFingerprint",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "submissionNonce",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "receiptNonce",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "issuedAt",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "expiry",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "signature",
+            "type": "bytes",
+            "internalType": "bytes"
+          }
+        ]
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "renounceAdmin",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "resumePolicy",
+    "inputs": [
+      {
+        "name": "policyCommitment",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "revokePolicy",
+    "inputs": [
+      {
+        "name": "policyCommitment",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setGlobalPause",
+    "inputs": [
+      {
+        "name": "paused",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "stopPolicy",
+    "inputs": [
+      {
+        "name": "policyCommitment",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "teeManager",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IFlareTeeManager"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "event",
+    "name": "AdminRenounced",
+    "inputs": [
+      {
+        "name": "formerAdmin",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "GlobalPauseUpdated",
+    "inputs": [
+      {
+        "name": "paused",
+        "type": "bool",
+        "indexed": false,
+        "internalType": "bool"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "PolicyRegistered",
+    "inputs": [
+      {
+        "name": "policyCommitment",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "policyId",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "owner",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "version",
+        "type": "uint32",
+        "indexed": false,
+        "internalType": "uint32"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "PolicyResumed",
+    "inputs": [
+      {
+        "name": "policyCommitment",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "PolicyRevoked",
+    "inputs": [
+      {
+        "name": "policyCommitment",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "PolicyStopped",
+    "inputs": [
+      {
+        "name": "policyCommitment",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "error",
+    "name": "DuplicateMachine",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidBinding",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidReceipt",
+    "inputs": [
+      {
+        "name": "index",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "InvalidSignature",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidState",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotAdmin",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotPolicyOwner",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "OfficialMachineUnavailable",
+    "inputs": [
+      {
+        "name": "index",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "PolicyAlreadyRegistered",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "UnknownPolicy",
+    "inputs": []
+  }
+] as const;
+
 export const PayGuardVaultAbi = [
   {
     "type": "constructor",
