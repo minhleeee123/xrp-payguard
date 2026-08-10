@@ -69,7 +69,11 @@ process isolation only, not production confidentiality.
 3. Verify three signed custody receipts and register the public policy binding.
 4. Create an exact public request from the connected requester.
 5. Each actor independently reloads finalized registry, router, vault, and
-   spend-history state, evaluates the private policy, and signs the result.
+   spend-history state, rejects a not-yet-created or expired request, evaluates
+   the private policy at the request's domain-bound creation timestamp, and
+   signs the result. This deterministic timestamp lets actors invoked across
+   adjacent finalized blocks produce one matching digest without trusting a
+   browser-supplied clock.
 6. The client verifies three envelopes and submits two matching results. It
    never supplies the decision.
 7. Execute an allowed request, or observe canonical denial without movement.

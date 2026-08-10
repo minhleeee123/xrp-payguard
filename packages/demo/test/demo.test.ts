@@ -222,6 +222,35 @@ describe("interactive demo actor", () => {
     expect(await recoverMessageAddress({ message: { raw: evaluationAttestationDigest(envelope.result) }, signature: envelope.signature })).toBe(f.config.actors[1].signer);
   });
 
+  it("produces one matching digest when actors observe different finalized blocks", async () => {
+    const f = fixture();
+    const firstState = canonicalState(f);
+    const secondState = { ...firstState, finalizedAt: firstState.finalizedAt + 5n };
+    const firstRequest = await actorRequest(f, 1, "EVALUATE", firstState.request.requestId);
+    const secondRequest = await actorRequest(f, 2, "EVALUATE", secondState.request.requestId);
+    const first = await processDemoActorRequest({
+      actor: 1,
+      privateKey: f.actorKeys[0],
+      config: f.config,
+      request: firstRequest,
+      stateReader: { load: async () => firstState },
+      now: () => now,
+    });
+    const second = await processDemoActorRequest({
+      actor: 2,
+      privateKey: f.actorKeys[1],
+      config: f.config,
+      request: secondRequest,
+      stateReader: { load: async () => secondState },
+      now: () => now,
+    });
+    if (!("result" in first) || !("result" in second)) throw new Error("expected evaluation envelopes");
+    expect(first.digest).toBe(second.digest);
+    expect(first.result.issuedAt).toBe(firstState.request.createdAt);
+    expect(second.result.issuedAt).toBe(secondState.request.createdAt);
+    expect(first.result.machineId).not.toBe(second.result.machineId);
+  });
+
   it("fails closed for tampered ciphertext, wrong actor key, and stale public accounting", async () => {
     const f = fixture();
     const custody = await actorRequest(f, 1, "CUSTODY");

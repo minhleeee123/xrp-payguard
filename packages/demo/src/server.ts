@@ -136,7 +136,9 @@ export async function processDemoActorRequest(options: ProcessDemoActorOptions):
     if (!options.stateReader || !request.requestId) throw new Error("canonical demo state reader is unavailable");
     const canonical = await options.stateReader.load(request.requestId, binding.policyCommitment);
     if (canonical.policyStatus !== 1) throw new Error("demo policy is not active");
-    if (canonical.finalizedAt > canonical.request.expiry) throw new Error("canonical demo request is expired");
+    if (canonical.request.createdAt > canonical.finalizedAt || canonical.finalizedAt > canonical.request.expiry) {
+      throw new Error("canonical demo request time is invalid or expired");
+    }
     if (policyBindingDigest(canonical.binding).toLowerCase() !== policyBindingDigest(binding).toLowerCase()) {
       throw new Error("on-chain demo policy binding does not match ciphertext");
     }
@@ -155,7 +157,11 @@ export async function processDemoActorRequest(options: ProcessDemoActorOptions):
       lastAccountingAt: canonical.lastAccountingAt,
       spendCheckpoint: canonical.spendCheckpoint,
       balanceCheckpoint,
-      now: canonical.finalizedAt,
+      // The request creation timestamp is already domain-bound on chain. Using
+      // it as the evaluation instant gives all independently invoked actors the
+      // same signed result while the finalized read above still enforces live
+      // expiry and active-policy checks.
+      now: canonical.request.createdAt,
     });
     const result = { ...base, machineId: descriptor.machineId, keyFingerprint: descriptor.keyFingerprint };
     const digest = evaluationDigest(result);
