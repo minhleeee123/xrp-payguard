@@ -155,7 +155,8 @@ incident coverage, and a verified release manifest.
   track direction, existing-project policy, and public form state.
 - [ ] Reconfirm the enabled final form fields, account eligibility, and bounty
   selection directly in the owner's DoraHacks session before submitting; the
-  public page currently reports its submission form disabled.
+  last recorded public-page check on 2026-08-09 found the submission form
+  disabled.
 - [x] Record and locally validate a captioned production demo without showing
   `.env.local`, credentials, keys, raw signatures, or private policy material.
 - [ ] Owner-review and upload the demo video, then add its public URL.

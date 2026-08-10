@@ -1,7 +1,8 @@
 # XRP PayGuard hackathon handoff
 
-> Implementation baseline validated before this handoff refresh:
-> `d5f81f341843bf9ad71113065d2597ebc36c1f3d`.
+> Interactive demo baseline validated before the V2 preparation work:
+> `d5f81f341843bf9ad71113065d2597ebc36c1f3d`. The later V2 candidate and
+> documentation work does not alter or upgrade the deployed demo evidence.
 > The production web/API artifact is pinned to source commit
 > `da66c74b1c4f4fc118f5cc268e169b2d5ee2d324`; its interactive lifecycle and
 > browser evidence was recorded in `9305976`.
@@ -90,11 +91,13 @@ Observed results on the current baseline:
   the separate public-web evidence, four deployment-corpus auditor tests,
   three demo-recorder tests, and deployment/release/FCC tooling suites.
 - All workspace TypeScript typechecks and all Go packages passed.
-- Forge passed 43 tests, including 256 fuzz runs and a 128-run/8192-call
-  conservation invariant with zero reverts.
-- Secret scan inspected 398 current files and 187 revisions with zero history
-  findings. Privacy scan inspected 47
-  browser/relay/FCC source and build files and found no browser persistence API;
+- Forge passed 50 tests, including seven V2 official-manager/adversarial cases,
+  256 fuzz runs, and a 128-run/8192-call conservation invariant with zero
+  reverts.
+- The final documentation review secret scan inspected 424 current files and
+  195 then-existing revisions with zero history findings. Privacy scan
+  inspected 49 browser/relay/FCC source and build files and found no browser
+  persistence API;
   the Coston2 evidence gate retained 13 testnet-only records, while the public
   web validator separately accepted three explicitly limited simulation records.
 - The release check returned `planned` because no verified PayGuard Coston2
@@ -158,16 +161,19 @@ release, and mainnet work remain outstanding.
 
 The 23 unchecked `PLAN.md` gates are deliberately retained. They require
 evidence that this repository cannot manufacture through another local unit
-test:
+test. They have different deadlines; an unchecked box is not automatically a
+pre-submission technical blocker:
 
-| Dependency | Open evidence required |
-| --- | --- |
-| Owner/organizer and users | Owner-session eligibility/form confirmation; 15 interviews/usability sessions; two pilots, measurements, and real feedback |
-| Live FCC infrastructure | Three stable HTTPS origins and indexer access; one registered-machine `PING`; all-three custody; replacement; hosted relay/proxy; live policy lifecycle and outage drills |
-| Uncontrolled protocol conditions | A real `DirectMintingDelayed` resume and official partial/default FAssets recovery with canonical PayGuard consumption |
-| Independent assurance | External contract/TEE review, exact-candidate remediation, and production security audit |
-| Verified release | Complete release manifest/bindings, runtime/wiring/machine/key/signer mapping, and live recurring/deny/stop/recovery/redemption journeys |
-| Production/mainnet | Fresh mainnet resolution/canary, multi-operator FCC design, managed monitoring, bounded-value FXRP pilot, and post-pilot primitive review |
+| Timing | Dependency | Open evidence required |
+| --- | --- | --- |
+| Before submission — owner-only | Organizer/account | Enabled final form, owner eligibility, bounty selection, public video URL, submission URL/receipt |
+| Before submission — validation target | Users | 15 interviews/usability sessions; retain the explicit zero-session disclosure until they occur |
+| Post-hackathon | Live FCC infrastructure | Three stable HTTPS origins and indexer access; one registered-machine `PING`; all-three custody; replacement; hosted relay/proxy; live policy lifecycle and outage drills |
+| Post-hackathon | Uncontrolled protocol conditions | A real `DirectMintingDelayed` resume and official partial/default FAssets recovery with canonical PayGuard consumption |
+| Post-hackathon | Independent assurance | External contract/TEE review, exact-candidate remediation, and production security audit |
+| Post-hackathon | Verified release | Complete release manifest/bindings, runtime/wiring/machine/key/signer mapping, and live recurring/deny/stop/recovery/redemption journeys |
+| Post-hackathon | Pilots | Personal and treasury testnet pilots, measurements, and real feedback |
+| Post-hackathon | Production/mainnet | Fresh mainnet resolution/canary, multi-operator FCC design, managed monitoring, bounded-value FXRP pilot, and post-pilot primitive review |
 
 The local Web2Json boundary added at `897b54b` does not close any of those live
 gates. It has no configured production source, live FDC request/proof, private

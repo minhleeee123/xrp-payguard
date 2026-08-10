@@ -29,7 +29,15 @@ Forbidden evidence:
 | F — Vault conservation | deposits/reservations/spend/refund and adversarial invariants | LOCAL PASS / VAULT DEPLOYED / LIVE FAssets REQUEST/PAYOUT OBSERVED / CANONICAL SETTLEMENT + DEFAULT RECOVERY OPEN |
 | G — XRP-native funding | XRPL payment, FDC proof, Smart Account deposit | PASS — live PayGuard-owned Coston2 evidence in [`evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json`](../../evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json) covers validated XRPL Testnet payment, FDC request/finalized round/proof commitment, on-chain `verifyXRPPayment`, `executeDirectMintingWithData`, and verified PayGuardVault accounting. The credential-free [`coston2-funding-resume-audit-2026-08-09.json`](../../evidence/coston2/coston2-funding-resume-audit-2026-08-09.json) reconstructs that checkpoint and re-verifies its proof/runtime bindings. The separate [`xrpl-fdc-trigger-pending-2026-08-09.json`](../../evidence/coston2/xrpl-fdc-trigger-pending-2026-08-09.json) binds a second validated XRPL payment and finalized proof to atomic replay consumption and one canonical router `Pending` request. Canonical private FDC evaluation passes locally, but its policy signers are simulated; delayed resubmission, live FCC results, and release gates remain open. |
 | H — Product release | full roles, recovery, accessibility, live deployment | INTERACTIVE VERCEL DAPP + ISOLATED SIMULATED-FCC/COSTON2 LIFECYCLE + PUBLIC-SAFE `/evidence/index.json` + LANDING + DESKTOP/MOBILE/KEYBOARD BROWSER SMOKE / PRODUCTION RELAY, FCC, AND RELEASE MANIFEST OPEN |
-| I — User validation | interviews, usability, and design-partner pilot | NOT STARTED |
+| I — User validation | interviews, usability, and design-partner pilot | NOT STARTED — INTERVIEWS/USABILITY ARE A PRE-SUBMISSION VALIDATION TARGET; PILOTS AND RELEASE ACCEPTANCE REMAIN POST-HACKATHON |
+
+Gate timing is explicit: owner account/form/video/submission actions happen
+before an actual hackathon submission can be claimed; interviews/usability are
+an open pre-submission validation target and must retain a zero-session
+disclosure until real participants complete them. The live portions of Gates
+0/A–H, the design-partner pilot portion of Gate I, external review, release
+promotion, and production/mainnet work are post-hackathon. The simulated demo
+does not pass those live portions.
 
 ## 3. Test matrix
 

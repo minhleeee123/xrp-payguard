@@ -1,9 +1,10 @@
 # Target architecture
 
 > Status: the local protocol, durable ciphertext custody adapter, relay, web
-> shell, deployed V1 registry/vault/router, and manager-backed V2 registry
-> candidate are implemented and tested. A V2 address, registered machines, and
-> release wiring remain targets until a verified PayGuard release.
+> shell, and manager-backed V2 registry candidate are implemented and tested.
+> The V1 registry/vault/router have independently checked Coston2 testnet
+> observations, but they are not a verified release. A V2 address, registered
+> machines, and release wiring remain planned targets.
 
 ## 1. System model
 
@@ -275,9 +276,11 @@ delivery; any body drift fails the page closed.
 
 ### Interactive simulated-FCC demo boundary
 
-The planned hackathon interaction path is additive and isolated from the
-production FCC topology. It uses a separate Coston2 registry, vault, and router
-namespace plus three short-lived serverless actor endpoints. Each actor has a
+The deployed hackathon interaction path is additive and isolated from the
+production FCC topology. Its evidence-verified hosted artifact is pinned to
+source `da66c74`; later repository UI changes are not silently promoted into
+that deployment record. It uses a separate Coston2 registry, vault, and router
+namespace plus three stateless serverless actor endpoints. Each actor has a
 distinct demo-only signing/decryption key, independently decrypts the policy in
 memory, runs the canonical deterministic evaluator, and signs only the exact
 receipt or evaluation attestation domain. The browser sends ciphertext rather
@@ -306,12 +309,13 @@ checkpoint, seals the public transition fields in a state-checkpoint hash, and
 binds the expected payment and proof to the exact EVM `proofOwner` that will
 submit the direct-mint transaction. A
 direct-mint success is accepted only from an exact public receipt matching all
-owner/account/destination/asset/value/fee/nonce/operation fields. Live supported
-service execution remains unverified. A separate read-only Coston2 observation
-resolves the runtime `AssetManagerFXRP`, FAsset, direct-mint fee settings, and
-Core Vault payment address through the Contract Registry and records an integer
-quote; no transaction is submitted. Delayed resume and live drift rejection
-remain open.
+owner/account/destination/asset/value/fee/nonce/operation fields. One bounded
+Coston2 testnet funding execution and its credential-free reconstruction are
+recorded; they are not a verified release or a production-service claim. A
+separate read-only Coston2 observation resolves the runtime `AssetManagerFXRP`,
+FAsset, direct-mint fee settings, and Core Vault payment address through the
+Contract Registry and records an integer quote without submitting a new
+transaction. A real delayed-mint resume remains open.
 
 ### FAssets exit
 

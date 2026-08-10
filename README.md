@@ -158,7 +158,7 @@ mainnet work; they are not silently promoted by local tests.
 | Solution-3 lifecycle | Fourteen successful Coston2 transactions cover simulated three-machine registration, policy registration, recurring allow, cap denial, stop/resume/revoke, and exact vault conservation | Machine identities and result signers are explicitly ephemeral simulation |
 | FAssets exit | Amount-based and `redeemWithTag` Coston2 requests have matching validated XRPL payouts and `RedemptionPerformed` observations | Partial/default recovery and canonical PayGuard settlement consumption remain open |
 | Web2Json | Local source commitment allowlist, exact public request, jq/tuple ABI, MIC/response, source-asserted freshness, replay, and verifier failure tests pass | No production source, live proof, source-truth guarantee, private policy evaluation, or on-chain consumer |
-| Web | Interactive Vercel Coston2 dApp, finalized wallet/vault/request reads, guarded writes, 3-actor simulated-FCC lifecycle, 16-asset evidence mirror, and production browser/Lighthouse pass | Production FCC/relay providers remain unavailable; the full hosted lifecycle is explicitly simulation-only |
+| Web | Interactive Vercel Coston2 dApp, finalized wallet/vault/request reads, guarded writes, 3-actor simulated-FCC lifecycle, 16-asset evidence mirror, and production browser/Lighthouse pass for deployed source `da66c74` | Production FCC/relay providers remain unavailable; the full hosted lifecycle is explicitly simulation-only, and later repository UI changes are not claimed as part of that deployed artifact |
 | Release | Release and V2 candidate validators fail closed | `pnpm release:check` reports `planned`; separate V2 plan/build and lifecycle/outage/redemption/user-study validators prepare future promotion without creating a verified manifest |
 
 ## Coston2 public identifiers
@@ -268,7 +268,7 @@ Public evidence is allowlisted, sanitized, and testnet-only. Start with
 | [`coston2-simulated-policy-lifecycle-2026-08-09.json`](evidence/simulation/coston2-simulated-policy-lifecycle-2026-08-09.json) | Real Coston2 contract lifecycle with explicitly simulated policy signers |
 | [`coston2-interactive-demo-deployment-2026-08-10.json`](evidence/simulation/coston2-interactive-demo-deployment-2026-08-10.json) | Separate demo contracts, three public actor descriptors, registrations, wiring, and mandatory false production assertions |
 | [`vercel-interactive-demo-2026-08-10.json`](evidence/web/vercel-interactive-demo-2026-08-10.json) | Production-origin API, full automated Coston2 ALLOW/DENY/governance lifecycle, and laptop browser smoke |
-| [`vercel-preview-2026-08-09.json`](evidence/web/vercel-preview-2026-08-09.json) | Current Vercel artifact, browser, keyboard, responsive, evidence, and Lighthouse audit |
+| [`vercel-preview-2026-08-09.json`](evidence/web/vercel-preview-2026-08-09.json) | Reviewed Vercel artifact, browser, keyboard, responsive, evidence, and Lighthouse audit |
 
 Evidence may contain only public addresses, hashes, blocks, transaction IDs,
 result commitments, timings, amounts already public by protocol design, and
@@ -459,7 +459,17 @@ The full attacker model, residual trust, and non-claims are documented in
 
 The hackathon deliberately uses **solution 3**: real public Coston2/XRPL facts,
 a deployed static product/evidence shell, and explicit local/simulated FCC
-authorization. The following remain post-hackathon or owner/external gates:
+authorization.
+
+Before an actual hackathon submission can be claimed, the owner must confirm
+the enabled DoraHacks form/account/bounty selection, review and upload the demo
+video, submit from the owner account, and retain the public URL or receipt.
+Interviews and usability sessions remain a pre-submission validation target;
+until real sessions occur, the submission must retain the explicit zero-session
+disclosure rather than treating source tests as user validation.
+
+The following technical, release, pilot, and production gates are explicitly
+**post-hackathon**:
 
 - three stable HTTPS FCC machine origins and authenticated indexer access;
 - registered production machines, all-three live custody receipts, two matching
@@ -468,9 +478,7 @@ authorization. The following remain post-hackathon or owner/external gates:
 - a real `DirectMintingDelayed` resume and canonical partial/default FAssets
   recovery;
 - a verified PayGuard release manifest and exact consumer bindings;
-- owner-session DoraHacks eligibility/form submission and public video URL;
-- interviews, usability sessions, testnet design-partner pilots, and measured
-  feedback;
+- testnet design-partner pilots and measured feedback;
 - independent contract/TEE security review and remediation; and
 - fresh mainnet resolution, canary, managed monitoring, bounded-value pilot,
   incident coverage, and explicit real-asset authorization.

@@ -84,8 +84,8 @@
   release acceptance.
 - [`technology/reuse-inventory.md`](technology/reuse-inventory.md): what may and
   may not be adapted from VeilBid.
-- [`technology/repository-layout.md`](technology/repository-layout.md): planned
-  workspace ownership and boundaries.
+- [`technology/repository-layout.md`](technology/repository-layout.md): current
+  workspace ownership, package boundaries, and demo-layer separation.
 - [`lessons/veilbid-build-lessons.md`](lessons/veilbid-build-lessons.md): failure
   modes and implementation lessons.
 

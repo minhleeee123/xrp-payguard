@@ -83,6 +83,27 @@ owner, payee, executor, and auditor inspect public execution evidence
 
 ## 4. Phase gates
 
+### Gate timing and hackathon boundary
+
+Unchecked boxes do not all have the same deadline:
+
+- **Before submission — owner actions:** confirm the enabled DoraHacks form,
+  account eligibility, and bounty selection; review/upload the video; submit
+  from the owner account; retain the resulting public URL or receipt.
+- **Before submission — validation target:** the Phase 0 interviews/usability
+  sessions improve product evidence but remain honestly `0 sessions` until real
+  participants complete them. Local tests cannot close this gate, and the
+  submission must not imply that it passed.
+- **Post-hackathon — live/release work:** V2 deployment, stable FCC/indexer/
+  relay infrastructure, registered custody/evaluation, uncontrolled live
+  FAssets conditions, outage drills, independent review, release-manifest
+  promotion, pilots, and all mainnet/production work.
+
+The current hackathon artifact does not need a V2 deployment or a verified
+production FCC release to demonstrate its explicitly simulated solution-3
+boundary. It does need the owner actions above before an actual submission can
+be claimed.
+
 ### Phase 0 — competition, product, and user discovery
 
 - [x] Recheck the public DoraHacks listing and official FCC readiness docs on
@@ -92,8 +113,10 @@ owner, payee, executor, and auditor inspect public execution evidence
   organizer approval, or granted infrastructure.
 - [ ] Confirm final dates, form mechanics, bounty eligibility, and any granted
   FCC access in the owner's DoraHacks/organizer session before submission.
-- [ ] Conduct at least five XRPL-user interviews, five treasury/DAO interviews,
-  and five payment-recipient usability sessions.
+- [ ] Pre-submission validation target: conduct at least five XRPL-user
+  interviews, five treasury/DAO interviews, and five payment-recipient
+  usability sessions. Until then, retain the explicit zero-session disclosure;
+  do not treat source tests as user validation.
 - [x] Select the first narrow policy problem and record why private policy
   evaluation is necessary instead of an ordinary public smart contract.
 - [x] Freeze product non-claims, data map, threat model, and one-sentence demo.
@@ -320,7 +343,8 @@ verified on Coston2. External review and registered FCC execution remain open.
   reverify the proof on-chain, and bind current quote, payment address,
   consumed nonce, approve/deposit operation, receipt, and vault conservation;
   injected mutations prove each live-bound drift fails closed.
-- [ ] Capture a real `DirectMintingDelayed` event on a supported test condition,
+- [ ] Post-hackathon: capture a real `DirectMintingDelayed` event on a
+  supported test condition,
   wait until its public `executionAllowedAt`, and verify the same proof/data is
   resubmitted successfully. The completed historical funding transaction did
   not enter the delayed state, so local delay simulation is not live evidence.
@@ -369,7 +393,8 @@ verified on Coston2. External review and registered FCC execution remain open.
   XRPL payout carries the requested destination tag; the sanitized public
   identifiers are in the tagged redemption evidence file. Partial fulfillment,
   default recovery, and canonical PayGuard event consumption remain open.
-- [ ] Execute and verify an official live FAssets redemption/default exit on
+- [ ] Post-hackathon: execute and verify an official live FAssets
+  redemption/default exit on
   Coston2, including partial fulfillment, default recovery, and canonical
   PayGuard settlement consumption.
 
@@ -450,7 +475,8 @@ privacy, secret, evidence, release, documentation, and binding-drift gates.
 
 - [x] Make relay/executor orchestration stateless and recoverable from public
   checkpoints.
-- [ ] Run proxy, RPC, FDC, FTSO, indexer, one-machine, and executor outage drills.
+- [ ] Post-hackathon: run proxy, RPC, FDC, FTSO, indexer, one-machine, and
+  executor outage drills.
 - [x] Run full-history secret scans plus browser/network/log/evidence privacy scans.
 - [x] Add rate limits, idempotency, health bindings, timeout budgets, and
   competing-executor tests.
@@ -459,7 +485,8 @@ privacy, secret, evidence, release, documentation, and binding-drift gates.
 - [x] Exercise a local fail-closed outage matrix for RPC/registry, FDC, FTSO,
   public-reader states, one-machine relay loss, and executor submission loss;
   live drills remain open.
-- [ ] Commission external contract and TEE-path review before production value.
+- [ ] Post-hackathon: commission external contract and TEE-path review before
+  production value.
 
 Exit: failure is resumable or explicitly denied, never represented as success.
 
@@ -483,15 +510,16 @@ Exit: failure is resumable or explicitly denied, never represented as success.
   ephemeral in-memory signers, two matching allow evaluations, deterministic
   cap denial, stop/resume/revoke, and vault conservation; keep the evidence
   under `evidence/simulation/` and do not count it as a live FCC lifecycle.
-- [ ] Generate and verify a PayGuard release manifest and consumer bindings.
+- [ ] Post-hackathon: generate and verify a PayGuard release manifest and
+  consumer bindings.
   The V2 source candidate, ignored local build digest, explicit blocker plan,
   promotion runbook, and lifecycle/outage/redemption/user-validation validators
   are prepared. They remain non-authoritative until real Coston2, FCC,
   redemption, fault-drill, and consented study evidence passes.
-- [ ] Verify runtime bytecode, constructor/wiring, extension ID, code/image hash,
-  governance, machines, key fingerprints, and signer mapping.
-- [ ] Record live personal recurring-payment, cap-denial, emergency-stop,
-  recovery, Smart Account funding, and redemption lifecycles.
+- [ ] Post-hackathon: verify runtime bytecode, constructor/wiring, extension ID,
+  code/image hash, governance, machines, key fingerprints, and signer mapping.
+- [ ] Post-hackathon: record live personal recurring-payment, cap-denial,
+  emergency-stop, recovery, Smart Account funding, and redemption lifecycles.
 - [x] Publish only sanitized public identifiers, hashes, blocks, transactions,
   timings, and assertion booleans; the production-corpus audit fetched all 15
   listed assets, matched every JSON body byte-for-byte to its reviewed source,
@@ -511,15 +539,17 @@ Exit: failure is resumable or explicitly denied, never represented as success.
 
 Exit: source, runtime, bindings, UI, docs, and public-safe evidence agree.
 
-### Phase 9 — pilots and distribution
+### Phase 9 — post-hackathon pilots and distribution
 
-- [ ] Run one personal subscription pilot and one treasury recurring-payment pilot.
-- [ ] Measure setup completion, activation time, failed-action comprehension,
-  recovery success, and recipient confidence.
+- [ ] Post-hackathon: run one personal subscription pilot and one treasury
+  recurring-payment pilot.
+- [ ] Post-hackathon: measure setup completion, activation time, failed-action
+  comprehension, recovery success, and recipient confidence.
 - [x] Publish compile-tested, fail-closed SDK examples and an integration guide
   for XRPL wallets and Flare dApps; keep the package private until a verified
   release manifest exists.
-- [ ] Record feedback and product decisions without invented traction.
+- [ ] Post-hackathon: record feedback and product decisions without invented
+  traction.
 - [x] Prepare explicit post-hackathon audit, FCC liveness-incentive, pricing,
   support/incident, and gated mainnet-readiness plans without claiming those
   activities have run.
@@ -527,7 +557,7 @@ Exit: source, runtime, bindings, UI, docs, and public-safe evidence agree.
 Exit: real users have completed real testnet journeys and the next investment is
 supported by evidence.
 
-### Phase 10 — production roadmap
+### Phase 10 — post-hackathon production roadmap
 
 - [ ] External security audits and remediation.
 - [ ] Mainnet protocol/address re-resolution and a disposable canary release.

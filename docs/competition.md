@@ -20,14 +20,14 @@ a demo/video/application link, repository or technical material, Flare usage,
 a new/ported/integrated/improved-work explanation, applicable deployment facts,
 and a short roadmap.
 
-The same public payload says existing projects are welcome, multiple tracks
-are allowed, and XRP/FXRP/FAssets are priority directions for the interoperable
-asset track. It also reports that the public submission and registration forms
-are currently disabled. Those fields are a public-page observation, not proof
-that the owner's account is eligible, that a final form will expose identical
-fields, that PayGuard has been accepted into a bounty, or that any organizer
-FCC capacity was granted. Final account/form/selection checks therefore remain
-an owner-session Gate 0 item.
+The same 2026-08-09 public payload says existing projects are welcome, multiple
+tracks are allowed, and XRP/FXRP/FAssets are priority directions for the
+interoperable asset track. It also reports that the public submission and
+registration forms were disabled at that check. Those fields are a dated
+public-page observation, not proof that the owner's account is eligible, that a
+final form will expose identical fields, that PayGuard has been accepted into a
+bounty, or that any organizer FCC capacity was granted. Final account/form/
+selection checks therefore remain an owner-session Gate 0 item.
 
 The [official FCC overview](https://dev.flare.network/fcc/overview), fetched on
 the same date, states that FCC is in the final stages of development and is not
@@ -104,9 +104,10 @@ roadmap work.
   threat model, verification guide, and roadmap.
 - New-work ledger separating copied reference material, adapted utilities, and
   new PayGuard work.
-- Verified contract addresses, transactions, blocks, and source commit; any
-  extension, code/image, machine-policy, or release field remains explicitly
-  unavailable until its live gate passes.
+- Independently checked Coston2 testnet contract addresses, transactions,
+  blocks, and source commit, explicitly classified as observations rather than
+  a verified release; any extension, code/image, machine-policy, or release
+  field remains unavailable until its live gate passes.
 - Honest limitations, residual trust, testnet status, and next steps.
 
 ## 4. Judging gates
@@ -139,7 +140,7 @@ The demo must explain what is public, what remains inside FCC, why the action
 was allowed or denied, and how to recover. The roadmap must distinguish shipped
 facts from planned audit, mainnet, operator, and product work.
 
-## 5. Distribution evidence
+## 5. Pre-submission validation targets
 
 Before submission, target at least:
 
@@ -150,3 +151,6 @@ Before submission, target at least:
 - documented organizer/community technical feedback.
 
 Never invent usage, acquisition, partnership, security, or production claims.
+If these sessions have not occurred, retain the explicit zero-session
+disclosure and leave the validation gate open. Repository tests cannot replace
+participant evidence.
