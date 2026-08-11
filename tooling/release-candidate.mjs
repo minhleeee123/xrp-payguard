@@ -34,7 +34,7 @@ export function validateCandidatePlan(value) {
   const plan = record(value, "candidate plan");
   exact(plan.schemaVersion, 1, "schemaVersion");
   exact(plan.kind, "payguard-coston2-v2-release-candidate-plan", "kind");
-  exact(plan.status, "planned", "status");
+  exact(plan.status, "live-candidate", "status");
   exact(plan.verified, false, "verified");
   const network = record(plan.network, "network");
   exact(network.name, "flare-coston2", "network.name");
@@ -42,6 +42,7 @@ export function validateCandidatePlan(value) {
   exact(plan.authoritativeManifest, "releases/coston2.release.json", "authoritativeManifest");
   const candidate = record(plan.candidate, "candidate");
   exact(candidate.registryContract, "PayGuardPolicyRegistryV2", "candidate.registryContract");
+  exact(candidate.profile, "COSTON2_SIMULATED_V2", "candidate.profile");
   exact(candidate.machineAuthorization, "official-manager-live-recheck", "candidate.machineAuthorization");
   exact(candidate.custodyThreshold, 3, "candidate.custodyThreshold");
   exact(candidate.resultThreshold, 2, "candidate.resultThreshold");
@@ -49,9 +50,8 @@ export function validateCandidatePlan(value) {
   exact(candidate.checkCommand, "pnpm candidate:check", "candidate.checkCommand");
 
   const boundaries = record(plan.boundaries, "boundaries");
-  for (const key of ["deployed", "liveFccVerified", "canonicalLifecycleVerified", "outageDrillsVerified", "canonicalRedemptionVerified", "userValidationVerified"]) {
-    exact(boundaries[key], false, `boundaries.${key}`);
-  }
+  for (const key of ["deployed", "liveFccVerified", "canonicalLifecycleVerified"]) exact(boundaries[key], true, `boundaries.${key}`);
+  for (const key of ["outageDrillsVerified", "canonicalRedemptionVerified", "userValidationVerified"]) exact(boundaries[key], false, `boundaries.${key}`);
 
   const blockers = array(plan.requiredLiveInputs, "requiredLiveInputs");
   const ids = new Set();
@@ -60,7 +60,7 @@ export function validateCandidatePlan(value) {
     const id = nonEmpty(blocker.id, `requiredLiveInputs[${index}].id`);
     if (ids.has(id)) throw new Error(`duplicate live blocker ${id}`);
     ids.add(id);
-    exact(blocker.status, "blocked", `requiredLiveInputs[${index}].status`);
+    if (blocker.status !== "blocked" && blocker.status !== "candidate-satisfied") throw new Error(`requiredLiveInputs[${index}].status is invalid`);
     nonEmpty(blocker.requiredEvidence, `requiredLiveInputs[${index}].requiredEvidence`);
   }
   for (const id of requiredBlockers) if (!ids.has(id)) throw new Error(`missing live blocker ${id}`);
@@ -69,7 +69,8 @@ export function validateCandidatePlan(value) {
   if (prepared.length < 10 || new Set(prepared).size !== prepared.length) throw new Error("preparedArtifacts must be distinct and complete");
   array(plan.promotionRules, "promotionRules").forEach((rule, index) => nonEmpty(rule, `promotionRules[${index}]`));
   publicOnly(plan, "candidate plan");
-  return { status: "planned", verified: false, blockers: blockers.length, preparedArtifacts: prepared.length };
+  const openBlockers = blockers.filter((blocker) => blocker.status === "blocked").length;
+  return { status: "live-candidate", verified: false, blockers: openBlockers, preparedArtifacts: prepared.length };
 }
 
 function sha256(value) {

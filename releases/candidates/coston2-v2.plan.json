@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "kind": "payguard-coston2-v2-release-candidate-plan",
-  "status": "planned",
+  "status": "live-candidate",
   "verified": false,
   "network": {
     "name": "flare-coston2",
@@ -10,6 +10,7 @@
   "authoritativeManifest": "releases/coston2.release.json",
   "candidate": {
     "registryContract": "PayGuardPolicyRegistryV2",
+    "profile": "COSTON2_SIMULATED_V2",
     "machineAuthorization": "official-manager-live-recheck",
     "custodyThreshold": 3,
     "resultThreshold": 2,
@@ -17,9 +18,9 @@
     "checkCommand": "pnpm candidate:check"
   },
   "boundaries": {
-    "deployed": false,
-    "liveFccVerified": false,
-    "canonicalLifecycleVerified": false,
+    "deployed": true,
+    "liveFccVerified": true,
+    "canonicalLifecycleVerified": true,
     "outageDrillsVerified": false,
     "canonicalRedemptionVerified": false,
     "userValidationVerified": false
@@ -27,18 +28,18 @@
   "requiredLiveInputs": [
     {
       "id": "official-fcc-manager-and-three-machines",
-      "status": "blocked",
-      "requiredEvidence": "Official TeeManager source, extension/code binding, three distinct production machine identities, HTTPS origins, and live manager status checks"
+      "status": "candidate-satisfied",
+      "requiredEvidence": "Candidate evidence records the official TeeManager, extension/code binding, three distinct status-2 simulated machine identities, HTTPS origins, and live manager checks; hardware identities remain a release blocker"
     },
     {
       "id": "coston2-v2-deployment",
-      "status": "blocked",
-      "requiredEvidence": "Deployment transactions, blocks, addresses, independently observed runtime hashes, wiring, roles, and source commit"
+      "status": "candidate-satisfied",
+      "requiredEvidence": "evidence/coston2/contracts-v2-simulated.json records deployment transactions, blocks, addresses, runtime hashes, wiring, roles, profile, and source commit"
     },
     {
       "id": "canonical-live-lifecycle",
-      "status": "blocked",
-      "requiredEvidence": "Funding, all-three custody, allow, deny, stop, resume, revoke, and redemption bound to one verified release"
+      "status": "candidate-satisfied",
+      "requiredEvidence": "fcc-hosted-relay-lifecycle.json records V2 funding, all-three custody, allow, deny, stop, resume, and revoke; release-bound redemption remains separate and blocked"
     },
     {
       "id": "outage-drills",

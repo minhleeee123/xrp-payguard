@@ -77,8 +77,8 @@ function userReport() {
 }
 
 describe("V2 release-candidate preparation", () => {
-  it("keeps the tracked candidate explicitly planned and fully blocked", async () => {
-    assert.deepEqual(validateCandidatePlan(await readJson(CANDIDATE_PLAN_PATH)), { status: "planned", verified: false, blockers: 6, preparedArtifacts: 21 });
+  it("tracks the live simulated candidate without promoting a release", async () => {
+    assert.deepEqual(validateCandidatePlan(await readJson(CANDIDATE_PLAN_PATH)), { status: "live-candidate", verified: false, blockers: 3, preparedArtifacts: 21 });
   });
 
   it("accepts a complete live lifecycle and rejects simulated or owner-lifecycle drift", () => {
