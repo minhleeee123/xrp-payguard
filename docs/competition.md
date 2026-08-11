@@ -74,9 +74,11 @@ Required evidence:
 The live Coston2 path now uses three stable registered `SIMULATED_TEE` Railway
 machines and independently verifies all-three custody plus a two-of-three
 evaluation/execute/deny lifecycle. It is stronger than a local simulation, but
-does not satisfy hardware-attestation or verified-release requirements. Do not
-describe the Confidential Compute Apps bounty as production-complete unless the
-remaining hardware, V2, recovery/outage, and release gates pass.
+does not satisfy hardware-attestation or verified-release requirements. A live
+C→D loss/re-registration/new-policy drill now passes without swapping a frozen
+identity. Do not describe the Confidential Compute Apps bounty as
+production-complete unless the remaining hardware, V2, full-outage, and release
+gates pass.
 
 ### Current hackathon delivery boundary
 

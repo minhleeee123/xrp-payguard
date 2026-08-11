@@ -205,8 +205,11 @@ and the separately evidenced live Coston2 simulated-machine path.
   fields; prove two matching result signatures in the local adapter.
 - [x] Prove replay, wrong owner, wrong commitment, wrong request, wrong code,
   and wrong machine failure locally.
-- [ ] Post-hackathon: prove supported replacement registration and document
-  that an active policy never silently swaps a frozen identity.
+- [x] Post-hackathon: prove supported replacement registration and document
+  that an active policy never silently swaps a frozen identity. Machine C was
+  made unavailable, D completed fresh `rRap`/availability/production, and a new
+  A/B/D policy passed custody plus ALLOW/execute/DENY/governance; the prior
+  A/B/C policy was never mutated.
 
 Exit: private policy content never enters a public path and registered threshold
 machines authorize one domain-bound test action.
@@ -489,7 +492,9 @@ privacy, secret, evidence, release, documentation, and binding-drift gates.
 - [x] Make relay/executor orchestration stateless and recoverable from public
   checkpoints.
 - [ ] Post-hackathon: run proxy, RPC, FDC, FTSO, indexer, one-machine, and
-  executor outage drills.
+  executor outage drills. The one-machine-loss/replacement and two-submission
+  executor-omission portions now pass live on Coston2 simulated machines; the
+  proxy, RPC, FDC, FTSO, indexer, and full executor-outage cases remain open.
 - [x] Run full-history secret scans plus browser/network/log/evidence privacy scans.
 - [x] Add rate limits, idempotency, health bindings, timeout budgets, and
   competing-executor tests.
