@@ -1,40 +1,47 @@
 {
   "schemaVersion": 1,
   "suite": "payguard-coston2-live-simulated-three-machine-custody",
-  "status": "verified-live-simulated-three-machine-custody",
-  "recordedAt": "2026-08-11T05:02:03.311Z",
+  "status": "verified-live-simulated-onchain-three-machine-custody",
+  "recordedAt": "2026-08-11T05:07:29.391Z",
   "network": {
     "name": "flare-coston2",
     "chainId": 114,
-    "observedBlock": "33906157"
+    "observedBlock": "33906253"
   },
   "publicIdentifiers": {
-    "verificationSourceCommit": "c78913aed8d11bda1d10f81755f656d0fd043ff2",
+    "verificationSourceCommit": "634b32b42d541850f1b71d8375700dac8201c05c",
     "manager": "0x1a9C4A0f9D76c0b1D91d22E24E573a9b377618aE",
     "extensionId": "66037",
-    "policyCommitment": "0x899910eec4146e485a78ed1d053ef71b33ae0f32a6c3efe3a1258881ad37ddc8",
-    "custodyBundleHash": "0xe664873add462fa4f59304d1fc1598348c03387c2d3d4bfa76bb6581f6550456",
+    "policyCommitment": "0x217701d5b9ac4f85646b2ff9b3f308666e70b5c5e11fa404323f9ca515ac768c",
+    "custodyBundleHash": "0x0ff097b255c21c2fb3b60c66b5ebd37197ff0d807df52d2451a18aef86a0e6be",
+    "machineRegistrationTransactions": [
+      "0x623230617a5f93f6e16ff7dd057cff34d5332e098656f9c27cf874feb7933c7f",
+      "0x1b1c361d4968d3404545d628ceba16cad7cda4722a78fbe0e8d6a8b80a92bed1",
+      "0xcd203ba1acab993f2be5976b194af7acedb7ac861eac03865ff82d67ec1d09c1"
+    ],
+    "policyFreezeTransaction": "0x8ce1642c167123e92328e460da5eca7ac08885002a8ec7274251f33ec6990cf4",
+    "policyFreezeBlock": "33906253",
     "machines": [
       {
         "teeId": "0x1C911D007f8203484eD4099bC11849d7e9691044",
         "proxyId": "0x8dfd80A00C1C6909E4f3f9439240243f5B193FA3",
         "url": "https://payguard-fcc-a-production.up.railway.app",
         "status": 2,
-        "receiptDigest": "0x4ad9ead338380426ecf4ff8777993cd200ba89bd5d55c8051e7bc6bf6f105895"
+        "receiptDigest": "0xf49950b85009302eaa12d03f5efb9dd4b61e7da71838d71f7e467ab1901ee6d4"
       },
       {
         "teeId": "0xff49A99535b8c52345D3c0b76bCf60194De7C29b",
         "proxyId": "0x6860a154be5415219E2A197E987e5f34cC48F2Bf",
         "url": "https://payguard-fcc-b-production.up.railway.app",
         "status": 2,
-        "receiptDigest": "0x97316ef186b70389c0023811181920374c4dd4b2b72c63dc752460e95b406237"
+        "receiptDigest": "0x50b6c77687456cac2977811e14046bee80e1ae1c44d10b3a876683879a322100"
       },
       {
         "teeId": "0xed19Ff73952E4A4783f739194940c0b6823Ae213",
         "proxyId": "0xB18ABc7833156ee6C9A10D251003F191Ec0005F3",
         "url": "https://payguard-fcc-c-production.up.railway.app",
         "status": 2,
-        "receiptDigest": "0xb2be6e7791657faf4980dc10e12034a061a4fa65beba20aabd85ae2403e7611e"
+        "receiptDigest": "0xfbbdd1f59c4e163bf81ab189640102de705b531882a2ff0ec21075fdea519ad2"
       }
     ]
   },
@@ -50,7 +57,7 @@
     "allThreeReceiptSignersVerified": true,
     "ciphertextStoreWriteVerified": true,
     "restartRecoveryVerified": false,
-    "onchainPolicyFreezeVerified": false,
+    "onchainPolicyFreezeVerified": true,
     "liveThresholdEvaluationVerified": false,
     "hardwareAttestationVerified": false,
     "simulatedTee": true,
@@ -63,11 +70,11 @@
   },
   "blockers": [
     "HARDWARE_ATTESTATION_NOT_VERIFIED",
-    "ONCHAIN_POLICY_FREEZE_NOT_YET_VERIFIED",
     "TWO_OF_THREE_LIVE_EVALUATION_NOT_YET_VERIFIED"
   ],
   "notes": [
     "Organizer-approved SIMULATED_TEE=true was used on Coston2.",
-    "The private policy, three ciphertexts, owner authorizations, and machine signatures existed only in process memory and are excluded from public evidence."
+    "The private policy, three ciphertexts, owner authorizations, and machine signatures existed only in process memory and are excluded from public evidence.",
+    "The on-chain freeze uses the deployed V1 administrator mapping; official-manager authorization remains a V2 release blocker."
   ]
 }
