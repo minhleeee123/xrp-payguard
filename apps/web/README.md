@@ -42,6 +42,12 @@ gate. Team has no invite control while no standalone role registry is deployed;
 the remaining buttons either navigate to a real view, open reviewed evidence,
 or prepare a verified Coston2 operation.
 
+Desktop application views use refresh-safe hashes such as `#app/requests` and
+participate in browser Back/Forward navigation. Landing section hashes remain
+on the landing surface, view changes reset scroll and keyboard focus to the new
+main region, and both application and landing surfaces expose a skip link.
+Transient notices auto-dismiss and also provide an explicit close control.
+
 Demo lifecycle parses the reviewed solution-3 artifact instead of rendering
 hard-coded success copy. It requires exactly three distinct simulated machine
 identities, two matching results per decision, fourteen successful Coston2
@@ -62,10 +68,14 @@ router tuple at one finalized Coston2 block without requiring a wallet. It
 verifies reviewed runtime hashes, router wiring, the full contract domain, the
 cross-language request hash, status/decision consistency, occurrence window,
 threshold fields, and expiry before publishing any fact. The reviewed
-XRPL/FDC-triggered request is prefilled as a public example. The Payee view
-derives its pending/ready/denied/expired/cancelled projection from that same
-validated tuple; executed settlement remains unavailable until its exact
-transaction receipt is also proven.
+XRPL/FDC-triggered request is prefilled and visibly labelled as a public example,
+not connected-wallet activity. A user-entered ID is relabelled as user-supplied.
+Canonical on-chain status and time-derived readiness are displayed separately:
+for example, `PENDING` plus `EXPIRED` means the time window passed while the
+request still awaits an on-chain expiry transition. The Payee view uses the same
+separation and never describes that state as an expected future payment;
+executed settlement remains unavailable until its exact transaction receipt is
+also proven.
 
 The Requests writer exposes only the router's existing public transitions:
 execute a chain-derived `ALLOWED` request before its approved expiry, expire a
@@ -89,7 +99,8 @@ projection covers public controls only and always returns `canAuthorize: false`.
 When no standalone role registry is deployed, Team instead shows only the
 registry-bound policy owner plus the exact request creator and payee as
 "observed request actors". These rows are not editable grants and make no team
-permission claim.
+permission claim. The copy follows the current lookup context and does not call
+a user-entered request the reviewed example.
 Policy Studio custody progress accepts only the schema-checked three-machine
 receipt bundle: each digest/signature must match the frozen binding and the
 shared submission nonce/time window. Until a verified provider supplies that
@@ -101,6 +112,10 @@ canonical Allowed/Denied/Executed/Expired states map to their exact request
 notification kind. A Pending checkpoint is never labelled Ready or Allowed.
 Export downloads only this schema-checked public feed, never policy plaintext,
 ciphertext, signatures, or private denial reasons.
+
+Policy Studio keeps exact Unix-second inputs for deterministic protocol
+encoding, while rendering UTC and human-duration helper text beside them. This
+presentation layer never changes the committed numeric values.
 
 Run locally with the pinned Node toolchain:
 

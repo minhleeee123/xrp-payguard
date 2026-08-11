@@ -1,7 +1,8 @@
 type GuardianKind = "cipher" | "quorum" | "ledger";
 
 export function landingView(): string {
-  return `<div class="landing-shell">
+  return `<div class="landing-shell" id="landing">
+    <a class="skip-link" href="#landing-main">Skip to main content</a>
     <header class="landing-topbar">
       <a class="landing-brand" href="#landing"><span class="brand-mark" aria-hidden="true">P</span><span>PayGuard</span><span class="brand-beta" aria-hidden="true">COSTON2</span></a>
       <nav class="landing-nav" aria-label="Landing navigation">
@@ -9,7 +10,7 @@ export function landingView(): string {
       </nav>
       <button class="outline-button" type="button" data-action="open-app">Open app</button>
     </header>
-    <main>
+    <main id="landing-main" tabindex="-1">
       <section class="landing-hero" aria-labelledby="landing-title">
         <div class="landing-hero-art" aria-hidden="true">
           <svg viewBox="0 0 1000 520" role="presentation" aria-hidden="true" focusable="false">
@@ -25,7 +26,7 @@ export function landingView(): string {
         <div class="landing-eyebrow">PRIVATE POLICY · PUBLIC ACTION</div>
         <h1 id="landing-title">Authorize public value with <em>private</em> rules.</h1>
         <p class="landing-lede">XRP PayGuard is an XRP-native policy control layer designed for Flare: keep the authorization rule inside a fixed FCC machine set, while every requested action and settlement remains public and auditable.</p>
-        <div class="landing-actions"><button class="primary-button" type="button" data-action="landing-demo">Inspect Coston2 demo</button><button class="outline-button" type="button" data-action="landing-studio">Open Policy Studio</button><a class="landing-text-link" href="#why">Understand the boundary ↘</a></div>
+        <div class="landing-actions"><button class="primary-button" type="button" data-action="landing-demo">View recorded lifecycle</button><button class="outline-button" type="button" data-action="landing-studio">Open Policy Studio</button><a class="landing-text-link" href="#why">Understand the boundary ↘</a></div>
         <div class="landing-status"><span class="status-dot amber"></span><span>Coston2 public facts + simulated FCC signers · <strong>no production FCC claim</strong></span></div>
         <div class="hero-proof-strip" aria-label="Current delivery boundary"><span>01 · TESTNET FACTS</span><span>02 · 3-SIGNER COSTON2 SIMULATION</span><span>03 · FAIL-CLOSED UI</span></div>
       </section>

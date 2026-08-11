@@ -34,6 +34,7 @@ import {
 import { fetchPublicWebEvidenceIndex, type PublicWebEvidenceIndex } from "./web-evidence.js";
 import { fetchSimulatedLifecycleEvidence, type SimulatedLifecycleEvidence } from "./demo-evidence.js";
 import { landingView } from "./landing.js";
+import { appViewHash, durationHint, parseAppRoute, requestStateLabels, unixTimeHint, type View } from "./ui-state.js";
 import {
   collectDemoCustody,
   collectDemoEvaluations,
@@ -82,7 +83,6 @@ import {
   type VaultTransactionKind,
 } from "./coston2.js";
 
-type View = "overview" | "studio" | "vaults" | "requests" | "demo" | "payee" | "auditor" | "team";
 const COSTON2_FAUCET = "https://faucet.flare.network";
 type PublicEvidenceMirrorState =
   | { status: "LOADING" }
@@ -115,14 +115,16 @@ type RequestTransactionUiState =
 const appElement = document.querySelector<HTMLDivElement>("#app");
 if (!appElement) throw new Error("PayGuard root missing");
 const app = appElement;
+const initialRoute = parseAppRoute(window.location.hash);
 
-let activeView: View = "overview";
+let activeView: View = initialRoute.surface === "app" ? initialRoute.view : "overview";
 let studioNotice = "No policy data has left this browser tab.";
 let studioDraft = studioTemplateDraft("personal-recurring");
 let studioEntropy = createStudioEntropy();
 let studioCompilation: StudioCompilation | null = null;
 let studioIssues: readonly StudioIssue[] = [];
 let appNotice = "";
+let appNoticeTimer: number | undefined;
 let requestState: PublicRequestReadState = unavailableRequestState();
 let auditState: PublicAuditReadState = unavailableAuditState();
 let custodyState: PublicPolicyCustodyReadState = unavailablePolicyCustodyState();
@@ -131,7 +133,7 @@ let workspaceState: PublicWorkspaceReadState = unavailableWorkspaceState();
 let notificationState: PublicNotificationReadState = unavailableNotificationState();
 let notificationOpen = false;
 let mobileMenuOpen = false;
-let landingOpen = window.location.hash === "#landing";
+let landingOpen = initialRoute.surface === "landing";
 let publicEvidenceMirrorState: PublicEvidenceMirrorState = { status: "LOADING" };
 let demoState: DemoUiState = { status: "LOADING" };
 let interactiveConfigState: InteractiveConfigUiState = { status: "LOADING" };
@@ -175,9 +177,10 @@ function render(): void {
   }
   app.innerHTML = `
     <div class="app-shell">
+      <a class="skip-link" href="#app-main">Skip to main content</a>
       <aside class="sidebar">
         <button class="brand brand-link" type="button" data-action="landing" aria-label="Open PayGuard landing page"><span class="brand-mark">P</span><span>PayGuard</span><span class="brand-beta">TESTNET</span></button>
-        <div class="workspace-label">PERSONAL WORKSPACE</div>
+        <div class="workspace-label">${connectedAccount() ? "CONNECTED TESTNET WORKSPACE" : "PUBLIC TESTNET EXPLORER"}</div>
         <nav class="primary-nav" aria-label="Primary navigation">
           ${navItem("overview", "Overview", "⌂")}
           ${navItem("studio", "Policy Studio", "◈")}
@@ -199,8 +202,8 @@ function render(): void {
       <main class="main-area">
         <header class="topbar"><div class="breadcrumbs"><span>Workspace</span><b>/</b><strong>${label(activeView)}</strong></div><div class="top-actions">${headerBalances()}${networkChip()}<button class="icon-button" type="button" data-action="notifications" aria-label="Notifications" aria-expanded="${notificationOpen}">♢${notificationState.status === "READY" && notificationState.feed.notifications.length > 0 ? '<span class="notification-dot"></span>' : ""}</button><button class="outline-button wallet-button" type="button" data-action="connect">${walletButtonLabel()}</button></div></header>
         ${notificationOpen ? notificationTray() : ""}
-        <section class="content">${viewContent()}</section>
-        ${appNotice ? `<div class="toast" role="status">${esc(appNotice)}</div>` : ""}
+        <section class="content" id="app-main" tabindex="-1">${viewContent()}</section>
+        ${appNotice ? `<div class="toast" role="status"><span>${esc(appNotice)}</span><button type="button" data-action="dismiss-notice" aria-label="Dismiss notification">×</button></div>` : ""}
       </main>
     </div>`;
   wireEvents();
@@ -228,7 +231,7 @@ function networkChip(): string {
   if (coston2State.status === "LOADING" || walletState.status === "CONNECTING") return `<span class="network-chip"><span class="status-dot amber"></span>Coston2 <em>checking</em></span>`;
   if (coston2State.status === "UNAVAILABLE") return `<span class="network-chip"><span class="status-dot amber"></span>Coston2 <em>read failed</em></span>`;
   if (walletState.status === "WRONG_CHAIN") return `<span class="network-chip"><span class="status-dot amber"></span>Wrong network <em>chain ${walletState.chainId}</em></span>`;
-  return `<span class="network-chip"><span class="status-dot amber"></span>Coston2 <em>connect</em></span>`;
+  return `<span class="network-chip"><span class="status-dot amber"></span>Coston2 <em>not connected</em></span>`;
 }
 
 function headerBalances(): string {
@@ -245,7 +248,7 @@ function sidebarNetworkCard(): string {
 function sidebarUserRow(): string {
   const account = connectedAccount();
   const label = walletState.status === "WRONG_CHAIN" ? "Switch to Coston2" : account ? short(account) : "Wallet not connected";
-  return `<div class="user-row"><div class="avatar">${account ? account.slice(2, 4).toUpperCase() : "—"}</div><div><strong>Owner</strong><small>${esc(label)}</small></div><span class="more">···</span></div>`;
+  return `<div class="user-row"><div class="avatar">${account ? account.slice(2, 4).toUpperCase() : "—"}</div><div><strong>${account ? "Owner view" : "No active owner"}</strong><small>${esc(label)}</small></div></div>`;
 }
 
 function token(value: bigint): string {
@@ -293,11 +296,12 @@ function quickStartView(): string {
   const account = connectedAccount();
   const live = liveSnapshot();
   const request = requestState.status === "UNAVAILABLE" ? null : requestState;
+  const reviewed = isReviewedRequestInput();
   return `<section class="panel quick-start" aria-labelledby="quick-start-title"><div class="panel-heading"><div><div class="eyebrow">FIRST-TIME TEST PATH</div><h2 id="quick-start-title">Try the product without guessing</h2></div><span class="state-tag gray-tag">COSTON2 ONLY</span></div><p class="panel-copy">Start with the wallet-free proof, then connect a disposable testnet wallet only when you want to move faucet tokens.</p><div class="quick-start-grid">
-    <article><span class="quick-index">01</span><div><strong>Inspect the complete lifecycle</strong><small>No wallet. Review three simulated machines, ALLOW, DENY, governance, and 14 Coston2 transactions.</small></div><button class="text-button" type="button" data-view="demo">Open demo ↗</button></article>
+    <article><span class="quick-index">01</span><div><strong>Inspect the reviewed lifecycle</strong><small>No wallet. Review three simulated machines, ALLOW, DENY, governance, and 14 Coston2 transactions.</small></div><button class="text-button" type="button" data-view="demo">View lifecycle ↗</button></article>
     <article><span class="quick-index">02</span><div><strong>${account ? "Coston2 wallet connected" : "Prepare a testnet wallet"}</strong><small>${account ? `${esc(short(account))} · PayGuard never receives its private key.` : "Use an injected EVM wallet. Get C2FLR gas and FTestXRP only from the official faucet."}</small></div>${account ? `<button class="text-button" type="button" data-action="refresh">Verify again ↗</button>` : `<div class="quick-actions"><button class="text-button" type="button" data-action="connect">Connect ↗</button><a href="${COSTON2_FAUCET}" target="_blank" rel="noreferrer">Official faucet ↗</a></div>`}</article>
     <article><span class="quick-index">03</span><div><strong>${live ? "Vault controls ready" : "Fund and inspect your vault"}</strong><small>${live ? `${token(live.tokenBalance)} FTestXRP in wallet · every write uses an exact two-step preview.` : "Approve, deposit, and withdraw are enabled only after finalized runtime, wiring, and accounting checks."}</small></div><button class="text-button" type="button" data-view="vaults">Open vault ↗</button></article>
-    <article><span class="quick-index">04</span><div><strong>${request ? "Canonical request loaded" : "Verify a public request"}</strong><small>${request ? `${request.status} · ${esc(short(request.snapshot.requestId))}` : "The reviewed request is prefilled. Reading it needs no wallet and reveals no private policy."}</small></div><button class="text-button" type="button" data-view="requests">Open requests ↗</button></article>
+    <article><span class="quick-index">04</span><div><strong>${request ? `${reviewed ? "Reviewed" : "Public"} request loaded` : "Verify a public request"}</strong><small>${request ? `On-chain ${request.status} · timing ${requestReadinessLabel(request.readiness)}.${reviewed ? " This public example is not your wallet activity." : " This is the public ID currently loaded in this tab."}` : "The reviewed request is prefilled. Reading it needs no wallet and reveals no private policy."}</small></div><button class="text-button" type="button" data-view="requests">Inspect request ↗</button></article>
   </div><div class="quick-boundary"><span>◈</span><p><strong>Policy activation is intentionally not a browser shortcut.</strong> Policy Studio computes an in-memory commitment; production activation still requires three registered FCC custody receipts.</p><button class="text-button" type="button" data-view="studio">Draft locally ↗</button></div></section>`;
 }
 
@@ -305,6 +309,7 @@ function overviewView(): string {
   const live = liveSnapshot();
   const account = connectedAccount();
   const publicRequest = requestState.status === "UNAVAILABLE" ? null : requestState;
+  const reviewed = isReviewedRequestInput();
   const notice = live
     ? `<div class="notice-banner live-notice"><span class="notice-icon">✓</span><div><strong>Finalized Coston2 account state verified</strong><span>Runtime bytecode, router/vault wiring, supported FTestXRP and conservation were checked together at block ${live.finalizedBlock}.</span></div><button type="button" data-action="refresh">Refresh</button></div>`
     : account
@@ -313,7 +318,7 @@ function overviewView(): string {
   return `${pageIntro("PERSONAL PAYGUARD", "Your testnet control center.", "Use real Coston2 account and vault state while private authorization remains separated from the browser.", "new-policy")}
     ${notice}
     ${quickStartView()}
-    <div class="metric-grid"><div class="metric-card"><div class="metric-label">VAULT AVAILABLE <span class="public-pill">PUBLIC</span></div><div class="metric-value">${live ? token(live.accounting.available) : "—"} <small>FTestXRP</small></div><div class="metric-foot muted">${live ? `${token(live.tokenBalance)} in connected wallet` : account ? "Live verification unavailable" : "Connect wallet for finalized read"}</div></div><div class="metric-card"><div class="metric-label">RESERVED <span class="public-pill">PUBLIC</span></div><div class="metric-value">${live ? token(live.accounting.reserved) : "—"}</div><div class="metric-foot muted">${live ? "Verified vault accounting" : "Pending state unavailable"}</div></div><div class="metric-card"><div class="metric-label">PUBLIC REQUEST</div><div class="metric-value metric-state">${publicRequest ? esc(requestReadinessLabel(publicRequest.readiness)) : "—"}</div><div class="metric-foot muted">${publicRequest ? `${publicRequest.status} · ${short(publicRequest.snapshot.requestId)}` : "Finalized request unavailable"}</div></div><div class="metric-card"><div class="metric-label">C2FLR GAS</div><div class="metric-value">${live ? nativeToken(live.nativeBalance) : "—"}</div><div class="metric-foot"><span class="status-dot ${live ? "green" : "amber"}"></span> ${account ? "Wallet connected" : "Wallet not connected"}</div></div><div class="metric-card accent-card"><div class="metric-label">FINALIZED BLOCK</div><div class="metric-value">${live?.finalizedBlock ?? requestFinalizedBlock ?? "—"}</div><div class="metric-foot muted">${live || publicRequest ? "Public reads are pinned to finality" : "No public checkpoint loaded"}</div></div></div>
+    <div class="metric-grid"><div class="metric-card"><div class="metric-label">VAULT AVAILABLE <span class="public-pill">PUBLIC</span></div><div class="metric-value">${live ? token(live.accounting.available) : "—"} <small>FTestXRP</small></div><div class="metric-foot muted">${live ? `${token(live.tokenBalance)} in connected wallet` : account ? "Live verification unavailable" : "Connect wallet for finalized read"}</div></div><div class="metric-card"><div class="metric-label">RESERVED <span class="public-pill">PUBLIC</span></div><div class="metric-value">${live ? token(live.accounting.reserved) : "—"}</div><div class="metric-foot muted">${live ? "Verified vault accounting" : "Pending state unavailable"}</div></div><div class="metric-card"><div class="metric-label">${reviewed ? "REVIEWED REQUEST" : "LOADED REQUEST"} ${reviewed ? '<span class="sample-pill">EXAMPLE</span>' : '<span class="public-pill">PUBLIC</span>'}</div><div class="metric-value metric-state">${publicRequest ? esc(publicRequest.status) : "—"}</div><div class="metric-foot muted">${publicRequest ? `Timing: ${requestReadinessLabel(publicRequest.readiness)} · ${short(publicRequest.snapshot.requestId)}` : "Finalized request unavailable"}</div></div><div class="metric-card"><div class="metric-label">C2FLR GAS</div><div class="metric-value">${live ? nativeToken(live.nativeBalance) : "—"}</div><div class="metric-foot"><span class="status-dot ${live ? "green" : "amber"}"></span> ${account ? "Wallet connected" : "Wallet not connected"}</div></div><div class="metric-card accent-card"><div class="metric-label">FINALIZED BLOCK</div><div class="metric-value">${live?.finalizedBlock ?? requestFinalizedBlock ?? "—"}</div><div class="metric-foot muted">${live || publicRequest ? "Public reads are pinned to finality" : "No public checkpoint loaded"}</div></div></div>
     <div class="section-grid"><section class="panel activity-panel"><div class="panel-heading"><div><div class="eyebrow">PUBLIC ACCOUNT</div><h2>${live ? "Coston2 wallet ready" : account ? "Wallet connected · reads blocked" : "Connect without sharing a key"}</h2></div><button class="text-button" type="button" data-view="vaults">Open vault ↗</button></div>${live ? `<div class="live-account-summary"><div><span>ACCOUNT</span><strong class="mono-value">${esc(live.account)}</strong></div><div><span>FTESTXRP ALLOWANCE</span><strong>${token(live.vaultAllowance)}</strong></div><div><span>ASSET</span><strong>${live.token.symbol} · ${live.token.decimals} decimals</strong></div></div><a class="outline-button inline-link" href="${explorerAddress(live.account)}" target="_blank" rel="noreferrer">Open account explorer ↗</a>` : `<div class="empty-state"><div class="empty-orbit">◌</div><strong>${account ? "No unverified balance displayed" : "No wallet permission yet"}</strong><span>${account ? "Retry the finalized Coston2 checks before trusting any account or vault value." : "PayGuard asks only for the public account. Signing stays inside the injected wallet."}</span><button class="outline-button" type="button" data-action="${account ? "refresh" : "connect"}">${account ? "Retry finalized reads" : "Connect Coston2 wallet"}</button></div>`}</section><section class="panel health-panel"><div class="panel-heading"><div><div class="eyebrow">DEPENDENCY HEALTH</div><h2>Trust surface</h2></div><span class="health-label"><span class="status-dot ${live ? "green" : "amber"}"></span>${live ? "Public live" : "Limited"}</span></div><ul class="health-list"><li><span class="health-icon gray">▣</span><div><strong>PayGuard contracts</strong><small>${live ? "Runtime and wiring verified" : "Waiting for finalized RPC read"}</small></div><span class="state-tag ${live ? "green-tag" : "amber-tag"}">${live ? "VERIFIED" : "WAITING"}</span></li><li><span class="health-icon gray">X</span><div><strong>FTestXRP asset</strong><small>${live ? "Supported asset metadata verified" : "Waiting for account read"}</small></div><span class="state-tag ${live ? "green-tag" : "amber-tag"}">${live ? "VERIFIED" : "WAITING"}</span></li><li><span class="health-icon gray">◇</span><div><strong>FCC machine quorum</strong><small>Registered production machines unavailable</small></div><span class="state-tag gray-tag">SIMULATED</span></li><li><span class="health-icon gray">◈</span><div><strong>FDC/FAssets evidence</strong><small>Reviewed static Coston2 observations</small></div><span class="state-tag gray-tag">EVIDENCE</span></li></ul></section></div>`;
 }
 
@@ -325,8 +330,8 @@ function studioView(): string {
       ${studioField("policyName", "Policy name", "A local label; the canonical policy ID is derived from it.", "text")}
       <div class="two-col">${studioField("owner", "Owner address", "Public at activation.", "text")}${studioField("target", "Allowed target", "Private rule; public only in a request.", "text")}</div>
       <div class="two-col">${studioField("maxPerAction", "Maximum per action", "Private · public base units only when requested.", "numeric")}${studioField("dailyCap", "Daily cap", "Private rolling/calendar policy input.", "numeric")}</div>
-      <div class="two-col">${studioField("startAt", "Starts at (UTC epoch)", "Private policy window.", "numeric")}${studioField("endAt", "Ends at (UTC epoch)", "Private policy window.", "numeric")}</div>
-      <div class="three-col">${studioField("scheduleIntervalSeconds", "Interval seconds", "0 selects ad-hoc mode.", "numeric")}${studioField("scheduleGraceSeconds", "Grace seconds", "0 only in ad-hoc mode.", "numeric")}${studioField("maxOccurrences", "Occurrence limit", "0 means no policy-specific limit.", "numeric")}</div>
+      <div class="two-col">${studioField("startAt", "Starts at (Unix time, UTC)", "Private policy window.", "numeric")}${studioField("endAt", "Ends at (Unix time, UTC)", "Private policy window.", "numeric")}</div>
+      <div class="three-col">${studioField("scheduleIntervalSeconds", "Interval (seconds)", "0 selects ad-hoc mode.", "numeric")}${studioField("scheduleGraceSeconds", "Grace (seconds)", "0 only in ad-hoc mode.", "numeric")}${studioField("maxOccurrences", "Occurrence limit", "0 means no policy-specific limit.", "numeric")}</div>
       <details class="domain-details"><summary>Exact public contract domain <span>local example · not verified</span></summary><p>These values bind the commitment. Replace them only with addresses resolved from a future verified PayGuard release.</p><div class="two-col">${studioField("registry", "Policy registry", "Public domain field.", "text")}${studioField("vault", "Vault", "Public domain field.", "text")}${studioField("router", "Action router", "Public domain field.", "text")}${studioField("asset", "Supported asset", "Public token address.", "text")}</div></details>
       <div class="form-divider"></div><div class="private-row"><span class="lock-icon">▣</span><div><strong>Confidential draft only</strong><small>The target rule, caps, schedule and fresh cryptographic salt/nonce remain in memory. No browser storage, logs, analytics, public calldata or evidence receives them.</small></div><span class="state-tag gray-tag">IN MEMORY</span></div><div class="form-actions"><span class="form-note" id="studio-notice">${esc(studioNotice)}</span><button class="primary-button" type="submit">Validate & compute ↗</button></div></form>
       <aside class="studio-side">${studioPreview()}${studioCustodyPanel()}${interactiveStudioPanel()}<section class="privacy-note"><span>✦</span><div><strong>Refresh discards the draft</strong><p>Policy plaintext and ciphertext are never placed in browser persistence. A refresh intentionally cannot recover this draft.</p></div></section></aside></div>`;
@@ -378,7 +383,29 @@ function custodyUnavailableReason(reason: string): string {
 
 function studioField(field: Exclude<keyof StudioDraft, "templateId">, labelText: string, hint: string, inputMode: "text" | "numeric"): string {
   const issue = studioIssues.find((candidate) => candidate.field === field);
-  return `<label class="studio-field ${issue ? "field-error" : ""}">${esc(labelText)}<input name="${field}" value="${esc(studioDraft[field])}" ${inputMode === "numeric" ? 'inputmode="numeric"' : 'spellcheck="false"'} autocomplete="off" aria-invalid="${Boolean(issue)}" />${issue ? `<span class="field-message">${esc(issue.message)}</span>` : `<small>${esc(hint)}</small>`}</label>`;
+  const hintId = `studio-hint-${field}`;
+  return `<label class="studio-field ${issue ? "field-error" : ""}">${esc(labelText)}<input name="${field}" value="${esc(studioDraft[field])}" ${inputMode === "numeric" ? 'inputmode="numeric"' : 'spellcheck="false"'} autocomplete="off" aria-invalid="${Boolean(issue)}" aria-describedby="${hintId}" />${issue ? `<span class="field-message" id="${hintId}">${esc(issue.message)}</span>` : `<small id="${hintId}" data-studio-hint="${field}" data-base-hint="${esc(hint)}">${esc(studioHumanHint(field, studioDraft[field], hint))}</small>`}</label>`;
+}
+
+function studioHumanHint(field: Exclude<keyof StudioDraft, "templateId">, value: string, baseHint: string): string {
+  if (field === "startAt" || field === "endAt") {
+    const human = unixTimeHint(value);
+    return human ? `${baseHint} ${human}.` : `${baseHint} Enter an unsigned Unix timestamp.`;
+  }
+  if (field === "scheduleIntervalSeconds" || field === "scheduleGraceSeconds") {
+    const human = durationHint(value);
+    return human ? `${baseHint} Current value: ${human}.` : `${baseHint} Enter unsigned seconds.`;
+  }
+  return baseHint;
+}
+
+function updateStudioHumanHints(form: HTMLFormElement): void {
+  form.querySelectorAll<HTMLElement>("[data-studio-hint]").forEach((element) => {
+    const field = element.dataset.studioHint as Exclude<keyof StudioDraft, "templateId">;
+    const input = form.elements.namedItem(field);
+    if (!(input instanceof HTMLInputElement)) return;
+    element.textContent = studioHumanHint(field, input.value.trim(), element.dataset.baseHint ?? "");
+  });
 }
 
 function studioPreview(): string {
@@ -425,29 +452,35 @@ function requestsView(): string {
   const unavailableReason = requestState.status === "UNAVAILABLE" ? requestUnavailableReason(requestState.reason) : "Finalized public request";
   const liveReadiness = requestState.status === "UNAVAILABLE" ? undefined : requestState.readiness;
   const readiness = snapshot && liveReadiness ? requestReadinessLabel(liveReadiness) : "UNAVAILABLE";
+  const stateLabels = snapshot && liveReadiness ? requestStateLabels(snapshot.status, liveReadiness) : undefined;
   const requestCell = snapshot ? `<strong>${esc(short(snapshot.requestId))}</strong><small>Occurrence ${snapshot.occurrence} · nonce ${snapshot.requestNonce}</small>` : `<strong>—</strong><small>No verified request ID</small>`;
   const actionCell = snapshot ? `<strong>${esc(short(snapshot.target))}</strong><small>${token(snapshot.amount)} FTestXRP · public transfer</small>` : `<strong>—</strong><small>Target and amount unavailable</small>`;
   const checkpointCell = snapshot ? `<strong>${esc(short(snapshot.spendCheckpoint))}</strong><small>${snapshot.scheduleSlot > 0n ? `Slot ${snapshot.scheduleSlot}` : "Ad-hoc"} · expires ${utc(snapshot.expiry)}</small>` : `<strong>—</strong><small>Waiting for RPC</small>`;
   const publicState = snapshot
-    ? `<div class="request-public-state"><div><span>Readiness</span><strong>${readiness}</strong></div><div><span>Decision evidence</span><strong>${snapshot.decision === "PENDING" ? "Waiting for threshold" : snapshot.decision === "ALLOW" ? "Threshold ALLOW · public" : `DENY · ${snapshot.publicReasonClass ?? "UNKNOWN"}`}</strong></div><div><span>Attempt</span><strong>${snapshot.attempt}</strong></div><div><span>Checkpoint</span><strong class="mono-value">${esc(short(snapshot.requestHash))}</strong></div></div>`
-    : `<div class="request-public-state"><div><span>Readiness</span><strong>Unavailable</strong></div><div><span>Decision evidence</span><strong>No chain result</strong></div><div><span>Attempt</span><strong>—</strong></div><div><span>Checkpoint</span><strong>—</strong></div></div>`;
-  return `${pageIntro("PUBLIC REQUEST QUEUE", "Requests & schedules", "Load any canonical request directly from the finalized Coston2 router. No wallet is required to inspect public state.")}
+    ? `<div class="request-public-state"><div><span>On-chain state</span><strong>${stateLabels?.canonical}</strong></div><div><span>Time readiness</span><strong>${stateLabels?.timing}${stateLabels?.needsExpiryFinalization ? " · finalize expiry on-chain" : ""}</strong></div><div><span>Decision evidence</span><strong>${snapshot.decision === "PENDING" ? "Waiting for threshold" : snapshot.decision === "ALLOW" ? "Threshold ALLOW · public" : `DENY · ${snapshot.publicReasonClass ?? "UNKNOWN"}`}</strong></div><div><span>Checkpoint</span><strong class="mono-value">${esc(short(snapshot.requestHash))}</strong></div></div>`
+    : `<div class="request-public-state"><div><span>On-chain state</span><strong>Unavailable</strong></div><div><span>Time readiness</span><strong>Unavailable</strong></div><div><span>Decision evidence</span><strong>No chain result</strong></div><div><span>Checkpoint</span><strong>—</strong></div></div>`;
+  return `${pageIntro("PUBLIC REQUEST INSPECTOR", "Inspect a request", "Load any canonical request directly from the finalized Coston2 router. On-chain state and time-derived readiness are shown separately.")}
     ${requestLookup()}
-    <section class="panel table-panel"><div class="panel-heading"><div><div class="eyebrow">ACTION REQUEST</div><h2>${snapshot ? "Public request state" : requestLoading ? "Reading finalized state…" : "No verified request loaded"}</h2></div><div class="table-tools"><button class="icon-button" type="button" data-action="load-request" aria-label="Refresh request">↻</button></div></div><div class="request-table"><div class="table-head"><span>REQUEST</span><span>PUBLIC ACTION</span><span>CHECKPOINT</span><span>STATUS</span><span></span></div><div class="table-row"><span>${requestCell}</span><span>${actionCell}</span><span>${checkpointCell}</span><span><span class="state-tag ${snapshot ? (liveReadiness === "READY_TO_EXECUTE" ? "green-tag" : "gray-tag") : "amber-tag"}">${esc(readiness)}</span></span><span>···</span></div></div>${publicState}<div class="table-footer"><span>Showing public finalized state only</span><span class="muted">${requestFinalizedBlock ? `Coston2 block ${requestFinalizedBlock}` : esc(unavailableReason)} · no browser cache</span></div></section>${requestTransactionPanel(snapshot)}<div class="recovery-strip"><div class="recovery-icon">↻</div><div><strong>Fresh-process recovery is built in</strong><p>A relay restart reconstructs work from chain checkpoints, not a private policy database.</p></div><button class="text-button" type="button" data-view="demo">Inspect the recorded lifecycle ↗</button></div>`;
+    <section class="panel table-panel"><div class="panel-heading"><div><div class="eyebrow">ACTION REQUEST</div><h2>${snapshot ? "Public request state" : requestLoading ? "Reading finalized state…" : "No verified request loaded"}</h2></div><div class="table-tools"><button class="icon-button" type="button" data-action="load-request" aria-label="Refresh request">↻</button></div></div><div class="request-table"><div class="table-head"><span>REQUEST</span><span>PUBLIC ACTION</span><span>CHECKPOINT</span><span>ON-CHAIN STATE</span><span></span></div><div class="table-row"><span>${requestCell}</span><span>${actionCell}</span><span>${checkpointCell}</span><span><span class="state-tag ${snapshot?.status === "ALLOWED" || snapshot?.status === "EXECUTED" ? "green-tag" : snapshot ? "gray-tag" : "amber-tag"}">${esc(snapshot?.status ?? "UNAVAILABLE")}</span><small>${snapshot ? `Timing: ${esc(readiness)}` : "No timing fact"}</small></span><span></span></div></div>${publicState}<div class="table-footer"><span>Showing public finalized state only</span><span class="muted">${requestFinalizedBlock ? `Coston2 block ${requestFinalizedBlock}` : esc(unavailableReason)} · no browser cache</span></div></section>${requestTransactionPanel(snapshot)}<div class="recovery-strip"><div class="recovery-icon">↻</div><div><strong>Fresh-process recovery is built in</strong><p>A relay restart reconstructs work from chain checkpoints, not a private policy database.</p></div><button class="text-button" type="button" data-view="demo">Inspect the recorded lifecycle ↗</button></div>`;
 }
 
 function requestLookup(): string {
-  return `<section class="panel request-lookup"><div><div class="eyebrow">FINALIZED ROUTER LOOKUP</div><h2>Inspect a request ID</h2><p class="panel-copy">The prefilled ID is the reviewed XRPL/FDC-triggered Coston2 request. Paste another bytes32 request ID to inspect it without a wallet.</p></div><label>Request ID<input id="request-id" value="${esc(requestInput)}" autocomplete="off" spellcheck="false" placeholder="0x…" /></label><button class="primary-button" type="button" data-action="load-request" ${requestLoading ? "disabled" : ""}>${requestLoading ? "Reading finalized block…" : "Load public state"}</button><small>${esc(requestNotice)}</small></section>`;
+  const reviewed = isReviewedRequestInput();
+  return `<section class="panel request-lookup"><div><div class="eyebrow">FINALIZED ROUTER LOOKUP</div><h2>Inspect a request ID</h2><p class="panel-copy">${reviewed ? "The prefilled ID is a reviewed public XRPL/FDC-triggered Coston2 example. It is not activity from your connected wallet." : "This user-supplied ID is read only from finalized public Coston2 state. It is not inferred to belong to your connected wallet."}</p><span class="state-tag sample-context-tag">${reviewed ? "REVIEWED PUBLIC EXAMPLE" : "USER-SUPPLIED PUBLIC ID"}</span></div><label>Request ID<input id="request-id" value="${esc(requestInput)}" autocomplete="off" spellcheck="false" placeholder="0x…" /></label><button class="primary-button" type="button" data-action="load-request" ${requestLoading ? "disabled" : ""}>${requestLoading ? "Reading finalized block…" : "Load public state"}</button><small>${esc(requestNotice)}</small></section>`;
+}
+
+function isReviewedRequestInput(): boolean {
+  return requestInput.trim().toLowerCase() === REVIEWED_PENDING_REQUEST_ID.toLowerCase();
 }
 
 function demoView(): string {
-  return `${interactiveDemoView()}${recordedDemoView()}`;
+  return `${pageIntro("WALLET-FREE REVIEWED DEMO", "One reviewed lifecycle", "Start with a verified public Coston2 contract run. The separate interactive simulation appears below only when its actors are available.")}${recordedDemoView()}${interactiveDemoView()}`;
 }
 
 function interactiveDemoView(): string {
   const account = connectedAccount();
-  if (interactiveConfigState.status === "LOADING") return `${pageIntro("INTERACTIVE TESTNET DEMO", "Preparing the isolated lifecycle", "Loading the simulation-only Coston2 contract and actor domain.")}<section class="panel demo-loading"><div class="empty-orbit">◌</div><h2>Checking demo configuration…</h2></section>`;
-  if (interactiveConfigState.status === "UNAVAILABLE") return `${pageIntro("INTERACTIVE TESTNET DEMO", "Interactive actors unavailable", "The website will not replace an unavailable actor quorum with a browser decision.")}<section class="panel"><div class="unavailable-box"><span class="status-dot amber"></span><div><strong>No interactive success asserted</strong><small>The recorded public-safe lifecycle remains available below; production FCC remains blocked independently.</small></div></div></section>`;
+  if (interactiveConfigState.status === "LOADING") return `${demoSectionIntro("INTERACTIVE TESTNET DEMO", "Preparing the optional interactive lifecycle", "Loading the simulation-only Coston2 contract and actor domain.")}<section class="panel demo-loading"><div class="empty-orbit">◌</div><h2>Checking demo configuration…</h2></section>`;
+  if (interactiveConfigState.status === "UNAVAILABLE") return `${demoSectionIntro("INTERACTIVE TESTNET DEMO", "Optional interactive actors unavailable", "The reviewed lifecycle above remains usable. The website will not replace an unavailable actor quorum with a browser decision.")}<section class="panel"><div class="unavailable-box"><span class="status-dot amber"></span><div><strong>No interactive success asserted</strong><small>The recorded public-safe lifecycle above remains available; production FCC remains blocked independently.</small></div></div></section>`;
   const config = interactiveConfigState.config;
   const snapshot = interactiveAccountSnapshot;
   const policyRegistered = Boolean(interactiveSession && interactivePolicyRegistration);
@@ -461,7 +494,7 @@ function interactiveDemoView(): string {
   const transactionRows = interactiveTransactions.length === 0
     ? `<div class="boundary-empty">No wallet transaction has been submitted from this interactive session.</div>`
     : `<ol class="interactive-transaction-list">${interactiveTransactions.map((item, index) => `<li><span class="demo-step-index">${String(index + 1).padStart(2, "0")}</span><div><strong>${esc(item.label)}</strong><small>Block ${item.blockNumber} · ${esc(short(item.hash))}</small></div><a href="${explorerTransaction(item.hash)}" target="_blank" rel="noreferrer">↗</a></li>`).join("")}</ol>`;
-  return `${pageIntro("INTERACTIVE TESTNET DEMO", "Run PayGuard end to end", "Use faucet FTestXRP and an injected wallet. Three serverless actors compute signed results; the browser never supplies ALLOW.")}
+  return `${demoSectionIntro("OPTIONAL INTERACTIVE TESTNET DEMO", "Run the isolated simulation", "Use faucet FTestXRP and an injected wallet. Three serverless actors compute signed results; the browser never supplies ALLOW.")}
     <div class="demo-boundary interactive-boundary"><span class="state-tag gray-tag">SIMULATED FCC · COSTON2 TESTNET</span><strong>Real testnet transactions · shared serverless trust domain</strong><span>Not production TEE · not Gate A/B/C</span></div>
     <div class="interactive-stepper" aria-label="Interactive demo progress">${["FUND", "RECEIPTS", "REGISTER", "REQUEST", "QUORUM", "EXECUTE / DENY", "GOVERNANCE"].map((step, index) => `<span class="${interactiveStepReached(index) ? "reached" : ""}">${String(index + 1).padStart(2, "0")} ${step}</span>`).join("")}</div>
     <div class="section-grid interactive-demo-grid"><section class="panel"><div class="panel-heading"><div><div class="eyebrow">01 · TEST TOKEN FUNDING</div><h2>Simulation-only vault</h2></div><span class="state-tag ${snapshot ? "green-tag" : "gray-tag"}">${snapshot ? "FINALIZED READ" : "NOT LOADED"}</span></div><p class="panel-copy">Approve and deposit faucet FTestXRP into the separate demo vault. The production-observation vault remains untouched.</p>${account ? `<div class="demo-account-grid"><div><span>Wallet</span><strong>${snapshot ? token(snapshot.tokenBalance) : "—"} FTestXRP</strong></div><div><span>Allowance</span><strong>${snapshot ? token(snapshot.allowance) : "—"}</strong></div><div><span>Demo available</span><strong>${snapshot ? token(snapshot.accounting.available) : "—"}</strong></div></div><label class="demo-amount-label">Funding amount<input id="interactive-fund-amount" value="${esc(interactiveFundInput)}" inputmode="decimal" autocomplete="off" /></label><div class="vault-actions"><button class="outline-button" type="button" data-action="refresh-interactive-account" ${interactiveBusy ? "disabled" : ""}>Refresh finalized state</button><button class="outline-button" type="button" data-action="demo-approve" ${interactiveBusy || !snapshot ? "disabled" : ""}>Approve</button><button class="primary-button" type="button" data-action="demo-deposit" ${interactiveBusy || !snapshot ? "disabled" : ""}>Deposit</button></div>` : `<button class="primary-button" type="button" data-action="connect">Connect Coston2 wallet</button>`}</section>
@@ -482,21 +515,25 @@ function interactiveStepReached(index: number): boolean {
   return interactiveAccountSnapshot?.policyStatus === 2 || interactiveAccountSnapshot?.policyStatus === 3;
 }
 
+function demoSectionIntro(eyebrow: string, title: string, copy: string): string {
+  return `<div class="demo-section-intro" id="interactive-demo"><div class="eyebrow">${eyebrow}</div><h2>${title}</h2><p>${copy}</p></div>`;
+}
+
 function recordedDemoView(): string {
   if (demoState.status === "LOADING") {
-    return `<section class="panel demo-loading recorded-demo-section"><div class="eyebrow">RECORDED SOLUTION 3 EVIDENCE</div><div class="empty-orbit">◌</div><h2>Validating evidence schema…</h2></section>`;
+    return `<section class="panel demo-loading recorded-demo-section" id="recorded-lifecycle"><div class="eyebrow">RECORDED SOLUTION 3 EVIDENCE</div><div class="empty-orbit">◌</div><h2>Validating evidence schema…</h2></section>`;
   }
   if (demoState.status === "UNAVAILABLE") {
-    return `<section class="panel recorded-demo-section"><div class="eyebrow">RECORDED SOLUTION 3 EVIDENCE</div><div class="unavailable-box"><span class="status-dot amber"></span><div><strong>No recorded success asserted</strong><small>Build or evidence validation failed closed. Live FCC remains unavailable independently.</small></div></div></section>`;
+    return `<section class="panel recorded-demo-section" id="recorded-lifecycle"><div class="eyebrow">RECORDED SOLUTION 3 EVIDENCE</div><div class="unavailable-box"><span class="status-dot amber"></span><div><strong>No recorded success asserted</strong><small>Build or evidence validation failed closed. Live FCC remains unavailable independently.</small></div></div></section>`;
   }
   const evidence = demoState.evidence;
   const machines = evidence.machines.map((machine, index) => `<article class="demo-machine machine-${index + 1}"><div class="machine-glyph">${index === 0 ? "◇" : index === 1 ? "⌁" : "▣"}</div><div><span>SIMULATED MACHINE ${index + 1}</span><strong>${esc(short(machine.machineId))}</strong><small>Key ${esc(short(machine.keyFingerprint))}<br>Signer ${esc(short(machine.signer))}</small></div></article>`).join("");
   const steps = evidence.steps.map((step, index) => `<li><span class="demo-step-index">${String(index + 1).padStart(2, "0")}</span><div><strong>${esc(step.label)}</strong><small>Block ${step.blockNumber} · ${esc(short(step.transactionHash))}</small></div><a href="${explorerTransaction(step.transactionHash)}" target="_blank" rel="noreferrer" aria-label="Open ${esc(step.label)} transaction">↗</a></li>`).join("");
-  return `<div class="page-intro secondary-demo-intro"><div><div class="eyebrow">RECORDED SOLUTION 3 · PUBLIC EVIDENCE</div><h1>One reviewed lifecycle</h1><p>A prior Coston2 contract run driven by three ephemeral simulated signers. It proves the contract path, not hardware confidentiality or production FCC.</p></div></div>
+  return `<div id="recorded-lifecycle"><div class="recorded-demo-lede"><span class="state-tag sample-context-tag">WALLET-FREE · REVIEWED PUBLIC EVIDENCE</span><p>A prior Coston2 contract run driven by three ephemeral simulated signers. It proves the contract path, not hardware confidentiality or production FCC.</p></div>
     <div class="demo-boundary"><span class="state-tag amber-tag">SIMULATION ONLY</span><strong>On-chain transactions verified · hardware TEE not present</strong><span>Observed through Coston2 block ${evidence.observedBlock}</span></div>
     <section class="demo-machine-grid">${machines}</section>
     <div class="demo-summary-grid"><section class="panel demo-result allow-result"><div class="eyebrow">2 MATCHING RESULTS</div><h2>Recurring payment allowed</h2><strong>${token(evidence.amount)} FTestXRP</strong><p>Two simulated machines produced one matching ALLOW digest, the vault reserved value, and the router executed the exact transfer.</p><span class="mono-value">${esc(short(evidence.allowRequestId))}</span></section><section class="panel demo-result deny-result"><div class="eyebrow">DETERMINISTIC POLICY RESULT</div><h2>Next request denied</h2><strong>CAP_EXCEEDED</strong><p>Two matching DENY results kept the vault unchanged. The private cap itself is not present in this public evidence.</p><span class="mono-value">${esc(short(evidence.denyRequestId))}</span></section><section class="panel demo-result"><div class="eyebrow">VAULT CONSERVATION</div><h2>Accounting still balances</h2><strong>${token(evidence.deposited)} deposited</strong><p>${token(evidence.availableAfter)} available + ${token(evidence.spentAfter)} spent. Stop, resume, and revoke were also verified.</p></section></div>
-    <div class="demo-detail-grid"><section class="panel demo-timeline"><div class="panel-heading"><div><div class="eyebrow">COSTON2 TRANSACTION TIMELINE</div><h2>${evidence.steps.length} verified checkpoints</h2></div><span class="state-tag green-tag">PUBLIC EVIDENCE</span></div><ol>${steps}</ol></section><aside class="panel demo-limitations"><div class="eyebrow">NOT PROVEN HERE</div><h2>Production gates stay explicit</h2><ul>${evidence.blockers.map((blocker) => `<li>${esc(blocker.replaceAll("_", " "))}</li>`).join("")}</ul><p>This demonstration cannot activate a new private browser draft or authorize a new request without the future three production FCC machines.</p><a class="outline-button inline-link" href="/evidence/simulation/coston2-simulated-policy-lifecycle-2026-08-09.json" target="_blank" rel="noreferrer">Open reviewed JSON ↗</a></aside></div>`;
+    <div class="demo-detail-grid"><section class="panel demo-timeline"><div class="panel-heading"><div><div class="eyebrow">COSTON2 TRANSACTION TIMELINE</div><h2>${evidence.steps.length} verified checkpoints</h2></div><span class="state-tag green-tag">PUBLIC EVIDENCE</span></div><ol>${steps}</ol></section><aside class="panel demo-limitations"><div class="eyebrow">NOT PROVEN HERE</div><h2>Production gates stay explicit</h2><ul>${evidence.blockers.map((blocker) => `<li>${esc(blocker.replaceAll("_", " "))}</li>`).join("")}</ul><p>This demonstration cannot activate a new private browser draft or authorize a new request without the future three production FCC machines.</p><a class="outline-button inline-link" href="/evidence/simulation/coston2-simulated-policy-lifecycle-2026-08-09.json" target="_blank" rel="noreferrer">Open reviewed JSON ↗</a></aside></div></div>`;
 }
 
 function requestTransactionPanel(snapshot: PublicRequestSnapshotV1 | undefined): string {
@@ -536,12 +573,16 @@ function requestReadinessLabel(readiness: string): string {
 function payeeView(): string {
   const receipt = payeeState.status === "UNAVAILABLE" ? undefined : payeeState.receipt;
   const unavailableReason = payeeState.status === "UNAVAILABLE" ? payeeUnavailableReason(payeeState.reason) : "Finalized public settlement";
+  const matchingRequest = receipt && requestState.status !== "UNAVAILABLE" && requestState.snapshot.requestId.toLowerCase() === receipt.requestId.toLowerCase()
+    ? requestState : undefined;
+  const labels = matchingRequest ? requestStateLabels(matchingRequest.status, matchingRequest.readiness) : undefined;
+  const expiredPending = receipt?.status === "PENDING" && labels?.needsExpiryFinalization;
   const expectedPanel = receipt
-    ? `<h2>${receipt.status === "SETTLED" ? "Payment settled" : "Expected payment"}</h2><p class="panel-copy">The payee sees only the public amount, destination, timing window, and settlement checkpoint. Private policy rules remain outside this receipt.</p><div class="request-public-state payee-public-state"><div><span>Amount</span><strong>${token(receipt.expectedAmount)} FTestXRP</strong></div><div><span>Target</span><strong class="mono-value">${esc(short(receipt.payee))}</strong></div><div><span>Expected at</span><strong>${utc(receipt.expectedAt)}</strong></div><div><span>Expiry</span><strong>${utc(receipt.expiry)}</strong></div></div><div class="unavailable-box"><span class="status-dot ${receipt.status === "SETTLED" ? "green" : ""}"></span><div><strong>${receipt.status}</strong><small>${receipt.status === "SETTLED" ? `Transaction ${esc(short(receipt.settlementTransactionHash))} · checkpoint ${esc(short(receipt.settlementCheckpoint))}` : `Finalized request ${esc(short(receipt.requestId))} · policy details remain private.`}</small></div></div>`
+    ? `<h2>${receipt.status === "SETTLED" ? "Payment settled" : expiredPending ? "Payment window expired" : "Expected payment"}</h2><p class="panel-copy">The payee sees only the public amount, destination, timing window, and settlement checkpoint. Private policy rules remain outside this receipt.</p><div class="request-public-state payee-public-state"><div><span>Amount</span><strong>${token(receipt.expectedAmount)} FTestXRP</strong></div><div><span>Target</span><strong class="mono-value">${esc(short(receipt.payee))}</strong></div><div><span>Expected at</span><strong>${utc(receipt.expectedAt)}</strong></div><div><span>Expiry</span><strong>${utc(receipt.expiry)}</strong></div></div><div class="unavailable-box ${expiredPending ? "expired-window-box" : ""}"><span class="status-dot ${receipt.status === "SETTLED" ? "green" : "amber"}"></span><div><strong>On-chain: ${receipt.status}${labels ? ` · Timing: ${labels.timing}` : ""}</strong><small>${receipt.status === "SETTLED" ? `Transaction ${esc(short(receipt.settlementTransactionHash))} · checkpoint ${esc(short(receipt.settlementCheckpoint))}` : expiredPending ? "The public window has passed, but the canonical request remains PENDING until someone finalizes expiry on-chain. No settlement is asserted." : `Finalized request ${esc(short(receipt.requestId))} · policy details remain private.`}</small></div></div>`
     : `<h2>No verified request yet</h2><p class="panel-copy">A payee can inspect only a finalized public request, transfer receipt, and supported redemption status. Policy rules, caps, delegates, and private denial reasons stay in FCC custody.</p><div class="unavailable-box"><span class="status-dot amber"></span><div><strong>Public request endpoint unavailable</strong><small>${esc(unavailableReason)}. No amount, recipient, timing, or transaction is asserted in this local preview.</small></div></div>`;
   return `${pageIntro("PUBLIC SETTLEMENT VIEW", "Payee status", "See the expected public amount, timing, and settlement receipt without learning the private policy behind the request.")}
     ${requestLookup()}
-    <div class="section-grid"><section class="panel"><div class="eyebrow">EXPECTED PAYMENT</div>${expectedPanel}</section><section class="panel"><div class="eyebrow">WHAT REMAINS PRIVATE</div><h2>Policy boundary</h2><ul class="evidence-list"><li><span class="evidence-icon">▣</span><div><strong>Target groups</strong><small>Not exposed to the payee</small></div><span class="state-tag gray-tag">PRIVATE</span></li><li><span class="evidence-icon">#</span><div><strong>Caps and schedules</strong><small>Only request timing is public</small></div><span class="state-tag gray-tag">PRIVATE</span></li><li><span class="evidence-icon">↗</span><div><strong>Settlement receipt</strong><small>Appears only after finalized public evidence</small></div><span class="state-tag gray-tag">WAITING</span></li></ul></section></div>`;
+    <div class="section-grid"><section class="panel"><div class="eyebrow">${receipt ? "PUBLIC PAYMENT STATE" : "NO VERIFIED PAYMENT"}</div>${expectedPanel}</section><section class="panel"><div class="eyebrow">WHAT REMAINS PRIVATE</div><h2>Policy boundary</h2><ul class="evidence-list"><li><span class="evidence-icon">▣</span><div><strong>Target groups</strong><small>Not exposed to the payee</small></div><span class="state-tag gray-tag">PRIVATE</span></li><li><span class="evidence-icon">#</span><div><strong>Caps and schedules</strong><small>Only request timing is public</small></div><span class="state-tag gray-tag">PRIVATE</span></li><li><span class="evidence-icon">↗</span><div><strong>Settlement receipt</strong><small>Appears only after finalized public evidence</small></div><span class="state-tag gray-tag">WAITING</span></li></ul></section></div>`;
 }
 
 function payeeUnavailableReason(reason: string): string {
@@ -593,12 +634,14 @@ function teamView(): string {
   const workspace = workspaceState.status === "UNAVAILABLE" ? undefined : workspaceState.snapshot;
   const request = requestState.status === "UNAVAILABLE" ? undefined : requestState.snapshot;
   const workspaceReason = workspaceState.status === "UNAVAILABLE" ? workspaceUnavailableReason(workspaceState.reason) : "Finalized public role registry";
+  const reviewed = isReviewedRequestInput();
+  const requestContext = reviewed ? "reviewed request example" : "currently loaded public request";
   const roleRows = workspace
     ? workspace.roles.map((assignment) => `<div class="role-row"><div class="avatar dashed">◌</div><div class="role-person"><strong>${esc(assignment.role)}</strong><small>${esc(short(assignment.account))} · ${assignment.active ? "Active assignment" : "Inactive assignment"}</small></div><span class="role-permission">Public role only</span></div>`).join("")
     : request && requestPolicyOwner
       ? `<div class="role-row"><div class="avatar purple">O</div><div class="role-person"><strong>Policy owner</strong><small>${esc(short(requestPolicyOwner))} · registry-bound public account</small></div><span class="role-permission">May cancel/recover</span></div><div class="role-row"><div class="avatar dashed">R</div><div class="role-person"><strong>Requester</strong><small>${esc(short(request.requester))} · exact request creator</small></div><span class="role-permission">May cancel</span></div><div class="role-row"><div class="avatar dashed">P</div><div class="role-person"><strong>Payee</strong><small>${esc(short(request.target))} · public transfer target</small></div><span class="role-permission">Receives only after execution</span></div>`
       : `<div class="role-row"><div class="avatar purple">O</div><div class="role-person"><strong>Owner</strong><small>Load a finalized request to observe its registry-bound actors.</small></div><span class="role-permission">Unavailable</span></div>`;
-  return `${pageIntro("ROLES & GOVERNANCE", "Team workspace", "Separate policy author, funder, executor, payee, and auditor responsibilities. No role can supply an authorization result.")}
+  return `${pageIntro(workspace ? "ROLES & GOVERNANCE" : "PUBLIC REQUEST CONTEXT", workspace ? "Team workspace" : "Observed request actors", workspace ? "Separate policy author, funder, executor, payee, and auditor responsibilities. No role can supply an authorization result." : `These public identities belong to the ${requestContext}. They are not your team, wallet contacts, or editable role grants.`)}
     <section class="panel roles-panel"><div class="panel-heading"><div><div class="eyebrow">${workspace ? "CURRENT WORKSPACE" : "OBSERVED REQUEST ACTORS"}</div><h2>${workspace ? "Personal workspace" : "On-chain identities, not role grants"}</h2></div><span class="state-tag ${workspace || request ? "green-tag" : "gray-tag"}">${workspace ? "VERIFIED" : request ? "OBSERVED" : "UNAVAILABLE"}</span></div>${roleRows}</section><div class="team-note"><span class="lock-icon">▣</span><div><strong>${workspace ? "Public role registry verified" : request ? "No standalone role registry deployed" : "Role registry unavailable"}</strong><p>${request && !workspace ? "The rows above are identities bound by the registry/request contracts, not editable team assignments. " : `${esc(workspaceReason)}. `}No role supplies, overrides, or infers an authorization result.</p></div></div>`;
 }
 
@@ -608,7 +651,7 @@ function notificationTray(): string {
   }
   const rows = notificationState.feed.notifications.length === 0
     ? `<div class="empty-state notification-empty"><strong>No verified events</strong><span>The feed is finalized but contains no public events.</span></div>`
-    : `<ul class="notification-list">${notificationState.feed.notifications.map((item) => `<li><span class="evidence-icon">${item.severity === "WARNING" ? "!" : "·"}</span><div><strong>${esc(notificationLabel(item.kind))}</strong><small>Block ${item.blockNumber} · ${item.observedAt}</small></div><span class="state-tag ${item.severity === "WARNING" ? "amber-tag" : "green-tag"}">${item.severity}</span></li>`).join("")}</ul>`;
+    : `<ul class="notification-list">${notificationState.feed.notifications.map((item) => `<li><span class="evidence-icon">${item.severity === "WARNING" ? "!" : "·"}</span><div><strong>${esc(notificationLabel(item.kind))}</strong><small>Block ${item.blockNumber} · ${utc(item.observedAt)}</small></div><span class="state-tag ${item.severity === "WARNING" ? "amber-tag" : "green-tag"}">${item.severity}</span></li>`).join("")}</ul>`;
   return `<aside class="notification-tray panel" role="status"><div class="panel-heading"><div><div class="eyebrow">PUBLIC NOTIFICATIONS</div><h2>Finalized event feed</h2></div><button class="icon-button" type="button" data-action="notifications" aria-label="Close notifications">×</button></div>${rows}<button class="outline-button notification-export" type="button" data-action="export-notifications">Export public-only report</button></aside>`;
 }
 
@@ -643,7 +686,7 @@ function workspaceUnavailableReason(reason: string): string {
 }
 
 function wireEvents(): void {
-  app.querySelectorAll<HTMLButtonElement>("[data-view]").forEach((button) => button.addEventListener("click", () => { activeView = button.dataset.view as View; mobileMenuOpen = false; render(); }));
+  app.querySelectorAll<HTMLButtonElement>("[data-view]").forEach((button) => button.addEventListener("click", () => navigateToView(button.dataset.view as View)));
   app.querySelectorAll<HTMLButtonElement>("[data-action]").forEach((button) => {
     const activate = (): void => handleAction(button.dataset.action ?? "");
     button.addEventListener("click", activate);
@@ -673,6 +716,7 @@ function wireEvents(): void {
   form?.addEventListener("submit", (event) => { event.preventDefault(); computeStudio(form); });
   form?.addEventListener("input", () => {
     studioDraft = readStudioDraft(form);
+    updateStudioHumanHints(form);
     if (studioCompilation) {
       studioCompilation = null;
       const value = app.querySelector<HTMLElement>("#commitment-value");
@@ -706,12 +750,13 @@ function wireLandingMotion(): void {
 }
 
 function handleAction(action: string): void {
-  if (action === "new-policy") { activeView = "studio"; render(); return; }
-  if (action === "landing") { window.history.pushState(null, "", `${window.location.pathname}${window.location.search}#landing`); landingOpen = true; mobileMenuOpen = false; render(); return; }
-  if (action === "open-app") { window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`); landingOpen = false; activeView = "overview"; render(); return; }
-  if (action === "landing-studio") { window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`); landingOpen = false; activeView = "studio"; render(); return; }
-  if (action === "landing-demo") { window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`); landingOpen = false; activeView = "demo"; render(); return; }
-  if (action === "landing-auditor") { window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`); landingOpen = false; activeView = "auditor"; render(); return; }
+  if (action === "new-policy") { navigateToView("studio"); return; }
+  if (action === "landing") { navigateToLanding(); return; }
+  if (action === "open-app") { navigateToView("overview"); return; }
+  if (action === "landing-studio") { navigateToView("studio"); return; }
+  if (action === "landing-demo") { navigateToView("demo"); return; }
+  if (action === "landing-auditor") { navigateToView("auditor"); return; }
+  if (action === "dismiss-notice") { clearAppNotice(); render(); return; }
   if (action === "notifications") { notificationOpen = !notificationOpen; render(); return; }
   if (action === "mobile-menu") { mobileMenuOpen = !mobileMenuOpen; render(); return; }
   if (action === "export-notifications") { exportNotifications(); return; }
@@ -735,6 +780,78 @@ function handleAction(action: string): void {
   if (action === "reset-demo-request") { resetInteractiveRequest(); return; }
 }
 
+function navigateToView(view: View, replace = false): void {
+  const method = replace ? "replaceState" : "pushState";
+  window.history[method](null, "", `${window.location.pathname}${window.location.search}${appViewHash(view)}`);
+  activeView = view;
+  landingOpen = false;
+  mobileMenuOpen = false;
+  notificationOpen = false;
+  clearAppNotice();
+  render();
+  resetPagePosition("app-main");
+}
+
+function navigateToLanding(): void {
+  window.history.pushState(null, "", `${window.location.pathname}${window.location.search}#landing`);
+  landingOpen = true;
+  mobileMenuOpen = false;
+  notificationOpen = false;
+  clearAppNotice();
+  render();
+  resetPagePosition("landing-main");
+}
+
+function syncRouteFromLocation(): void {
+  const route = parseAppRoute(window.location.hash);
+  if (route.surface === "landing") {
+    if (landingOpen) return;
+    landingOpen = true;
+    mobileMenuOpen = false;
+    notificationOpen = false;
+    clearAppNotice();
+    render();
+    if (route.anchor === "landing") resetPagePosition("landing-main");
+    else restoreLandingAnchor(route.anchor);
+    return;
+  }
+  if (!landingOpen && activeView === route.view) return;
+  activeView = route.view;
+  landingOpen = false;
+  mobileMenuOpen = false;
+  notificationOpen = false;
+  clearAppNotice();
+  render();
+  resetPagePosition("app-main");
+}
+
+function resetPagePosition(focusId: string): void {
+  window.requestAnimationFrame(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    document.getElementById(focusId)?.focus({ preventScroll: true });
+  });
+}
+
+function restoreLandingAnchor(anchor: string): void {
+  window.requestAnimationFrame(() => document.getElementById(anchor)?.scrollIntoView({ block: "start", behavior: "auto" }));
+}
+
+function showAppNotice(message: string, duration = 7_000): void {
+  if (appNoticeTimer !== undefined) window.clearTimeout(appNoticeTimer);
+  appNotice = message;
+  appNoticeTimer = window.setTimeout(() => {
+    appNotice = "";
+    appNoticeTimer = undefined;
+    if (!landingOpen) render();
+  }, duration);
+}
+
+function clearAppNotice(): void {
+  if (appNoticeTimer !== undefined) window.clearTimeout(appNoticeTimer);
+  appNoticeTimer = undefined;
+  appNotice = "";
+}
+
 function prepareRequestTransaction(value: string): void {
   if (value !== "EXECUTE" && value !== "EXPIRE" && value !== "CANCEL") return;
   const account = connectedAccount();
@@ -749,13 +866,13 @@ function prepareRequestTransaction(value: string): void {
     validateRequestTransaction(value, account, snapshot, requestPolicyOwner, requestFinalizedAt);
     requestIntent = value;
     requestTransactionState = { status: "IDLE" };
-    appNotice = "Review the exact public router transition below. The wallet has not opened yet.";
+    showAppNotice("Review the exact public router transition below. The wallet has not opened yet.");
   } catch (error) {
     const message = error instanceof RequestTransactionError
       ? requestTransactionFailureMessage(error.reason) : "The router action could not be prepared safely.";
     requestIntent = null;
     requestTransactionState = { status: "ERROR", message };
-    appNotice = message;
+    showAppNotice(message, 10_000);
   }
   render();
 }
@@ -770,7 +887,7 @@ async function submitRequestTransaction(): Promise<void> {
     return;
   }
   requestTransactionState = { status: "SUBMITTING", kind };
-  appNotice = "Confirm the exact Coston2 router call in your wallet, then wait for finalized state verification.";
+  showAppNotice("Confirm the exact Coston2 router call in your wallet, then wait for finalized state verification.", 12_000);
   render();
   try {
     const result = await executeRequestTransaction(kind, requestInput, account, walletProvider);
@@ -784,18 +901,18 @@ async function submitRequestTransaction(): Promise<void> {
     requestIntent = null;
     requestTransactionState = { status: "SUCCESS", kind, hash: result.hash, blockNumber: result.blockNumber };
     requestNotice = `${kind} verified in finalized Coston2 state at block ${result.after.finalizedBlock}.`;
-    appNotice = `${kind} receipt, exact router event, and finalized request state matched.`;
+    showAppNotice(`${kind} receipt, exact router event, and finalized request state matched.`);
   } catch (error) {
     const message = error instanceof RequestTransactionError
       ? requestTransactionFailureMessage(error.reason) : "The router transaction could not be verified safely.";
     requestIntent = null;
     requestTransactionState = { status: "ERROR", message };
-    appNotice = message;
+    showAppNotice(message, 10_000);
   }
   render();
 }
 
-async function refreshPublicRequest(): Promise<void> {
+async function refreshPublicRequest(announce = true): Promise<void> {
   const sequence = ++requestReadSequence;
   const requestedId = requestInput.trim();
   requestLoading = true;
@@ -818,7 +935,7 @@ async function refreshPublicRequest(): Promise<void> {
     requestPolicyOwner = result.policyOwner;
     notificationState = notificationStateFromRequest(result);
     requestNotice = `Canonical public state verified at Coston2 block ${result.finalizedBlock}.`;
-    appNotice = "Request runtime, wiring, domain, request hash and finalized state matched the deployed Coston2 router.";
+    if (announce) showAppNotice("Request runtime, wiring, domain, request hash and finalized state matched the deployed Coston2 router.");
   } catch {
     if (sequence !== requestReadSequence) return;
     requestState = unavailableRequestState("SNAPSHOT_INVALID");
@@ -827,7 +944,7 @@ async function refreshPublicRequest(): Promise<void> {
     requestFinalizedAt = null;
     requestPolicyOwner = null;
     requestNotice = "The request was not found or failed finalized runtime/domain/schema validation.";
-    appNotice = "No request fact is being asserted because the finalized lookup failed closed.";
+    if (announce) showAppNotice("No request fact is being asserted because the finalized lookup failed closed.", 10_000);
   } finally {
     if (sequence === requestReadSequence) {
       requestLoading = false;
@@ -850,14 +967,14 @@ function prepareVaultTransaction(value: string): void {
     validateVaultTransaction(value, amount, live);
     vaultIntent = { kind: value, amount };
     vaultTransactionState = { status: "IDLE" };
-    appNotice = "Review the exact testnet intent below. The wallet has not opened yet.";
+    showAppNotice("Review the exact testnet intent below. The wallet has not opened yet.");
   } catch (error) {
     const message = error instanceof VaultTransactionError
       ? vaultTransactionFailureMessage(error.reason)
       : "The vault intent could not be prepared safely.";
     vaultIntent = null;
     vaultTransactionState = { status: "ERROR", message };
-    appNotice = message;
+    showAppNotice(message, 10_000);
   }
   render();
 }
@@ -872,7 +989,7 @@ async function submitVaultTransaction(): Promise<void> {
     return;
   }
   vaultTransactionState = { status: "SUBMITTING", ...intent };
-  appNotice = "Confirm the exact Coston2 transaction in your wallet, then wait for finalized postcondition checks.";
+  showAppNotice("Confirm the exact Coston2 transaction in your wallet, then wait for finalized postcondition checks.", 12_000);
   render();
   try {
     const result = await executeVaultTransaction(intent.kind, intent.amount, account, walletProvider);
@@ -880,14 +997,14 @@ async function submitVaultTransaction(): Promise<void> {
     coston2State = { status: "READY", snapshot: result.after };
     vaultIntent = null;
     vaultTransactionState = { status: "SUCCESS", kind: result.kind, amount: result.amount, hash: result.hash, blockNumber: result.blockNumber };
-    appNotice = `${result.kind} finalized at Coston2 block ${result.blockNumber}; receipt, event and account postconditions matched.`;
+    showAppNotice(`${result.kind} finalized at Coston2 block ${result.blockNumber}; receipt, event and account postconditions matched.`);
   } catch (error) {
     const message = error instanceof VaultTransactionError
       ? vaultTransactionFailureMessage(error.reason)
       : "The transaction could not be verified safely.";
     vaultIntent = null;
     vaultTransactionState = { status: "ERROR", message };
-    appNotice = message;
+    showAppNotice(message, 10_000);
     if (walletState.status === "CONNECTED") void refreshCoston2State();
   }
   render();
@@ -896,12 +1013,12 @@ async function submitVaultTransaction(): Promise<void> {
 async function connectWallet(): Promise<void> {
   walletState = { status: "CONNECTING" };
   coston2State = { status: "IDLE" };
-  appNotice = "Approve public account access and Flare Coston2 in your wallet. PayGuard never requests a private key.";
+  showAppNotice("Approve public account access and Flare Coston2 in your wallet. PayGuard never requests a private key.", 12_000);
   render();
   try {
     const session = await connectCoston2Wallet(walletProvider);
     walletState = { status: "CONNECTED", account: session.account };
-    appNotice = `Connected ${short(session.account)} on Coston2. Verifying finalized public state…`;
+    showAppNotice(`Connected ${short(session.account)} on Coston2. Verifying finalized public state…`, 12_000);
     render();
     await refreshCoston2State();
     if (interactiveConfigState.status === "READY") await refreshInteractiveAccount(false);
@@ -912,7 +1029,7 @@ async function connectWallet(): Promise<void> {
       : "Wallet connection failed safely.";
     walletState = { status: "ERROR", message };
     coston2State = { status: "IDLE" };
-    appNotice = message;
+    showAppNotice(message, 10_000);
     render();
   }
 }
@@ -925,18 +1042,18 @@ async function refreshCoston2State(): Promise<void> {
   }
   const sequence = ++liveReadSequence;
   coston2State = { status: "LOADING" };
-  appNotice = "Reading runtime, wiring, asset, balance and vault accounting at one finalized Coston2 block…";
+  showAppNotice("Reading runtime, wiring, asset, balance and vault accounting at one finalized Coston2 block…", 12_000);
   render();
   try {
     const snapshot = await loadCoston2AccountSnapshot(account);
     if (sequence !== liveReadSequence || connectedAccount()?.toLowerCase() !== account.toLowerCase()) return;
     coston2State = { status: "READY", snapshot };
-    appNotice = `Verified finalized Coston2 block ${snapshot.finalizedBlock}. No transaction was signed.`;
+    showAppNotice(`Verified finalized Coston2 block ${snapshot.finalizedBlock}. No transaction was signed.`);
   } catch (error) {
     if (sequence !== liveReadSequence) return;
     const message = coston2ReadFailureMessage(error);
     coston2State = { status: "UNAVAILABLE", message };
-    appNotice = `${message} Reads failed closed; no balance or contract state is being asserted.`;
+    showAppNotice(`${message} Reads failed closed; no balance or contract state is being asserted.`, 10_000);
   }
   render();
 }
@@ -968,7 +1085,7 @@ function walletChanged(): void {
   liveReadSequence += 1;
   walletState = { status: "DISCONNECTED" };
   coston2State = { status: "IDLE" };
-  appNotice = "Wallet account or network changed. Revalidating the public session…";
+  showAppNotice("Wallet account or network changed. Revalidating the public session…", 12_000);
   vaultIntent = null;
   vaultTransactionState = { status: "IDLE" };
   requestIntent = null;
@@ -995,7 +1112,7 @@ function exportNotifications(): void {
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
-  appNotice = exported.status === "AVAILABLE" ? "Exported finalized public notifications; no private payload included." : "Exported an unavailable public-feed report; no event was asserted.";
+  showAppNotice(exported.status === "AVAILABLE" ? "Exported finalized public notifications; no private payload included." : "Exported an unavailable public-feed report; no event was asserted.");
   render();
 }
 
@@ -1300,9 +1417,10 @@ function readStudioDraft(form: HTMLFormElement): StudioDraft {
 }
 
 render();
+if (initialRoute.surface === "landing" && initialRoute.anchor !== "landing") restoreLandingAnchor(initialRoute.anchor);
 walletProvider?.on?.("accountsChanged", walletChanged);
 walletProvider?.on?.("chainChanged", walletChanged);
-void refreshPublicRequest().finally(() => restoreWalletSession());
+void refreshPublicRequest(false).finally(() => restoreWalletSession());
 void fetchPublicWebEvidenceIndex()
   .then((index) => { publicEvidenceMirrorState = { status: "READY", index }; if (!landingOpen) render(); })
   .catch(() => { publicEvidenceMirrorState = { status: "UNAVAILABLE", reason: "NOT_PUBLISHED" }; if (!landingOpen) render(); });
@@ -1320,7 +1438,5 @@ void fetchInteractiveDemoConfig()
     interactiveAccountSnapshot = null;
     if (!landingOpen) render();
   });
-window.addEventListener("hashchange", () => {
-  landingOpen = window.location.hash === "#landing";
-  render();
-});
+window.addEventListener("hashchange", syncRouteFromLocation);
+window.addEventListener("popstate", syncRouteFromLocation);

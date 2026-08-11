@@ -60,7 +60,8 @@ hosted index by design.
 
 1. Open `/#landing` and explain: private policy is the target boundary; amount,
    recipient, timing, and settlement remain public.
-2. Choose **Inspect Coston2 demo**. The wallet-free recorded path shows three
+2. Choose **View recorded lifecycle**. The wallet-free recorded path appears
+   before the optional interactive controls and shows three
    visually distinct machines, ALLOW, cap denial, governance, and conservation.
 3. For the interactive path, use only a disposable Coston2 wallet with faucet
    C2FLR/FTestXRP. Approve and deposit `1` FTestXRP into the isolated demo vault.

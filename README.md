@@ -211,7 +211,8 @@ production-target contracts:
 Use only a disposable testnet wallet and faucet assets. Never enter a real
 operational policy or use mainnet value.
 
-1. Open the live application and choose **Inspect Coston2 demo**.
+1. Open the live application and choose **View recorded lifecycle**. The
+   reviewed wallet-free evidence appears before the optional interactive demo.
 2. Add/select Coston2 (chain ID `114`) in an injected EVM wallet. Obtain C2FLR
    for gas and FTestXRP from the official Flare faucet linked in Overview.
 3. In **Demo lifecycle**, connect the wallet, leave the funding amount at `1`,

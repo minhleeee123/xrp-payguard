@@ -227,6 +227,10 @@ domain fields are explicit; a local example is labeled `LOCAL EXAMPLE · NOT
 VERIFIED`. A validation pass computes a commitment only in memory and never
 creates a receipt or authorization.
 
+Unix-second fields retain their exact decimal protocol value, but the desktop
+form also renders a human-readable UTC timestamp or duration beneath the input.
+This helper is presentation-only and must not alter the commitment.
+
 The separate Interactive Demo may continue from that commitment only after the
 user explicitly enters `SIMULATED FCC · COSTON2 TESTNET` mode. It encrypts the
 draft independently to three demo actors and may display their signed receipts,
@@ -329,6 +333,10 @@ Use a public table for request ID, target, amount, schedule slot, checkpoint,
 expiry, and terminal status. Pending requests do not reserve funds. Executor
 buttons advance public checkpoints only and never accept a decision argument.
 Show split, stale, unavailable, denied, expired, and executed states separately.
+Always present canonical on-chain status separately from time-derived readiness.
+For example, a request may be canonically `PENDING` while its window is
+`EXPIRED`; explain that expiry still needs an on-chain transition instead of
+implying payment remains expected.
 
 ### Payee
 
@@ -350,6 +358,15 @@ Show policy author, funder, executor, payee, and auditor as separate roles. A
 role description must state which public controls it has and that no role can
 provide or override `ALLOW`. Policy changes are new versions with fresh custody
 receipts; active rules never silently mutate.
+
+### Desktop navigation and feedback
+
+Every application surface has a stable `#app/<view>` hash and participates in
+browser Back/Forward navigation. Landing section hashes stay on the landing
+surface. A view change resets document scroll and moves focus to the new main
+region; both shells expose a skip link. Desktop navigation never renders the
+mobile-only `More` control. Transient notices provide a dismiss control and
+expire automatically instead of permanently covering content.
 
 ## 6. Responsive, accessibility, and motion
 
