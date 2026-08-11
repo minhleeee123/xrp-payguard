@@ -108,7 +108,7 @@ export async function verifyFoundationActionResponse(value, expected) {
   exactKeys(value.result, ["id", "submissionTag", "status", "log", "opType", "opCommand", "additionalResultStatus", "version", "data"], "action result");
   const result = value.result;
   if (bytes32(result.id, "action ID") !== bytes32(expected.instructionId, "expected instruction ID")) throw new Error("action ID mismatch");
-  if (result.submissionTag !== "submit" || result.status !== 1 || result.log !== "ok") throw new Error("foundation action did not complete successfully");
+  if (result.submissionTag !== "threshold" || result.status !== 1 || result.log !== "ok") throw new Error("foundation action did not complete successfully");
   if (result.opType?.toLowerCase() !== FOUNDATION_OP_TYPE || result.opCommand?.toLowerCase() !== FOUNDATION_OP_COMMAND) throw new Error("foundation operation domain mismatch");
   if (result.additionalResultStatus !== "0x" || result.version !== "0.1.0-payguard") throw new Error("foundation result version or additional status mismatch");
   const response = decodeFoundationResponse(result.data);

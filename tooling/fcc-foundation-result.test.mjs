@@ -30,7 +30,7 @@ async function fixture() {
   };
   response.bindingHash = foundationBindingHash(response);
   const result = {
-    id: instructionId, submissionTag: "submit", status: 1, log: "ok", opType: FOUNDATION_OP_TYPE,
+    id: instructionId, submissionTag: "threshold", status: 1, log: "ok", opType: FOUNDATION_OP_TYPE,
     opCommand: FOUNDATION_OP_COMMAND, additionalResultStatus: "0x", version: "0.1.0-payguard",
     data: encodeFoundationResponse(response),
   };
@@ -60,7 +60,7 @@ test("verifies exact PayGuard response and both pinned FCC signing domains", asy
 test("fails closed on result, binding, signer, and schema drift", async () => {
   const cases = [
     async ({ value }) => { value.result.status = 0; },
-    async ({ value }) => { value.result.submissionTag = "threshold"; },
+    async ({ value }) => { value.result.submissionTag = "submit"; },
     async ({ value }) => { value.result.opCommand = FOUNDATION_OP_TYPE; },
     async ({ value }) => { value.result.version = "other"; },
     async ({ expected }) => { expected.payloadHash = keccak256(toHex("wrong")); },
