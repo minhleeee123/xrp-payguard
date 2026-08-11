@@ -155,10 +155,10 @@ if (resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
     console.log(JSON.stringify(mode === "plan" ? {
       ...result,
       next: [
-        "pnpm candidate:build",
-        "collect real live inputs in an ignored operator workspace",
-        "verify lifecycle, outage, redemption, and user-validation evidence",
-        "follow the promotion runbook; do not promote this candidate plan",
+        "pnpm deploy:coston2:v2:verify",
+        "collect the remaining outage, canonical-redemption, hardware, and consented user-validation inputs",
+        "verify each remaining artifact against the same future release candidate",
+        "follow the promotion runbook; do not copy candidate evidence into the authoritative manifest",
       ],
     } : result));
   } catch (error) {
