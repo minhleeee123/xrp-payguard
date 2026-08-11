@@ -140,9 +140,11 @@ export interface LiveEvaluationResult {
 
 export type LivePolicyAction = "STOP" | "RESUME" | "REVOKE";
 
+export const DEFAULT_LIVE_FCC_RELAY_ORIGIN = "https://payguard-live-relay-production.up.railway.app";
+
 export async function fetchLiveFccConfig(
   fetcher: typeof fetch = fetch,
-  relayOrigin = String(import.meta.env.VITE_PAYGUARD_LIVE_RELAY_ORIGIN ?? ""),
+  relayOrigin = String(import.meta.env.VITE_PAYGUARD_LIVE_RELAY_ORIGIN || DEFAULT_LIVE_FCC_RELAY_ORIGIN),
 ): Promise<LiveFccConfig> {
   const origin = normalizeRelayOrigin(relayOrigin);
   const response = await fetcher(`${origin}/v1/config`, {

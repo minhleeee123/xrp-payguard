@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Address, Hex } from "viem";
 import {
+  DEFAULT_LIVE_FCC_RELAY_ORIGIN,
   LIVE_FCC_MODE,
   evaluateLiveRequest,
   fetchLiveFccConfig,
@@ -56,6 +57,16 @@ function configWire() {
 }
 
 describe("live FCC browser boundary", () => {
+  it("pins the verified public relay when the build has no override", async () => {
+    const fetcher = vi.fn(async () => new Response(JSON.stringify(configWire()), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    }));
+    const config = await fetchLiveFccConfig(fetcher as typeof fetch);
+    expect(config.relayOrigin).toBe(DEFAULT_LIVE_FCC_RELAY_ORIGIN);
+    expect(fetcher).toHaveBeenCalledWith(`${DEFAULT_LIVE_FCC_RELAY_ORIGIN}/v1/config`, expect.any(Object));
+  });
+
   it("accepts only the explicit V1 simulated-TEE domain", async () => {
     const fetcher = vi.fn(async () => new Response(JSON.stringify(configWire()), {
       status: 200,
