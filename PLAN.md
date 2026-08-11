@@ -8,13 +8,12 @@
 > lifecycle. Hardware attestation, V2 release, the remaining dependency-outage
 > drills, and a complete release remain unverified.
 >
-> Hackathon delivery decision (updated 2026-08-10): the current demo uses the
-> credential-free local three-machine stack, verified public Coston2
-> contract/funding observations, and an isolated Vercel serverless demo. Since
-> that freeze, three Railway origins, authenticated indexer access, registration,
-> live custody, and live threshold evaluation have been verified separately with
-> organizer-supported `SIMULATED_TEE=true`. They remain labelled `SIMULATED` and
-> do not satisfy hardware-attestation, V2-release, or mainnet gates.
+> Hackathon delivery decision (updated 2026-08-11): historical solution-3
+> evidence retains the credential-free local and isolated Vercel simulation
+> boundaries. The current Vercel application additionally connects to a hosted
+> Railway V1 relay and three registered A/B/D machines using organizer-supported
+> `SIMULATED_TEE=true`. They remain labelled `SIMULATED` and do not satisfy
+> hardware-attestation, V2-release, or mainnet gates.
 
 ## 1. Product objective
 
@@ -99,8 +98,8 @@ Unchecked boxes do not all have the same deadline:
 - **Post-hackathon — live/release work:** these gates stay separate from the
   submission count even when completed later. Stable A/B/D FCC origins,
   authenticated indexer access, registered simulated custody/evaluation,
-  replacement, and executor-pause recovery now pass. V2, hosted relay/web
-  integration, uncontrolled live FAssets conditions, remaining outage drills,
+  replacement, executor-pause recovery, and hosted V1 relay/web integration now
+  pass. V2, uncontrolled live FAssets conditions, remaining outage drills,
   independent review, release promotion, pilots, hardware, and all
   mainnet/production work remain outside the hackathon boundary.
 
@@ -428,15 +427,16 @@ release gates.
 ### Phase 6 — full application
 
 The checked items describe the reviewed source application and the current
-Vercel deployment. Fresh user-wallet broadcast evidence, production FCC, and
-live editable governance remain open.
+Vercel deployment. Hosted simulated V1 custody/evaluation and owner governance
+now pass; fresh non-operator user-wallet evidence and verified-release FCC remain
+open.
 
 - [x] Build the laptop-first application shell and standalone landing page;
   deploy the exact reviewed artifact with Vercel CLI and pass production
   HTML/assets/evidence, desktop/mobile, keyboard, and Lighthouse smoke.
 - [x] Build the local Policy Studio with templates, exact public/private
   preview, local validation, schema-checked custody receipt progress, and an
-  activation block; live ingress and activation evidence remain open.
+  activation block; hosted V1 ingress, receipt, and activation evidence now pass.
 - [x] Build the Accounts/Vaults surface with injected-wallet Coston2 connection,
   one-finalized-block runtime/wiring/asset verification, public wallet and vault
   balances, conservation, and recovery copy. Add two-step exact FTestXRP
@@ -516,12 +516,13 @@ Exit: failure is resumable or explicitly denied, never represented as success.
 
 ### Phase 8 — Coston2 release and evidence
 
-- [x] Deploy the public-safe static web shell to Vercel through the pinned
-  CLI workflow and verify HTTPS HTML/JS/CSS plus desktop/mobile/keyboard
-  reachability; FCC, relay, policy provider, and full-release smoke remain open.
+- [x] Deploy the public-safe web application to Vercel through the pinned CLI
+  workflow and verify HTTPS HTML/JS/CSS plus desktop/mobile/keyboard
+  reachability. It now reaches the hosted V1 relay and registered A/B/D
+  simulated machines; verified-release smoke remains open.
 - [x] Emit an allowlisted public-safe evidence index and JSON assets at the
-  Vercel `/evidence/` endpoint; private-policy, FCC, relay, and release claims
-  remain unavailable.
+  Vercel `/evidence/` endpoint. The hosted relay lifecycle is now included as a
+  sanitized FCC observation; hardware, V2, and release claims remain unavailable.
 - [x] Freeze the hackathon demo to the local three-machine simulated FCC mode
   and document that it proves deterministic/fail-closed behavior, not TEE
   confidentiality, registered custody, or a live PayGuard release.
@@ -547,13 +548,17 @@ Exit: failure is resumable or explicitly denied, never represented as success.
 - [ ] Post-hackathon: record live personal recurring-payment, cap-denial,
   emergency-stop, recovery, Smart Account funding, and redemption lifecycles.
 - [x] Publish only sanitized public identifiers, hashes, blocks, transactions,
-  timings, and assertion booleans; the production-corpus audit fetched all 15
-  listed assets, matched every JSON body byte-for-byte to its reviewed source,
+  timings, and assertion booleans; the latest production-corpus audit fetched all
+  22 listed assets, matched every JSON body byte-for-byte to its reviewed source,
   reran the public-field/simulation guards, and remains repository-only to avoid
   recursive evidence publication.
-- [ ] Post-hackathon: complete the hosted proxy/relay release path, connect the
-  hosted web to the verified release, and run complete production
-  desktop/mobile/keyboard smokes against the exact deployed commit.
+- [x] Post-hackathon: deploy the authenticated hosted V1 relay, connect the
+  production web to registered A/B/D `SIMULATED_TEE` machines, reject a
+  client-supplied decision, and pass one complete Coston2 custody/ALLOW/execute/
+  cap-denial/governance/conservation run through the public relay origin.
+- [ ] Post-hackathon: promote the hosted web/relay to a verified V2 release and
+  run the complete production desktop/mobile/keyboard matrix against that exact
+  release-bound commit.
 - [x] Deploy and audit the separate Interactive Demo contracts/serverless
   actors, publish sanitized simulation evidence, and verify the production web
   lifecycle without treating it as Gate A/B/C or a verified release. The three

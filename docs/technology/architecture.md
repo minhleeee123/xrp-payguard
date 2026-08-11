@@ -4,8 +4,9 @@
 > shell, and manager-backed V2 registry candidate are implemented and tested.
 > The V1 registry/vault/router have independently checked Coston2 testnet
 > observations. Three registered Coston2 `SIMULATED_TEE` machines now pass live
-> custody/evaluation and replacement recovery, but this is not a hardware-backed
-> or verified release. A V2 address and release wiring remain planned targets.
+> custody/evaluation and replacement recovery through a hosted Railway relay
+> connected to the Vercel UI, but this is not a hardware-backed or verified
+> release. A V2 address and release wiring remain planned targets.
 
 ## 1. System model
 
@@ -277,29 +278,31 @@ assertions before rendering. The Vite evidence plugin applies the existing
 recursive public-safety and simulation guards in both development and build
 delivery; any body drift fails the page closed.
 
-### Interactive simulated-FCC demo boundary
+### Hosted V1 FCC path and isolated fallback
 
-The deployed hackathon interaction path is additive and isolated from the
-live Railway FCC topology. The current production artifact is pinned to source
-`be51006` and deployment `dpl_9Thw4YwLfL24pZpWqF9riioAPQHj`; its 21-entry
-evidence corpus is byte-verified separately from the earlier full interactive
-lifecycle record. It uses a separate Coston2 registry, vault, and router
-namespace plus three stateless serverless actor endpoints. Each actor has a
-distinct demo-only signing/decryption key, independently decrypts the policy in
-memory, runs the canonical deterministic evaluator, and signs only the exact
-receipt or evaluation attestation domain. The browser sends ciphertext rather
-than plaintext and never sends a decision field. A threshold collector may
-compare and transport signed results, but it cannot create or override
-`ALLOW`.
+The production Vercel application now discovers one pinned Railway relay. The
+browser independently encrypts the policy to registered A/B/D machine keys and
+sends each ciphertext through a numbered authenticated ingress route. The relay
+preflights the V1 contracts, dispatcher ownership/extension, current machine
+URLs/status/code/platform, and private endpoints before forwarding a byte. It
+verifies each machine receipt and returns only public receipt metadata.
 
-This path is explicitly `SIMULATED FCC · COSTON2 TESTNET`. The actors share one
-hosting/operator trust domain, are not registered hardware TEEs, do not provide
-sealed persistence, and do not satisfy production common-custody or FCC release
-gates. A browser refresh discards the private draft and encrypted copies; the
-actors remain stateless and re-evaluate only after reconstructing the public
-Coston2 request, policy status, vault accounting, and spend history. The
-existing production-FCC code, admission checks, and target topology remain
-unchanged and fail closed while real machines are unavailable.
+For evaluation the browser sends an empty JSON body plus a request-specific
+owner authorization. It never sends `ALLOW`, `DENY`, policy rules, spend totals,
+or history. The relay reconstructs the canonical request, policy, vault, and
+executed history from Coston2, dispatches that public state to the three frozen
+machines, verifies both FCC envelope and inner result signatures, and submits
+two matching results. RPC, Explorer reconstruction, proxy, signature, binding,
+or quorum drift fails closed. This deployed V1 route is operator-only because
+the dispatcher is owner-gated.
+
+The earlier isolated demo remains in source and historical evidence as an
+explicitly separate fallback design. Its serverless actor endpoints are not
+part of the current static Vercel deployment, so that UI branch fails closed
+when they return unavailable. Those actors share one operator, are not
+registered FCC machines, and do not provide sealed persistence. Neither route
+is hardware-backed, V2, mainnet, or a verified PayGuard release. A browser
+refresh discards the private draft and encrypted copies in both routes.
 
 ### XRPL-native path
 

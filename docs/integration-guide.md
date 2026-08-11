@@ -3,11 +3,10 @@
 ## Current release boundary
 
 This guide documents compile-tested public codecs, not a live PayGuard SDK or
-verified Coston2 release. The hosted web demo still uses three serverless
-simulation actors. Separately, stable A/B/D FCC origins, authenticated indexer
-access, registered `SIMULATED_TEE` custody/evaluation, replacement, and executor
-recovery now pass on Coston2. Hosted release relay/web integration, hardware
-attestation, V2, and a verified release manifest remain open. Integrators must
+verified Coston2 release. The production web now connects to a hosted V1 relay
+and stable A/B/D `SIMULATED_TEE` machines; custody/evaluation, replacement, and
+executor recovery pass on Coston2. Hardware attestation, V2, permissionless
+release wiring, and a verified release manifest remain open. Integrators must
 not treat either preview below as a policy approval, FDC proof, signature,
 submitted transaction, or successful payment.
 

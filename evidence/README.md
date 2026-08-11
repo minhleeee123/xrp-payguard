@@ -49,18 +49,26 @@ an XRP payment, FDC request, or mint transaction.
 credential-free Coston2 RPC, Explorer/API, and faucet page reachability. It
 does not represent a faucet grant, FCC indexer access, or a PayGuard release.
 
+`coston2/fcc-hosted-relay-lifecycle.json` records the hosted Coston2 V1 path
+through the production Railway relay and registered A/B/D `SIMULATED_TEE`
+machines. It covers authenticated ciphertext-only ingress, three verified
+custody receipts, request-ID-only canonical evaluation, two matching ALLOW and
+DENY submissions, execution, governance, and vault conservation. It contains
+no policy, ciphertext, authorization, signature, credential, or key and does
+not prove hardware attestation, V2, mainnet readiness, or a verified release.
+
 `web/github-pages-preview-2026-08-09.json` is a historical record of the
 retired public-safe GitHub Pages static-shell deployment and its HTTP
 HTML/JS/CSS smoke. The site was removed before the Vercel deployment; the
 record does not represent a current URL, hosted relay, FCC origin, policy
 provider, wallet flow, or verified PayGuard release.
 
-`web/vercel-preview-2026-08-09.json` records the current public-safe Vercel
-static-shell deployment and its HTTP HTML/JS/CSS smoke. It is a static preview
-only and does not represent a hosted relay, FCC origin, policy provider, wallet
-flow, or verified PayGuard release. The record remains repository-only and is
-not embedded in its own deployment, avoiding a recursive artifact whose
-deployment identifier would always be one release stale.
+`web/vercel-preview-2026-08-09.json` records an earlier public-safe Vercel
+static-shell deployment and its HTTP HTML/JS/CSS smoke. It does not represent
+the current hosted relay/FCC path or a verified PayGuard release. The record
+remains repository-only and is not embedded in its own deployment, avoiding a
+recursive artifact whose deployment identifier would always be one release
+stale.
 
 `simulation/fcc-local-three-machine-2026-08-09.json` records the disposable
 credential-free three-machine Docker smoke selected for the hackathon demo. It
@@ -71,7 +79,9 @@ indexer access, production registration, and a live private-policy lifecycle.
 The Vercel build publishes the reviewed Coston2 and explicitly labelled
 simulation JSON files plus the metadata-only
 `https://xrp-payguard.vercel.app/evidence/index.json` endpoint. The endpoint is
-an evidence mirror, not a live policy, relay, FCC, or release service.
+an evidence mirror, not an authorization endpoint or a release manifest. The
+separate hosted relay URL and its limitations are recorded in the lifecycle
+evidence above.
 
 Never store private policies, ciphertext, wallet/XRPL/FCC keys, signatures
 forbidden by policy, proxy/indexer credentials, authenticated raw responses, or

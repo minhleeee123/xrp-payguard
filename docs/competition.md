@@ -84,14 +84,15 @@ gates pass.
 
 ### Current hackathon delivery boundary
 
-The frozen 2026-08-09 web delivery uses the credential-free local
-three-machine simulated FCC demo. Separately, the repository now records a live
-Coston2 three-Railway-machine custody/evaluation lifecycle. The web artifact is
-not retroactively described as using that live path, and neither path is a
+The frozen 2026-08-09 delivery and its evidence remain a credential-free local/
+isolated three-machine simulated FCC demo. The current Vercel artifact now also
+connects to the hosted Railway relay and registered A/B/D Coston2 machines; a
+separate sanitized lifecycle records custody, request-ID-only quorum evaluation,
+execution, denial, governance, and conservation. Neither artifact is a
 hardware-backed or verified V2 release.
 
 The submission must say `SIMULATED`, `PLANNED`, or `NOT VERIFIED` wherever
-hardware TEE confidentiality, V2 release, hosted-web integration, recovery, or
+hardware TEE confidentiality, V2 release, verified-release promotion, recovery, or
 a complete production release would otherwise be implied. Stable FCC servers,
 authenticated indexer access, registered simulated custody, and threshold
 evaluation are now verified repository facts; they must not be inflated into a

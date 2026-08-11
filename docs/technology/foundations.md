@@ -64,12 +64,12 @@ release fact by itself.
 
 The following cannot be truthfully completed from this local workspace alone:
 
-- three distinct registered FCC machines with stable HTTPS origins and active
-  policy/result capacity;
+- hardware-backed, independently operated FCC machines and verified V2 release
+  capacity; the registered A/B/D `SIMULATED_TEE` V1 path is already hosted;
 - organizer confirmation of current Summer Signal schedule, submission
   mechanics, and FCC access;
 - interviews/usability sessions and a design-partner testnet pilot;
-- hosted web/relay/FCC deployment credentials and production smoke access.
+- verified-release production smoke access and managed monitoring credentials.
 
 Until those inputs are provided, local simulated tests may validate protocol
 logic but do not become Coston2 release evidence.

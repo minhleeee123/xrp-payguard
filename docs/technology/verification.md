@@ -200,13 +200,13 @@ it is intentionally excluded from the hosted index and does not upgrade the
 interactive testnet client into an FCC or verified-release claim.
 
 The refreshed production-corpus audit recorded on 2026-08-11 is pinned to
-source `be51006cf14fa319a4ba34fff3d17176da905520`. It matched the current
-metadata index and all 21 hosted bodies byte-for-byte to reviewed local sources,
-including 20 chain-114 records and three explicitly bounded simulation records.
+source `256fa0fcb9a97a2eec20e4c7a33f8873b9cb11c3`. It matched the current
+metadata index and all 22 hosted bodies byte-for-byte to reviewed local sources,
+including 21 chain-114 records and three explicitly bounded simulation records.
 Its repository-only result is
 [`public-evidence-deployment-audit-2026-08-11.json`](../../evidence/web/public-evidence-deployment-audit-2026-08-11.json).
-This proves public-artifact integrity, not that the Vercel simulated actors are
-the registered Railway FCC machines.
+This proves public-artifact integrity and includes the sanitized hosted-relay
+lifecycle record; it does not turn either simulated route into hardware/V2.
 
 On 2026-08-10 the isolated interactive namespace passed a 133.29-second gate
 against the public Vercel actor APIs and separate Coston2 contracts. The test
@@ -246,11 +246,13 @@ plan retains six explicit external blockers until those activities occur.
 
 ## 5. Release acceptance
 
-The hackathon acceptance boundary is narrower than release acceptance: the
-Vercel artifact remains a three-actor simulation plus public Coston2 facts.
-Separate post-freeze repository evidence now verifies stable A/B/D Railway
-origins and a registered live `SIMULATED_TEE` private lifecycle. The hosted web
-is not connected to that path, and hardware/V2 release acceptance remains open.
+The hackathon acceptance boundary is narrower than release acceptance. The
+production Vercel app exposes the earlier isolated three-actor record as
+historical evidence and an explicitly labelled live V1 operator path through
+the hosted Railway relay and registered A/B/D `SIMULATED_TEE` machines. A
+sanitized end-to-end run verifies private ingress, custody, two-of-three
+evaluation, execution, denial, governance, and conservation. Hardware/V2
+release acceptance remains open.
 
 One separate solution-3 record now proves the deployed Coston2 registry,
 router, and vault path with three ephemeral simulated signers, two matching
@@ -261,6 +263,6 @@ live portion of Gate E.
 
 Do not call PayGuard complete because the simulated Coston2 lifecycle works.
 Release still requires hardware/V2 lifecycle evidence, the remaining dependency
-outage and redemption paths, release-bound generated bindings, hosted-web smoke,
-external review, user testing, and documentation whose claims exactly match the
-deployed state.
+outage and redemption paths, release-bound generated bindings, release-bound
+browser smoke, external review, user testing, and documentation whose claims
+exactly match the deployed state.

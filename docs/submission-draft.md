@@ -51,15 +51,15 @@ evidence without publishing the policy rules themselves.
   demonstrates two-of-three recurring authorization, cap denial,
   stop/resume/revoke, and vault conservation, but not live FCC custody or
   hardware confidentiality.
-- A public Vercel dApp exposes a reviewed 21-entry evidence mirror and an
-  isolated interactive testnet lifecycle backed by three simulated serverless
-  actors and separate Coston2 contracts. It permanently labels the shared
-  operator/no-hardware-TEE boundary.
+- A public Vercel dApp exposes a reviewed 22-entry evidence mirror and a hosted
+  V1 path through the Railway relay and registered A/B/D `SIMULATED_TEE`
+  machines. The older isolated serverless-actor lifecycle remains historical
+  evidence; neither path is hardware-backed or a verified release.
 - The deployed lifecycle passed three custody receipts, policy registration,
   two matching `ALLOW` results and execution, two matching `CAP_EXCEEDED`
   results, stop/resume/revoke, and vault conservation. This is simulation-only,
   not production FCC evidence.
-- The current repository-only production-corpus audit fetched all 21 hosted
+- The current repository-only production-corpus audit fetched all 22 hosted
   evidence assets, required HTTP/JSON boundaries, and matched each body
   byte-for-byte to its reviewed local source without recursively publishing
   its own audit. The earlier 15-body audit remains historical evidence for the
@@ -82,11 +82,11 @@ evidence without publishing the policy rules themselves.
    resolution exist, but no full live FCC policy lifecycle using an FTSO
    snapshot is claimed.
 6. **FCC:** the authorization path freezes three compatible machine identities
-   and requires two matching evaluations. The hosted hackathon UI remains an
-   explicitly simulated three-actor Vercel/Coston2 path. Separately, registered
-   A/B/D `SIMULATED_TEE` machines now pass live private custody, threshold
-   evaluation, replacement, and executor recovery on Coston2. Hardware-backed
-   independent operators, V2, and a verified release remain post-hackathon.
+   and requires two matching evaluations. The hosted UI now reaches registered
+   A/B/D `SIMULATED_TEE` machines through the Railway V1 relay; live private
+   custody, threshold evaluation, replacement, and executor recovery pass on
+   Coston2. Hardware-backed independent operators, V2, and a verified release
+   remain post-hackathon.
 
 ## Public links
 
@@ -115,9 +115,9 @@ evidence without publishing the policy rules themselves.
 The exact deployment transactions, blocks, runtime hashes, constructor/wiring
 assertions, machine registration/status, replacement transactions, and live
 lifecycle observations are in sanitized repository evidence. The current
-hosted public index mirrors those reviewed Railway records, but the Vercel
-interactive actor path is still separate and simulation-only; the index must
-not be presented as proof that the UI drives the live Railway machines.
+hosted public index mirrors those reviewed Railway records, including one
+end-to-end UI-compatible relay lifecycle. The historical interactive actor path
+is separate and must not be reassigned to the registered machines.
 Extension and machine facts remain simulated/testnet observations, not a
 hardware-backed release.
 
@@ -141,10 +141,10 @@ The complete retrospective new-work classification is in
   No hardware-backed independent machine set or V2 release has been verified.
 - No live supported Web2Json source, request/proof, private policy evaluation,
   source-truth guarantee, or canonical Web2 consumer has been verified.
-- The Vercel build supports a full isolated testnet demo through three
-  simulated actors. They share one serverless operator and provide no hardware
-  confidentiality, sealed persistence, independent operators, production
-  relay, or production FCC availability.
+- The current Vercel build supports the hosted V1 operator path. It uses
+  registered simulated machines but provides no hardware confidentiality,
+  independent operators, permissionless dispatcher, V2, or verified release.
+  The older isolated three-actor lifecycle is historical evidence only.
 - No verified PayGuard release manifest, external audit, mainnet integration,
   user interview, pilot, revenue, partnership, or traction claim exists.
 - Ordinary XRP/FXRP transfers expose amount, recipient, timing, and transaction
@@ -154,8 +154,8 @@ The complete retrospective new-work classification is in
 
 After the hackathon: replace the simulated A/B/D set with independently operated
 hardware-backed FCC machines; deploy and verify V2; finish proxy/RPC/FDC/FTSO/
-indexer outage drills and canonical partial/default redemption; connect the
-hosted relay and web to the exact release; commission independent contract/FCC
+indexer outage drills and canonical partial/default redemption; promote the
+hosted relay and web to the exact verified release; commission independent contract/FCC
 reviews; then run a bounded design-partner testnet pilot. Mainnet requires fresh
 address resolution, a new audited candidate, disposable canary, strict value
 caps, incident coverage, and a verified release manifest.

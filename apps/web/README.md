@@ -6,11 +6,10 @@ Payee, wallet-free Auditor, and Team/roles surfaces. Its visual language follows
 repository-level [`DESIGN.md`](../../DESIGN.md). The Policy Studio computes a
 domain-bound commitment from an in-memory draft only. It includes three policy
 templates, structured local validation, fresh browser cryptographic entropy,
-and an exact activation/request/private visibility map. Its contract addresses
-are explicitly local examples, and receipt progress remains unavailable rather
-than substituting local receipts until a verified Coston2 machine set exists.
-It does not use browser storage, send ciphertext, or provide an authorization
-result.
+and an exact activation/request/private visibility map. The production app can
+select the hosted V1 Coston2 domain, independently encrypt to registered A/B/D
+machines, collect verified receipts through the Railway relay, and register the
+commitment. It does not use browser storage or provide an authorization result.
 
 The injected-wallet boundary now connects or adds Flare Coston2 without ever
 receiving a private key. For an authorized public account it pins all reads to
@@ -103,8 +102,9 @@ permission claim. The copy follows the current lookup context and does not call
 a user-entered request the reviewed example.
 Policy Studio custody progress accepts only the schema-checked three-machine
 receipt bundle: each digest/signature must match the frozen binding and the
-shared submission nonce/time window. Until a verified provider supplies that
-bundle, the UI shows activation blocked and never substitutes a local receipt.
+shared submission nonce/time window. The configured hosted relay supplies this
+bundle only after preflighting and forwarding independently encrypted copies to
+registered A/B/D machines; otherwise activation stays blocked.
 Notifications use a strict public feed with finalized block/time facts, typed
 status/severity, public references, and domain-separated feed/export hashes. A
 validated router checkpoint now produces one `EVIDENCE_VERIFIED` observation;
@@ -123,8 +123,9 @@ Run locally with the pinned Node toolchain:
 PATH="$PWD/.local/toolchains/bin:$PATH" pnpm --filter @xrp-payguard/web dev
 ```
 
-The connected public account/vault reader is a real Coston2 feature, but the UI
-is not evidence of a complete PayGuard release or live FCC authorization.
+The connected public account/vault reader and hosted simulated-FCC V1 path are
+real Coston2 features, but the UI is not evidence of a complete PayGuard release
+or hardware FCC authorization.
 Deploy the built static artifact with the Vercel CLI from the
 repository root:
 
@@ -134,9 +135,10 @@ vercel deploy apps/web/dist --prod --yes --project xrp-payguard
 ```
 
 The current production deployment at <https://xrp-payguard.vercel.app/> contains
-only `apps/web/dist`; wallet signing stays in the injected wallet, while FCC
-machines, a relay, a policy provider, and a verified PayGuard release remain
-external. The latest sanitized deployment record is
+only `apps/web/dist`; wallet signing stays in the injected wallet. It calls the
+pinned public Railway relay, while its executor key, FCC machines, and indexer
+credentials remain external/server-side. A verified PayGuard release remains
+unavailable. The latest sanitized deployment record is
 [`vercel-preview-2026-08-09.json`](../../evidence/web/vercel-preview-2026-08-09.json).
 
 The build also emits only the allowlisted public evidence files under
