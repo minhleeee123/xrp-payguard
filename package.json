@@ -9,6 +9,7 @@
   },
   "devDependencies": {
     "@types/node": "24.0.0",
+    "tsx": "4.23.12",
     "typescript": "5.9.3",
     "viem": "2.55.11",
     "ws": "8.21.0",
@@ -91,6 +92,9 @@
     "fcc:ping:plan": "node tooling/fcc-foundation-ping.mjs plan",
     "fcc:ping:send": "node tooling/fcc-foundation-ping.mjs send --broadcast",
     "fcc:ping:test": "node --test tooling/fcc-foundation-ping.test.mjs",
-    "check": "pnpm toolchain:check && pnpm docs:check && pnpm secret:scan && pnpm privacy:scan && pnpm evidence:check && pnpm web:evidence:test && pnpm web:deployment-audit:test && pnpm demo:record:test && pnpm web:test && pnpm release:check && pnpm release:test && pnpm candidate:check && pnpm deploy:coston2:test && pnpm coston2:dependencies:test && pnpm coston2:endpoints:test && pnpm coston2:direct-mint:test && pnpm coston2:funding-resume:test && pnpm coston2:simulated-lifecycle:test && pnpm coston2:interactive-demo:test && pnpm coston2:fdc-trigger:test && pnpm coston2:fdc-live:test && pnpm fcc:container:test && pnpm fcc:railway:test && pnpm fcc:foundation:test && pnpm fcc:machine:preflight:test && pnpm fcc:version:test && pnpm fcc:machine:registration:test && pnpm fcc:result:test && pnpm fcc:ping:test && pnpm bindings:check"
+    "fcc:custody:plan": "tsx tooling/fcc-live-custody.ts plan",
+    "fcc:custody:run": "tsx tooling/fcc-live-custody.ts run --write-live-private-policy",
+    "fcc:custody:test": "tsx --test tooling/fcc-live-custody.test.ts",
+    "check": "pnpm toolchain:check && pnpm docs:check && pnpm secret:scan && pnpm privacy:scan && pnpm evidence:check && pnpm web:evidence:test && pnpm web:deployment-audit:test && pnpm demo:record:test && pnpm web:test && pnpm release:check && pnpm release:test && pnpm candidate:check && pnpm deploy:coston2:test && pnpm coston2:dependencies:test && pnpm coston2:endpoints:test && pnpm coston2:direct-mint:test && pnpm coston2:funding-resume:test && pnpm coston2:simulated-lifecycle:test && pnpm coston2:interactive-demo:test && pnpm coston2:fdc-trigger:test && pnpm coston2:fdc-live:test && pnpm fcc:container:test && pnpm fcc:railway:test && pnpm fcc:foundation:test && pnpm fcc:machine:preflight:test && pnpm fcc:version:test && pnpm fcc:machine:registration:test && pnpm fcc:result:test && pnpm fcc:ping:test && pnpm fcc:custody:test && pnpm bindings:check"
   }
 }
