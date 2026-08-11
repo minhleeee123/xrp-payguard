@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "suite": "payguard-coston2-live-simulated-three-machine-custody",
+  "status": "verified-live-simulated-three-machine-custody",
+  "recordedAt": "2026-08-11T05:02:03.311Z",
+  "network": {
+    "name": "flare-coston2",
+    "chainId": 114,
+    "observedBlock": "33906157"
+  },
+  "publicIdentifiers": {
+    "verificationSourceCommit": "c78913aed8d11bda1d10f81755f656d0fd043ff2",
+    "manager": "0x1a9C4A0f9D76c0b1D91d22E24E573a9b377618aE",
+    "extensionId": "66037",
+    "policyCommitment": "0x899910eec4146e485a78ed1d053ef71b33ae0f32a6c3efe3a1258881ad37ddc8",
+    "custodyBundleHash": "0xe664873add462fa4f59304d1fc1598348c03387c2d3d4bfa76bb6581f6550456",
+    "machines": [
+      {
+        "teeId": "0x1C911D007f8203484eD4099bC11849d7e9691044",
+        "proxyId": "0x8dfd80A00C1C6909E4f3f9439240243f5B193FA3",
+        "url": "https://payguard-fcc-a-production.up.railway.app",
+        "status": 2,
+        "receiptDigest": "0x4ad9ead338380426ecf4ff8777993cd200ba89bd5d55c8051e7bc6bf6f105895"
+      },
+      {
+        "teeId": "0xff49A99535b8c52345D3c0b76bCf60194De7C29b",
+        "proxyId": "0x6860a154be5415219E2A197E987e5f34cC48F2Bf",
+        "url": "https://payguard-fcc-b-production.up.railway.app",
+        "status": 2,
+        "receiptDigest": "0x97316ef186b70389c0023811181920374c4dd4b2b72c63dc752460e95b406237"
+      },
+      {
+        "teeId": "0xed19Ff73952E4A4783f739194940c0b6823Ae213",
+        "proxyId": "0xB18ABc7833156ee6C9A10D251003F191Ec0005F3",
+        "url": "https://payguard-fcc-c-production.up.railway.app",
+        "status": 2,
+        "receiptDigest": "0xb2be6e7791657faf4980dc10e12034a061a4fa65beba20aabd85ae2403e7611e"
+      }
+    ]
+  },
+  "assertions": {
+    "chainIdVerified": true,
+    "officialManagerVerified": true,
+    "exactlyThreeDistinctMachinesVerified": true,
+    "allMachinesStatusTwoVerified": true,
+    "allOriginsVerified": true,
+    "independentEncryptionVerified": true,
+    "ownerAuthorizationVerified": true,
+    "allThreeReceiptDigestsVerified": true,
+    "allThreeReceiptSignersVerified": true,
+    "ciphertextStoreWriteVerified": true,
+    "restartRecoveryVerified": false,
+    "onchainPolicyFreezeVerified": false,
+    "liveThresholdEvaluationVerified": false,
+    "hardwareAttestationVerified": false,
+    "simulatedTee": true,
+    "noPrivateKeyRecorded": true,
+    "noCredentialRecorded": true,
+    "noPolicyRecorded": true,
+    "noCiphertextRecorded": true,
+    "noSignatureRecorded": true,
+    "testnetOnly": true
+  },
+  "blockers": [
+    "HARDWARE_ATTESTATION_NOT_VERIFIED",
+    "ONCHAIN_POLICY_FREEZE_NOT_YET_VERIFIED",
+    "TWO_OF_THREE_LIVE_EVALUATION_NOT_YET_VERIFIED"
+  ],
+  "notes": [
+    "Organizer-approved SIMULATED_TEE=true was used on Coston2.",
+    "The private policy, three ciphertexts, owner authorizations, and machine signatures existed only in process memory and are excluded from public evidence."
+  ]
+}
