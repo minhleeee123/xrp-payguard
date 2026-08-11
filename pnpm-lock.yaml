@@ -54,9 +54,15 @@ importers:
 
   apps/relay:
     dependencies:
+      '@xrp-payguard/bindings':
+        specifier: workspace:*
+        version: link:../../packages/bindings
       '@xrp-payguard/protocol':
         specifier: workspace:*
         version: link:../../packages/protocol
+      tsx:
+        specifier: 4.23.12
+        version: 4.23.12
       viem:
         specifier: 2.55.11
         version: 2.55.11(typescript@7.0.2)

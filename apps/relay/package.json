@@ -7,11 +7,14 @@
     ".": "./src/index.ts"
   },
   "scripts": {
+    "live:start": "tsx src/live-entry.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@xrp-payguard/bindings": "workspace:*",
     "@xrp-payguard/protocol": "workspace:*",
+    "tsx": "4.23.12",
     "viem": "2.55.11"
   },
   "devDependencies": {

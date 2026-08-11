@@ -1,0 +1,16 @@
+.git
+.github
+.env*
+.local
+.vercel
+**/node_modules
+**/dist
+**/coverage
+**/out
+evidence
+docs
+tooling
+artifacts
+cache
+*.log
+*.tmp
