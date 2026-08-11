@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "suite": "payguard-coston2-live-simulated-threshold-lifecycle",
+  "status": "verified-live-simulated-threshold-lifecycle",
+  "recordedAt": "2026-08-11T05:30:31.204Z",
+  "network": {
+    "name": "flare-coston2",
+    "chainId": 114,
+    "observedBlock": "33906784"
+  },
+  "publicIdentifiers": {
+    "verificationSourceCommit": "7f0563dcbf380c3c8a433dbc897fb0546d2c8e74",
+    "dispatcher": "0x18Ea713cEf10ECf5cAC23c08dD25Ac17D2f07e3d",
+    "policyCommitment": "0xe8e5d3bb73361162601a10d274f8b206711a0275fc02f2b483a9bc535949a08e",
+    "custodyFreezeTransaction": "0xcb8db39e7c083b5c33f4726a7d097f958ee722b65a8961b6c8085d383d43b8dc",
+    "machines": [
+      {
+        "teeId": "0x1C911D007f8203484eD4099bC11849d7e9691044",
+        "proxyId": "0x8dfd80A00C1C6909E4f3f9439240243f5B193FA3",
+        "url": "https://payguard-fcc-a-production.up.railway.app",
+        "status": 2
+      },
+      {
+        "teeId": "0xff49A99535b8c52345D3c0b76bCf60194De7C29b",
+        "proxyId": "0x6860a154be5415219E2A197E987e5f34cC48F2Bf",
+        "url": "https://payguard-fcc-b-production.up.railway.app",
+        "status": 2
+      },
+      {
+        "teeId": "0xed19Ff73952E4A4783f739194940c0b6823Ae213",
+        "proxyId": "0xB18ABc7833156ee6C9A10D251003F191Ec0005F3",
+        "url": "https://payguard-fcc-c-production.up.railway.app",
+        "status": 2
+      }
+    ],
+    "allow": {
+      "instructionId": "0xcbbd1ba8f68dceba6d8d19f022109d7b8641f158ed45d9194660e28f4540915e",
+      "evaluationDigest": "0x7c94ec18ad2ecdb15b59a2b05f62ea4d7ac5f86171e4d1e19d1524aa16b8b331",
+      "transactions": {
+        "create": "0x995bbf1125996950ca371a206c85c894b35e4095c83327b0fdd9b72a491513c9",
+        "dispatch": "0x7054cf4cb77ccc94f5995c778b681916afa69a2be1dc9b3273fd7ffa2b8edeea",
+        "submit": [
+          "0xaaa8e222da6b18e02f985c6ea5b0ef14cafbddd047213c39bc2276e07c1ba0af",
+          "0xfd80edd2176228125d8e5b401670b50714030f2dda5c92257f45af302b344b81"
+        ],
+        "execute": "0xac8f92c7ff2aa47c906fdc09fd5eeee93c88ebfb5c37b9a2be2d4cb03acf4ab8"
+      },
+      "routerStatus": 4
+    },
+    "deny": {
+      "instructionId": "0x588ebf52e716b1d4d4d307d6381e31a2e6685461ca2ee129ab2f41f565d9bedb",
+      "evaluationDigest": "0xc4ea2d96fb006de5662552726dbe13f4fd7548ed222589a5f33d95802a9aba4a",
+      "publicReasonClass": "CAP_EXCEEDED",
+      "transactions": {
+        "create": "0x882dad7e090110f6f2f14605a00a2d0538ec38004714b15d2a1ee99bd7daafba",
+        "dispatch": "0x5d114d29bf991176f230083e9912c40599992154af4a77d11589caad0cb51d9d",
+        "submit": [
+          "0x66c4b85ffa72830a0f3529cbef84b8d32f40b496fda49f1f0f7368a400ae657c",
+          "0x9f89d378fbb177243288a71bcf29af1907be9281dfe0aa080660a6eef3cdb32a"
+        ]
+      },
+      "routerStatus": 3
+    },
+    "policyLifecycleTransactions": {
+      "stop": "0x20014abc841c89b05872a57c8499ed539223478b8c9633cfee1a01da3ec15133",
+      "resume": "0x004f05ffb358f290c611e2e65589725cf76f8f0520849706ca0e8eb76d51eee3",
+      "revoke": "0x4a6913b1124e39bf9c78b2dba8a089dc1b388036b4af50332b30129b8d106b22"
+    },
+    "accounting": {
+      "before": {
+        "deposited": "1000000",
+        "available": "990000",
+        "reserved": "0",
+        "spent": "10000",
+        "withdrawn": "0",
+        "refunded": "0"
+      },
+      "afterAllow": {
+        "deposited": "1000000",
+        "available": "890000",
+        "reserved": "0",
+        "spent": "110000",
+        "withdrawn": "0",
+        "refunded": "0"
+      },
+      "afterDeny": {
+        "deposited": "1000000",
+        "available": "890000",
+        "reserved": "0",
+        "spent": "110000",
+        "withdrawn": "0",
+        "refunded": "0"
+      }
+    }
+  },
+  "assertions": {
+    "liveThreeMachineDispatchVerified": true,
+    "allThreeOuterSignaturesVerified": true,
+    "allThreeInnerSignaturesVerified": true,
+    "twoMatchingAllowVerified": true,
+    "allowExecutionVerified": true,
+    "vaultConservationVerified": true,
+    "twoMatchingDenyVerified": true,
+    "denyMovedNoFundsVerified": true,
+    "stopResumeRevokeVerified": true,
+    "hardwareAttestationVerified": false,
+    "simulatedTee": true,
+    "v2ReleaseVerified": false,
+    "noPrivateKeyRecorded": true,
+    "noCredentialRecorded": true,
+    "noPolicyRecorded": true,
+    "noCiphertextRecorded": true,
+    "noSignatureRecorded": true,
+    "testnetOnly": true
+  },
+  "blockers": [
+    "HARDWARE_ATTESTATION_NOT_VERIFIED",
+    "V2_RELEASE_NOT_VERIFIED",
+    "OUTAGE_AND_REPLACEMENT_DRILLS_NOT_VERIFIED"
+  ],
+  "notes": [
+    "Organizer-approved SIMULATED_TEE=true was used on Coston2.",
+    "ALLOW and DENY were independently computed by three registered machines; the router accepted two matching attestations.",
+    "The private policy, ciphertexts, owner authorizations, and signatures are excluded from public evidence.",
+    "The on-chain lifecycle uses the deployed V1 administrator mapping; official-manager authorization remains a V2 release blocker."
+  ]
+}
