@@ -149,7 +149,8 @@ async function ensureService() {
 async function ensureDomain() {
   const listed = await railway(["domain", "list", "--service", SERVICE, "--environment", ENVIRONMENT, "--json"]);
   const domains = JSON.parse(listed.stdout);
-  const existing = Array.isArray(domains) ? domains.find((item) => typeof item.domain === "string" && item.domain.endsWith(".up.railway.app")) : null;
+  const entries = Array.isArray(domains) ? domains : domains.domains;
+  const existing = Array.isArray(entries) ? entries.find((item) => typeof item.domain === "string" && item.domain.endsWith(".up.railway.app")) : null;
   if (existing) return `https://${existing.domain}`;
   const created = await railway(["domain", "--service", SERVICE, "--environment", ENVIRONMENT, "--port", "8080", "--json"]);
   const value = JSON.parse(created.stdout);
