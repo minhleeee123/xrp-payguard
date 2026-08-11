@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "suite": "payguard-coston2-v2-simulated-deployment",
+  "status": "live-candidate",
+  "verifiedRelease": false,
+  "hardwareTeeVerified": false,
+  "simulatedTee": true,
+  "profile": "COSTON2_SIMULATED_V2",
+  "recordedAt": "2026-08-11T11:45:27.054Z",
+  "sourceCommit": "4bb30adb18dc2366439c71eb756638573af8007c",
+  "network": {
+    "name": "flare-coston2",
+    "chainId": 114,
+    "observedBlock": "33918796"
+  },
+  "teeManager": "0x1a9C4A0f9D76c0b1D91d22E24E573a9b377618aE",
+  "extensionId": "66037",
+  "codeHash": "0x194844cf417dde867073e5ab7199fa4d21fd82b5dbe2bdea8b3d7fc18d10fdc2",
+  "contracts": {
+    "registry": {
+      "name": "PayGuardPolicyRegistryV2",
+      "address": "0xbB89d68Efd3994CD688816c175343511bA5c0E88",
+      "transactionHash": "0xb862aa7cb78f573ddb566e3171d2c62429825101e4c24cfd9be3519aed6862c0",
+      "blockNumber": "33918762",
+      "runtimeCodeHash": "0x1ed44c1bdb9df8d47f81cb1e1d80a699799236e17a2251dd08ec9d1b93244f8d"
+    },
+    "vault": {
+      "name": "PayGuardVault",
+      "address": "0xe8f5b30F9adCea6b8532bFbD65f804E771520214",
+      "transactionHash": "0xb59fc5ef7de170471baf0a291540bb1a78a3f6323677722bbf85209b45b12d40",
+      "blockNumber": "33918768",
+      "runtimeCodeHash": "0x5971e2ef67c18d4c9365aec05e063c65a484617f70a5e7ffde792e0dcd7cc006"
+    },
+    "router": {
+      "name": "PayGuardActionRouter",
+      "address": "0x452988f04bE9602EC0CEB0239EBA5Fe60d8988D3",
+      "transactionHash": "0xe7303036207e29c7b6441ec4440e5c20f47022f8690a5cd89df9686df1f3ffd1",
+      "blockNumber": "33918776",
+      "runtimeCodeHash": "0x5c33c9e11ab8a2e4a4ff56a6ea4d0774e302146c32dcf3325b9341aa0160915f"
+    }
+  },
+  "asset": "0x0b6A3645c240605887a5532109323A3E12273dc7",
+  "wiring": {
+    "vaultRouter": {
+      "functionName": "setRouter",
+      "transactionHash": "0xbf25f771fbfbb88e2392b43f343533a4883e63c57c80fe4e0bda3438d5a6d859",
+      "blockNumber": "33918779",
+      "verified": true
+    },
+    "supportedFTestXrp": {
+      "functionName": "setSupportedAsset",
+      "transactionHash": "0x9612f4e5fc9d15cb395cbb2622b8646968fd316f180b460578829f01cff1698e",
+      "blockNumber": "33918784",
+      "verified": true
+    }
+  },
+  "machines": [
+    {
+      "signer": "0x1C911D007f8203484eD4099bC11849d7e9691044",
+      "machineId": "0x0000000000000000000000001c911d007f8203484ed4099bc11849d7e9691044",
+      "origin": "https://payguard-fcc-a-production.up.railway.app",
+      "status": 2,
+      "simulated": true
+    },
+    {
+      "signer": "0xff49A99535b8c52345D3c0b76bCf60194De7C29b",
+      "machineId": "0x000000000000000000000000ff49a99535b8c52345d3c0b76bcf60194de7c29b",
+      "origin": "https://payguard-fcc-b-production.up.railway.app",
+      "status": 2,
+      "simulated": true
+    },
+    {
+      "signer": "0xd871bc2044a75e8cc2CF06aCdeaDC4CBbEef349A",
+      "machineId": "0x000000000000000000000000d871bc2044a75e8cc2cf06acdeadc4cbbeef349a",
+      "origin": "https://payguard-fcc-d-production.up.railway.app",
+      "status": 2,
+      "simulated": true
+    }
+  ],
+  "assertions": {
+    "sourceCommitCleanAtBroadcast": true,
+    "runtimeCodeVerified": true,
+    "constructorBindingsVerified": true,
+    "officialManagerRechecked": true,
+    "threeProductionMachinesRechecked": true,
+    "simulatedProfileChainLocked": true,
+    "vaultRouterVerified": true,
+    "supportedAssetVerified": true,
+    "noHardwareAttestationClaimed": true,
+    "noVerifiedReleaseClaimed": true,
+    "publicOnly": true
+  },
+  "notes": [
+    "This is a live Coston2 V2 simulated-TEE candidate deployed in parallel with V1.",
+    "It is not the non-simulated hardware-attested PayGuard release manifest."
+  ]
+}
