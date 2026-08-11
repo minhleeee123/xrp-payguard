@@ -1,15 +1,16 @@
 # FCC container build and local three-machine gate
 
 Status: reproducible `linux/amd64` image and local simulated three-machine smoke
-pass. This is not a registered FCC deployment, stable HTTPS origin, sealed
-recovery proof, Coston2 action result, or release image claim.
+pass. Separately, registered Railway A/B/D simulated machines and Coston2 action
+results are evidenced; this local image record by itself is not a deployment,
+hardware-attestation, sealed-recovery, or release-image claim.
 
 For the hackathon delivery, this local stack is the selected FCC demonstration
 mode. It demonstrates deterministic three-machine identities, ciphertext-only
 adapter behavior, restart identity rotation, and fail-closed ingress without
 incurring hosted TEE cost. It does not provide hardware confidentiality or
-upgrade any live product claim. Hosted FCC infrastructure is deferred until
-after the hackathon.
+upgrade any live product claim by itself. Hosted simulated FCC infrastructure
+was added later and is evaluated only through its separate Coston2 evidence.
 
 ## Image contract
 
@@ -66,11 +67,14 @@ and removes its containers, network, volumes, and temporary image tag. The
 compose network has ordinary bridge egress solely for local testing and carries
 no credentials. It is not the production network policy.
 
-## Post-hackathon live gate
+## Live deployment status and remaining gate
 
-A live image must be rebuilt from the exact committed source, published by
-digest, and placed behind three new stable authenticated HTTPS proxy origins.
-Each fresh machine must be registered through the supported Coston2 flow and
-checked against its public proxy identity and on-chain record. `MODE=1` must be
-reported as simulated TEE. Neither this local smoke nor an image hash may be
-promoted to PayGuard custody/evaluation evidence.
+Three stable Railway origins were built from the pinned extension stack and
+registered through the supported Coston2 flow. A/B/D report manager status `2`,
+and separate evidence verifies proxy/TEE identity, all-three ingress receipts,
+threshold results, C→D replacement, and executor-pause recovery. They run
+`SIMULATED_TEE=true` and therefore do not establish hardware confidentiality.
+Neither this local smoke nor an image hash alone may be promoted to PayGuard
+custody/evaluation evidence; only the sanitized live records support those
+limited claims. Hardware-backed multi-operator deployment and a verified V2
+release remain open.

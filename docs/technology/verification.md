@@ -27,7 +27,7 @@ Forbidden evidence:
 | D — Deterministic evaluation | cross-language vectors and private policy result | LIVE SIMULATED PASS — THREE MATCHING ALLOW RESULTS AND THREE MATCHING CAP DENIALS; CANONICAL FTSO/FDC LIVE INPUTS REMAIN OPEN |
 | E — Threshold execution | two distinct exact results authorize one atomic action | LIVE SIMULATED V1 PASS — TWO DISTINCT ATTESTATIONS AUTHORIZE ALLOW/EXECUTE; TWO DENIALS MOVE NO FUNDS / HARDWARE + V2 RELEASE OPEN |
 | F — Vault conservation | deposits/reservations/spend/refund and adversarial invariants | LOCAL PASS / VAULT DEPLOYED / LIVE FAssets REQUEST/PAYOUT OBSERVED / CANONICAL SETTLEMENT + DEFAULT RECOVERY OPEN |
-| G — XRP-native funding | XRPL payment, FDC proof, Smart Account deposit | PASS — live PayGuard-owned Coston2 evidence in [`evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json`](../../evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json) covers validated XRPL Testnet payment, FDC request/finalized round/proof commitment, on-chain `verifyXRPPayment`, `executeDirectMintingWithData`, and verified PayGuardVault accounting. The credential-free [`coston2-funding-resume-audit-2026-08-09.json`](../../evidence/coston2/coston2-funding-resume-audit-2026-08-09.json) reconstructs that checkpoint and re-verifies its proof/runtime bindings. The separate [`xrpl-fdc-trigger-pending-2026-08-09.json`](../../evidence/coston2/xrpl-fdc-trigger-pending-2026-08-09.json) binds a second validated XRPL payment and finalized proof to atomic replay consumption and one canonical router `Pending` request. Canonical private FDC evaluation passes locally, but its policy signers are simulated; delayed resubmission, live FCC results, and release gates remain open. |
+| G — XRP-native funding | XRPL payment, FDC proof, Smart Account deposit | PASS — live PayGuard-owned Coston2 evidence in [`evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json`](../../evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json) covers validated XRPL Testnet payment, FDC request/finalized round/proof commitment, on-chain `verifyXRPPayment`, `executeDirectMintingWithData`, and verified PayGuardVault accounting. The credential-free [`coston2-funding-resume-audit-2026-08-09.json`](../../evidence/coston2/coston2-funding-resume-audit-2026-08-09.json) reconstructs that checkpoint and re-verifies its proof/runtime bindings. The separate [`xrpl-fdc-trigger-pending-2026-08-09.json`](../../evidence/coston2/xrpl-fdc-trigger-pending-2026-08-09.json) binds a second validated XRPL payment and finalized proof to atomic replay consumption and one canonical router `Pending` request. Canonical private FDC evaluation passes locally, but that exact live trigger was not sent through the separately verified simulated FCC lifecycle; delayed resubmission, end-to-end FDC→FCC execution, and release gates remain open. |
 | H — Product release | full roles, recovery, accessibility, live deployment | INTERACTIVE VERCEL DAPP + LIVE RAILWAY SIMULATED-FCC V1 LIFECYCLE/REPLACEMENT + FULL EXECUTOR PAUSE/RESUME + PUBLIC-SAFE REPOSITORY EVIDENCE + LANDING + DESKTOP/MOBILE/KEYBOARD BROWSER SMOKE / HOSTED-WEB INTEGRATION, HARDWARE, V2, REMAINING DEPENDENCY-OUTAGE MATRIX, AND RELEASE MANIFEST OPEN |
 | I — User validation | interviews, usability, and design-partner pilot | NOT STARTED — INTERVIEWS/USABILITY ARE A PRE-SUBMISSION VALIDATION TARGET; PILOTS AND RELEASE ACCEPTANCE REMAIN POST-HACKATHON |
 
@@ -237,11 +237,11 @@ plan retains six explicit external blockers until those activities occur.
 
 ## 5. Release acceptance
 
-The hackathon acceptance boundary is narrower than release acceptance: a
-credential-free local three-machine simulation, public Coston2 facts, and the
-Vercel public shell/evidence mirror may be demonstrated only with explicit
-simulation and availability labels. Production FCC servers and the hosted
-private lifecycle are post-hackathon work.
+The hackathon acceptance boundary is narrower than release acceptance: the
+Vercel artifact remains a three-actor simulation plus public Coston2 facts.
+Separate post-freeze repository evidence now verifies stable A/B/D Railway
+origins and a registered live `SIMULATED_TEE` private lifecycle. The hosted web
+is not connected to that path, and hardware/V2 release acceptance remains open.
 
 One separate solution-3 record now proves the deployed Coston2 registry,
 router, and vault path with three ephemeral simulated signers, two matching
@@ -250,7 +250,8 @@ under `evidence/simulation/`, asserts `hardwareTeeVerified: false` and
 `registeredMachinesVerified: false`, and does not satisfy Gate A, B, C, or the
 live portion of Gate E.
 
-Do not call PayGuard complete when only a local demo works. Release requires a
-real Coston2 lifecycle, live failure/recovery evidence, generated bindings,
-public-safe hosted smoke, secret/privacy scans, user testing, and documentation
-whose claims exactly match the deployed state.
+Do not call PayGuard complete because the simulated Coston2 lifecycle works.
+Release still requires hardware/V2 lifecycle evidence, the remaining dependency
+outage and redemption paths, release-bound generated bindings, hosted-web smoke,
+external review, user testing, and documentation whose claims exactly match the
+deployed state.

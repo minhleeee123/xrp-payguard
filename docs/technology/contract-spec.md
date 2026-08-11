@@ -2,8 +2,10 @@
 
 > The local V1 ABI/state machine now exists under `packages/contracts/src` and
 > is covered by Foundry tests. Its three contracts and vault wiring are verified
-> on Coston2 in `evidence/coston2/contracts-deployment.json`. This document does
-> not assert registered FCC execution, a complete release, or a production audit.
+> on Coston2 in `evidence/coston2/contracts-deployment.json`. A separate
+> registered Coston2 `SIMULATED_TEE` lifecycle now exercises the V1 contracts,
+> but this document does not assert hardware-backed FCC execution, a complete
+> release, or a production audit.
 > A manager-backed `PayGuardPolicyRegistryV2` is also implemented and tested
 > locally, but it has no verified Coston2 deployment or release status.
 > The separate XRPL FDC trigger consumer is deployed and binding-verified in

@@ -1,8 +1,8 @@
 # FCC private policy wire and TEE identity
 
-Status: local cross-language ECIES and authenticated-ingress gate. No private
-Coston2 ingress, registered PayGuard machine, custody receipt, or live
-evaluation is claimed yet.
+Status: local cross-language ECIES plus live Coston2 authenticated ingress,
+registered simulated-machine custody receipts, and threshold evaluation pass.
+Hardware-backed confidentiality and V2 release are not claimed.
 
 ## Machine identity
 
@@ -86,7 +86,10 @@ low-S owner signature before decryption and returns only its public signed
 receipt. Exact retries are idempotent; the removed coordinator HTTP path cannot
 bypass owner authorization.
 
-The current machine store is in-memory and deliberately fails closed after
-identity restart. A stable authenticated HTTPS origin, rate limiting at the
-proxy, sealed rollback/recovery state, three independent registrations, and live
-replacement evidence remain separate gates before custody is called live.
+The current machine store is identity-namespaced and deliberately fails closed
+for a replacement identity. Stable authenticated HTTPS origins, three distinct
+registrations, live all-three custody, and C→D replacement now pass with
+organizer-supported `SIMULATED_TEE=true`. The supported recovery model creates
+a fresh identity and new policy; it never restores or silently swaps an old
+identity. Hardware-backed sealed recovery, independent operators, production
+proxy review, and V2 release remain open.

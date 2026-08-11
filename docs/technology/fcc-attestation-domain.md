@@ -1,7 +1,8 @@
 # FCC attestation signing domain
 
-Status: local cross-language compatibility gate. Registered Coston2 machine
-signatures are not yet verified.
+Status: local cross-language compatibility plus registered Coston2 simulated-
+machine signature verification pass. Hardware attestation and V2 release remain
+unverified.
 
 ## Pinned source behavior
 

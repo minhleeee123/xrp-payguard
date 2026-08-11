@@ -3,11 +3,13 @@
 ## Current release boundary
 
 This guide documents compile-tested public codecs, not a live PayGuard SDK or
-verified Coston2 release. The hackathon uses three local `SIMULATED_TEE`
-machines. Stable FCC origins, authenticated indexers, registered machine
-custody, hosted relay, and a verified release manifest are post-hackathon
-gates. Integrators must not treat either preview below as a policy approval,
-FDC proof, signature, submitted transaction, or successful payment.
+verified Coston2 release. The hosted web demo still uses three serverless
+simulation actors. Separately, stable A/B/D FCC origins, authenticated indexer
+access, registered `SIMULATED_TEE` custody/evaluation, replacement, and executor
+recovery now pass on Coston2. Hosted release relay/web integration, hardware
+attestation, V2, and a verified release manifest remain open. Integrators must
+not treat either preview below as a policy approval, FDC proof, signature,
+submitted transaction, or successful payment.
 
 The example package is deliberately private until a verified PayGuard release
 manifest exists. It accepts no XRPL seed, EVM private key, FCC key, API key, or

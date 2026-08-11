@@ -1,7 +1,9 @@
 # FCC foundation deployment and registration runbook
 
 Status: sender deployment, extension registration, explicit binding, and
-configuration are verified on Coston2. No TEE machine or FCC result is claimed.
+configuration are verified on Coston2. This runbook's foundation record alone
+claims no TEE machine or FCC result; later files separately verify registered
+simulated machines, signed `PING_V1`, custody, and threshold evaluation.
 
 ## Verified registration
 

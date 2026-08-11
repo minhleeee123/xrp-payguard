@@ -3,8 +3,9 @@
 > Status: the local protocol, durable ciphertext custody adapter, relay, web
 > shell, and manager-backed V2 registry candidate are implemented and tested.
 > The V1 registry/vault/router have independently checked Coston2 testnet
-> observations, but they are not a verified release. A V2 address, registered
-> machines, and release wiring remain planned targets.
+> observations. Three registered Coston2 `SIMULATED_TEE` machines now pass live
+> custody/evaluation and replacement recovery, but this is not a hardware-backed
+> or verified release. A V2 address and release wiring remain planned targets.
 
 ## 1. System model
 
@@ -18,7 +19,7 @@ FDC request -> voting round -> proof -> Smart Account / PersonalAccount
                                                    v
 Browser Policy Studio -- ciphertext only --> Private ingress gateway
       |                                      /       |       \
-      |                                     TEE A   TEE B   TEE C
+      |                                     TEE A   TEE B   TEE D
       |                                      \ sealed policy /
       |                                       signed receipts
       v                                              |
@@ -51,8 +52,9 @@ machine-signed public receipt. It does not decrypt, score, persist plaintext, or
 become a correctness authority. Each machine verifies an owner signature over
 the full binding digest, ciphertext hash, machine/key identity, submission
 nonce, and bounded time window before decrypting. The local container endpoint
-implements this contract; stable TLS origins and proxy rate limits remain a
-deployment gate.
+implements this contract. Stable Railway TLS origins now serve A/B/D and passed
+live ingress; independent hardware operators, production transport review, and
+release-bound proxy/relay controls remain deployment gates.
 
 ### Policy custody receipts
 
@@ -80,8 +82,9 @@ policy ciphertext. The identity-namespaced store persists only ciphertext and
 public receipt metadata with atomic no-overwrite writes, strict permissions,
 and corruption/symlink rejection. A same-identity process can reconstruct
 custody; a rotated identity sees an empty namespace and cannot evaluate the old
-policy. Authenticated HTTPS deployment and production recovery evidence remain
-mandatory before this local boundary becomes live.
+policy. Authenticated HTTPS deployment and supported C→D replacement now pass
+on Coston2 simulated machines. Hardware-backed sealed recovery, independent
+operators, and verified V2 release evidence remain mandatory for production.
 
 ### Foundation FCC sender
 
@@ -94,9 +97,9 @@ only a nonzero nonce and public payload hash. The handler rejects malformed,
 non-canonical, wrong-chain, wrong-version, or empty fields and returns a typed
 binding hash. This component cannot dispatch `EVALUATE_V1`, submit `ALLOW`, or
 move vault funds. Deployment, registration, and a live outer FCC signature are
-separate gates. The sender and extension registration are now Coston2-verified
-as extension `66037`; a production machine and live outer FCC signature remain
-unverified.
+independently checked gates. Extension `66037`, registered status-2 simulated
+machines, and a live `PING_V1` with exact TEE/proxy signatures are now
+Coston2-verified. This does not establish hardware attestation or a V2 release.
 
 ### PolicyRegistry
 
@@ -368,8 +371,10 @@ and atomically consumes transaction/proof commitments while creating one
 contract has no `ALLOW` path. Its Coston2 deployment/runtime bindings and one
 live proof consumption into a canonical `Pending` request are verified. V1 FCC
 evaluators locally enforce the frozen private FDC descriptor and public trigger
-snapshot before either machine can sign `ALLOW`; the recorded Coston2 policy
-custody is still simulated, so no live FCC authorization is claimed.
+snapshot before either machine can sign `ALLOW`. The recorded FDC-triggered
+Coston2 request itself stopped at `Pending` and was not submitted to FCC. A
+separate registered `SIMULATED_TEE` lifecycle now proves live threshold
+authorization, but it does not consume that FDC request or prove hardware/V2.
 
 The integration layer now also has a local fail-closed `Web2Json` boundary. It
 models the official `PublicWeb2` request/response fields and commits the exact

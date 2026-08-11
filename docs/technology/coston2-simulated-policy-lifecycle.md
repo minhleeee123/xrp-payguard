@@ -4,11 +4,12 @@ Status: guarded solution-3 demonstration tooling; no live FCC claim.
 
 ## Purpose
 
-The hackathon boundary uses three local `SIMULATED_TEE` machines because stable
-hardware-backed FCC origins and the authenticated indexer are unavailable. The
-guarded lifecycle runner extends that boundary onto the already verified
-PayGuard Coston2 contracts without pretending that locally generated signers are
-official FCC machines.
+The frozen hackathon web boundary chose three local `SIMULATED_TEE` machines
+when stable PayGuard origins and authenticated indexer access were unavailable.
+Later A/B/D registered simulated-machine evidence is tracked separately and
+does not retroactively upgrade this runner. The guarded lifecycle extends the
+original boundary onto the already verified PayGuard Coston2 contracts without
+pretending that locally generated signers are official FCC machines.
 
 The runner uses the committed PayGuard protocol evaluator, three ephemeral
 signers held only in process memory, and the deployment owner's ignored local

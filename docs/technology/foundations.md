@@ -8,8 +8,10 @@ strict private-policy wire, and loopback ECIES decryption pass locally. FCC
 foundation dispatch now has a local typed sender/handler and shared Solidity/Go
 binding vector. Its sender deployment, extension registration, explicit binding,
 owner permissions, and EVM key-type configuration are verified on Coston2.
-A production machine/result, stable machine origins, sealed recovery, and the
-private live lifecycle remain planned and not yet verified.
+Stable A/B/D origins, authenticated indexer access, registered simulated
+machines, signed `PING_V1`, private custody/evaluation, C→D replacement, and
+executor-pause recovery are now evidenced separately. Hardware-backed machines,
+sealed identity recovery, V2 deployment, and a verified release remain open.
 
 ## Pinned local toolchain
 
@@ -28,15 +30,19 @@ shape but constructs its own `PAYGUARD` / `PING_V1` request. The request binds
 Coston2 chain `114`, the exact sender, registry-assigned extension ID, PayGuard
 code version, nonce, and a public-safe payload hash. The Go extension accepts
 only the canonical ABI tuple and returns the same fields plus their binding
-hash. This proves local wire compatibility only; an official outer FCC result
-and registered TEE signer remain Gate A evidence requirements.
+hash. The shared vector proves local wire compatibility; separate Coston2
+evidence now verifies an official outer FCC result and registered simulated
+TEE/proxy signers. Hardware attestation and V2 release remain separate
+requirements.
 
 Deployment tooling resolves the manager from the digest-pinned official
 scaffold file, verifies the live diamond interface, and journals deploy,
 register, one-shot bind, owner permissions, and EVM key-type configuration.
 `fcc-foundation-deployment.md` defines the exact runbook and evidence boundary.
-The committed tooling deployed and independently reverified extension `66037`;
-this registered sender is still not a Gate A FCC result.
+The committed tooling deployed and independently reverified extension `66037`.
+The sender registration alone is not a Gate A result; the later signed live
+`PING_V1` and threshold-lifecycle evidence are the corresponding simulated-
+machine facts.
 
 ## Official discovery sources
 

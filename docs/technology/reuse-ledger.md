@@ -1,6 +1,8 @@
 # PayGuard reuse ledger
 
-Status: current local adaptation record; no FCC deployment claim.
+Status: current adaptation record. Deployment facts come only from PayGuard's
+separate sanitized Coston2 evidence, never from the referenced scaffold or
+VeilBid.
 
 The official Flare FCE scaffold was inspected read-only at commit
 `ffb6c4ca7c160c49be59e00fe537e24d2477b000`.
@@ -40,6 +42,7 @@ deployment addresses, evidence, ciphertext, or sealed state was copied. The
 production command now refuses to start until it discovers the fresh tee-node
 identity and both loopback sign/decrypt operations are usable. Its per-machine
 ingress requires the policy owner's canonical signature over the complete
-binding and ciphertext domain. Registered FCC machines and a live Coston2
-`PING_V1`/`EVALUATE_V1` result remain planned until new PayGuard infrastructure
-is available.
+binding and ciphertext domain. New PayGuard-owned A/B/D infrastructure now has
+registered simulated machines and live Coston2 `PING_V1`/`EVALUATE_V1`
+evidence. Those facts do not originate in either reference source and do not
+establish hardware attestation or a verified release.
