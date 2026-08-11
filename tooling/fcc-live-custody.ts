@@ -543,7 +543,8 @@ export async function executeLiveCustody(options: LiveCustodyOptions) {
   const issuedAt = now;
   const expiry = now + 15n * 60n;
   const receipts: Array<{ receipt: PolicyReceiptV1; digest: Hex; signer: Address; signature: Hex }> = [];
-  for (const machine of machines) {
+  for (let index = 0; index < machines.length; index += 1) {
+    const machine = machines[index]!;
     const ciphertext = await encryptPrivatePolicyForTeeV1(policy, machine.publicKey);
     const authorizationDigest = policyIngressAuthorizationDigest({
       binding,
