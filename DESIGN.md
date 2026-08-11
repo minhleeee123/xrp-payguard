@@ -26,10 +26,14 @@ The website has two related surfaces with one visual system:
 | Application | Let owner, funder, executor, payee, team member, and auditor inspect public-safe state | Persistent app chrome, dense two-column workspaces |
 | Documentation | Explain protocol, threats, verification, and limitations | Reading column with protocol/code panels |
 
-The application navigation is:
+The application navigation is grouped by purpose:
 
-`Overview` · `Policy Studio` · `Vaults` · `Requests` · `Payee` · `Auditor` ·
-`Team & roles`
+- Main flow: `Policy Studio` · `Vaults` · `Requests`.
+- Verify: `Demo lifecycle` · `Payee` · `Auditor`.
+- Admin: `Team & roles`.
+
+There is no Overview screen. Landing owns onboarding; legacy
+`#app/overview` routes redirect to the wallet-free Demo lifecycle.
 
 The landing page may use a centered hero and a dotted globe illustration. The
 application must prioritize task completion, public checkpoints, recovery, and
@@ -150,10 +154,14 @@ is not valid without a verified manifest.
 ### Application sidebar
 
 The app has a `224–248px` left sidebar on laptop widths. It contains the
-wordmark, `PERSONAL WORKSPACE`/team name, role-aware navigation, and a compact
-dependency-status block. The active item uses a lime left rule and text only;
-there is no colored tile background. The sidebar footer shows wallet state and
-never a private key, seed, or credential.
+wordmark, role-aware navigation, and the public wallet identity in the footer.
+The active item uses a lime left rule and text only; there is no colored tile
+background. Repeated workspace, release-candidate, dependency-health, and help
+cards do not occupy the global shell. The sidebar footer never shows a private
+key, seed, or credential.
+
+Desktop navigation labels the three groups `MAIN FLOW`, `VERIFY`, and `ADMIN`.
+This hierarchy must remain visible without turning group labels into controls.
 
 At widths below `760px`, the sidebar becomes a fixed bottom navigation with five
 high-value destinations; secondary destinations remain reachable from a menu.
@@ -188,6 +196,20 @@ left-aligned content. The first row is a bracketed metadata label and optional
 section index (`[ PUBLIC CHECKPOINTS ]`, `B 01`). The title uses light PT Serif;
 body copy uses Inter Tight.
 
+### Contextual card help
+
+Every major card exposes a compact `?` control in its upper-right corner. The
+control reveals task-specific guidance on pointer hover and keyboard focus; a
+click may pin it temporarily, and `Escape` closes it. The tooltip describes how
+to use the surface and what its labels mean without turning the whole card into
+a clickable object.
+
+Move optional instructions and repeated explanatory prose into this help layer
+to keep the default workspace scannable. Never hide a value or message that can
+change a decision: canonical state, wallet/network state, amount, public/private
+boundary, disabled-control prerequisite, fail-closed reason, hardware/release
+limitation, or exact transaction preview must remain visible in the card.
+
 ### Evidence/code panel
 
 Evidence panels use `#252525`, a `4px` radius, `24px` padding, and JetBrains Mono.
@@ -214,9 +236,42 @@ evidence object is kept separate from the private in-memory preview in code.
 
 ### Status tag
 
-Transparent tags use a one-pixel border and uppercase Inter Tight at `10–11px`.
-`VERIFIED` and active controls use signal lime; every other state uses ash/fog.
-Tags include text such as `0 / 3 VERIFIED`, `LOCAL`, `UNAVAILABLE`, or `DENIED`.
+Compact tags use uppercase Inter Tight at `10–11px`. `VERIFIED` uses a lime
+status rail; every other state uses ash/fog. Tags include text such as
+`0 / 3 VERIFIED`, `LOCAL`, `UNAVAILABLE`, or `DENIED`.
+
+Status tags and informational badges must not resemble controls. They use a
+compact filled label with a short left status rail, default cursor, and no hover
+or pressed state. Static metric, guardian, and use-case cards likewise remain
+visually stationary. Only a card implemented as a button may lift or change its
+interactive border on hover.
+
+### Interaction affordance
+
+Primary actions use a filled lime surface; secondary actions use a lime outline;
+tertiary text actions use a visible underline rail. All three have hover, active,
+keyboard-focus, and disabled states. Icon-only actions sit inside a bordered
+square rather than appearing as decorative glyphs. Buttons use at least a 40px
+desktop control height, except compact icon and tertiary controls.
+
+Editable text and numeric fields use a black inset surface, a high-contrast
+border, a persistent left input rail, and a stronger label than helper copy.
+Hover and focus strengthen the border; disabled inputs return to neutral gray.
+Expandable rows expose a boxed plus/minus marker and a full-row hover state.
+
+### Information density
+
+The application shell shows only navigation, the current route, network,
+available verified balances, notifications, and wallet action. Unknown balance
+placeholders are hidden from the header rather than repeated as `—`. Release,
+hardware, FCC, and dependency detail appears only where it changes a task or is
+the subject of evidence; it is never repeated as a banner across every view.
+
+Each view prioritizes its unique task. Repeated explanatory flows, duplicate
+status summaries, and footer notices are removed when they add no action or new
+fact. Safety-critical fail-closed reasons, public/private boundaries, canonical
+state, and evidence limitations remain adjacent to the control or assertion
+they qualify.
 
 ### Form and validation
 
@@ -292,40 +347,38 @@ checkpoint rows. Moss Shadow may tint the interior field and Olive Depth may
 carry the mechanism stroke; Signal Lime remains one small status point per
 mascot. No mascot gains a second chromatic accent or CTA-style glow.
 
-### Overview
-
-The overview opens with the active role/workspace and a one-line network state.
-Metrics are public facts only: available balance, reserved, active policy
-versions, and next public checkpoint. Unknown values use `—` plus an explanation;
-zero must not mean “provider unavailable.” A trust-surface list shows FCC, FDC,
-FTSO, router/vault, and wallet states independently.
-
 ### Policy Studio
 
-The page starts with three templates: personal recurring, delegated allowance,
-and treasury vendor. A template changes only an in-memory draft and creates new
-entropy. The form collects policy name, owner, target, caps, UTC window,
-schedule, occurrence bound, and explicit public contract domain.
+The page is one gated four-step workflow: `Template → Rules → Review →
+Activate`. A template must be selected explicitly and creates fresh in-memory
+entropy. Rules derive owner from the connected wallet, use human-readable UTC
+date controls, show schedule-specific fields only when relevant, and keep the
+resolved contract domain read-only.
 
-The primary action is `VALIDATE & COMPUTE`. After validation, show the commitment,
-exact boundary map, and `0 / 3 VERIFIED` receipt progress. The activation panel
-must remain blocked until three registered, domain-matching machine receipts are
-actually verified. It must never create local receipts or display `ALLOW`.
+All four sections remain in one vertical desktop document. The compact step bar
+is sticky below the global top bar and acts as a table of contents: scrolling
+updates its active item, while clicking any item scrolls to that section.
+Future sections stay visible and labelled `LOCKED`; only their state-changing
+controls remain disabled until prior gates pass.
 
-An adjacent `INTERACTIVE TESTNET DEMO` panel may offer the complete separately
-namespaced lifecycle. Its stepper is `FUND → RECEIPTS → REGISTER → REQUEST →
-QUORUM → EXECUTE/DENY → GOVERNANCE`. It uses the same sharp cards and status
-tags, shows explorer links for real Coston2 transactions, and places
-`SIMULATED FCC · NOT PRODUCTION TEE` above every actor/quorum state. It never
-uses the lime `VERIFIED` treatment for hardware, independence, or production
-custody.
+Review states the policy in plain language, separates public/private disclosure,
+and repeats that ordinary transaction facts remain public. Only then may the
+user compute the commitment. Activate remains locked until a valid commitment
+exists and registration remains blocked until three registered,
+domain-matching machine receipts are actually verified. It never creates local
+receipts or displays `ALLOW`.
+
+The separately namespaced V1 sandbox lives only inside Demo lifecycle's
+historical archive. It never competes with or falls back into the V2 Studio.
 
 ### Vaults
 
-Show public deposited/available/reserved/spent/withdrawn conservation. Funding
-steps clearly distinguish XRPL wallet signing, asynchronous FDC proof, Smart
-Account operation, and final public receipt. With no verified provider, show
-`UNAVAILABLE` and recovery instructions; never show a simulated balance.
+Put the approve/deposit/withdraw task first. Follow it with one compact overview
+showing available balance, wallet balance, and allowance. Deposited, reserved,
+spent, withdrawn, finality, conservation, runtime, prepared operation, and the
+explorer/faucet link remain visible below those headline values without a
+disclosure header. With no verified provider, show `UNAVAILABLE` and recovery
+instructions; never show a simulated balance.
 
 ### Requests and schedules
 
@@ -423,8 +476,9 @@ Before a UI commit, verify:
    checks pass where applicable.
 3. Fresh browser storage is empty after Studio use; no private payload appears
    in network or console output.
-4. Laptop screenshots cover Overview, Studio empty/valid/error, Vaults,
-   Requests, Payee, Auditor, and Team states.
+4. Laptop screenshots cover Landing, all four Studio steps, Vaults, Requests,
+   Demo, Payee, Auditor, and Team states; `#app/overview` is checked as a Demo
+   redirect.
 5. Responsive screenshots cover the Studio form, boundary map, receipt progress,
    and recovery copy without horizontal overflow.
 6. The rendered interface agrees with this document and never upgrades a

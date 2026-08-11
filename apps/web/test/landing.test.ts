@@ -19,12 +19,20 @@ describe("editorial landing page", () => {
     expect(html).toContain('<a class="skip-link" href="#landing-main">Skip to main content</a>');
     expect(html).toContain('<main id="landing-main" tabindex="-1">');
     expect(html).toContain("Verify live V2 lifecycle");
+    expect(html).toContain('href="#journey">HOW IT WORKS</a>');
+    expect(html).not.toContain('href="#why">WHY</a>');
+    expect(html).not.toContain('href="#guardians">GUARDIANS</a>');
+    expect(html.match(/data-action="landing-demo"/g)).toHaveLength(1);
+    expect(html.match(/data-action="landing-studio"/g)).toHaveLength(1);
     expect(html).not.toContain("hosted V1 lifecycle");
     expect(html).not.toContain("Hardware attestation, V2, and a verified PayGuard release");
     expect(html).toContain('<a class="landing-brand" href="#landing"><span class="brand-mark" aria-hidden="true">P</span><span>PayGuard</span><span class="brand-beta" aria-hidden="true">COSTON2</span></a>');
     expect(html).not.toContain('class="landing-brand" href="#landing" aria-label=');
     expect(html.match(/class="neon-divider"/g)).toHaveLength(1);
     expect(html.match(/<details/g)).toHaveLength(4);
+    expect(html.match(/data-help=/g)).toHaveLength(11);
+    expect(html).not.toContain("<h3>Personal subscriptions</h3><p>");
+    expect(html).not.toContain("<h3>Policy custodian</h3><p>");
   });
 
   it("renders three meaningful code-native SVG mascots without chromatic assets", () => {
@@ -51,6 +59,14 @@ describe("editorial landing page", () => {
     expect(css).toContain(".reveal-ready .landing-reveal { opacity: 1; transform: none; }");
     for (const motion of ["custodyConverge", "quorumLink", "ledgerTick"]) expect(css).toContain(`@keyframes ${motion}`);
     expect(css).not.toMatch(/(?:linear|radial|conic)-gradient/i);
+  });
+
+  it("does not give static landing cards a false clickable hover state", () => {
+    const css = readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
+    expect(css).not.toContain(".guardian-card:hover");
+    expect(css).not.toContain(".use-case-card:hover");
+    expect(css).toContain(".faq-list summary:hover");
+    expect(css).toContain(".landing-text-link:hover");
   });
 
   it("ships a local SVG favicon instead of causing a production asset miss", () => {

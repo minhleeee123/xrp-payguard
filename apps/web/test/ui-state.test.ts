@@ -4,8 +4,9 @@ import { APP_VIEWS, appViewHash, durationHint, parseAppRoute, requestStateLabels
 describe("desktop application presentation state", () => {
   it("provides refresh-safe hashes for every application view", () => {
     for (const view of APP_VIEWS) expect(parseAppRoute(appViewHash(view))).toEqual({ surface: "app", view });
-    expect(parseAppRoute("")).toEqual({ surface: "app", view: "overview" });
-    expect(parseAppRoute("#app/unknown")).toEqual({ surface: "app", view: "overview" });
+    expect(parseAppRoute("")).toEqual({ surface: "app", view: "demo" });
+    expect(parseAppRoute("#app/unknown")).toEqual({ surface: "app", view: "demo" });
+    expect(parseAppRoute("#app/overview")).toEqual({ surface: "app", view: "demo" });
   });
 
   it("keeps landing section anchors on the landing surface", () => {

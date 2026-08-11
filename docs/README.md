@@ -24,6 +24,9 @@
   adoption without production-readiness claims.
 - [`product/user-journeys.md`](product/user-journeys.md): end-to-end journeys
   for policy owner, payee, executor, and auditor.
+- [`product/desktop-ui-ux-working-notes.md`](product/desktop-ui-ux-working-notes.md):
+  owner-reviewed desktop UI/UX decisions, implementation status, and the
+  pre-deployment consolidation checklist.
 - [`product/user-validation-protocol.md`](product/user-validation-protocol.md):
   planned consented study, privacy boundary, cohort floor, moderated tasks, and
   anonymized aggregate gate.

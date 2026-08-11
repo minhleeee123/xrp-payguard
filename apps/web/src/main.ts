@@ -25,6 +25,7 @@ import {
   compileStudioDraft,
   createStudioEntropy,
   studioTemplateDraft,
+  validateStudioDraft,
   type PreviewItem,
   type StudioCompilation,
   type StudioDraft,
@@ -34,7 +35,6 @@ import {
 import { fetchPublicWebEvidenceIndex, type PublicWebEvidenceIndex } from "./web-evidence.js";
 import { fetchSimulatedLifecycleEvidence, type SimulatedLifecycleEvidence } from "./demo-evidence.js";
 import { fetchLiveV2LifecycleEvidence, type LiveV2LifecycleEvidence } from "./live-lifecycle-evidence.js";
-import { fetchProductionHealth, type ProductionHealth } from "./production-health.js";
 import { landingView } from "./landing.js";
 import { appViewHash, durationHint, parseAppRoute, requestStateLabels, unixTimeHint, type View } from "./ui-state.js";
 import {
@@ -109,7 +109,7 @@ type DemoUiState = { status: "LOADING" } | { status: "READY"; evidence: Simulate
 type LiveV2EvidenceUiState = { status: "LOADING" } | { status: "READY"; evidence: LiveV2LifecycleEvidence } | { status: "UNAVAILABLE" };
 type InteractiveConfigUiState = { status: "LOADING" } | { status: "READY"; config: DemoDomainConfig } | { status: "UNAVAILABLE" };
 type LiveFccConfigUiState = { status: "LOADING" } | { status: "READY"; config: LiveFccConfig } | { status: "UNAVAILABLE" };
-type ProductionHealthUiState = { status: "LOADING" } | { status: "READY"; health: ProductionHealth } | { status: "UNAVAILABLE" };
+type StudioStep = 1 | 2 | 3 | 4;
 type WalletUiState =
   | { status: "DISCONNECTED" }
   | { status: "CONNECTING" }
@@ -137,9 +137,14 @@ if (!appElement) throw new Error("PayGuard root missing");
 const app = appElement;
 const initialRoute = parseAppRoute(window.location.hash);
 
-let activeView: View = initialRoute.surface === "app" ? initialRoute.view : "overview";
+let activeView: View = initialRoute.surface === "app" ? initialRoute.view : "demo";
 let studioNotice = "No policy data has left this browser tab.";
 let studioDraft = studioTemplateDraft("personal-recurring");
+let studioStep: StudioStep = 1;
+let studioTemplateChosen = false;
+let studioRulesReviewed = false;
+let studioScrollHandler: (() => void) | null = null;
+let studioScrollFrame: number | null = null;
 let studioEntropy = createStudioEntropy();
 let studioCompilation: StudioCompilation | null = null;
 let studioIssues: readonly StudioIssue[] = [];
@@ -158,6 +163,7 @@ let publicEvidenceMirrorState: PublicEvidenceMirrorState = { status: "LOADING" }
 let demoState: DemoUiState = { status: "LOADING" };
 let liveV2EvidenceState: LiveV2EvidenceUiState = { status: "LOADING" };
 let interactiveConfigState: InteractiveConfigUiState = { status: "UNAVAILABLE" };
+let interactiveStudioCompilation: StudioCompilation | null = null;
 let interactiveSession: DemoPolicySession | null = null;
 let interactivePolicyRegistration: DemoTransactionResult | null = null;
 let interactiveAccountSnapshot: DemoAccountSnapshot | null = null;
@@ -171,7 +177,6 @@ let interactiveFundInput = "1";
 let interactiveRequestAmountInput = "0.1";
 let interactiveTransactions: { label: string; hash: `0x${string}`; blockNumber: bigint }[] = [];
 let liveFccConfigState: LiveFccConfigUiState = { status: "LOADING" };
-let productionHealthState: ProductionHealthUiState = { status: "LOADING" };
 let liveFccSession: LivePolicySession | null = null;
 let liveFccPolicyRegistration: LiveTransactionResult | null = null;
 let liveFccPolicyStatus: number | null = null;
@@ -213,28 +218,19 @@ function render(): void {
       <a class="skip-link" href="#app-main">Skip to main content</a>
       <aside class="sidebar">
         <button class="brand brand-link" type="button" data-action="landing" aria-label="Open PayGuard landing page"><span class="brand-mark">P</span><span>PayGuard</span><span class="brand-beta">TESTNET</span></button>
-        <div class="workspace-label">${connectedAccount() ? "CONNECTED TESTNET WORKSPACE" : "PUBLIC TESTNET EXPLORER"}</div>
         <nav class="primary-nav" aria-label="Primary navigation">
-          ${navItem("overview", "Overview", "⌂")}
-          ${navItem("studio", "Policy Studio", "◈")}
-          ${navItem("vaults", "Vaults", "▣")}
-          ${navItem("requests", "Requests", "↗")}
-          ${navItem("demo", "Demo lifecycle", "⌁")}
-          ${navItem("payee", "Payee", "◍")}
-          ${navItem("auditor", "Auditor", "◌")}
-          ${navItem("team", "Team & roles", "♧")}
+          <div class="nav-group nav-group-main"><span class="nav-group-label">MAIN FLOW</span>${navItem("studio", "Policy Studio", "◈")}${navItem("vaults", "Vaults", "▣")}${navItem("requests", "Requests", "↗")}</div>
+          <div class="nav-group nav-group-proof"><span class="nav-group-label">VERIFY</span>${navItem("demo", "Demo lifecycle", "⌁")}${navItem("payee", "Payee", "◍")}${navItem("auditor", "Auditor", "◌")}</div>
+          <div class="nav-group nav-group-admin"><span class="nav-group-label">ADMIN</span>${navItem("team", "Team & roles", "♧")}</div>
           <button class="nav-item mobile-more" type="button" data-action="mobile-menu" aria-expanded="${mobileMenuOpen}" aria-controls="mobile-secondary-nav"><span class="nav-icon">＋</span>More</button>
         </nav>
         ${mobileMenuOpen ? `<div class="mobile-secondary-nav" id="mobile-secondary-nav" aria-label="Secondary navigation">${navItem("demo", "Demo", "⌁")}${navItem("payee", "Payee", "◍")}${navItem("auditor", "Auditor", "◌")}${navItem("team", "Team & roles", "♧")}</div>` : ""}
         <div class="sidebar-bottom">
-          ${sidebarNetworkCard()}
-          <button class="help-link" type="button" data-action="landing">? <span>How PayGuard works</span></button>
           ${sidebarUserRow()}
         </div>
       </aside>
       <main class="main-area">
         <header class="topbar"><div class="breadcrumbs"><span>Workspace</span><b>/</b><strong>${label(activeView)}</strong></div><div class="top-actions">${headerBalances()}${networkChip()}<button class="icon-button" type="button" data-action="notifications" aria-label="Notifications" aria-expanded="${notificationOpen}">♢${notificationState.status === "READY" && notificationState.feed.notifications.length > 0 ? '<span class="notification-dot"></span>' : ""}</button><button class="outline-button wallet-button" type="button" data-action="connect">${walletButtonLabel()}</button></div></header>
-        ${candidateContextBar()}
         ${notificationOpen ? notificationTray() : ""}
         <section class="content" id="app-main" tabindex="-1">${viewContent()}</section>
         ${appNotice ? `<div class="toast" role="status"><span>${esc(appNotice)}</span><button type="button" data-action="dismiss-notice" aria-label="Dismiss notification">×</button></div>` : ""}
@@ -248,7 +244,7 @@ function navItem(view: View, text: string, icon: string): string {
   return `<button class="nav-item nav-item-${view} ${activeView === view ? "active" : ""}" type="button" data-view="${view}"><span class="nav-icon">${icon}</span>${text}${view === "requests" ? requestCount : ""}</button>`;
 }
 
-function label(view: View): string { return ({ overview: "Overview", studio: "Policy Studio", vaults: "Vaults", requests: "Requests", demo: "Demo lifecycle", payee: "Payee", auditor: "Auditor", team: "Team & roles" })[view]; }
+function label(view: View): string { return ({ studio: "Policy Studio", vaults: "Vaults", requests: "Requests", demo: "Demo lifecycle", payee: "Payee", auditor: "Auditor", team: "Team & roles" })[view]; }
 
 function connectedAccount(): Address | null {
   return walletState.status === "CONNECTED" || walletState.status === "WRONG_CHAIN" ? walletState.account : null;
@@ -268,27 +264,10 @@ function networkChip(): string {
   return `<span class="network-chip"><span class="status-dot amber"></span>Coston2 <em>not connected</em></span>`;
 }
 
-function candidateContextBar(): string {
-  if (liveFccConfigState.status === "READY") {
-    const monitor = productionHealthState.status === "READY" && productionHealthState.health.status === "ready"
-      ? " · production monitor healthy" : productionHealthState.status === "LOADING" ? " · monitor checking" : " · monitor unavailable/degraded";
-    return `<div class="candidate-context candidate-ready" role="status"><span class="status-dot green"></span><strong>V2 LIVE CANDIDATE</strong><span>Coston2 · 3 registered status-2 machines · SIMULATED_TEE${monitor}</span><em>Hardware release not verified</em></div>`;
-  }
-  if (liveFccConfigState.status === "LOADING") {
-    return `<div class="candidate-context" role="status"><span class="status-dot amber"></span><strong>VERIFYING V2 CANDIDATE</strong><span>Checking relay, contracts, manager and A/B/D machine bindings</span><em>No readiness asserted yet</em></div>`;
-  }
-  return `<div class="candidate-context candidate-unavailable" role="status"><span class="status-dot amber"></span><strong>V2 LIVE PATH UNAVAILABLE</strong><span>Production checks failed closed</span><em>No simulated fallback is shown as live</em></div>`;
-}
-
 function headerBalances(): string {
   const live = liveSnapshot();
-  return `<div class="header-balances" aria-label="Coston2 wallet balances"><span class="header-balance" title="FTestXRP wallet balance"><small>FTESTXRP</small><strong>${live ? token(live.tokenBalance) : "—"}</strong></span><span class="header-balance" title="C2FLR gas balance"><small>C2FLR</small><strong>${live ? nativeToken(live.nativeBalance) : "—"}</strong></span><a class="header-faucet" href="${COSTON2_FAUCET}" target="_blank" rel="noreferrer" aria-label="Get Coston2 test tokens">FAUCET ↗</a></div>`;
-}
-
-function sidebarNetworkCard(): string {
-  if (liveFccConfigState.status === "READY") return `<div class="security-card live-card"><span class="status-dot green"></span><div><strong>V2 live candidate</strong><small>3 registered simulated machines</small></div></div>`;
-  if (liveFccConfigState.status === "LOADING") return `<div class="security-card"><span class="status-dot amber"></span><div><strong>Checking V2 domain</strong><small>Relay, manager & machines</small></div></div>`;
-  return `<div class="security-card"><span class="status-dot amber"></span><div><strong>V2 path unavailable</strong><small>Authorization failed closed</small></div></div>`;
+  if (!live) return `<a class="header-faucet" href="${COSTON2_FAUCET}" target="_blank" rel="noreferrer" aria-label="Get Coston2 test tokens">FAUCET ↗</a>`;
+  return `<div class="header-balances" aria-label="Coston2 wallet balances"><span class="header-balance" title="FTestXRP wallet balance"><small>FTESTXRP</small><strong>${token(live.tokenBalance)}</strong></span><span class="header-balance" title="C2FLR gas balance"><small>C2FLR</small><strong>${nativeToken(live.nativeBalance)}</strong></span><a class="header-faucet" href="${COSTON2_FAUCET}" target="_blank" rel="noreferrer" aria-label="Get Coston2 test tokens">FAUCET ↗</a></div>`;
 }
 
 function sidebarUserRow(): string {
@@ -330,65 +309,70 @@ function viewContent(): string {
   if (activeView === "payee") return payeeView();
   if (activeView === "auditor") return auditorView();
   if (activeView === "team") return teamView();
-  return overviewView();
+  return demoView();
 }
 
-function pageIntro(eyebrow: string, title: string, copy: string, action = ""): string {
-  const actionLabels: Record<string, string> = { "new-policy": "Open Policy Studio" };
-  return `<div class="page-intro"><div><div class="eyebrow">${eyebrow}</div><h1>${title}</h1><p>${copy}</p></div>${action ? `<button class="primary-button" type="button" data-action="${action}">${actionLabels[action] ?? action}</button>` : ""}</div>`;
-}
-
-function quickStartView(): string {
-  const account = connectedAccount();
-  const live = liveSnapshot();
-  const request = requestState.status === "UNAVAILABLE" ? null : requestState;
-  const reviewed = isReviewedRequestInput();
-  return `<section class="panel quick-start" aria-labelledby="quick-start-title"><div class="panel-heading"><div><div class="eyebrow">FIRST-TIME TEST PATH</div><h2 id="quick-start-title">Try the product without guessing</h2></div><span class="state-tag gray-tag">COSTON2 ONLY</span></div><p class="panel-copy">Start with the wallet-free proof, then connect a disposable testnet wallet only when you want to move faucet tokens.</p><div class="quick-start-grid">
-    <article><span class="quick-index">01</span><div><strong>Verify the live V2 candidate</strong><small>No wallet. Inspect A/B/D readiness, the hosted ALLOW/DENY lifecycle, V2 transactions, governance, and conservation.</small></div><button class="text-button" type="button" data-view="demo">Open V2 proof ↗</button></article>
-    <article><span class="quick-index">02</span><div><strong>${account ? "Coston2 wallet connected" : "Prepare a testnet wallet"}</strong><small>${account ? `${esc(short(account))} · PayGuard never receives its private key.` : "Use an injected EVM wallet. Get C2FLR gas and FTestXRP only from the official faucet."}</small></div>${account ? `<button class="text-button" type="button" data-action="refresh">Verify again ↗</button>` : `<div class="quick-actions"><button class="text-button" type="button" data-action="connect">Connect ↗</button><a href="${COSTON2_FAUCET}" target="_blank" rel="noreferrer">Official faucet ↗</a></div>`}</article>
-    <article><span class="quick-index">03</span><div><strong>${live ? "Vault controls ready" : "Fund and inspect your vault"}</strong><small>${live ? `${token(live.tokenBalance)} FTestXRP in wallet · every write uses an exact two-step preview.` : "Approve, deposit, and withdraw are enabled only after finalized runtime, wiring, and accounting checks."}</small></div><button class="text-button" type="button" data-view="vaults">Open vault ↗</button></article>
-    <article><span class="quick-index">04</span><div><strong>${request ? `${reviewed ? "Reviewed" : "Public"} request loaded` : "Verify a public request"}</strong><small>${request ? `On-chain ${request.status} · timing ${requestReadinessLabel(request.readiness)}.${reviewed ? " This public example is not your wallet activity." : " This is the public ID currently loaded in this tab."}` : "The reviewed request is prefilled. Reading it needs no wallet and reveals no private policy."}</small></div><button class="text-button" type="button" data-view="requests">Inspect request ↗</button></article>
-  </div><div class="quick-boundary"><span>◈</span><p><strong>Policy activation is intentionally not a browser shortcut.</strong> The V2 live candidate requires three registered FCC custody receipts; only the configured operator can rerun writes, while judges can verify the completed lifecycle wallet-free.</p><button class="text-button" type="button" data-view="studio">Inspect Policy Studio ↗</button></div></section>`;
-}
-
-function overviewView(): string {
-  const live = liveSnapshot();
-  const account = connectedAccount();
-  const publicRequest = requestState.status === "UNAVAILABLE" ? null : requestState;
-  const reviewed = isReviewedRequestInput();
-  const notice = live
-    ? `<div class="notice-banner live-notice"><span class="notice-icon">✓</span><div><strong>Finalized Coston2 account state verified</strong><span>Runtime bytecode, router/vault wiring, supported FTestXRP and conservation were checked together at block ${live.finalizedBlock}.</span></div><button type="button" data-action="refresh">Refresh</button></div>`
-    : account
-      ? `<div class="notice-banner"><span class="notice-icon">◉</span><div><strong>${coston2State.status === "LOADING" ? "Reading finalized Coston2 state" : "Finalized Coston2 state unavailable"}</strong><span>${coston2State.status === "UNAVAILABLE" ? esc(coston2State.message) : "The public account is connected; no balance is asserted until every live check passes."}</span></div><button type="button" data-action="refresh">Retry</button></div>`
-      : `<div class="notice-banner"><span class="notice-icon">◉</span><div><strong>Connect a Coston2 wallet</strong><span>Wallet access enables public balance and vault reads. FCC policy authorization remains explicitly simulated.</span></div><button type="button" data-action="connect">Connect</button></div>`;
-  return `${pageIntro("PERSONAL PAYGUARD", "Your testnet control center.", "Use real Coston2 account and vault state while private authorization remains separated from the browser.", "new-policy")}
-    ${notice}
-    ${quickStartView()}
-    <div class="metric-grid"><div class="metric-card"><div class="metric-label">VAULT AVAILABLE <span class="public-pill">PUBLIC</span></div><div class="metric-value">${live ? token(live.accounting.available) : "—"} <small>FTestXRP</small></div><div class="metric-foot muted">${live ? `${token(live.tokenBalance)} in connected wallet` : account ? "Live verification unavailable" : "Connect wallet for finalized read"}</div></div><div class="metric-card"><div class="metric-label">RESERVED <span class="public-pill">PUBLIC</span></div><div class="metric-value">${live ? token(live.accounting.reserved) : "—"}</div><div class="metric-foot muted">${live ? "Verified vault accounting" : "Pending state unavailable"}</div></div><div class="metric-card"><div class="metric-label">${reviewed ? "REVIEWED REQUEST" : "LOADED REQUEST"} ${reviewed ? '<span class="sample-pill">EXAMPLE</span>' : '<span class="public-pill">PUBLIC</span>'}</div><div class="metric-value metric-state">${publicRequest ? esc(publicRequest.status) : "—"}</div><div class="metric-foot muted">${publicRequest ? `Timing: ${requestReadinessLabel(publicRequest.readiness)} · ${short(publicRequest.snapshot.requestId)}` : "Finalized request unavailable"}</div></div><div class="metric-card"><div class="metric-label">C2FLR GAS</div><div class="metric-value">${live ? nativeToken(live.nativeBalance) : "—"}</div><div class="metric-foot"><span class="status-dot ${live ? "green" : "amber"}"></span> ${account ? "Wallet connected" : "Wallet not connected"}</div></div><div class="metric-card accent-card"><div class="metric-label">FINALIZED BLOCK</div><div class="metric-value">${live?.finalizedBlock ?? requestFinalizedBlock ?? "—"}</div><div class="metric-foot muted">${live || publicRequest ? "Public reads are pinned to finality" : "No public checkpoint loaded"}</div></div></div>
-    <div class="section-grid"><section class="panel activity-panel"><div class="panel-heading"><div><div class="eyebrow">PUBLIC ACCOUNT</div><h2>${live ? "Coston2 wallet ready" : account ? "Wallet connected · reads blocked" : "Connect without sharing a key"}</h2></div><button class="text-button" type="button" data-view="vaults">Open vault ↗</button></div>${live ? `<div class="live-account-summary"><div><span>ACCOUNT</span><strong class="mono-value">${esc(live.account)}</strong></div><div><span>FTESTXRP ALLOWANCE</span><strong>${token(live.vaultAllowance)}</strong></div><div><span>ASSET</span><strong>${live.token.symbol} · ${live.token.decimals} decimals</strong></div></div><a class="outline-button inline-link" href="${explorerAddress(live.account)}" target="_blank" rel="noreferrer">Open account explorer ↗</a>` : `<div class="empty-state"><div class="empty-orbit">◌</div><strong>${account ? "No unverified balance displayed" : "No wallet permission yet"}</strong><span>${account ? "Retry the finalized Coston2 checks before trusting any account or vault value." : "PayGuard asks only for the public account. Signing stays inside the injected wallet."}</span><button class="outline-button" type="button" data-action="${account ? "refresh" : "connect"}">${account ? "Retry finalized reads" : "Connect Coston2 wallet"}</button></div>`}</section><section class="panel health-panel"><div class="panel-heading"><div><div class="eyebrow">DEPENDENCY HEALTH</div><h2>Trust surface</h2></div><span class="health-label"><span class="status-dot ${live ? "green" : "amber"}"></span>${live ? "Public live" : "Limited"}</span></div><ul class="health-list"><li><span class="health-icon gray">▣</span><div><strong>PayGuard contracts</strong><small>${live ? "Runtime and wiring verified" : "Waiting for finalized RPC read"}</small></div><span class="state-tag ${live ? "green-tag" : "amber-tag"}">${live ? "VERIFIED" : "WAITING"}</span></li><li><span class="health-icon gray">X</span><div><strong>FTestXRP asset</strong><small>${live ? "Supported asset metadata verified" : "Waiting for account read"}</small></div><span class="state-tag ${live ? "green-tag" : "amber-tag"}">${live ? "VERIFIED" : "WAITING"}</span></li><li><span class="health-icon gray">◇</span><div><strong>FCC machine quorum</strong><small>${liveFccConfigState.status === "READY" ? "A/B/D registered at manager status 2" : "Hosted relay or machine preflight unavailable"}</small></div><span class="state-tag ${liveFccConfigState.status === "READY" ? "green-tag" : "amber-tag"}">${liveFccConfigState.status === "READY" ? "LIVE SIMULATED" : "UNAVAILABLE"}</span></li>${productionHealthRow()}<li><span class="health-icon gray">◈</span><div><strong>FDC/FAssets evidence</strong><small>Reviewed static Coston2 observations</small></div><span class="state-tag gray-tag">EVIDENCE</span></li></ul></section></div>`;
-}
-
-function productionHealthRow(): string {
-  if (productionHealthState.status === "LOADING") return `<li><span class="health-icon gray">⌁</span><div><strong>Production monitor</strong><small>Loading aggregate dependency health</small></div><span class="state-tag amber-tag">CHECKING</span></li>`;
-  if (productionHealthState.status === "UNAVAILABLE") return `<li><span class="health-icon gray">⌁</span><div><strong>Production monitor</strong><small>Public aggregate health unavailable; operator routes remain private</small></div><span class="state-tag amber-tag">UNAVAILABLE</span></li>`;
-  const health = productionHealthState.health;
-  const ready = health.status === "ready";
-  return `<li><span class="health-icon gray">⌁</span><div><strong>Production monitor</strong><small>${health.monitoredDependencies} dependencies · ${health.activeAlerts} active alerts · aggregate only</small></div><span class="state-tag ${ready ? "green-tag" : "amber-tag"}">${esc(health.status.toUpperCase())}</span></li>`;
+function pageIntro(eyebrow: string, title: string, copy: string): string {
+  return `<div class="page-intro"><div><div class="eyebrow">${eyebrow}</div><h1>${title}</h1><p>${copy}</p></div></div>`;
 }
 
 function studioView(): string {
-  return `${pageIntro("PRIVATE POLICY STUDIO", "Create a payment policy", "Define what can happen in private. Only the commitment, receipts, and public request domain leave this tab.")}
-    <div class="template-grid" aria-label="Policy templates">${STUDIO_TEMPLATES.map((template) => `<button class="template-card ${studioDraft.templateId === template.id ? "selected" : ""}" type="button" data-template="${template.id}" aria-pressed="${studioDraft.templateId === template.id}"><strong>${esc(template.name)}</strong><span>${esc(template.summary)}</span></button>`).join("")}</div>
-    <div class="studio-layout"><form class="panel studio-form" id="studio-form" novalidate><div class="form-header"><div><h2>Policy rules</h2><p>Version 1 · values stay in this tab until you submit encrypted copies to registered FCC ingress.</p></div><span class="version-chip">POLICY_SCHEMA_V1</span></div>
-      ${studioIssues.length > 0 ? `<div class="validation-summary" role="alert"><strong>Fix ${studioIssues.length} field${studioIssues.length === 1 ? "" : "s"} before computing</strong><span>${esc(studioIssues[0]?.message ?? "Policy draft is invalid.")}</span></div>` : ""}
-      ${studioField("policyName", "Policy name", "A local label; the canonical policy ID is derived from it.", "text")}
-      <div class="two-col">${studioField("owner", "Owner address", "Public at activation.", "text")}${studioField("target", "Allowed target", "Private rule; public only in a request.", "text")}</div>
-      <div class="two-col">${studioField("maxPerAction", "Maximum per action", "Private · public base units only when requested.", "numeric")}${studioField("dailyCap", "Daily cap", "Private rolling/calendar policy input.", "numeric")}</div>
-      <div class="two-col">${studioField("startAt", "Starts at (Unix time, UTC)", "Private policy window.", "numeric")}${studioField("endAt", "Ends at (Unix time, UTC)", "Private policy window.", "numeric")}</div>
-      <div class="three-col">${studioField("scheduleIntervalSeconds", "Interval (seconds)", "0 selects ad-hoc mode.", "numeric")}${studioField("scheduleGraceSeconds", "Grace (seconds)", "0 only in ad-hoc mode.", "numeric")}${studioField("maxOccurrences", "Occurrence limit", "0 means no policy-specific limit.", "numeric")}</div>
-      <details class="domain-details"><summary>Exact public contract domain <span>local example · not verified</span></summary><p>These values bind the commitment. Replace them only with addresses resolved from a future verified PayGuard release.</p><div class="two-col">${studioField("registry", "Policy registry", "Public domain field.", "text")}${studioField("vault", "Vault", "Public domain field.", "text")}${studioField("router", "Action router", "Public domain field.", "text")}${studioField("asset", "Supported asset", "Public token address.", "text")}</div></details>
-      <div class="form-divider"></div><div class="private-row"><span class="lock-icon">▣</span><div><strong>Confidential draft only</strong><small>The target rule, caps, schedule and fresh cryptographic salt/nonce remain in memory. No browser storage, logs, analytics, public calldata or evidence receives them.</small></div><span class="state-tag gray-tag">IN MEMORY</span></div><div class="form-actions"><span class="form-note" id="studio-notice">${esc(studioNotice)}</span><button class="primary-button" type="submit">Validate & compute ↗</button></div></form>
-      <aside class="studio-side">${studioPreview()}${studioCustodyPanel()}${interactiveStudioPanel()}<section class="privacy-note"><span>✦</span><div><strong>Refresh discards the draft</strong><p>Policy plaintext and ciphertext are never placed in browser persistence. A refresh intentionally cannot recover this draft.</p></div></section></aside></div>`;
+  return `${pageIntro("PRIVATE POLICY STUDIO", "Create a payment policy", "Build one private rule through four visible sections. The sticky step bar jumps between them while actions remain gated in order.")}
+    ${studioStepper()}
+    <div class="studio-all-steps">
+      <div class="studio-section" id="studio-section-1" data-studio-section="1">${studioTemplateStep()}</div>
+      <div class="studio-section ${studioTemplateChosen ? "" : "locked"}" id="studio-section-2" data-studio-section="2">${studioRulesStep()}</div>
+      <div class="studio-section ${studioRulesReviewed ? "" : "locked"}" id="studio-section-3" data-studio-section="3">${studioReviewStep()}</div>
+      <div class="studio-section ${studioCompilation ? "" : "locked"}" id="studio-section-4" data-studio-section="4">${studioActivateStep()}</div>
+    </div>
+    <section class="privacy-note studio-privacy-note"><span>✦</span><div><strong>Refresh discards this workflow</strong><p>Draft values, entropy, ciphertexts, and receipts are never placed in browser persistence.</p></div></section>`;
+}
+
+function studioStepper(): string {
+  const steps: readonly [StudioStep, string][] = [[1, "Template"], [2, "Rules"], [3, "Review"], [4, "Activate"]];
+  const unlocked = (step: StudioStep): boolean => step === 1 || (step === 2 && studioTemplateChosen) || (step === 3 && studioRulesReviewed) || (step === 4 && Boolean(studioCompilation));
+  const complete = (step: StudioStep): boolean => step === 1 ? studioTemplateChosen : step === 2 ? studioRulesReviewed : step === 3 ? Boolean(studioCompilation) : false;
+  return `<div class="studio-progress"><div class="studio-progress-meta"><span>Step ${studioStep} of 4</span><strong>${steps[studioStep - 1]?.[1]}</strong></div><div class="studio-stepper" aria-label="Policy creation sections">${steps.map(([step, labelText]) => `<button class="studio-step ${studioStep === step ? "active" : ""} ${complete(step) ? "complete" : ""} ${unlocked(step) ? "" : "locked"}" type="button" data-studio-step="${step}" ${studioStep === step ? 'aria-current="step"' : ""}><span>${complete(step) ? "✓" : String(step).padStart(2, "0")}</span>${labelText}${!unlocked(step) ? " · LOCKED" : ""}</button>`).join("")}</div></div>`;
+}
+
+function studioTemplateStep(): string {
+  return `<section class="panel studio-step-panel"><div class="form-header"><div><div class="eyebrow">STEP 01</div><h2>Choose a starting policy</h2><p>Select one template explicitly. This creates fresh in-memory entropy.</p></div><span class="version-chip">POLICY_SCHEMA_V1</span></div><div class="template-grid" aria-label="Policy templates">${STUDIO_TEMPLATES.map((template) => { const selected = studioTemplateChosen && studioDraft.templateId === template.id; return `<button class="template-card ${selected ? "selected" : ""}" type="button" data-template="${template.id}" aria-pressed="${selected}"><strong>${esc(template.name)}</strong><span>${esc(template.summary)}</span><span class="template-choice-state" aria-hidden="true">${selected ? "✓ SELECTED" : "SELECT TEMPLATE →"}</span></button>`; }).join("")}</div><div class="studio-action-bar"><span>${esc(studioNotice)}</span><button class="primary-button" type="button" data-studio-step="2" ${studioTemplateChosen ? "" : "disabled"}>Continue to rules</button></div></section>`;
+}
+
+function studioRulesStep(): string {
+  const account = connectedAccount();
+  const recurring = studioDraft.scheduleIntervalSeconds !== "0";
+  const locked = !studioTemplateChosen;
+  const domainLabel = liveFccConfigState.status === "READY" ? "Configured Coston2 V2 domain" : "Configured public Coston2 domain";
+  return `<form class="panel studio-form studio-step-panel" id="studio-form" novalidate><div class="form-header"><div><div class="eyebrow">STEP 02</div><h2>Define the private rule</h2><p>Focus on payment intent; owner and contract domain are resolved for you.</p></div><span class="state-tag ${locked ? "gray-tag" : "green-tag"}">${locked ? "LOCKED · CHOOSE TEMPLATE" : "IN MEMORY"}</span></div><fieldset class="studio-step-fields" ${locked ? "disabled" : ""}>${studioIssues.length > 0 ? `<div class="validation-summary" role="alert"><strong>Fix ${studioIssues.length} field${studioIssues.length === 1 ? "" : "s"}</strong><span>${esc(studioIssues[0]?.message ?? "Policy draft is invalid.")}</span></div>` : ""}<input type="hidden" name="owner" value="${esc(account ?? "")}" /><input type="hidden" name="registry" value="${esc(studioDraft.registry)}" /><input type="hidden" name="vault" value="${esc(studioDraft.vault)}" /><input type="hidden" name="router" value="${esc(studioDraft.router)}" /><input type="hidden" name="asset" value="${esc(studioDraft.asset)}" />${studioField("policyName", "Policy name", "A local label used to derive the canonical policy ID.", "text")}<div class="two-col">${studioField("target", "Allowed target", "Private policy rule; public only when requested.", "text")}<div class="derived-field"><span>Owner</span><strong>${account ? esc(short(account)) : "Wallet not connected"}</strong><small>${account ? "Derived from the connected Coston2 wallet." : "Connect a wallet before this rule can be reviewed."}</small>${account ? "" : '<button class="text-button" type="button" data-action="connect">Connect wallet ↗</button>'}</div></div><div class="two-col">${studioField("maxPerAction", "Maximum per action", "Private cap; an actual requested amount remains public.", "numeric")}${studioField("dailyCap", "Daily cap", "Private policy limit.", "numeric")}</div><div class="schedule-choice"><span>Schedule</span><div><label><input type="radio" name="scheduleMode" value="adhoc" ${recurring ? "" : "checked"} />Ad-hoc</label><label><input type="radio" name="scheduleMode" value="recurring" ${recurring ? "checked" : ""} />Recurring</label></div></div><div class="two-col">${studioDateField("startAt", "Starts at (UTC)")}${studioDateField("endAt", "Ends at (UTC)")}</div>${recurring ? `<div class="two-col">${studioField("scheduleIntervalSeconds", "Interval in seconds", "How often a scheduled occurrence may happen.", "numeric")}${studioField("scheduleGraceSeconds", "Grace in seconds", "Must be shorter than the interval.", "numeric")}</div>` : '<input type="hidden" name="scheduleIntervalSeconds" value="0" /><input type="hidden" name="scheduleGraceSeconds" value="0" />'}<details class="domain-details more-options"><summary>More options <span>occurrence limit</span></summary><div>${studioField("maxOccurrences", "Occurrence limit", "0 means no policy-specific limit.", "numeric")}</div></details><div class="derived-domain"><div><span>Resolved domain</span><strong>${domainLabel}</strong></div><small>Registry ${esc(short(studioDraft.registry))} · Vault ${esc(short(studioDraft.vault))} · Router ${esc(short(studioDraft.router))} · FTestXRP ${esc(short(studioDraft.asset))}</small></div><div class="private-row"><span class="lock-icon">▣</span><div><strong>Confidential draft only</strong><small>Target, caps, schedule, salt, and nonce stay in this tab until encrypted submission to registered FCC ingress.</small></div><span class="state-tag gray-tag">IN MEMORY</span></div><div class="studio-action-bar"><button class="outline-button" type="button" data-studio-step="1">Back to template</button><span id="studio-notice">${esc(studioNotice)}</span><button class="primary-button" type="submit" ${account && !locked ? "" : "disabled"}>Continue to review</button></div></fieldset></form>`;
+}
+
+function studioDateField(field: "startAt" | "endAt", labelText: string): string {
+  const issue = studioIssues.find((candidate) => candidate.field === field);
+  return `<label class="studio-field ${issue ? "field-error" : ""}">${labelText}<input type="datetime-local" name="${field}" value="${esc(unixToDateTimeInput(studioDraft[field]))}" step="60" aria-invalid="${Boolean(issue)}" />${issue ? `<span class="field-message">${esc(issue.message)}</span>` : "<small>Displayed as a human-readable UTC date and time.</small>"}</label>`;
+}
+
+function studioReviewStep(): string {
+  const recurring = studioDraft.scheduleIntervalSeconds !== "0";
+  const schedule = recurring ? `every ${durationHint(studioDraft.scheduleIntervalSeconds) ?? `${studioDraft.scheduleIntervalSeconds} seconds`}` : "on an ad-hoc basis";
+  return `<section class="studio-review-layout"><div class="panel studio-step-panel"><div class="form-header"><div><div class="eyebrow">STEP 03</div><h2>Review before computing</h2><p>No receipt or activation is created by this local computation.</p></div><span class="state-tag ${studioRulesReviewed ? "green-tag" : "gray-tag"}">${studioRulesReviewed ? "RULES READY" : "LOCKED · VALIDATE RULES"}</span></div><p class="policy-sentence">Allow <strong>${esc(short(studioDraft.owner))}</strong> to request up to <strong>${esc(studioDraft.maxPerAction)} FTestXRP</strong> for <strong>${esc(short(studioDraft.target))}</strong>, ${esc(schedule)}, within a daily cap of <strong>${esc(studioDraft.dailyCap)} FTestXRP</strong>.</p><div class="disclosure-grid"><article><span class="visibility-dot public"></span><h3>Public</h3><p>Commitment, owner, contract domain, and every actual request's amount, recipient, timing, nonce, and transaction graph.</p></article><article><span class="visibility-dot private"></span><h3>Private in FCC</h3><p>Target relationship, caps, schedule logic, occurrence bound, salt, nonce, and intermediate evaluation details.</p></article></div><div class="public-warning"><strong>PayGuard is not private money.</strong><span>Ordinary amount, recipient, timing, and transaction graph remain public.</span></div><details class="domain-details technical-details"><summary>Technical details <span>exact domain and hashes</span></summary>${studioPreview()}</details><div class="studio-action-bar"><button class="outline-button" type="button" data-studio-step="2">Back to rules</button><span>${esc(studioNotice)}</span><button class="primary-button" type="button" data-action="studio-compute" ${studioRulesReviewed ? "" : "disabled"}>Compute policy commitment</button></div></div></section>`;
+}
+
+function studioActivateStep(): string {
+  const ready = Boolean(studioCompilation);
+  return `<div class="studio-activate-layout"><section class="panel studio-step-panel activation-summary"><div class="form-header"><div><div class="eyebrow">STEP 04</div><h2>Activate with three custody receipts</h2><p>${ready ? "The commitment is ready locally. Registration remains blocked until the exact V2 domain and all three machine receipts pass." : "Review the policy and compute its commitment before any custody or registration action becomes available."}</p></div><span class="state-tag ${ready ? "green-tag" : "gray-tag"}">${ready ? "COMMITMENT READY" : "LOCKED · COMPUTE FIRST"}</span></div>${studioPreview()}<div class="studio-action-bar"><button class="outline-button" type="button" data-studio-step="3">Back to review</button><button class="text-button" type="button" data-view="demo">Open lifecycle evidence ↗</button></div></section>${studioCustodyPanel()}</div>`;
+}
+
+function unixToDateTimeInput(value: string): string {
+  const seconds = Number(value);
+  if (!Number.isSafeInteger(seconds) || seconds <= 0) return "";
+  return new Date(seconds * 1_000).toISOString().slice(0, 16);
+}
+
+function dateTimeInputToUnix(value: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) return "";
+  const milliseconds = Date.parse(`${value}:00Z`);
+  return Number.isNaN(milliseconds) ? "" : String(Math.floor(milliseconds / 1_000));
 }
 
 function interactiveStudioPanel(): string {
@@ -396,12 +380,12 @@ function interactiveStudioPanel(): string {
   if (interactiveConfigState.status === "LOADING") return `<details class="legacy-sandbox-panel"><summary>Legacy V1 sandbox <span>loading isolated actors</span></summary><section class="panel receipt-card interactive-studio-card"><div class="eyebrow">LEGACY V1 SANDBOX</div><h3>Loading isolated demo domain…</h3><p class="panel-copy">This is not the active V2 candidate.</p></section></details>`;
   if (interactiveConfigState.status === "UNAVAILABLE") return `<details class="legacy-sandbox-panel"><summary>Legacy V1 sandbox <span>recorded evidence only</span></summary><section class="panel receipt-card interactive-studio-card"><div class="eyebrow">LEGACY V1 SANDBOX</div><h3>Historical actor APIs are intentionally not deployed</h3><div class="activation-block"><span class="status-dot amber"></span><div><strong>No fallback approval</strong><small>The active V2 FCC panel remains independent; review the historical evidence in Demo lifecycle.</small></div></div></section></details>`;
   const config = interactiveConfigState.config;
-  const exactDomain = studioCompilation
-    && studioCompilation.policy.registry.toLowerCase() === config.registry.toLowerCase()
-    && studioCompilation.policy.vault.toLowerCase() === config.vault.toLowerCase()
-    && studioCompilation.policy.router.toLowerCase() === config.router.toLowerCase()
-    && studioCompilation.policy.asset.toLowerCase() === config.asset.toLowerCase()
-    && account && studioCompilation.policy.owner.toLowerCase() === account.toLowerCase();
+  const exactDomain = interactiveStudioCompilation
+    && interactiveStudioCompilation.policy.registry.toLowerCase() === config.registry.toLowerCase()
+    && interactiveStudioCompilation.policy.vault.toLowerCase() === config.vault.toLowerCase()
+    && interactiveStudioCompilation.policy.router.toLowerCase() === config.router.toLowerCase()
+    && interactiveStudioCompilation.policy.asset.toLowerCase() === config.asset.toLowerCase()
+    && account && interactiveStudioCompilation.policy.owner.toLowerCase() === account.toLowerCase();
   const rows = interactiveSession
     ? interactiveSession.custody.map((envelope) => `<div class="receipt-row demo-receipt-row"><span class="machine-index">0${envelope.actor}</span><div><strong>${esc(short(envelope.receipt.machineId))}</strong><small>Signed simulation receipt · ${esc(short(envelope.digest))}</small></div><span class="state-tag gray-tag">SIMULATED</span></div>`).join("")
     : config.actors.map((actor) => `<div class="receipt-row demo-receipt-row"><span class="machine-index">0${actor.actor}</span><div><strong>${esc(short(actor.machineId))}</strong><small>Distinct serverless actor · not a TEE</small></div><span class="state-tag gray-tag">READY</span></div>`).join("");
@@ -422,6 +406,7 @@ function studioCustodyPanel(): string {
   if (liveFccConfigState.status === "LOADING") return `<section class="panel receipt-card"><div class="eyebrow">V2 LIVE CANDIDATE · COSTON2</div><h3>Verifying relay and three machines…</h3><p class="panel-copy">No readiness is asserted until the relay checks V2 contracts, manager status, stable HTTPS origins, keys and code hash.</p></section>`;
   if (liveFccConfigState.status === "UNAVAILABLE") return `<section class="panel receipt-card"><div class="eyebrow">V2 LIVE CANDIDATE · COSTON2</div><h3>Live path unavailable</h3><div class="activation-block"><span class="status-dot amber"></span><div><strong>Failed closed</strong><small>No local receipt or legacy simulation replaces the hosted V2 path.</small></div></div></section>`;
   const config = liveFccConfigState.config;
+  if (!studioCompilation) return `<section class="panel receipt-card"><div class="eyebrow">LIVE FCC · COSTON2 V2</div><h3>Custody waits for a commitment</h3><div class="activation-block"><span class="status-dot amber"></span><div><strong>0 / 3 receipts</strong><small>Complete Rules and Review first. No machine request is sent from this locked section.</small></div></div></section>`;
   const exactDomain = studioCompilation
     && studioCompilation.policy.registry.toLowerCase() === config.contracts.registry.toLowerCase()
     && studioCompilation.policy.vault.toLowerCase() === config.contracts.vault.toLowerCase()
@@ -492,11 +477,17 @@ function studioPreview(): string {
     && studioCompilation.policy.registry.toLowerCase() === interactiveConfigState.config.registry.toLowerCase()
     && studioCompilation.policy.vault.toLowerCase() === interactiveConfigState.config.vault.toLowerCase()
     && studioCompilation.policy.router.toLowerCase() === interactiveConfigState.config.router.toLowerCase();
+  const publicCoston2Domain = studioCompilation
+    && studioCompilation.policy.registry.toLowerCase() === PAYGUARD_COSTON2.registry.toLowerCase()
+    && studioCompilation.policy.vault.toLowerCase() === PAYGUARD_COSTON2.vault.toLowerCase()
+    && studioCompilation.policy.router.toLowerCase() === PAYGUARD_COSTON2.router.toLowerCase();
   const domainStatus = liveV2Domain
     ? "V2 live-candidate domain loaded · hardware release not verified"
     : demoDomain
       ? "Legacy V1 sandbox domain loaded · not active V2"
-      : "Local example domain · select V2 only with the configured operator";
+      : publicCoston2Domain
+        ? "Reviewed public Coston2 domain · V2 activation requires the configured operator"
+        : "Local example domain · not verified";
   return `<section class="panel commitment-card"><div class="eyebrow">DOMAIN-BOUND COMMITMENT</div><div class="commitment-value" id="commitment-value">${esc(commitment)}</div><small>${studioCompilation ? "Validated locally · not registered" : "Validate the in-memory draft to compute"}</small><div class="commitment-state"><span class="status-dot ${liveV2Domain ? "green" : "amber"}"></span> ${domainStatus}</div></section>
     <section class="panel boundary-card"><div class="eyebrow">EXACT DATA MAP</div><h3>Public versus private</h3>${studioCompilation ? `${previewGroup("Public at activation", studioCompilation.publicAtActivation, "public")} ${previewGroup("Public at request", studioCompilation.publicAtRequest, "request")} ${previewGroup("Private in FCC", studioCompilation.privateInFcc, "private")}` : `<p class="boundary-empty">Compute the draft to inspect every policy field by when and where it becomes visible.</p>`}</section>`;
 }
@@ -509,7 +500,8 @@ function vaultsView(): string {
   const live = liveSnapshot();
   const account = connectedAccount();
   return `${pageIntro("PUBLIC ASSET VAULTS", "Your Coston2 vault", "Read one finalized public checkpoint before approving, depositing, or withdrawing test tokens.")}
-    <div class="vault-card panel"><div class="vault-card-top"><div class="token-symbol">X</div><div><h2>FTestXRP vault</h2><span class="muted">${account ? esc(short(account)) : "Public asset · Coston2"}</span></div><span class="state-tag ${live ? "green-tag" : "amber-tag"}">${live ? "LIVE READ" : account ? "READ BLOCKED" : "CONNECT"}</span></div><div class="vault-balance"><span>Available in vault</span><strong>${live ? token(live.accounting.available) : "—"} <small>FTestXRP</small></strong><span class="muted">${live ? `Finalized block ${live.finalizedBlock}` : account ? "Live verification must pass before balances appear" : "Connect an injected wallet to read account state"}</span></div><div class="vault-stats"><div><span>Deposited</span><strong>${live ? token(live.accounting.deposited) : "—"}</strong></div><div><span>Reserved</span><strong>${live ? token(live.accounting.reserved) : "—"}</strong></div><div><span>Spent</span><strong>${live ? token(live.accounting.spent) : "—"}</strong></div><div><span>Withdrawn</span><strong>${live ? token(live.accounting.withdrawn) : "—"}</strong></div></div><div class="vault-public-state"><div><span>Conservation</span><strong>${live ? "Verified at finalized block" : "Waiting for Coston2"}</strong></div><div><span>Wallet balance</span><strong>${live ? `${token(live.tokenBalance)} FTestXRP` : "—"}</strong></div><div><span>Vault allowance</span><strong>${live ? `${token(live.vaultAllowance)} FTestXRP` : "—"}</strong></div><div><span>Contract runtime</span><strong>${live ? "Verified against deployment evidence" : "—"}</strong></div></div><div class="vault-actions"><button class="primary-button" type="button" data-action="${account ? "refresh" : "connect"}">${live ? "Refresh finalized state" : account ? "Retry finalized reads" : "Connect Coston2 wallet"}</button>${live ? `<a class="outline-button inline-link" href="${explorerAddress(PAYGUARD_COSTON2.vault)}" target="_blank" rel="noreferrer">Vault explorer ↗</a>` : `<a class="outline-button inline-link" href="${COSTON2_FAUCET}" target="_blank" rel="noreferrer">Get test tokens ↗</a>`}</div></div>${vaultTransactionPanel(live, account)}<div class="section-grid"><section class="panel"><div class="panel-heading"><div><div class="eyebrow">EVM TESTNET PATH</div><h2>Wallet → PayGuardVault</h2></div><span class="state-tag ${live ? "green-tag" : "amber-tag"}">${live ? "TRANSACTIONS READY" : account ? "READ BLOCKED" : "CONNECT"}</span></div><div class="step-list"><div class="step-row"><span class="step-number">01</span><div><strong>Verify Coston2 and deployment</strong><small>Chain 114, finalized block, runtime hashes and wiring</small></div></div><div class="step-row"><span class="step-number">02</span><div><strong>Approve exact FTestXRP amount</strong><small>Wallet confirmation required; no private key enters PayGuard</small></div></div><div class="step-row"><span class="step-number">03</span><div><strong>Deposit or withdraw</strong><small>Receipt event and finalized postcondition must match exactly</small></div></div></div><p class="panel-copy phase-note">Only testnet FTestXRP is supported. The official Coston2 faucet currently supplies both C2FLR gas and FTestXRP; FCC authorization remains separate from these public vault controls.</p></section><section class="panel"><div class="panel-heading"><div><div class="eyebrow">XRPL-NATIVE PATH</div><h2>XRPL → FDC → Flare</h2></div><span class="state-tag gray-tag">EVIDENCE</span></div><p class="panel-copy">The flagship Smart Account funding path has a reviewed public observation. Interactive XRPL signing remains separate from this EVM recovery/developer path.</p><a class="text-button inline-link" href="/evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json" target="_blank" rel="noreferrer">Open funding evidence ↗</a></section></div>`;
+    ${vaultTransactionPanel(live, account)}
+    <section class="vault-card vault-overview panel"><div class="vault-card-top"><div class="token-symbol" aria-hidden="true">X</div><div><div class="eyebrow">VAULT OVERVIEW</div><h2>FTestXRP</h2><span class="muted">${account ? esc(short(account)) : "Public asset · Coston2"}</span></div><span class="state-tag ${live ? "green-tag" : "amber-tag"}">${live ? "LIVE" : account ? "READ BLOCKED" : "CONNECT"}</span><button class="icon-button vault-refresh" type="button" data-action="${account ? "refresh" : "connect"}" aria-label="${account ? "Refresh finalized vault state" : "Connect Coston2 wallet"}">↻</button></div><div class="vault-summary-grid"><div><span>Available</span><strong>${live ? token(live.accounting.available) : "—"}</strong><small>FTestXRP</small></div><div><span>Wallet balance</span><strong>${live ? token(live.tokenBalance) : "—"}</strong><small>FTestXRP</small></div><div><span>Vault allowance</span><strong>${live ? token(live.vaultAllowance) : "—"}</strong><small>FTestXRP</small></div></div><div class="vault-account-details"><div class="vault-details-grid"><div><span>Finalized block</span><strong>${live?.finalizedBlock ?? "—"}</strong></div><div><span>Deposited</span><strong>${live ? token(live.accounting.deposited) : "—"}</strong></div><div><span>Reserved</span><strong>${live ? token(live.accounting.reserved) : "—"}</strong></div><div><span>Spent</span><strong>${live ? token(live.accounting.spent) : "—"}</strong></div><div><span>Withdrawn</span><strong>${live ? token(live.accounting.withdrawn) : "—"}</strong></div><div><span>Conservation</span><strong>${live ? "Verified" : "Unavailable"}</strong></div><div><span>Contract runtime</span><strong>${live ? "Verified" : "Unavailable"}</strong></div><div><span>Prepared operation</span><strong>${vaultIntent?.kind ?? "None"}</strong></div></div><div class="vault-detail-actions">${live ? `<a class="text-button inline-link" href="${explorerAddress(PAYGUARD_COSTON2.vault)}" target="_blank" rel="noreferrer">Open vault explorer ↗</a>` : `<a class="text-button inline-link" href="${COSTON2_FAUCET}" target="_blank" rel="noreferrer">Get test tokens ↗</a>`}</div></div></section>`;
 }
 
 function vaultTransactionPanel(live: Coston2AccountSnapshot | null, account: Address | null): string {
@@ -527,7 +519,7 @@ function vaultTransactionPanel(live: Coston2AccountSnapshot | null, account: Add
   const review = vaultIntent
     ? `<div class="transaction-review"><div class="eyebrow">EXACT WALLET PREVIEW</div><h3>${vaultIntent.kind} · ${token(vaultIntent.amount)} FTestXRP</h3><p>${intentCopy}</p><dl><div><dt>Network</dt><dd>Coston2 · chain 114</dd></div><div><dt>Account</dt><dd>${account ? esc(account) : "—"}</dd></div><div><dt>Contract</dt><dd>${vaultIntent.kind === "APPROVE" ? PAYGUARD_COSTON2.asset : PAYGUARD_COSTON2.vault}</dd></div><div><dt>Success gate</dt><dd>Receipt + exact event + finalized postcondition</dd></div></dl><div class="transaction-warning">Testnet only. Confirm the same account, amount and contract in your wallet.</div><div class="vault-actions"><button class="outline-button" type="button" data-action="cancel-vault-intent" ${busy ? "disabled" : ""}>Cancel</button><button class="primary-button" type="button" data-action="submit-vault-intent" ${busy ? "disabled" : ""}>${busy ? "Waiting for wallet / finality…" : "Confirm in wallet"}</button></div></div>`
     : "";
-  return `<section class="panel vault-transaction-panel"><div class="panel-heading"><div><div class="eyebrow">LIVE TEST-TOKEN CONTROLS</div><h2>Approve, deposit or withdraw</h2></div><span class="state-tag ${live ? "green-tag" : "amber-tag"}">${live ? "COSTON2 LIVE" : "READ REQUIRED"}</span></div><p class="panel-copy">Enter an exact FTestXRP amount. Preparing an action does not open the wallet; the second confirmation does.</p><label class="transaction-amount">Amount in FTestXRP<input id="vault-amount" value="${esc(vaultAmountInput)}" inputmode="decimal" autocomplete="off" placeholder="1.000000" ${!live || busy ? "disabled" : ""} /><small>${live ? `Wallet ${token(live.tokenBalance)} · allowance ${token(live.vaultAllowance)} · vault available ${token(live.accounting.available)}` : "Connect and pass finalized checks first."}</small></label><div class="transaction-actions"><button class="outline-button" type="button" data-vault-kind="APPROVE" ${!live || busy ? "disabled" : ""}>Prepare exact approval</button><button class="primary-button" type="button" data-vault-kind="DEPOSIT" ${!live || busy ? "disabled" : ""}>Prepare deposit</button><button class="outline-button" type="button" data-vault-kind="WITHDRAW" ${!live || busy ? "disabled" : ""}>Prepare withdrawal</button></div>${review}${result}</section>`;
+  return `<section class="panel vault-transaction-panel"><div class="panel-heading"><div><div class="eyebrow">LIVE TEST-TOKEN CONTROLS</div><h2>Approve, deposit or withdraw</h2></div><span class="state-tag ${live ? "green-tag" : "amber-tag"}">${live ? "COSTON2 LIVE" : "READ REQUIRED"}</span></div><label class="transaction-amount">Amount in FTestXRP<input id="vault-amount" value="${esc(vaultAmountInput)}" inputmode="decimal" autocomplete="off" placeholder="1.000000" ${!live || busy ? "disabled" : ""} /><small>${live ? `Wallet ${token(live.tokenBalance)} · allowance ${token(live.vaultAllowance)} · vault available ${token(live.accounting.available)}` : "Connect and pass finalized checks first."}</small></label><div class="transaction-actions"><button class="outline-button" type="button" data-vault-kind="APPROVE" ${!live || busy ? "disabled" : ""}>Prepare exact approval</button><button class="primary-button" type="button" data-vault-kind="DEPOSIT" ${!live || busy ? "disabled" : ""}>Prepare deposit</button><button class="outline-button" type="button" data-vault-kind="WITHDRAW" ${!live || busy ? "disabled" : ""}>Prepare withdrawal</button></div>${review}${result}</section>`;
 }
 
 function requestsView(): string {
@@ -544,12 +536,12 @@ function requestsView(): string {
     : `<div class="request-public-state"><div><span>On-chain state</span><strong>Unavailable</strong></div><div><span>Time readiness</span><strong>Unavailable</strong></div><div><span>Decision evidence</span><strong>No chain result</strong></div><div><span>Checkpoint</span><strong>—</strong></div></div>`;
   return `${pageIntro("PUBLIC REQUEST INSPECTOR", "Inspect a request", "Load any canonical request directly from the finalized Coston2 router. On-chain state and time-derived readiness are shown separately.")}
     ${requestLookup()}
-    <section class="panel table-panel"><div class="panel-heading"><div><div class="eyebrow">ACTION REQUEST</div><h2>${snapshot ? "Public request state" : requestLoading ? "Reading finalized state…" : "No verified request loaded"}</h2></div><div class="table-tools"><button class="icon-button" type="button" data-action="load-request" aria-label="Refresh request">↻</button></div></div><div class="request-table"><div class="table-head"><span>REQUEST</span><span>PUBLIC ACTION</span><span>CHECKPOINT</span><span>ON-CHAIN STATE</span><span></span></div><div class="table-row"><span>${requestCell}</span><span>${actionCell}</span><span>${checkpointCell}</span><span><span class="state-tag ${snapshot?.status === "ALLOWED" || snapshot?.status === "EXECUTED" ? "green-tag" : snapshot ? "gray-tag" : "amber-tag"}">${esc(snapshot?.status ?? "UNAVAILABLE")}</span><small>${snapshot ? `Timing: ${esc(readiness)}` : "No timing fact"}</small></span><span></span></div></div>${publicState}<div class="table-footer"><span>Showing public finalized state only</span><span class="muted">${requestFinalizedBlock ? `Coston2 block ${requestFinalizedBlock}` : esc(unavailableReason)} · no browser cache</span></div></section>${requestTransactionPanel(snapshot)}<div class="recovery-strip"><div class="recovery-icon">↻</div><div><strong>Fresh-process recovery is built in</strong><p>A relay restart reconstructs work from chain checkpoints, not a private policy database.</p></div><button class="text-button" type="button" data-view="demo">Inspect the recorded lifecycle ↗</button></div>`;
+    <section class="panel table-panel"><div class="panel-heading"><div><div class="eyebrow">ACTION REQUEST</div><h2>${snapshot ? "Public request state" : requestLoading ? "Reading finalized state…" : "No verified request loaded"}</h2></div><div class="table-tools"><button class="icon-button" type="button" data-action="load-request" aria-label="Refresh request">↻</button></div></div><div class="request-table"><div class="table-head"><span>REQUEST</span><span>PUBLIC ACTION</span><span>CHECKPOINT</span><span>ON-CHAIN STATE</span><span></span></div><div class="table-row"><span>${requestCell}</span><span>${actionCell}</span><span>${checkpointCell}</span><span><span class="state-tag ${snapshot?.status === "ALLOWED" || snapshot?.status === "EXECUTED" ? "green-tag" : snapshot ? "gray-tag" : "amber-tag"}">${esc(snapshot?.status ?? "UNAVAILABLE")}</span><small>${snapshot ? `Timing: ${esc(readiness)}` : "No timing fact"}</small></span><span></span></div></div>${publicState}<div class="table-footer"><span>Showing public finalized state only</span><span class="muted">${requestFinalizedBlock ? `Coston2 block ${requestFinalizedBlock}` : esc(unavailableReason)} · no browser cache</span></div></section>${requestTransactionPanel(snapshot)}`;
 }
 
 function requestLookup(): string {
   const reviewed = isReviewedRequestInput();
-  return `<section class="panel request-lookup"><div><div class="eyebrow">FINALIZED ROUTER LOOKUP</div><h2>Inspect a request ID</h2><p class="panel-copy">${reviewed ? "The prefilled ID is a reviewed public XRPL/FDC-triggered Coston2 example. It is not activity from your connected wallet." : "This user-supplied ID is read only from finalized public Coston2 state. It is not inferred to belong to your connected wallet."}</p><span class="state-tag sample-context-tag">${reviewed ? "REVIEWED PUBLIC EXAMPLE" : "USER-SUPPLIED PUBLIC ID"}</span></div><label>Request ID<input id="request-id" value="${esc(requestInput)}" autocomplete="off" spellcheck="false" placeholder="0x…" /></label><button class="primary-button" type="button" data-action="load-request" ${requestLoading ? "disabled" : ""}>${requestLoading ? "Reading finalized block…" : "Load public state"}</button><small>${esc(requestNotice)}</small></section>`;
+  return `<section class="panel request-lookup"><div><div class="eyebrow">FINALIZED ROUTER LOOKUP</div><h2>Inspect a request ID</h2><span class="state-tag sample-context-tag">${reviewed ? "REVIEWED PUBLIC EXAMPLE" : "USER-SUPPLIED PUBLIC ID"}</span></div><label>Request ID<input id="request-id" value="${esc(requestInput)}" autocomplete="off" spellcheck="false" placeholder="0x…" /></label><button class="primary-button" type="button" data-action="load-request" ${requestLoading ? "disabled" : ""}>${requestLoading ? "Reading finalized block…" : "Load public state"}</button><small>${esc(requestNotice)}</small></section>`;
 }
 
 function isReviewedRequestInput(): boolean {
@@ -579,7 +571,7 @@ function liveV2EvidenceView(): string {
 }
 
 function legacyDemoArchiveView(): string {
-  return `<details class="legacy-demo-archive"><summary><span><strong>Historical V1 simulation tools</strong><small>Optional isolated sandbox and the earlier 14-transaction record · not the active V2 path</small></span><em>Expand legacy evidence</em></summary><div class="legacy-demo-content">${recordedDemoView()}${interactiveDemoView()}</div></details>`;
+  return `<details class="legacy-demo-archive"><summary><span><strong>Historical V1 simulation tools</strong><small>Optional isolated sandbox and the earlier 14-transaction record · not the active V2 path</small></span><em>Expand legacy evidence</em></summary><div class="legacy-demo-content">${recordedDemoView()}${interactiveStudioPanel()}${interactiveDemoView()}</div></details>`;
 }
 
 function liveFccDemoView(): string {
@@ -616,7 +608,7 @@ function interactiveDemoView(): string {
   const policyReady = policyRegistered && snapshot?.policyStatus === 1;
   const policyLabel = snapshot?.policyStatus === 3 ? "Demo policy revoked"
     : snapshot?.policyStatus === 2 ? "Demo policy stopped"
-      : policyReady ? "Demo policy active" : interactiveSession ? "Receipts ready" : "Prepare in Policy Studio";
+      : policyReady ? "Demo policy active" : interactiveSession ? "Receipts ready" : "Prepare in the sandbox setup above";
   const request = interactiveRequest?.request;
   const decision = interactiveThreshold?.status === "THRESHOLD_READY" ? interactiveThreshold.matching[0]?.result : undefined;
   const requestStatus = interactiveExecution ? "EXECUTED" : decision?.decision === "DENY" && interactiveThresholdTransactions.length >= 2 ? "DENIED" : interactiveThresholdTransactions.length >= 2 ? "ALLOWED" : request ? "PENDING" : "NOT CREATED";
@@ -627,7 +619,7 @@ function interactiveDemoView(): string {
     <div class="demo-boundary interactive-boundary"><span class="state-tag gray-tag">V1 SIMULATION · SEPARATE CONTRACTS</span><strong>Real testnet transactions · shared serverless trust domain</strong><span>Not registered FCC · not active V2 · not Gate A/B/C</span></div>
     <div class="interactive-stepper" aria-label="Interactive demo progress">${["FUND", "RECEIPTS", "REGISTER", "REQUEST", "QUORUM", "EXECUTE / DENY", "GOVERNANCE"].map((step, index) => `<span class="${interactiveStepReached(index) ? "reached" : ""}">${String(index + 1).padStart(2, "0")} ${step}</span>`).join("")}</div>
     <div class="section-grid interactive-demo-grid"><section class="panel"><div class="panel-heading"><div><div class="eyebrow">01 · TEST TOKEN FUNDING</div><h2>Simulation-only vault</h2></div><span class="state-tag ${snapshot ? "green-tag" : "gray-tag"}">${snapshot ? "FINALIZED READ" : "NOT LOADED"}</span></div><p class="panel-copy">Approve and deposit faucet FTestXRP into the separate demo vault. The production-observation vault remains untouched.</p>${account ? `<div class="demo-account-grid"><div><span>Wallet</span><strong>${snapshot ? token(snapshot.tokenBalance) : "—"} FTestXRP</strong></div><div><span>Allowance</span><strong>${snapshot ? token(snapshot.allowance) : "—"}</strong></div><div><span>Demo available</span><strong>${snapshot ? token(snapshot.accounting.available) : "—"}</strong></div></div><label class="demo-amount-label">Funding amount<input id="interactive-fund-amount" value="${esc(interactiveFundInput)}" inputmode="decimal" autocomplete="off" /></label><div class="vault-actions"><button class="outline-button" type="button" data-action="refresh-interactive-account" ${interactiveBusy ? "disabled" : ""}>Refresh finalized state</button><button class="outline-button" type="button" data-action="demo-approve" ${interactiveBusy || !snapshot ? "disabled" : ""}>Approve</button><button class="primary-button" type="button" data-action="demo-deposit" ${interactiveBusy || !snapshot ? "disabled" : ""}>Deposit</button></div>` : `<button class="primary-button" type="button" data-action="connect">Connect Coston2 wallet</button>`}</section>
-    <section class="panel"><div class="panel-heading"><div><div class="eyebrow">02 · POLICY & CUSTODY</div><h2>${policyLabel}</h2></div><span class="state-tag gray-tag">SIMULATION ONLY</span></div>${interactiveSession ? `<div class="commitment-value">${esc(interactiveSession.binding.policyCommitment)}</div><div class="demo-actor-mini">${interactiveSession.custody.map((item) => `<span>ACTOR ${item.actor} · ${esc(short(item.digest))}</span>`).join("")}</div>` : `<p class="panel-copy">Use the adjacent demo panel in Policy Studio to bind your wallet, encrypt the draft three times, and collect owner-authorized receipts.</p>`}<div class="vault-actions"><button class="outline-button" type="button" data-view="studio">Open Policy Studio</button>${interactiveSession && !interactivePolicyRegistration ? `<button class="primary-button" type="button" data-action="register-demo-policy" ${interactiveBusy ? "disabled" : ""}>Register policy</button>` : ""}</div></section></div>
+    <section class="panel"><div class="panel-heading"><div><div class="eyebrow">02 · POLICY & CUSTODY</div><h2>${policyLabel}</h2></div><span class="state-tag gray-tag">SIMULATION ONLY</span></div>${interactiveSession ? `<div class="commitment-value">${esc(interactiveSession.binding.policyCommitment)}</div><div class="demo-actor-mini">${interactiveSession.custody.map((item) => `<span>ACTOR ${item.actor} · ${esc(short(item.digest))}</span>`).join("")}</div>` : `<p class="panel-copy">Use the sandbox setup above to bind the wallet, compute the isolated V1 draft, and collect three owner-authorized simulation receipts.</p>`}<div class="vault-actions">${interactiveSession && !interactivePolicyRegistration ? `<button class="primary-button" type="button" data-action="register-demo-policy" ${interactiveBusy ? "disabled" : ""}>Register policy</button>` : ""}</div></section></div>
     <div class="section-grid interactive-demo-grid"><section class="panel"><div class="panel-heading"><div><div class="eyebrow">03 · PUBLIC REQUEST</div><h2>${request ? `Occurrence ${request.occurrence}` : "Create an exact action"}</h2></div><span class="state-tag ${request ? "green-tag" : "gray-tag"}">${esc(requestStatus)}</span></div><p class="panel-copy">The target and amount are public here. Private caps and policy relationships stay inside the three actor evaluations.</p>${policyReady && account ? `<label class="demo-amount-label">Request amount<input id="interactive-request-amount" value="${esc(interactiveRequestAmountInput)}" inputmode="decimal" autocomplete="off" /></label>${request ? `<dl class="demo-request-facts"><div><dt>Request</dt><dd>${esc(short(request.requestId))}</dd></div><div><dt>Amount</dt><dd>${token(request.amount)} FTestXRP</dd></div><div><dt>Checkpoint</dt><dd>${esc(short(request.spendCheckpoint))}</dd></div><div><dt>Expiry</dt><dd>${utc(request.expiry)}</dd></div></dl><button class="outline-button" type="button" data-action="reset-demo-request" ${interactiveBusy ? "disabled" : ""}>Prepare next request</button>` : `<button class="primary-button" type="button" data-action="create-demo-request" ${interactiveBusy || !snapshot || snapshot.accounting.available <= 0n ? "disabled" : ""}>${interactiveBusy === "REQUEST" ? "Waiting for wallet / finality…" : "Create public request"}</button>`}` : `<div class="unavailable-box"><span class="status-dot amber"></span><div><strong>Policy or wallet prerequisite missing</strong><small>Register the demo policy and load a funded finalized account first.</small></div></div>`}</section>
     <section class="panel"><div class="panel-heading"><div><div class="eyebrow">04 · ACTOR QUORUM</div><h2>${decision ? `${decision.decision} · ${decision.publicReasonClass}` : "Independent evaluation"}</h2></div><span class="state-tag ${interactiveThreshold?.status === "THRESHOLD_READY" ? "green-tag" : "gray-tag"}">${interactiveThreshold?.status ?? "WAITING"}</span></div><div class="demo-actor-mini">${config.actors.map((actor) => { const result = interactiveThreshold?.valid.find((item) => item.actor === actor.actor); return `<span>ACTOR ${actor.actor} · ${result ? `${result.result.decision} · ${esc(short(result.digest))}` : "not evaluated"}</span>`; }).join("")}</div><p class="panel-copy">The API accepts ciphertext and a request ID only. Any client-supplied decision field is rejected.</p><div class="vault-actions">${request && !interactiveThreshold ? `<button class="primary-button" type="button" data-action="evaluate-demo-request" ${interactiveBusy ? "disabled" : ""}>${interactiveBusy === "EVALUATE" ? "Calling 3 actors…" : "Evaluate with 3 actors"}</button>` : ""}${interactiveThreshold?.status === "THRESHOLD_READY" && interactiveThresholdTransactions.length === 0 ? `<button class="primary-button" type="button" data-action="submit-demo-threshold" ${interactiveBusy ? "disabled" : ""}>${interactiveBusy === "THRESHOLD" ? "Submitting 2 signatures…" : "Submit 2 matching results"}</button>` : ""}${decision?.decision === "ALLOW" && interactiveThresholdTransactions.length >= 2 && !interactiveExecution ? `<button class="primary-button" type="button" data-action="execute-demo-request" ${interactiveBusy ? "disabled" : ""}>Execute public transfer</button>` : ""}</div></section></div>
     <div class="section-grid interactive-demo-grid"><section class="panel"><div class="panel-heading"><div><div class="eyebrow">05 · GOVERNANCE</div><h2>Stop, resume, or revoke</h2></div><span class="state-tag gray-tag">OWNER ONLY</span></div><p class="panel-copy">Governance can stop new requests, but cannot manufacture a decision. Revocation is terminal.</p><div class="vault-actions"><button class="outline-button" type="button" data-policy-action="STOP" ${snapshot?.policyStatus !== 1 || interactiveBusy ? "disabled" : ""}>Stop</button><button class="outline-button" type="button" data-policy-action="RESUME" ${snapshot?.policyStatus !== 2 || interactiveBusy ? "disabled" : ""}>Resume</button><button class="outline-button" type="button" data-policy-action="REVOKE" ${!policyRegistered || snapshot?.policyStatus === 3 || interactiveBusy ? "disabled" : ""}>Revoke</button></div></section><section class="panel"><div class="panel-heading"><div><div class="eyebrow">PUBLIC TRANSACTION LOG</div><h2>${interactiveTransactions.length} finalized writes</h2></div><span class="state-tag gray-tag">THIS TAB ONLY</span></div>${transactionRows}</section></div>
@@ -683,7 +675,7 @@ function requestTransactionPanel(snapshot: PublicRequestSnapshotV1 | undefined):
       : "Cancel this request as its creator or policy owner and release any reservation.";
   const review = requestIntent && snapshot
     ? `<div class="transaction-review"><div class="eyebrow">EXACT ROUTER PREVIEW</div><h3>${requestIntent} · ${esc(short(snapshot.requestId))}</h3><p>${reviewCopy}</p><dl><div><dt>Network</dt><dd>Coston2 · chain 114</dd></div><div><dt>Router</dt><dd>${PAYGUARD_COSTON2.router}</dd></div><div><dt>Request hash</dt><dd>${snapshot.requestHash}</dd></div><div><dt>Success gate</dt><dd>Receipt + exact event + finalized terminal state</dd></div></dl><div class="transaction-warning">No policy rule or ALLOW flag is supplied by this action.</div><div class="vault-actions"><button class="outline-button" type="button" data-action="cancel-request-intent" ${busy ? "disabled" : ""}>Back</button><button class="primary-button" type="button" data-action="submit-request-intent" ${busy ? "disabled" : ""}>${busy ? "Waiting for wallet / finality…" : "Confirm in wallet"}</button></div></div>` : "";
-  return `<section class="panel request-transaction-panel"><div class="panel-heading"><div><div class="eyebrow">PUBLIC ROUTER CONTROLS</div><h2>Advance only the canonical state</h2></div><span class="state-tag ${account ? "green-tag" : "amber-tag"}">${account ? "WALLET CONNECTED" : "CONNECT WALLET"}</span></div><p class="panel-copy">Execute and expire are permissionless only in their exact contract states. Cancel additionally requires the requester or policy owner.</p><div class="transaction-actions"><button class="primary-button" type="button" data-request-kind="EXECUTE" ${!can("EXECUTE") || busy ? "disabled" : ""}>Prepare execution</button><button class="outline-button" type="button" data-request-kind="EXPIRE" ${!can("EXPIRE") || busy ? "disabled" : ""}>Prepare expiry</button><button class="outline-button" type="button" data-request-kind="CANCEL" ${!can("CANCEL") || busy ? "disabled" : ""}>Prepare cancellation</button></div>${!account ? `<button class="text-button request-connect" type="button" data-action="connect">Connect Coston2 wallet ↗</button>` : ""}${review}${result}</section>`;
+  return `<section class="panel request-transaction-panel"><div class="panel-heading"><div><div class="eyebrow">PUBLIC ROUTER CONTROLS</div><h2>Advance only the canonical state</h2></div><span class="state-tag ${account ? "green-tag" : "amber-tag"}">${account ? "WALLET CONNECTED" : "CONNECT WALLET"}</span></div><div class="transaction-actions"><button class="primary-button" type="button" data-request-kind="EXECUTE" ${!can("EXECUTE") || busy ? "disabled" : ""}>Prepare execution</button><button class="outline-button" type="button" data-request-kind="EXPIRE" ${!can("EXPIRE") || busy ? "disabled" : ""}>Prepare expiry</button><button class="outline-button" type="button" data-request-kind="CANCEL" ${!can("CANCEL") || busy ? "disabled" : ""}>Prepare cancellation</button></div>${!account ? `<button class="text-button request-connect" type="button" data-action="connect">Connect Coston2 wallet ↗</button>` : ""}${review}${result}</section>`;
 }
 
 function requestUnavailableReason(reason: string): string {
@@ -762,7 +754,6 @@ function auditUnavailableReason(reason: string): string {
 function teamView(): string {
   const workspace = workspaceState.status === "UNAVAILABLE" ? undefined : workspaceState.snapshot;
   const request = requestState.status === "UNAVAILABLE" ? undefined : requestState.snapshot;
-  const workspaceReason = workspaceState.status === "UNAVAILABLE" ? workspaceUnavailableReason(workspaceState.reason) : "Finalized public role registry";
   const reviewed = isReviewedRequestInput();
   const requestContext = reviewed ? "reviewed request example" : "currently loaded public request";
   const roleRows = workspace
@@ -771,7 +762,7 @@ function teamView(): string {
       ? `<div class="role-row"><div class="avatar purple">O</div><div class="role-person"><strong>Policy owner</strong><small>${esc(short(requestPolicyOwner))} · registry-bound public account</small></div><span class="role-permission">May cancel/recover</span></div><div class="role-row"><div class="avatar dashed">R</div><div class="role-person"><strong>Requester</strong><small>${esc(short(request.requester))} · exact request creator</small></div><span class="role-permission">May cancel</span></div><div class="role-row"><div class="avatar dashed">P</div><div class="role-person"><strong>Payee</strong><small>${esc(short(request.target))} · public transfer target</small></div><span class="role-permission">Receives only after execution</span></div>`
       : `<div class="role-row"><div class="avatar purple">O</div><div class="role-person"><strong>Owner</strong><small>Load a finalized request to observe its registry-bound actors.</small></div><span class="role-permission">Unavailable</span></div>`;
   return `${pageIntro(workspace ? "ROLES & GOVERNANCE" : "PUBLIC REQUEST CONTEXT", workspace ? "Team workspace" : "Observed request actors", workspace ? "Separate policy author, funder, executor, payee, and auditor responsibilities. No role can supply an authorization result." : `These public identities belong to the ${requestContext}. They are not your team, wallet contacts, or editable role grants.`)}
-    <section class="panel roles-panel"><div class="panel-heading"><div><div class="eyebrow">${workspace ? "CURRENT WORKSPACE" : "OBSERVED REQUEST ACTORS"}</div><h2>${workspace ? "Personal workspace" : "On-chain identities, not role grants"}</h2></div><span class="state-tag ${workspace || request ? "green-tag" : "gray-tag"}">${workspace ? "VERIFIED" : request ? "OBSERVED" : "UNAVAILABLE"}</span></div>${roleRows}</section><div class="team-note"><span class="lock-icon">▣</span><div><strong>${workspace ? "Public role registry verified" : request ? "No standalone role registry deployed" : "Role registry unavailable"}</strong><p>${request && !workspace ? "The rows above are identities bound by the registry/request contracts, not editable team assignments. " : `${esc(workspaceReason)}. `}No role supplies, overrides, or infers an authorization result.</p></div></div>`;
+    <section class="panel roles-panel"><div class="panel-heading"><div><div class="eyebrow">${workspace ? "CURRENT WORKSPACE" : "OBSERVED REQUEST ACTORS"}</div><h2>${workspace ? "Personal workspace" : "On-chain identities, not role grants"}</h2></div><span class="state-tag ${workspace || request ? "green-tag" : "gray-tag"}">${workspace ? "VERIFIED" : request ? "OBSERVED" : "UNAVAILABLE"}</span></div>${roleRows}</section>`;
 }
 
 function notificationTray(): string {
@@ -805,16 +796,12 @@ function notificationUnavailableReason(reason: string): string {
   } as Record<string, string>)[reason] ?? "Public notification feed unavailable";
 }
 
-function workspaceUnavailableReason(reason: string): string {
-  return ({
-    RPC_UNCONFIGURED: "No verified RPC provider configured",
-    RPC_UNAVAILABLE: "RPC provider unavailable",
-    REGISTRY_UNFINALIZED: "Role registry is not finalized",
-    REGISTRY_INVALID: "Public role registry failed validation",
-  } as Record<string, string>)[reason] ?? "Public role registry unavailable";
-}
-
 function wireEvents(): void {
+  if (studioScrollHandler) window.removeEventListener("scroll", studioScrollHandler);
+  if (studioScrollFrame !== null) cancelAnimationFrame(studioScrollFrame);
+  studioScrollHandler = null;
+  studioScrollFrame = null;
+  installCardHelp();
   app.querySelectorAll<HTMLButtonElement>("[data-view]").forEach((button) => button.addEventListener("click", () => navigateToView(button.dataset.view as View)));
   app.querySelectorAll<HTMLButtonElement>("[data-action]").forEach((button) => {
     const activate = (): void => handleAction(button.dataset.action ?? "");
@@ -826,6 +813,7 @@ function wireEvents(): void {
     });
   });
   app.querySelectorAll<HTMLButtonElement>("[data-template]").forEach((button) => button.addEventListener("click", () => selectTemplate(button.dataset.template ?? "")));
+  app.querySelectorAll<HTMLButtonElement>("[data-studio-step]").forEach((button) => button.addEventListener("click", () => goToStudioStep(Number(button.dataset.studioStep))));
   app.querySelectorAll<HTMLButtonElement>("[data-policy-action]").forEach((button) => button.addEventListener("click", () => void submitInteractiveGovernance(button.dataset.policyAction ?? "")));
   app.querySelectorAll<HTMLButtonElement>("[data-live-policy-action]").forEach((button) => button.addEventListener("click", () => void submitLiveFccGovernance(button.dataset.livePolicyAction ?? "")));
   app.querySelectorAll<HTMLButtonElement>("[data-request-kind]").forEach((button) => button.addEventListener("click", () => prepareRequestTransaction(button.dataset.requestKind ?? "")));
@@ -844,9 +832,10 @@ function wireEvents(): void {
   app.querySelector<HTMLInputElement>("#interactive-request-amount")?.addEventListener("input", (event) => { interactiveRequestAmountInput = (event.currentTarget as HTMLInputElement).value; });
   app.querySelector<HTMLInputElement>("#live-fcc-request-amount")?.addEventListener("input", (event) => { liveFccRequestAmountInput = (event.currentTarget as HTMLInputElement).value; });
   const form = app.querySelector<HTMLFormElement>("#studio-form");
-  form?.addEventListener("submit", (event) => { event.preventDefault(); computeStudio(form); });
+  form?.addEventListener("submit", (event) => { event.preventDefault(); advanceStudioRules(form); });
   form?.addEventListener("input", () => {
     studioDraft = readStudioDraft(form);
+    studioRulesReviewed = false;
     updateStudioHumanHints(form);
     if (studioCompilation) {
       studioCompilation = null;
@@ -854,11 +843,78 @@ function wireEvents(): void {
       if (value) value.textContent = "Draft changed — recompute";
       const notice = app.querySelector<HTMLElement>("#studio-notice");
       if (notice) notice.textContent = "Draft changed. The previous commitment is no longer current.";
-      resetInteractivePolicySession("Draft changed. Recompute before collecting new simulated receipts.");
       resetLiveFccPolicySession("Draft changed. Recompute before collecting new live machine receipts.");
     }
   });
+  form?.querySelectorAll<HTMLInputElement>('input[name="scheduleMode"]').forEach((input) => input.addEventListener("change", () => {
+    if (input.value === "recurring" && studioDraft.scheduleIntervalSeconds === "0") {
+      studioDraft = { ...studioDraft, scheduleIntervalSeconds: "604800", scheduleGraceSeconds: "86400" };
+    }
+    if (input.value === "adhoc") studioDraft = { ...studioDraft, scheduleIntervalSeconds: "0", scheduleGraceSeconds: "0" };
+    render();
+  }));
+  if (activeView === "studio" && !landingOpen) wireStudioSectionTracking();
   wireLandingMotion();
+}
+
+function installCardHelp(): void {
+  const cards = app.querySelectorAll<HTMLElement>(".content .panel, .landing-shell article");
+  cards.forEach((card, index) => {
+    if (card.querySelector(":scope > .card-help")) return;
+    const title = card.querySelector<HTMLElement>("h2, h3, strong")?.textContent?.trim() || "this section";
+    const tooltip = document.createElement("span");
+    const tooltipId = `card-help-${index}`;
+    tooltip.className = "card-help-tooltip";
+    tooltip.id = tooltipId;
+    tooltip.setAttribute("role", "tooltip");
+    tooltip.textContent = card.dataset.help || cardHelpText(card, title);
+    const button = document.createElement("button");
+    button.className = "card-help";
+    button.type = "button";
+    button.setAttribute("aria-label", `How to use ${title}`);
+    button.setAttribute("aria-describedby", tooltipId);
+    button.setAttribute("aria-expanded", "false");
+    button.innerHTML = '<span aria-hidden="true">?</span>';
+    button.append(tooltip);
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const pinned = button.classList.toggle("pinned");
+      button.setAttribute("aria-expanded", String(pinned));
+    });
+    button.addEventListener("blur", () => {
+      button.classList.remove("pinned");
+      button.setAttribute("aria-expanded", "false");
+    });
+    button.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      button.classList.remove("pinned");
+      button.setAttribute("aria-expanded", "false");
+      button.blur();
+    });
+    card.classList.add("has-card-help");
+    card.append(button);
+  });
+}
+
+function cardHelpText(card: HTMLElement, title: string): string {
+  if (card.classList.contains("guardian-card")) return `Use ${title} to understand one trust responsibility. The badge reports delivery evidence; it is not a button or an authorization result.`;
+  if (card.classList.contains("use-case-card")) return `This is an example policy pattern, not a live customer deployment. Open Policy Studio to adapt the pattern and review its public/private boundary.`;
+  if (card.classList.contains("boundary-column")) return `Compare this list with the opposite column. PayGuard protects policy rules, while ordinary amount, recipient, timing, and transaction graph remain public.`;
+  if (card.classList.contains("vault-transaction-panel")) return "Enter one exact FTestXRP amount, prepare an operation, review the exact account and contract, then confirm in the wallet. Controls remain disabled until finalized Coston2 checks pass.";
+  if (card.classList.contains("vault-overview")) return "Use the three headline values for the current funding decision. The finalized block, accounting totals, conservation, runtime, prepared operation, and explorer link remain visible below for direct verification.";
+  if (card.classList.contains("request-lookup")) return isReviewedRequestInput()
+    ? "Load the prefilled reviewed public XRPL/FDC-triggered Coston2 example. It is not activity from the connected wallet. You may replace it with another bytes32 request ID."
+    : "Paste a bytes32 request ID and load one finalized public Coston2 router checkpoint. A user-supplied ID is not inferred to belong to the connected wallet.";
+  if (card.classList.contains("request-transaction-panel")) return "These controls only advance an existing canonical request. Execute, expire, or cancel is enabled from verified chain state; the browser never supplies ALLOW or a policy decision.";
+  if (card.classList.contains("studio-step-panel")) return `Use the sticky step bar to jump to ${title} or reach it by scrolling. Locked sections remain readable, but their state-changing controls stay disabled until prior gates pass; draft values never enter browser storage.`;
+  if (card.classList.contains("receipt-card")) return "Inspect the frozen machine identities and custody progress here. Registration remains blocked unless the exact domain and all three signed receipts verify; unavailable dependencies fail closed.";
+  if (card.classList.contains("verify-card") || card.classList.contains("evidence-card") || card.classList.contains("evidence-mirror")) return "This is a wallet-free verification surface. Enter or inspect public identifiers only; missing finalized evidence stays unavailable and never becomes an inferred success.";
+  if (activeView === "demo") return `Inspect ${title} as public testnet evidence. Status labels come from decoded artifacts or finalized state; explorer links are the source of truth, and simulated TEE claims never imply hardware verification.`;
+  if (activeView === "payee") return `Use ${title} to inspect only the expected public settlement facts. Private caps, target relationships, delegates, and denial details are intentionally absent.`;
+  if (activeView === "auditor") return `Use ${title} to verify public commitments, checkpoints, and conservation without connecting a wallet. No private policy or raw signature is requested.`;
+  if (activeView === "team") return `Use ${title} to identify registry-bound public actors. These rows are observational and cannot grant roles or provide an authorization result.`;
+  if (activeView === "requests") return `Use ${title} to inspect finalized public request state. Canonical status and time-derived readiness are separate; do not treat a pending but expired window as an expected payment.`;
+  return `Use ${title} to inspect the current public-safe state. Hover or focus controls for actions; status labels and values are informational.`;
 }
 
 function wireLandingMotion(): void {
@@ -882,12 +938,12 @@ function wireLandingMotion(): void {
 }
 
 function handleAction(action: string): void {
-  if (action === "new-policy") { navigateToView("studio"); return; }
   if (action === "landing") { navigateToLanding(); return; }
-  if (action === "open-app") { navigateToView("overview"); return; }
+  if (action === "open-app") { navigateToView("studio"); return; }
   if (action === "landing-studio") { navigateToView("studio"); return; }
   if (action === "landing-demo") { navigateToView("demo"); return; }
   if (action === "landing-auditor") { navigateToView("auditor"); return; }
+  if (action === "studio-compute") { computeStudioAndActivate(); return; }
   if (action === "dismiss-notice") { clearAppNotice(); render(); return; }
   if (action === "notifications") { notificationOpen = !notificationOpen; render(); return; }
   if (action === "mobile-menu") { mobileMenuOpen = !mobileMenuOpen; render(); return; }
@@ -929,6 +985,54 @@ function navigateToView(view: View, replace = false): void {
   clearAppNotice();
   render();
   resetPagePosition("app-main");
+}
+
+function goToStudioStep(value: number): void {
+  if (value !== 1 && value !== 2 && value !== 3 && value !== 4) return;
+  studioStep = value;
+  render();
+  scrollToStudioStep(value);
+}
+
+function scrollToStudioStep(value: number): void {
+  requestAnimationFrame(() => {
+    const section = app.querySelector<HTMLElement>(`#studio-section-${value}`);
+    section?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  });
+}
+
+function wireStudioSectionTracking(): void {
+  const sections = Array.from(app.querySelectorAll<HTMLElement>("[data-studio-section]"));
+  if (sections.length !== 4) return;
+  const update = (): void => {
+    studioScrollFrame = null;
+    let current: StudioStep = 1;
+    for (const section of sections) {
+      if (section.getBoundingClientRect().top <= 176) current = Number(section.dataset.studioSection) as StudioStep;
+    }
+    if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 4) current = 4;
+    if (current === studioStep) return;
+    studioStep = current;
+    const labels: Record<StudioStep, string> = { 1: "Template", 2: "Rules", 3: "Review", 4: "Activate" };
+    const progress = app.querySelector<HTMLElement>(".studio-progress");
+    const meta = progress?.querySelector<HTMLElement>(".studio-progress-meta");
+    const metaStep = meta?.querySelector<HTMLElement>("span");
+    const metaLabel = meta?.querySelector<HTMLElement>("strong");
+    if (metaStep) metaStep.textContent = `Step ${current} of 4`;
+    if (metaLabel) metaLabel.textContent = labels[current];
+    progress?.querySelectorAll<HTMLButtonElement>(".studio-step").forEach((button) => {
+      const active = Number(button.dataset.studioStep) === current;
+      button.classList.toggle("active", active);
+      if (active) button.setAttribute("aria-current", "step");
+      else button.removeAttribute("aria-current");
+    });
+  };
+  studioScrollHandler = () => {
+    if (studioScrollFrame !== null) return;
+    studioScrollFrame = requestAnimationFrame(update);
+  };
+  window.addEventListener("scroll", studioScrollHandler, { passive: true });
+  update();
 }
 
 function navigateToLanding(): void {
@@ -1291,6 +1395,9 @@ function prepareLiveFccDraft(): void {
       maxOccurrences: "10",
     };
     studioCompilation = null;
+    studioTemplateChosen = true;
+    studioRulesReviewed = false;
+    studioStep = 2;
     studioIssues = [];
     resetLiveFccPolicySession("Live V2 domain loaded. Review private rules, then validate and compute.");
     studioNotice = "Live A/B/D domain loaded with fresh in-memory entropy. Nothing has been sent yet.";
@@ -1298,6 +1405,7 @@ function prepareLiveFccDraft(): void {
     liveFccNotice = "Connect the exact V2 operator wallet before preparing the live domain.";
   }
   render();
+  if (studioStep === 2) scrollToStudioStep(2);
 }
 
 function resetLiveFccPolicySession(notice: string): void {
@@ -1464,8 +1572,8 @@ function prepareInteractiveDraft(): void {
   try {
     const { account, config } = interactiveContext();
     const now = BigInt(Math.floor(Date.now() / 1000));
-    studioEntropy = createStudioEntropy();
-    studioDraft = {
+    const interactiveEntropy = createStudioEntropy();
+    const interactiveDraft: StudioDraft = {
       ...studioTemplateDraft("delegated-allowance"),
       templateId: "delegated-allowance",
       policyName: `interactive-demo-${now}`,
@@ -1483,10 +1591,9 @@ function prepareInteractiveDraft(): void {
       scheduleGraceSeconds: "0",
       maxOccurrences: "10",
     };
-    studioCompilation = null;
-    studioIssues = [];
     resetInteractivePolicySession("Isolated Coston2 demo domain loaded. Review private rules, then validate and compute.");
-    studioNotice = "Simulation-only domain loaded with fresh in-memory entropy. Validate before contacting actors.";
+    interactiveStudioCompilation = compileStudioDraft(interactiveDraft, interactiveEntropy);
+    interactiveNotice = "Isolated V1 policy computed in memory. Collect three simulation receipts when ready.";
   } catch {
     interactiveNotice = "Connect a Coston2 wallet and wait for the interactive configuration first.";
   }
@@ -1494,6 +1601,7 @@ function prepareInteractiveDraft(): void {
 }
 
 function resetInteractivePolicySession(notice: string): void {
+  interactiveStudioCompilation = null;
   interactiveSession = null;
   interactivePolicyRegistration = null;
   interactiveRequest = null;
@@ -1504,13 +1612,13 @@ function resetInteractivePolicySession(notice: string): void {
 }
 
 async function submitInteractiveCustody(): Promise<void> {
-  if (!studioCompilation) return;
+  if (!interactiveStudioCompilation) return;
   interactiveBusy = "CUSTODY";
   interactiveNotice = "Confirm three owner signatures. Each binds one ciphertext to one simulated actor.";
   render();
   try {
     const { account, config, provider } = interactiveContext();
-    interactiveSession = await collectDemoCustody(studioCompilation.policy, account, provider, config);
+    interactiveSession = await collectDemoCustody(interactiveStudioCompilation.policy, account, provider, config);
     interactivePolicyRegistration = null;
     interactiveRequest = null;
     interactiveThreshold = null;
@@ -1705,29 +1813,54 @@ function addInteractiveTransaction(label: string, result: DemoTransactionResult)
   }
 }
 
-function computeStudio(form: HTMLFormElement): void {
+function advanceStudioRules(form: HTMLFormElement): void {
   studioDraft = readStudioDraft(form);
+  studioIssues = validateStudioDraft(studioDraft);
+  if (studioIssues.length > 0) {
+    studioRulesReviewed = false;
+    studioCompilation = null;
+    studioNotice = "Fix the highlighted rule fields. Nothing was sent.";
+    render();
+    scrollToStudioStep(2);
+    return;
+  }
+  studioRulesReviewed = true;
+  studioCompilation = null;
+  studioNotice = "Rules validated locally. Review what becomes public before computing.";
+  studioStep = 3;
+  render();
+  scrollToStudioStep(3);
+}
+
+function computeStudioAndActivate(): void {
+  if (!studioRulesReviewed) return;
   try {
     studioCompilation = compileStudioDraft(studioDraft, studioEntropy);
     studioIssues = [];
-    studioNotice = "Local validation passed. No ciphertext, receipt, or activation was submitted.";
-    render();
+    studioNotice = "Commitment computed locally. No ciphertext, receipt, or activation was submitted.";
+    studioStep = 4;
   } catch (error) {
     studioCompilation = null;
     studioIssues = error instanceof StudioValidationError ? error.issues : [{ field: "policy", message: "The policy could not be compiled safely." }];
+    studioRulesReviewed = false;
+    studioStep = 2;
     studioNotice = "Validation failed locally. Nothing was sent.";
-    render();
   }
+  render();
+  scrollToStudioStep(studioStep);
 }
 
 function selectTemplate(value: string): void {
   if (!STUDIO_TEMPLATES.some((template) => template.id === value)) return;
-  studioDraft = studioTemplateDraft(value as StudioTemplateId);
+  const account = connectedAccount();
+  const domain = liveFccConfigState.status === "READY" ? liveFccConfigState.config.contracts : PAYGUARD_COSTON2;
+  studioDraft = { ...studioTemplateDraft(value as StudioTemplateId), owner: account ?? "", registry: domain.registry, vault: domain.vault, router: domain.router, asset: domain.asset };
   studioEntropy = createStudioEntropy();
   studioCompilation = null;
+  studioTemplateChosen = true;
+  studioRulesReviewed = false;
   studioIssues = [];
   studioNotice = "Template loaded with fresh in-memory salt and submission nonce.";
-  resetInteractivePolicySession("Template changed. Compute a fresh policy before collecting simulated receipts.");
   resetLiveFccPolicySession("Template changed. Compute a fresh policy before collecting live FCC receipts.");
   render();
 }
@@ -1735,6 +1868,7 @@ function selectTemplate(value: string): void {
 function readStudioDraft(form: HTMLFormElement): StudioDraft {
   const data = new FormData(form);
   const value = (field: Exclude<keyof StudioDraft, "templateId">): string => String(data.get(field) ?? "").trim();
+  const scheduleMode = String(data.get("scheduleMode") ?? (studioDraft.scheduleIntervalSeconds === "0" ? "adhoc" : "recurring"));
   return {
     templateId: studioDraft.templateId,
     policyName: value("policyName"),
@@ -1746,10 +1880,10 @@ function readStudioDraft(form: HTMLFormElement): StudioDraft {
     target: value("target"),
     maxPerAction: value("maxPerAction"),
     dailyCap: value("dailyCap"),
-    startAt: value("startAt"),
-    endAt: value("endAt"),
-    scheduleIntervalSeconds: value("scheduleIntervalSeconds"),
-    scheduleGraceSeconds: value("scheduleGraceSeconds"),
+    startAt: dateTimeInputToUnix(value("startAt")),
+    endAt: dateTimeInputToUnix(value("endAt")),
+    scheduleIntervalSeconds: scheduleMode === "adhoc" ? "0" : value("scheduleIntervalSeconds"),
+    scheduleGraceSeconds: scheduleMode === "adhoc" ? "0" : value("scheduleGraceSeconds"),
     maxOccurrences: value("maxOccurrences"),
   };
 }
@@ -1768,9 +1902,6 @@ void fetchSimulatedLifecycleEvidence()
 void fetchLiveV2LifecycleEvidence()
   .then((evidence) => { liveV2EvidenceState = { status: "READY", evidence }; if (!landingOpen) render(); })
   .catch(() => { liveV2EvidenceState = { status: "UNAVAILABLE" }; if (!landingOpen) render(); });
-void fetchProductionHealth()
-  .then((health) => { productionHealthState = { status: "READY", health }; if (!landingOpen) render(); })
-  .catch(() => { productionHealthState = { status: "UNAVAILABLE" }; if (!landingOpen) render(); });
 void fetchLiveFccConfig()
   .then(async (config) => {
     liveFccConfigState = { status: "READY", config };

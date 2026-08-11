@@ -6,7 +6,7 @@ export function landingView(): string {
     <header class="landing-topbar">
       <a class="landing-brand" href="#landing"><span class="brand-mark" aria-hidden="true">P</span><span>PayGuard</span><span class="brand-beta" aria-hidden="true">COSTON2</span></a>
       <nav class="landing-nav" aria-label="Landing navigation">
-        <a href="#why">WHY</a><a href="#guardians">GUARDIANS</a><a href="#journey">ARCHITECTURE</a><a href="#use-cases">USE CASES</a><a href="#evidence">EVIDENCE</a>
+        <a href="#journey">HOW IT WORKS</a><a href="#use-cases">USE CASES</a><a href="#evidence">EVIDENCE</a>
       </nav>
       <button class="outline-button" type="button" data-action="open-app">Open app</button>
     </header>
@@ -26,7 +26,7 @@ export function landingView(): string {
         <div class="landing-eyebrow">PRIVATE POLICY · PUBLIC ACTION</div>
         <h1 id="landing-title">Authorize public value with <em>private</em> rules.</h1>
         <p class="landing-lede">XRP PayGuard is an XRP-native policy control layer designed for Flare: keep the authorization rule inside a fixed FCC machine set, while every requested action and settlement remains public and auditable.</p>
-        <div class="landing-actions"><button class="primary-button" type="button" data-action="landing-demo">Verify live V2 lifecycle</button><button class="outline-button" type="button" data-action="landing-studio">Open Policy Studio</button><a class="landing-text-link" href="#why">Understand the boundary ↘</a></div>
+        <div class="landing-actions"><button class="primary-button" type="button" data-action="landing-demo">Verify live V2 lifecycle</button><a class="landing-text-link" href="#why">Understand the boundary ↘</a></div>
         <div class="landing-status"><span class="status-dot green"></span><span>Coston2 <strong>V2 live candidate</strong> · 3 registered simulated FCC machines · hardware release not verified</span></div>
         <div class="hero-proof-strip" aria-label="Current delivery boundary"><span>01 · V2 CONTRACT DOMAIN</span><span>02 · 3 REGISTERED FCC MACHINES</span><span>03 · PUBLIC ON-CHAIN PROOF</span></div>
       </section>
@@ -79,14 +79,14 @@ export function landingView(): string {
           <p>Start from a narrow template, inspect exactly what will be public, then create a new version whenever the rule changes. No active policy mutates silently.</p>
         </div>
         <div class="use-case-grid">
-          <article class="use-case-card"><span class="use-case-index">U 01</span><div class="use-case-icon" aria-hidden="true">↻</div><h3>Personal subscriptions</h3><p>Bound a merchant target, amount ceiling, interval, occurrence count, and grace window without publishing the complete relationship map.</p><span class="landing-tag">PRODUCT MODEL · NOT PILOTED</span></article>
-          <article class="use-case-card"><span class="use-case-index">U 02</span><div class="use-case-icon" aria-hidden="true">▦</div><h3>Treasury vendors</h3><p>Separate policy author, funder, executor, payee, and auditor roles while preserving public reconciliation and a deterministic deny path.</p><span class="landing-tag">PRODUCT MODEL · NOT PILOTED</span></article>
-          <article class="use-case-card"><span class="use-case-index">U 03</span><div class="use-case-icon" aria-hidden="true">⇢</div><h3>Delegated budgets</h3><p>Let an explicitly named delegate request a bounded action without giving that delegate—or the web client—the ability to supply ALLOW.</p><span class="landing-tag">PRODUCT MODEL · NOT PILOTED</span></article>
+          <article class="use-case-card" data-help="Bound a merchant target, amount ceiling, interval, occurrence count, and grace window without publishing the complete relationship map. This is a starting pattern, not a live customer deployment."><span class="use-case-index">U 01</span><div class="use-case-icon" aria-hidden="true">↻</div><h3>Personal subscriptions</h3><span class="landing-tag">PRODUCT MODEL · NOT PILOTED</span></article>
+          <article class="use-case-card" data-help="Separate policy author, funder, executor, payee, and auditor roles while preserving public reconciliation and a deterministic deny path. Review every role and public field before activation."><span class="use-case-index">U 02</span><div class="use-case-icon" aria-hidden="true">▦</div><h3>Treasury vendors</h3><span class="landing-tag">PRODUCT MODEL · NOT PILOTED</span></article>
+          <article class="use-case-card" data-help="Let an explicitly named delegate request a bounded action without giving that delegate—or the web client—the ability to supply ALLOW. The canonical path still requires matching FCC results."><span class="use-case-index">U 03</span><div class="use-case-icon" aria-hidden="true">⇢</div><h3>Delegated budgets</h3><span class="landing-tag">PRODUCT MODEL · NOT PILOTED</span></article>
         </div>
       </section>
 
       <section class="landing-section landing-reveal evidence-section" id="evidence" aria-labelledby="evidence-title">
-        <div class="evidence-story"><div class="eyebrow">PUBLIC-SAFE EVIDENCE</div><h2 id="evidence-title">Inspect facts,<br />not <em>promises.</em></h2><p>The hosted mirror publishes only testnet addresses, hashes, transactions, blocks, timings, and assertion booleans. Private policy material, credentials, and raw signatures are excluded.</p><div class="evidence-actions"><button class="outline-button" type="button" data-action="landing-auditor">Open Auditor</button><button class="outline-button" type="button" data-action="landing-demo">Open lifecycle</button><a class="landing-text-link" href="/evidence/index.json" target="_blank" rel="noreferrer">Evidence index ↗</a></div></div>
+        <div class="evidence-story"><div class="eyebrow">PUBLIC-SAFE EVIDENCE</div><h2 id="evidence-title">Inspect facts,<br />not <em>promises.</em></h2><p>The hosted mirror publishes only testnet addresses, hashes, transactions, blocks, timings, and assertion booleans. Private policy material, credentials, and raw signatures are excluded.</p><div class="evidence-actions"><button class="outline-button" type="button" data-action="landing-auditor">Open Auditor</button><a class="landing-text-link" href="/evidence/index.json" target="_blank" rel="noreferrer">Evidence index ↗</a></div></div>
         <div class="evidence-terminal" role="group" aria-label="Current verified versus limited scope"><div class="terminal-bar"><span>PAYGUARD / V2 CANDIDATE</span><span>2026-08-11</span></div><dl><div><dt>NETWORK</dt><dd>Coston2 · testnet only</dd></div><div><dt>V2 CONTRACTS</dt><dd>Runtime + wiring checked</dd></div><div><dt>XRP → FDC → VAULT</dt><dd>One public run observed</dd></div><div><dt>FCC POLICY PATH</dt><dd>3 registered simulated machines</dd></div><div><dt>V2 LIFECYCLE</dt><dd>Custody + ALLOW + DENY verified</dd></div><div><dt>RELEASE</dt><dd>Live candidate · hardware not verified</dd></div></dl><span class="terminal-cursor" aria-hidden="true">_</span></div>
       </section>
 
@@ -110,7 +110,7 @@ export function landingView(): string {
 
 function guardianCard(kind: GuardianKind, name: string, role: string, copy: string, status: string): string {
   const signal = kind === "cipher" ? "CUSTODY / 03" : kind === "quorum" ? "DIGEST / 02" : "ROOT / N+1";
-  return `<article class="guardian-card" data-mascot="${kind}"><div class="guardian-art" data-signal="${signal}" aria-hidden="true">${guardianMascot(kind)}</div><div class="guardian-copy"><span class="guardian-name">${name}</span><h3>${role}</h3><p>${copy}</p><span class="landing-tag">${status}</span></div></article>`;
+  return `<article class="guardian-card" data-mascot="${kind}" data-help="${copy}"><div class="guardian-art" data-signal="${signal}" aria-hidden="true">${guardianMascot(kind)}</div><div class="guardian-copy"><span class="guardian-name">${name}</span><h3>${role}</h3><span class="landing-tag">${status}</span></div></article>`;
 }
 
 function guardianMascot(kind: GuardianKind): string {
@@ -163,7 +163,7 @@ function guardianMascot(kind: GuardianKind): string {
 }
 
 function journeyStep(index: string, title: string, copy: string, state: string): string {
-  return `<article class="journey-step"><span>${index}</span><strong>${title}</strong><small>${copy}</small><em>${state}</em></article>`;
+  return `<article class="journey-step" data-help="${copy}"><span>${index}</span><strong>${title}</strong><em>${state}</em></article>`;
 }
 
 function landingDots(): string {
