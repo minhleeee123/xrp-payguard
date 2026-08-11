@@ -3,7 +3,7 @@
 ## Current release boundary
 
 This guide documents compile-tested public codecs, not a live PayGuard SDK or
-verified Coston2 release. The production web now connects to a hosted V1 relay
+verified Coston2 release. The production web now connects to a hosted V2 simulated-candidate relay
 and stable A/B/D `SIMULATED_TEE` machines; custody/evaluation, replacement, and
 executor recovery pass on Coston2. Hardware attestation, V2, permissionless
 release wiring, and a verified release manifest remain open. Integrators must

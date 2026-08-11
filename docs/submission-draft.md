@@ -51,15 +51,15 @@ evidence without publishing the policy rules themselves.
   demonstrates two-of-three recurring authorization, cap denial,
   stop/resume/revoke, and vault conservation, but not live FCC custody or
   hardware confidentiality.
-- A public Vercel dApp exposes a reviewed 22-entry evidence mirror and a hosted
-  V1 path through the Railway relay and registered A/B/D `SIMULATED_TEE`
+- A public Vercel dApp exposes a reviewed 23-entry evidence mirror and a hosted
+  V2 candidate path through the Railway relay and registered A/B/D `SIMULATED_TEE`
   machines. The older isolated serverless-actor lifecycle remains historical
   evidence; neither path is hardware-backed or a verified release.
 - The deployed lifecycle passed three custody receipts, policy registration,
   two matching `ALLOW` results and execution, two matching `CAP_EXCEEDED`
   results, stop/resume/revoke, and vault conservation. This is simulation-only,
   not production FCC evidence.
-- The current repository-only production-corpus audit fetched all 22 hosted
+- The current repository-only production-corpus audit fetched all 23 hosted
   evidence assets, required HTTP/JSON boundaries, and matched each body
   byte-for-byte to its reviewed local source without recursively publishing
   its own audit. The earlier 15-body audit remains historical evidence for the
@@ -83,9 +83,9 @@ evidence without publishing the policy rules themselves.
    snapshot is claimed.
 6. **FCC:** the authorization path freezes three compatible machine identities
    and requires two matching evaluations. The hosted UI now reaches registered
-   A/B/D `SIMULATED_TEE` machines through the Railway V1 relay; live private
+   A/B/D `SIMULATED_TEE` machines through the Railway V2 relay; live private
    custody, threshold evaluation, replacement, and executor recovery pass on
-   Coston2. Hardware-backed independent operators, V2, and a verified release
+   Coston2. Hardware-backed independent operators and a verified release
    remain post-hackathon.
 
 ## Public links
@@ -105,9 +105,10 @@ evidence without publishing the policy rules themselves.
 
 | Component | Address / identifier |
 |---|---|
-| PayGuardPolicyRegistry | `0x8DFb2D7D7a2608Ee7Cd78983fbe28cCE00e1D4A4` |
-| PayGuardVault | `0xFFe7522075412B2eBA5b8B91c9aA4E1c2c6f84dB` |
-| PayGuardActionRouter | `0x28A969018975Fb40aEd0BfA98f6d1c3023B6a7Da` |
+| PayGuardPolicyRegistryV2 | `0xbB89d68Efd3994CD688816c175343511bA5c0E88` |
+| V2 PayGuardVault | `0xe8f5b30F9adCea6b8532bFbD65f804E771520214` |
+| V2 PayGuardActionRouter | `0x452988f04bE9602EC0CEB0239EBA5Fe60d8988D3` |
+| V1 rollback namespace | Registry `0x8DFb…D4A4`; vault `0xFFe7…84dB`; router `0x28A9…a7Da` |
 | FCC foundation sender extension | `66037` |
 | FCC three-machine dispatcher | `0x18Ea713cEf10ECf5cAC23c08dD25Ac17D2f07e3d` |
 | Active simulated FCC machines | A `0x1C911D007f8203484eD4099bC11849d7e9691044`; B `0xff49A99535b8c52345D3c0b76bCf60194De7C29b`; D `0xd871bc2044a75e8cc2CF06aCdeaDC4CBbEef349A` |
@@ -138,12 +139,12 @@ The complete retrospective new-work classification is in
 
 - Stable A/B/D HTTPS origins, authenticated indexer access, registered
   simulated-machine custody, and signed live results are verified on Coston2.
-  No hardware-backed independent machine set or V2 release has been verified.
+  No hardware-backed independent machine set or verified release has been produced.
 - No live supported Web2Json source, request/proof, private policy evaluation,
   source-truth guarantee, or canonical Web2 consumer has been verified.
-- The current Vercel build supports the hosted V1 operator path. It uses
+- The current Vercel build supports the hosted V2 simulated candidate path. It uses
   registered simulated machines but provides no hardware confidentiality,
-  independent operators, permissionless dispatcher, V2, or verified release.
+  independent operators, permissionless dispatcher, or verified release.
   The older isolated three-actor lifecycle is historical evidence only.
 - No verified PayGuard release manifest, external audit, mainnet integration,
   user interview, pilot, revenue, partnership, or traction claim exists.
@@ -153,7 +154,7 @@ The complete retrospective new-work classification is in
 ## Roadmap
 
 After the hackathon: replace the simulated A/B/D set with independently operated
-hardware-backed FCC machines; deploy and verify V2; finish proxy/RPC/FDC/FTSO/
+hardware-backed FCC machines; finish proxy/RPC/FDC/FTSO/
 indexer outage drills and canonical partial/default redemption; promote the
 hosted relay and web to the exact verified release; commission independent contract/FCC
 reviews; then run a bounded design-partner testnet pilot. Mainnet requires fresh

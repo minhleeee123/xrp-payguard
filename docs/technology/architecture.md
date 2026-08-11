@@ -2,11 +2,12 @@
 
 > Status: the local protocol, durable ciphertext custody adapter, relay, web
 > shell, and manager-backed V2 registry candidate are implemented and tested.
-> The V1 registry/vault/router have independently checked Coston2 testnet
+> Parallel V1 and V2 registry/vault/router namespaces have independently checked Coston2 testnet
 > observations. Three registered Coston2 `SIMULATED_TEE` machines now pass live
 > custody/evaluation and replacement recovery through a hosted Railway relay
 > connected to the Vercel UI, but this is not a hardware-backed or verified
-> release. A V2 address and release wiring remain planned targets.
+> release. The active hosted route uses the V2 simulated profile; hardware
+> release promotion remains a planned target.
 
 ## 1. System model
 
@@ -108,9 +109,9 @@ Records owner, policy commitment/version, schema, extension, code version,
 three machine identities/key fingerprints, receipt bitmap, threshold,
 activation/revocation state, and policy nonce. No ciphertext is accepted.
 
-The deployed Coston2 V1 uses an administrator-populated local machine mapping
-and therefore is not a release-grade FCC identity authority. The local V2
-candidate instead freezes the official `FlareTeeManager`, extension ID, and code
+The retained Coston2 V1 rollback namespace uses an administrator-populated local
+machine mapping and therefore is not a release-grade FCC identity authority.
+The deployed V2 candidate instead freezes the official `FlareTeeManager`, extension ID, and code
 hash in its constructor; checks production status, exact extension,
 TEE/proxy/initial identity, code hash, platform support, and URL agreement for
 all three receipts; and repeats that official check when the router accepts a
@@ -119,8 +120,9 @@ pause that blocks registrations, new requests, and evaluations without
 rewriting an individual policy or preventing settlement/recovery of an already
 allowed request. Governance can permanently renounce that pause authority only
 while the system is unpaused. A verified release must bind the remaining admin
-to reviewed multisig/timelock governance or prove renunciation. V2 is planned,
-not yet deployed or release-verified.
+to reviewed multisig/timelock governance or prove renunciation. V2 is deployed
+at `0xbB89…0E88` under an immutable chain-114 `TEST_PLATFORM` simulated profile,
+but is not hardware-attested or release-verified.
 
 ### Vault
 
@@ -278,12 +280,13 @@ assertions before rendering. The Vite evidence plugin applies the existing
 recursive public-safety and simulation guards in both development and build
 delivery; any body drift fails the page closed.
 
-### Hosted V1 FCC path and isolated fallback
+### Hosted V2 FCC path and V1 rollback
 
 The production Vercel application now discovers one pinned Railway relay. The
 browser independently encrypts the policy to registered A/B/D machine keys and
 sends each ciphertext through a numbered authenticated ingress route. The relay
-preflights the V1 contracts, dispatcher ownership/extension, current machine
+preflights the V2 contracts, immutable manager/extension/code/profile,
+dispatcher ownership/extension, current machine
 URLs/status/code/platform, and private endpoints before forwarding a byte. It
 verifies each machine receipt and returns only public receipt metadata.
 
@@ -293,15 +296,16 @@ or history. The relay reconstructs the canonical request, policy, vault, and
 executed history from Coston2, dispatches that public state to the three frozen
 machines, verifies both FCC envelope and inner result signatures, and submits
 two matching results. RPC, Explorer reconstruction, proxy, signature, binding,
-or quorum drift fails closed. This deployed V1 route is operator-only because
+or quorum drift fails closed. This deployed V2 candidate route is operator-only because
 the dispatcher is owner-gated.
 
-The earlier isolated demo remains in source and historical evidence as an
-explicitly separate fallback design. Its serverless actor endpoints are not
+The V1 registry/vault/router addresses remain explicit Railway rollback
+metadata and were not modified during promotion. The earlier isolated demo
+remains in source and historical evidence. Its serverless actor endpoints are not
 part of the current static Vercel deployment, so that UI branch fails closed
 when they return unavailable. Those actors share one operator, are not
 registered FCC machines, and do not provide sealed persistence. Neither route
-is hardware-backed, V2, mainnet, or a verified PayGuard release. A browser
+is hardware-backed, mainnet, or a verified PayGuard release. A browser
 refresh discards the private draft and encrypted copies in both routes.
 
 ### XRPL-native path

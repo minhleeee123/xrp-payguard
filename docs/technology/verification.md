@@ -21,14 +21,14 @@ Forbidden evidence:
 | Gate | Required proof | Status |
 |---|---|---|
 | 0 — Foundations | pinned supported tools, registries, services, three machine capacity | PARTIAL — FUNDING + CONTRACTS + REGISTRY DEPENDENCIES + RPC/EXPLORER/FAUCET + THREE STABLE RAILWAY ORIGINS + AUTHENTICATED INDEXER + THREE REGISTERED SIMULATED MACHINES PASS / HARDWARE CAPACITY OPEN |
-| A — FCC result | registered extension result verified on Coston2 | LIVE SIMULATED PASS — STATUS-2 MACHINE + DISPATCH/DELIVERY + EXACT TEE/PROXY SIGNATURES / HARDWARE + V2 RELEASE OPEN |
+| A — FCC result | registered extension result verified on Coston2 | LIVE V2 SIMULATED PASS — STATUS-2 MACHINES + DISPATCH/DELIVERY + EXACT TEE/PROXY SIGNATURES + OFFICIAL-MANAGER RECHECK / HARDWARE RELEASE OPEN |
 | B — Private policy ingress | sealed policy, three receipts, replay/domain negatives | LIVE SIMULATED PASS — THREE INDEPENDENT ECIES WRITES + THREE MACHINE-SIGNED RECEIPTS + SANITIZED ON-CHAIN FREEZE + C→D NEW-POLICY REPLACEMENT / HARDWARE OPEN |
 | C — Common custody | all-three matching policy availability and commitment | LIVE SIMULATED PASS — EXACT COMMITMENT/MACHINE/KEY SET FROZEN AFTER ALL THREE RECEIPTS / HARDWARE OPEN |
 | D — Deterministic evaluation | cross-language vectors and private policy result | LIVE SIMULATED PASS — THREE MATCHING ALLOW RESULTS AND THREE MATCHING CAP DENIALS; CANONICAL FTSO/FDC LIVE INPUTS REMAIN OPEN |
-| E — Threshold execution | two distinct exact results authorize one atomic action | LIVE SIMULATED V1 PASS — TWO DISTINCT ATTESTATIONS AUTHORIZE ALLOW/EXECUTE; TWO DENIALS MOVE NO FUNDS / HARDWARE + V2 RELEASE OPEN |
+| E — Threshold execution | two distinct exact results authorize one atomic action | LIVE SIMULATED V2 PASS — TWO DISTINCT ATTESTATIONS AUTHORIZE ALLOW/EXECUTE; TWO DENIALS MOVE NO FUNDS / HARDWARE RELEASE OPEN |
 | F — Vault conservation | deposits/reservations/spend/refund and adversarial invariants | LOCAL PASS / VAULT DEPLOYED / LIVE FAssets REQUEST/PAYOUT OBSERVED / CANONICAL SETTLEMENT + DEFAULT RECOVERY OPEN |
 | G — XRP-native funding | XRPL payment, FDC proof, Smart Account deposit | PASS — live PayGuard-owned Coston2 evidence in [`evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json`](../../evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json) covers validated XRPL Testnet payment, FDC request/finalized round/proof commitment, on-chain `verifyXRPPayment`, `executeDirectMintingWithData`, and verified PayGuardVault accounting. The credential-free [`coston2-funding-resume-audit-2026-08-09.json`](../../evidence/coston2/coston2-funding-resume-audit-2026-08-09.json) reconstructs that checkpoint and re-verifies its proof/runtime bindings. The separate [`xrpl-fdc-trigger-pending-2026-08-09.json`](../../evidence/coston2/xrpl-fdc-trigger-pending-2026-08-09.json) binds a second validated XRPL payment and finalized proof to atomic replay consumption and one canonical router `Pending` request. Canonical private FDC evaluation passes locally, but that exact live trigger was not sent through the separately verified simulated FCC lifecycle; delayed resubmission, end-to-end FDC→FCC execution, and release gates remain open. |
-| H — Product release | full roles, recovery, accessibility, live deployment | INTERACTIVE VERCEL DAPP + LIVE RAILWAY SIMULATED-FCC V1 LIFECYCLE/REPLACEMENT + FULL EXECUTOR PAUSE/RESUME + PUBLIC-SAFE REPOSITORY EVIDENCE + LANDING + DESKTOP/MOBILE/KEYBOARD BROWSER SMOKE / HOSTED-WEB INTEGRATION, HARDWARE, V2, REMAINING DEPENDENCY-OUTAGE MATRIX, AND RELEASE MANIFEST OPEN |
+| H — Product release | full roles, recovery, accessibility, live deployment | INTERACTIVE VERCEL DAPP + LIVE RAILWAY SIMULATED-FCC V2 LIFECYCLE + V1 REPLACEMENT/EXECUTOR RECOVERY + PUBLIC-SAFE REPOSITORY EVIDENCE + LANDING + BROWSER SMOKE / HARDWARE, V2 OUTAGE MATRIX, CANONICAL V2 REDEMPTION, USER VALIDATION, AND RELEASE MANIFEST OPEN |
 | I — User validation | interviews, usability, and design-partner pilot | NOT STARTED — INTERVIEWS/USABILITY ARE A PRE-SUBMISSION VALIDATION TARGET; PILOTS AND RELEASE ACCEPTANCE REMAIN POST-HACKATHON |
 
 Gate timing is explicit: owner account/form/video/submission actions happen
@@ -201,12 +201,12 @@ interactive testnet client into an FCC or verified-release claim.
 
 The refreshed production-corpus audit recorded on 2026-08-11 is pinned to
 source `544c5ce88a9fda5b4a26a39e3994756e5a1c3cdd`. It matched the current
-metadata index and all 22 hosted bodies byte-for-byte to reviewed local sources,
+metadata index and all 23 hosted bodies byte-for-byte to reviewed local sources,
 including 21 chain-114 records and three explicitly bounded simulation records.
 Its repository-only result is
 [`public-evidence-deployment-audit-2026-08-11.json`](../../evidence/web/public-evidence-deployment-audit-2026-08-11.json).
 This proves public-artifact integrity and includes the sanitized hosted-relay
-lifecycle record; it does not turn either simulated route into hardware/V2.
+lifecycle record; it does not turn either simulated route into hardware.
 
 On 2026-08-10 the isolated interactive namespace passed a 133.29-second gate
 against the public Vercel actor APIs and separate Coston2 contracts. The test
@@ -248,10 +248,10 @@ plan retains six explicit external blockers until those activities occur.
 
 The hackathon acceptance boundary is narrower than release acceptance. The
 production Vercel app exposes the earlier isolated three-actor record as
-historical evidence and an explicitly labelled live V1 operator path through
+historical evidence and an explicitly labelled live V2 simulated candidate through
 the hosted Railway relay and registered A/B/D `SIMULATED_TEE` machines. A
 sanitized end-to-end run verifies private ingress, custody, two-of-three
-evaluation, execution, denial, governance, and conservation. Hardware/V2
+evaluation, execution, denial, governance, and conservation. Hardware release
 release acceptance remains open.
 
 One separate solution-3 record now proves the deployed Coston2 registry,
@@ -262,7 +262,7 @@ under `evidence/simulation/`, asserts `hardwareTeeVerified: false` and
 live portion of Gate E.
 
 Do not call PayGuard complete because the simulated Coston2 lifecycle works.
-Release still requires hardware/V2 lifecycle evidence, the remaining dependency
+Release still requires hardware lifecycle evidence, the remaining V2 dependency
 outage and redemption paths, release-bound generated bindings, release-bound
 browser smoke, external review, user testing, and documentation whose claims
 exactly match the deployed state.

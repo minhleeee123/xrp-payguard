@@ -1,7 +1,7 @@
 # FCC attestation signing domain
 
 Status: local cross-language compatibility plus registered Coston2 simulated-
-machine signature verification pass. Hardware attestation and V2 release remain
+machine signature verification pass. Hardware attestation and verified-release promotion remain
 unverified.
 
 ## Pinned source behavior

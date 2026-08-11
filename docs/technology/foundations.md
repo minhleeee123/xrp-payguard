@@ -32,7 +32,7 @@ code version, nonce, and a public-safe payload hash. The Go extension accepts
 only the canonical ABI tuple and returns the same fields plus their binding
 hash. The shared vector proves local wire compatibility; separate Coston2
 evidence now verifies an official outer FCC result and registered simulated
-TEE/proxy signers. Hardware attestation and V2 release remain separate
+TEE/proxy signers. Hardware attestation and verified-release promotion remain separate
 requirements.
 
 Deployment tooling resolves the manager from the digest-pinned official
@@ -65,7 +65,7 @@ release fact by itself.
 The following cannot be truthfully completed from this local workspace alone:
 
 - hardware-backed, independently operated FCC machines and verified V2 release
-  capacity; the registered A/B/D `SIMULATED_TEE` V1 path is already hosted;
+  capacity; the registered A/B/D `SIMULATED_TEE` V2 candidate path is already hosted;
 - organizer confirmation of current Summer Signal schedule, submission
   mechanics, and FCC access;
 - interviews/usability sessions and a design-partner testnet pilot;

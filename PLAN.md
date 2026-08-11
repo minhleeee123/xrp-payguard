@@ -1,19 +1,22 @@
 # XRP PayGuard — full product execution plan
 
 > Status: the local protocol and Foundry state machine pass cross-language/unit
-> tests. The V1 contracts and a three-machine FCC dispatcher are deployed and
-> verified on Coston2. Three stable, registered `SIMULATED_TEE` machines have
+> tests. Parallel V1 and V2 contract namespaces plus a three-machine FCC
+> dispatcher are deployed and verified on Coston2. Three stable, registered
+> `SIMULATED_TEE` machines have
 > completed all-three private custody plus a live two-of-three ALLOW/execute,
 > CAP-denial, stop/resume/revoke, C→D replacement, and executor-pause recovery
-> lifecycle. Hardware attestation, V2 release, the remaining dependency-outage
+> lifecycle, including one hosted V2 run. Hardware attestation, verified-release
+> promotion, the remaining V2 dependency-outage
 > drills, and a complete release remain unverified.
 >
 > Hackathon delivery decision (updated 2026-08-11): historical solution-3
 > evidence retains the credential-free local and isolated Vercel simulation
 > boundaries. The current Vercel application additionally connects to a hosted
-> Railway V1 relay and three registered A/B/D machines using organizer-supported
+> Railway relay and three registered A/B/D machines using organizer-supported
 > `SIMULATED_TEE=true`. They remain labelled `SIMULATED` and do not satisfy
-> hardware-attestation, V2-release, or mainnet gates.
+> V2 Coston2 simulated profile. They do not satisfy hardware-attestation,
+> verified-release, or mainnet gates.
 
 ## 1. Product objective
 
@@ -98,12 +101,13 @@ Unchecked boxes do not all have the same deadline:
 - **Post-hackathon — live/release work:** these gates stay separate from the
   submission count even when completed later. Stable A/B/D FCC origins,
   authenticated indexer access, registered simulated custody/evaluation,
-  replacement, executor-pause recovery, and hosted V1 relay/web integration now
-  pass. V2, uncontrolled live FAssets conditions, remaining outage drills,
+  replacement, executor-pause recovery, hosted V2 relay/web integration, and a
+  complete V2 custody/threshold/governance lifecycle now pass. Uncontrolled
+  live FAssets conditions, remaining V2 outage drills,
   independent review, release promotion, pilots, hardware, and all
   mainnet/production work remain outside the hackathon boundary.
 
-The current hackathon artifact does not need a V2 deployment or a verified
+The original hackathon boundary did not require a V2 deployment or a verified
 production FCC release to demonstrate its explicitly simulated solution-3
 boundary. It does need the owner actions above before an actual submission can
 be claimed.
@@ -436,7 +440,7 @@ open.
   HTML/assets/evidence, desktop/mobile, keyboard, and Lighthouse smoke.
 - [x] Build the local Policy Studio with templates, exact public/private
   preview, local validation, schema-checked custody receipt progress, and an
-  activation block; hosted V1 ingress, receipt, and activation evidence now pass.
+  activation block; hosted V2 ingress, receipt, and activation evidence now pass.
 - [x] Build the Accounts/Vaults surface with injected-wallet Coston2 connection,
   one-finalized-block runtime/wiring/asset verification, public wallet and vault
   balances, conservation, and recovery copy. Add two-step exact FTestXRP
@@ -518,7 +522,7 @@ Exit: failure is resumable or explicitly denied, never represented as success.
 
 - [x] Deploy the public-safe web application to Vercel through the pinned CLI
   workflow and verify HTTPS HTML/JS/CSS plus desktop/mobile/keyboard
-  reachability. It now reaches the hosted V1 relay and registered A/B/D
+  reachability. It now reaches the hosted V2 relay and registered A/B/D
   simulated machines; verified-release smoke remains open.
 - [x] Emit an allowlisted public-safe evidence index and JSON assets at the
   Vercel `/evidence/` endpoint. The hosted relay lifecycle is now included as a
@@ -538,27 +542,30 @@ Exit: failure is resumable or explicitly denied, never represented as success.
 - [ ] Post-hackathon: generate and verify a PayGuard release manifest and
   consumer bindings.
   The V2 source candidate, ignored local build digest, explicit blocker plan,
-  promotion runbook, and lifecycle/outage/redemption/user-validation validators
-  are prepared. They remain non-authoritative until real Coston2, FCC,
-  redemption, fault-drill, and consented study evidence passes.
+  promotion runbook, deployment, hosted lifecycle, and lifecycle/outage/
+  redemption/user-validation validators are prepared. The live simulated
+  candidate remains non-authoritative until the remaining redemption,
+  fault-drill, hardware, and consented study evidence passes.
 - [x] Post-hackathon: verify runtime bytecode, constructor/wiring, extension ID,
   code/image hash, governance, machines, key fingerprints, and signer mapping
-  for the live Coston2 simulated V1 stack and its three-machine dispatcher.
-  This does not verify a V2 or hardware-backed release.
+  for the live Coston2 simulated V1 and V2 stacks and their three-machine
+  dispatcher. This does not verify a hardware-backed release.
 - [ ] Post-hackathon: record live personal recurring-payment, cap-denial,
   emergency-stop, recovery, Smart Account funding, and redemption lifecycles.
 - [x] Publish only sanitized public identifiers, hashes, blocks, transactions,
   timings, and assertion booleans; the latest production-corpus audit fetched all
-  22 listed assets, matched every JSON body byte-for-byte to its reviewed source,
+  23 listed assets, matched every JSON body byte-for-byte to its reviewed source,
   reran the public-field/simulation guards, and remains repository-only to avoid
   recursive evidence publication.
-- [x] Post-hackathon: deploy the authenticated hosted V1 relay, connect the
+- [x] Post-hackathon: deploy the authenticated hosted relay, connect the
   production web to registered A/B/D `SIMULATED_TEE` machines, reject a
   client-supplied decision, and pass one complete Coston2 custody/ALLOW/execute/
-  cap-denial/governance/conservation run through the public relay origin.
-- [ ] Post-hackathon: promote the hosted web/relay to a verified V2 release and
-  run the complete production desktop/mobile/keyboard matrix against that exact
-  release-bound commit.
+  cap-denial/governance/conservation run through the public relay origin, then
+  promote the active route to the V2 simulated candidate while retaining V1
+  rollback metadata.
+- [ ] Post-hackathon: promote the hosted V2 simulated candidate to a verified
+  hardware-backed release and run the complete production desktop/mobile/
+  keyboard matrix against that exact release-bound commit.
 - [x] Deploy and audit the separate Interactive Demo contracts/serverless
   actors, publish sanitized simulation evidence, and verify the production web
   lifecycle without treating it as Gate A/B/C or a verified release. The three

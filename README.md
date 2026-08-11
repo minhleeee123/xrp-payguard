@@ -52,7 +52,8 @@ submission boundary. PayGuard now has three stable, registered Coston2
 `SIMULATED_TEE` machines, authenticated indexer connectivity, all-three live
 private-policy custody, and a verified two-of-three evaluation/execute/deny
 lifecycle. This organizer-approved simulated setup is suitable for Coston2
-hackathon judging, but it is not hardware attestation or a verified V2
+hackathon judging. The live web/relay path now uses the manager-backed V2
+Coston2 simulated profile, but this is not hardware attestation or a verified
 release. See
 [`docs/competition.md`](docs/competition.md) for the evidence-based track
 decision.
@@ -114,7 +115,7 @@ different assurance levels:
 | FDC | Verify exact XRPL payments and selected external trigger facts | Live `XRPPayment` funding and one atomic `Pending` trigger pass; Web2Json remains local-only |
 | Smart Accounts | Bind an XRPL user, PersonalAccount, nonce, fee, and exact `0xFE` operation | One direct-mint-to-vault transaction and a credential-free historical reconstruction pass |
 | FTSOv2 | Supply a canonical, bounded, fresh reference value for policies denominated outside the native asset | Deterministic TypeScript/Go/Solidity logic and fail-closed adapters pass locally; no live FCC lifecycle using an FTSO snapshot is claimed |
-| FCC | Store sealed policy copies and produce machine-signed deterministic evaluations | Typed extension, ciphertext-only atomic store, reproducible Railway image, authenticated Coston2 indexer, three stable registered simulated machines, signed PING, all-three live custody, live two-of-three ALLOW/execute/CAP-denial, and C→D replacement recovery; hardware attestation, the remaining outage matrix, and V2 release remain unverified |
+| FCC | Store sealed policy copies and produce machine-signed deterministic evaluations | Typed extension, ciphertext-only atomic store, reproducible Railway image, authenticated Coston2 indexer, three stable registered simulated machines, signed PING, all-three live V2 custody, live two-of-three ALLOW/execute/CAP-denial, and V1 C→D replacement recovery; hardware attestation, the remaining V2 outage matrix, and verified release remain open |
 
 ## Policy and authorization model
 
@@ -159,16 +160,16 @@ are not included in this headline count.
 
 | Area | Verified result | Important limitation |
 | --- | --- | --- |
-| Contracts | Non-upgradeable V1 policy registry, vault, router, and atomic XRPL FDC consumer are deployed and runtime/constructor/wiring checked on Coston2; a V2 registry candidate now verifies official manager status/extension/code/platform locally | V2 is not deployed, and V1 remains the recorded Coston2 contract; this is not a complete release manifest or FCC authorization proof |
+| Contracts | A parallel V2 registry/vault/router namespace is deployed and runtime/constructor/wiring checked on Coston2; V2 immutably binds the official manager, extension `66037`, code hash, and chain-114-only simulated profile | This is a live simulated candidate, not the hardware-attested verified release manifest; V1 remains available only as a rollback namespace |
 | XRP-native funding | Validated XRPL Payment → finalized FDC proof → on-chain `verifyXRPPayment` → Smart Account direct mint → `1,000,000` UBA vault deposit | The observed mint did not enter `DirectMintingDelayed` |
 | Canonical FDC trigger | A separate 100-drop payment/proof was atomically replay-consumed into one router request with status `Pending` | No FCC evaluation, `ALLOW`, reserve, or execution followed |
 | Private protocol | Cross-language policy codecs, schedule/spend math, FTSO/FDC composition, threshold domains, replay, atomic ciphertext persistence, adversarial vectors, stable FCC origins, authenticated indexer access, registration, signed PING, all-three custody, two-of-three live evaluation, and replacement recovery pass | The live machines use organizer-supported simulated attestation; hardware-backed custody and the full dependency-outage matrix remain absent |
-| Live FCC lifecycle | Three registered Railway machines encrypted/stored one policy independently, returned three verified receipts/evaluations, survived a measured executor pause with the request pending and vault unchanged, and drove V1 through ALLOW→execute, `CAP_EXCEEDED` DENY, stop/resume/revoke, and exact vault conservation | `SIMULATED_TEE=true`, V1 administrator mapping, and no V2 release manifest; this is not hardware or mainnet production |
+| Live FCC lifecycle | Three registered Railway machines encrypted/stored one policy independently, returned three verified receipts/evaluations, and drove V2 through ALLOW→execute, `CAP_EXCEEDED` DENY, owner-only stop/resume/revoke, and exact vault conservation; the earlier V1 run also records executor-pause and replacement recovery | `SIMULATED_TEE=true`; the complete V2 outage matrix and hardware release manifest remain open |
 | Solution-3 demo lifecycle | Fourteen successful Coston2 transactions cover simulated three-machine registration, policy registration, recurring allow, cap denial, stop/resume/revoke, and exact vault conservation | The older demo identities and result signers are explicitly ephemeral simulation and separate from the live Railway run |
 | FAssets exit | Amount-based and `redeemWithTag` Coston2 requests have matching validated XRPL payouts and `RedemptionPerformed` observations | Partial/default recovery and canonical PayGuard settlement consumption remain open |
 | Web2Json | Local source commitment allowlist, exact public request, jq/tuple ABI, MIC/response, source-asserted freshness, replay, and verifier failure tests pass | No production source, live proof, source-truth guarantee, private policy evaluation, or on-chain consumer |
-| Web + hosted relay | The production Vercel dApp connects to the Railway relay and registered A/B/D machines for authenticated ciphertext-only ingress, three custody receipts, V1 registration, request-ID-only two-of-three evaluation, execution, cap denial, and stop/resume/revoke. Its 22-asset evidence mirror is byte-verified at deployed source `544c5ce` | This is the Coston2 `SIMULATED_TEE=true` V1 operator path. It is not hardware-backed, permissionless V2, a verified PayGuard release, or mainnet production; the isolated three-actor demo remains historical evidence, not a route in the current static deployment |
-| Release | Release and V2 candidate validators fail closed | `pnpm release:check` reports `planned`; separate V2 plan/build and lifecycle/outage/redemption/user-study validators prepare future promotion without creating a verified manifest |
+| Web + hosted relay | The production Vercel dApp and Railway relay use the V2 namespace for authenticated ciphertext-only ingress, three custody receipts, request-ID-only two-of-three evaluation, execution, cap denial, and owner lifecycle. Its 23-asset evidence mirror is byte-verified; explicit V1 addresses remain rollback metadata | This is the Coston2 `SIMULATED_TEE=true` V2 candidate, not a hardware-backed verified release or mainnet production |
+| Release | Release and V2 candidate validators fail closed | `pnpm release:check` remains `planned`; the candidate is live but `verified: false` until V2 outage, canonical redemption, user validation, and hardware release evidence pass |
 
 ## Coston2 public identifiers
 
@@ -179,9 +180,10 @@ hashes, wiring, and the exact source commit used for each deployment.
 | Component | Public identifier |
 | --- | --- |
 | Network | Flare Coston2, chain ID `114` |
-| `PayGuardPolicyRegistry` | [`0x8DFb2D7D7a2608Ee7Cd78983fbe28cCE00e1D4A4`](https://coston2-explorer.flare.network/address/0x8DFb2D7D7a2608Ee7Cd78983fbe28cCE00e1D4A4) |
-| `PayGuardVault` | [`0xFFe7522075412B2eBA5b8B91c9aA4E1c2c6f84dB`](https://coston2-explorer.flare.network/address/0xFFe7522075412B2eBA5b8B91c9aA4E1c2c6f84dB) |
-| `PayGuardActionRouter` | [`0x28A969018975Fb40aEd0BfA98f6d1c3023B6a7Da`](https://coston2-explorer.flare.network/address/0x28A969018975Fb40aEd0BfA98f6d1c3023B6a7Da) |
+| `PayGuardPolicyRegistryV2` | [`0xbB89d68Efd3994CD688816c175343511bA5c0E88`](https://coston2-explorer.flare.network/address/0xbB89d68Efd3994CD688816c175343511bA5c0E88) |
+| V2 `PayGuardVault` | [`0xe8f5b30F9adCea6b8532bFbD65f804E771520214`](https://coston2-explorer.flare.network/address/0xe8f5b30F9adCea6b8532bFbD65f804E771520214) |
+| V2 `PayGuardActionRouter` | [`0x452988f04bE9602EC0CEB0239EBA5Fe60d8988D3`](https://coston2-explorer.flare.network/address/0x452988f04bE9602EC0CEB0239EBA5Fe60d8988D3) |
+| V1 rollback namespace | Registry `0x8DFb…D4A4` · vault `0xFFe7…84dB` · router `0x28A9…a7Da` |
 | `PayGuardXrplFdcTrigger` | [`0x4b626E2DA4D45034C8fAA38D10AbDfD4921486b2`](https://coston2-explorer.flare.network/address/0x4b626E2DA4D45034C8fAA38D10AbDfD4921486b2) |
 | `FlareTeeManager` | [`0x1a9C4A0f9D76c0b1D91d22E24E573a9b377618aE`](https://coston2-explorer.flare.network/address/0x1a9C4A0f9D76c0b1D91d22E24E573a9b377618aE) |
 | FCC foundation sender | [`0xA1e95721aD7F96D7f9bcd1d62b3A38A8625Cf8dC`](https://coston2-explorer.flare.network/address/0xA1e95721aD7F96D7f9bcd1d62b3A38A8625Cf8dC) |
@@ -191,11 +193,11 @@ hashes, wiring, and the exact source commit used for each deployment.
 | FCC machine B | [`0xff49A99535b8c52345D3c0b76bCf60194De7C29b`](https://coston2-systems-explorer.flare.network/tee/objects) · <https://payguard-fcc-b-production.up.railway.app> · manager status `2` |
 | Retired FCC machine C | [`0xed19Ff73952E4A4783f739194940c0b6823Ae213`](https://coston2-systems-explorer.flare.network/tee/objects) · endpoint deliberately unavailable during replacement drill; never swapped into an old policy |
 | FCC machine D | [`0xd871bc2044a75e8cc2CF06aCdeaDC4CBbEef349A`](https://coston2-systems-explorer.flare.network/tee/objects) · <https://payguard-fcc-d-production.up.railway.app> · manager status `2` |
-| Hosted FCC relay | <https://payguard-live-relay-production.up.railway.app> · `LIVE_SIMULATED_TEE_C2` · authenticated owner ingress/evaluation · V1 operator-only |
+| Hosted FCC relay | <https://payguard-live-relay-production.up.railway.app> · `COSTON2_SIMULATED_V2` · authenticated owner ingress/evaluation · V1 Railway rollback retained |
 | Live FCC PING | [`0x1c1201a26bd0c7e296a4f7c527823540c65b188979e467104a6f366b1ad59408`](https://coston2-explorer.flare.network/tx/0x1c1201a26bd0c7e296a4f7c527823540c65b188979e467104a6f366b1ad59408) · signed result and both TEE/proxy signers verified |
-| Live policy freeze | [`0xcb8db39e7c083b5c33f4726a7d097f958ee722b65a8961b6c8085d383d43b8dc`](https://coston2-explorer.flare.network/tx/0xcb8db39e7c083b5c33f4726a7d097f958ee722b65a8961b6c8085d383d43b8dc) · three custody receipts frozen |
-| Live threshold ALLOW | [`0xcbbd1ba8f68dceba6d8d19f022109d7b8641f158ed45d9194660e28f4540915e`](https://coston2-explorer.flare.network/tx/0x7054cf4cb77ccc94f5995c778b681916afa69a2be1dc9b3273fd7ffa2b8edeea) · three matching results, two submitted, request executed |
-| Live threshold DENY | [`0x588ebf52e716b1d4d4d307d6381e31a2e6685461ca2ee129ab2f41f565d9bedb`](https://coston2-explorer.flare.network/tx/0x5d114d29bf991176f230083e9912c40599992154af4a77d11589caad0cb51d9d) · `CAP_EXCEEDED`, no vault accounting change |
+| V2 live policy freeze | [`0x683c2c3dfdbe9c201428b9a50c6b08df1340dda102f9c9c47c07dd3b620c1bfb`](https://coston2-explorer.flare.network/tx/0x683c2c3dfdbe9c201428b9a50c6b08df1340dda102f9c9c47c07dd3b620c1bfb) · three custody receipts frozen after official-manager rechecks |
+| V2 live threshold ALLOW | Request `0xc414…3658` · [execute](https://coston2-explorer.flare.network/tx/0x110302617ac630812eb052f53de04c139891c4468ba1fc4ba76d82ac1786db45) · two matching results submitted |
+| V2 live threshold DENY | Request `0x61df…3817` · `CAP_EXCEEDED` · no vault accounting change |
 | Supported test asset | FTestXRP `0x0b6A3645c240605887a5532109323A3E12273dc7`, resolved and checked through supported Flare runtime sources |
 
 The fully interactive hackathon demo is deliberately isolated from those
@@ -213,9 +215,9 @@ The judge-safe path needs no wallet: open **Demo lifecycle**, inspect the live
 relay/machine readiness card, then open the hosted lifecycle evidence and its
 Coston2 transactions. Never enter a real operational policy or use mainnet value.
 
-The write path is intentionally restricted to the currently configured V1
+The write path is intentionally restricted to the currently configured V2
 operator wallet. That operator can connect on chain ID `114`, select the hosted
-V1 domain in **Policy Studio**, validate an in-memory test policy, collect three
+V2 domain in **Policy Studio**, validate an in-memory test policy, collect three
 live FCC receipts, register it, then use **Demo lifecycle** to create a request,
 ask the relay to evaluate it, execute an ALLOW, observe a `CAP_EXCEEDED` DENY,
 and exercise stop/resume/revoke. Every write requires the injected wallet; the
@@ -242,7 +244,7 @@ Suggested five-minute walkthrough:
    then use the two-step FTestXRP transaction preview without exposing a key.
 5. In **Requests**, load the prefilled canonical request; compare its router
    status, Payee projection, Auditor boundary, and guarded expiry action.
-6. Open **Demo lifecycle** and inspect the hosted V1 readiness card for the
+6. Open **Demo lifecycle** and inspect the hosted V2 readiness card for the
    Railway relay and registered A/B/D machines. Judges can verify the complete
    run through sanitized evidence without a wallet. The configured operator may
    rerun custody/request/evaluation/governance from the UI; everyone else stays
@@ -253,7 +255,7 @@ The deployed artifact is a public-safe static Vite bundle with an interactive
 injected-wallet Coston2 client, evidence mirror, and an explicit HTTPS connection
 to the Railway relay. It contains no `.env.local`, key, credential, private
 policy, ciphertext, or raw signature. Relay signing and FCC/indexer credentials
-remain server-side; the UI labels this as the simulated V1 operator path rather
+remain server-side; the UI labels this as the simulated V2 candidate path rather
 than a verified release.
 
 ## Evidence map
@@ -271,7 +273,8 @@ Public evidence is allowlisted, sanitized, and testnet-only. Start with
 | [`fassets-redemption-2026-08-09.json`](evidence/coston2/fassets-redemption-2026-08-09.json) | Amount-based redemption request, XRPL payout, and matching settlement event |
 | [`fassets-tagged-redemption-2026-08-09.json`](evidence/coston2/fassets-tagged-redemption-2026-08-09.json) | Tagged redemption and validated XRPL destination tag |
 | [`fcc-hackathon-simulated-ping.json`](evidence/coston2/fcc-hackathon-simulated-ping.json) | Three stable Railway origins, registered status-2 simulated machines, live Coston2 dispatch/delivery, and verified TEE/proxy-signed PING result |
-| [`fcc-live-three-machine-custody.json`](evidence/coston2/fcc-live-three-machine-custody.json) | Independently encrypted live policy custody, three verified machine receipts, and V1 on-chain freeze |
+| [`contracts-v2-simulated.json`](evidence/coston2/contracts-v2-simulated.json) | V2 runtime, constructor, official-manager, machine, profile, and wiring verification with explicit non-release boundaries |
+| [`fcc-live-three-machine-custody.json`](evidence/coston2/fcc-live-three-machine-custody.json) | Independently encrypted live policy custody, three verified machine receipts, and V2 on-chain freeze |
 | [`fcc-live-dispatcher.json`](evidence/coston2/fcc-live-dispatcher.json) | Dispatcher deployment, immutable-aware runtime verification, extension binding, and simulated limitations |
 | [`fcc-live-threshold-lifecycle.json`](evidence/coston2/fcc-live-threshold-lifecycle.json) | Three-machine live simulated evaluation, two-of-three ALLOW execution, cap denial, conservation, and policy lifecycle |
 | [`fcc-live-replacement-lifecycle.json`](evidence/coston2/fcc-live-replacement-lifecycle.json) | C outage, fresh D registration, new A/B/D custody and threshold lifecycle, measured full executor pause/resume, and no frozen-identity swap |
@@ -281,7 +284,7 @@ Public evidence is allowlisted, sanitized, and testnet-only. Start with
 | [`coston2-interactive-demo-deployment-2026-08-10.json`](evidence/simulation/coston2-interactive-demo-deployment-2026-08-10.json) | Separate demo contracts, three public actor descriptors, registrations, wiring, and mandatory false production assertions |
 | [`vercel-interactive-demo-2026-08-10.json`](evidence/web/vercel-interactive-demo-2026-08-10.json) | Production-origin API, full automated Coston2 ALLOW/DENY/governance lifecycle, and laptop browser smoke |
 | [`vercel-preview-2026-08-09.json`](evidence/web/vercel-preview-2026-08-09.json) | Reviewed Vercel artifact, browser, keyboard, responsive, evidence, and Lighthouse audit |
-| [`public-evidence-deployment-audit-2026-08-11.json`](evidence/web/public-evidence-deployment-audit-2026-08-11.json) | Current production origin, source commit `544c5ce`, and all 22 hosted evidence bodies matched byte-for-byte to reviewed local sources |
+| [`public-evidence-deployment-audit-2026-08-11.json`](evidence/web/public-evidence-deployment-audit-2026-08-11.json) | Current production origin and all 23 hosted evidence bodies matched byte-for-byte to reviewed local sources |
 
 Evidence may contain only public addresses, hashes, blocks, transaction IDs,
 result commitments, timings, amounts already public by protocol design, and
@@ -349,11 +352,12 @@ pnpm --filter @xrp-payguard/web build
 forge test --root packages/contracts
 ```
 
-Prepare and inspect the non-authoritative V2 candidate with one command:
+Inspect or independently verify the non-authoritative live V2 candidate:
 
 ```sh
 pnpm candidate:build
 pnpm candidate:plan
+pnpm deploy:coston2:v2:verify
 ```
 
 The build uses the pinned local toolchain when available and pinned containers

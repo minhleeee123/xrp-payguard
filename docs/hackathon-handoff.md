@@ -34,7 +34,7 @@ The hackathon build uses solution 3:
 Three stable Railway origins, authenticated indexer access, registered status-2
 `SIMULATED_TEE` machines, signed `PING_V1`, all-three custody, two-of-three
 evaluation, C→D replacement, and executor-pause recovery pass on Coston2. The
-current Vercel app is wired to that hosted V1 path, and a sanitized end-to-end
+current Vercel app is wired to the hosted V2 simulated-candidate path, and a sanitized end-to-end
 relay run is mirrored in public evidence. Hardware TEE attestation, V2 release,
 remaining dependency outages, and a complete release remain open. No simulated
 path may be presented as hardware-backed confidentiality or mainnet production.
@@ -56,7 +56,7 @@ rejects any non-empty/client-decision body. Historical serverless demo actor
 routes are not part of this static artifact and therefore fail closed.
 
 A repository-only audit independently fetched the current production index and
-all 22 listed JSON assets, required HTTP 200 plus JSON content types,
+all 23 listed JSON assets, required HTTP 200 plus JSON content types,
 reran the forbidden-field and explicit-simulation checks, and matched every body
 byte-for-byte to its reviewed local source. Its own record is excluded from the
 hosted index by design.
@@ -72,12 +72,12 @@ hosted index by design.
    ALLOW submission/execution, `CAP_EXCEEDED` DENY, stop/resume/revoke, and
    conservation transaction identifiers to Coston2 Explorer.
 4. If the configured operator is demonstrating, connect that testnet wallet,
-   prepare a hosted V1 policy in **Policy Studio**, collect three receipts,
+   prepare a hosted V2 policy in **Policy Studio**, collect three receipts,
    register it, create a request, and ask the relay for quorum evaluation.
 5. Point out that the evaluation body is empty and owner-authenticated; the
    browser cannot supply `ALLOW` or override canonical chain history.
 6. Close with the permanent boundary: simulated TEE, V1 operator dispatcher,
-   no hardware attestation, no V2, and no verified release.
+   no hardware attestation and no verified release.
 
 ## Validation actually run
 
@@ -190,7 +190,7 @@ technical blocker:
 | --- | --- | --- |
 | Before submission — owner-only | Organizer/account | Enabled final form, owner eligibility, bounty selection, public video URL, submission URL/receipt |
 | Before submission — validation target | Users | 15 interviews/usability sessions; retain the explicit zero-session disclosure until they occur |
-| Post-hackathon | Remaining FCC operations | Hardware-backed independent operators; verified V2 promotion; proxy, RPC, FDC, FTSO, and indexer outage drills. Hosted simulated V1 relay/web, stable origins/indexer, `PING`, custody, threshold lifecycle, C→D replacement, one-machine loss, and full executor pause/resume already pass. |
+| Post-hackathon | Remaining FCC operations | Hardware-backed independent operators; verified-release promotion; proxy, RPC, FDC, FTSO, and indexer outage drills. Hosted simulated V2 relay/web and lifecycle plus V1 replacement/executor recovery already pass. |
 | Post-hackathon | Uncontrolled protocol conditions | A real `DirectMintingDelayed` resume and official partial/default FAssets recovery with canonical PayGuard consumption |
 | Post-hackathon | Independent assurance | External contract/TEE review, exact-candidate remediation, and production security audit |
 | Post-hackathon | Verified release | Complete release manifest/bindings, runtime/wiring/machine/key/signer mapping, and live recurring/deny/stop/recovery/redemption journeys |
@@ -211,7 +211,7 @@ policy evaluation, or canonical on-chain Web2 consumer.
 | Web2Json | Local source-commitment allowlist, exact jq/tuple-ABI/MIC/response binding, source-asserted freshness, replay, and fail-closed verifier tests | No production source, live proof, source-truth guarantee, private evaluation, or on-chain consumer |
 | FCC foundation | Sender/extension binding, status-2 registered simulated machines, and exact live `PING_V1` TEE/proxy signatures pass | No hardware attestation or V2 release |
 | FCC policy path | A/B/D stable origins, authenticated indexer, all-three live simulated custody, hosted request-ID-only two-of-three ALLOW/DENY, conservation, replacement, and executor recovery pass | V1 administrator mapping, `SIMULATED_TEE`, remaining dependency outages, and no verified release |
-| Web | Interactive Vercel dApp, hosted Railway FCC V1 controls, refreshed desktop navigation, and byte-verified 22-asset evidence mirror pass | Operator-only simulated V1; historical actor APIs are not in the current static artifact; hardware/V2 release remains unavailable |
+| Web | Interactive Vercel dApp, hosted Railway FCC V2 controls, refreshed desktop navigation, and byte-verified 23-asset evidence mirror pass | Operator-only simulated V2 candidate; historical actor APIs are not in the current static artifact; hardware release remains unavailable |
 | Release | Release validators and fail-closed checks pass | No verified release manifest exists |
 | SDK | Compile-tested XRPL-wallet and Flare-dApp preview examples plus integration guide | Package remains private; no live writer or release domain is exposed |
 | Competition | Public deadline, prize/track direction, package, and existing-project policy were refreshed from DoraHacks | Enabled final form, owner eligibility, bounty selection, submission receipt, and FCC grant remain owner/organizer-only |

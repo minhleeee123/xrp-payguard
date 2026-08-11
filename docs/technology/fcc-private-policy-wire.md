@@ -92,4 +92,4 @@ registrations, live all-three custody, and C→D replacement now pass with
 organizer-supported `SIMULATED_TEE=true`. The supported recovery model creates
 a fresh identity and new policy; it never restores or silently swaps an old
 identity. Hardware-backed sealed recovery, independent operators, production
-proxy review, and V2 release remain open.
+proxy review and hardware verified-release promotion remain open.

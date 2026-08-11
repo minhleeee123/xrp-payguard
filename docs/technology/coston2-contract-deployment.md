@@ -1,10 +1,26 @@
 # Coston2 contract deployment runbook
 
-Status: verified public contract deployment, not a verified PayGuard release.
-The public evidence file passes repository checks; registered FCC and private
-policy lifecycle gates remain open.
+Status: parallel V1 and V2 public contract deployments are verified on
+Coston2. The active V2 route is a simulated candidate, not a hardware-attested
+verified PayGuard release.
 
-## Verified deployment
+## Active V2 simulated candidate — 2026-08-11
+
+| Contract | Coston2 address | Deployment block |
+|---|---|---:|
+| `PayGuardPolicyRegistryV2` | `0xbB89d68Efd3994CD688816c175343511bA5c0E88` | `33918762` |
+| `PayGuardVault` | `0xe8f5b30F9adCea6b8532bFbD65f804E771520214` | `33918768` |
+| `PayGuardActionRouter` | `0x452988f04bE9602EC0CEB0239EBA5Fe60d8988D3` | `33918776` |
+
+The V2 evidence in
+[`contracts-v2-simulated.json`](../../evidence/coston2/contracts-v2-simulated.json)
+verifies runtime, wiring, official-manager binding, extension `66037`, exact
+code hash, and all three status-2 machines. Its simulated flag is immutable,
+can only be enabled on chain `114`, and accepts only `TEST_PLATFORM` with the
+organizer-supported zero initial identity. V1 below remains an isolated
+rollback namespace.
+
+## Retained V1 deployment
 
 Source commit `17ff0bc1eb135195a94d0d261bc491f006730720` produced:
 

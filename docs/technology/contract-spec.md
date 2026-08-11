@@ -3,11 +3,13 @@
 > The local V1 ABI/state machine now exists under `packages/contracts/src` and
 > is covered by Foundry tests. Its three contracts and vault wiring are verified
 > on Coston2 in `evidence/coston2/contracts-deployment.json`. A separate
-> registered Coston2 `SIMULATED_TEE` lifecycle now exercises the V1 contracts,
+> registered Coston2 `SIMULATED_TEE` lifecycle exercises both V1 historical and
+> active V2 candidate contracts,
 > but this document does not assert hardware-backed FCC execution, a complete
 > release, or a production audit.
-> A manager-backed `PayGuardPolicyRegistryV2` is also implemented and tested
-> locally, but it has no verified Coston2 deployment or release status.
+> A manager-backed `PayGuardPolicyRegistryV2` is deployed and runtime/constructor
+> checked on Coston2 under the explicit `COSTON2_SIMULATED_V2` profile. It has
+> live custody/evaluation evidence but no hardware-attested release status.
 > The separate XRPL FDC trigger consumer is deployed and binding-verified in
 > `evidence/coston2/xrpl-fdc-trigger-deployment.json`. One live proof was later
 > consumed into a canonical `Pending` request in
@@ -26,7 +28,7 @@ Responsibilities:
 - activate, stop, revoke, and supersede versions under explicit authority;
 - expose no ciphertext or policy fields.
 
-### `PayGuardPolicyRegistryV2` — local release candidate
+### `PayGuardPolicyRegistryV2` — live Coston2 simulated candidate
 
 Responsibilities:
 
@@ -47,10 +49,15 @@ Responsibilities:
   administrator global pause for new registration/request/evaluation work;
 - permit permanent admin renunciation only while the global pause is off, so
   governance cannot renounce into a permanently paused configuration.
+- permit `initialTeeId == 0` only when an immutable simulated flag was enabled
+  at deployment, `block.chainid == 114`, and platform is exactly
+  `TEST_PLATFORM`; the hardware profile continues to require
+  `initialTeeId == teeId`.
 
 The constructor manager address is not self-authenticating: a future release
 manifest must prove it was resolved from the supported Flare source and verify
-the deployed constructor/runtime binding. V2 must remain `planned` until then.
+the deployed constructor/runtime binding. The current V2 is therefore a
+`live-candidate`, not a verified release.
 
 ### `PayGuardVault`
 
@@ -155,9 +162,10 @@ before Gate A can pass.
 
 The V2 candidate preserves the router-facing V1 selectors, so the unchanged
 router can call `getPolicy`, `policyStatus`, and `isFrozenSigner` against V2.
-Local integration tests prove a result is rejected after the official manager
+Local integration tests and the live hosted lifecycle prove the binding; tests
+also prove a result is rejected after the official manager
 removes the frozen machine from production status. This does not alter or
-upgrade the already deployed V1 registry.
+upgrade the retained V1 registry.
 
 ## 2. Schemas
 

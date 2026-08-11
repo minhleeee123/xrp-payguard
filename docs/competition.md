@@ -79,7 +79,7 @@ C→D loss/re-registration/new-policy drill now passes without swapping a frozen
 identity; the same live path also remains pending with unchanged vault
 accounting during a measured full executor pause, then resumes successfully.
 Do not describe the Confidential Compute Apps bounty as
-production-complete unless the remaining hardware, V2, full-outage, and release
+production-complete unless the remaining hardware, full V2 outage, and release
 gates pass.
 
 ### Current hackathon delivery boundary
@@ -89,10 +89,11 @@ isolated three-machine simulated FCC demo. The current Vercel artifact now also
 connects to the hosted Railway relay and registered A/B/D Coston2 machines; a
 separate sanitized lifecycle records custody, request-ID-only quorum evaluation,
 execution, denial, governance, and conservation. Neither artifact is a
-hardware-backed or verified V2 release.
+hardware-backed or a verified release; the active V2 route is explicitly a
+Coston2 simulated candidate.
 
 The submission must say `SIMULATED`, `PLANNED`, or `NOT VERIFIED` wherever
-hardware TEE confidentiality, V2 release, verified-release promotion, recovery, or
+hardware TEE confidentiality, verified-release promotion, complete recovery, or
 a complete production release would otherwise be implied. Stable FCC servers,
 authenticated indexer access, registered simulated custody, and threshold
 evaluation are now verified repository facts; they must not be inflated into a

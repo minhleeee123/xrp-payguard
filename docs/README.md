@@ -62,7 +62,7 @@
 - [`technology/release-manifest.md`](technology/release-manifest.md): canonical
   public-safe Coston2 release-manifest shape and verification gate.
 - [`technology/coston2-v2-promotion-runbook.md`](technology/coston2-v2-promotion-runbook.md):
-  planned V2 candidate build, lifecycle/outage/redemption evidence, promotion,
+  live V2 simulated candidate, remaining outage/redemption evidence, promotion,
   and abort boundaries.
 - [`technology/foundations.md`](technology/foundations.md): pinned local
   toolchain, official source map, and external Gate 0/1 blockers.

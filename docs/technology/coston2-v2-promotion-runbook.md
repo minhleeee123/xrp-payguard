@@ -1,21 +1,26 @@
-# Coston2 V2 release-candidate promotion runbook (planned)
+# Coston2 V2 live-candidate promotion runbook
 
-This runbook prepares a future `PayGuardPolicyRegistryV2` Coston2 release. It
-does not authorize deployment, register FCC machines, submit transactions, or
-create a verified release manifest. The tracked candidate plan remains
-`planned` and every live dependency remains `blocked` until independently
-observed.
+This runbook governs promotion of the deployed `PayGuardPolicyRegistryV2`
+Coston2 simulated candidate. The candidate has contract, machine, hosted
+custody, threshold, conservation, and owner-lifecycle evidence. It does not
+create or imply a hardware-attested verified release manifest.
 
 ## Two artifacts that must never be confused
 
 - `releases/candidates/coston2-v2.plan.json` is a checked-in preparation plan.
-  It contains no deployment fact and must always have `verified: false`.
+  It tracks candidate facts and must remain `verified: false`.
+- `evidence/coston2/contracts-v2-simulated.json` and
+  `fcc-hosted-relay-lifecycle.json` are public-safe candidate evidence. They
+  explicitly assert simulated TEE and non-release boundaries.
 - `releases/coston2.release.json` is the future authoritative manifest. It must
   remain absent until every gate below passes against one clean source commit.
 
 `pnpm candidate:build` compiles V2 and writes an ignored local build record at
 `.local/release-candidate/coston2-v2.build.json`. That record contains source
 and bytecode digests, but it is not deployable evidence and is never promoted.
+
+The active candidate can be re-observed with `pnpm deploy:coston2:v2:verify`.
+V1 remains a separate Railway rollback namespace.
 
 ## Gate A — freeze the candidate
 
@@ -28,7 +33,7 @@ and bytecode digests, but it is not deployable evidence and is never promoted.
 5. Compare generated bindings and local digests. A dirty-tree local record may
    aid development but may not be the source of a release.
 
-## Gate B — obtain external FCC authority
+## Gate B — obtain external FCC authority for verified release (open)
 
 Resolve the official Coston2 TeeManager through a supported Flare source and
 record its source digest. Obtain three real, distinct, non-simulated FCC
@@ -41,7 +46,7 @@ Private ingress must return a machine-signed receipt before freeze. All three
 machines must durably retain the encrypted policy. Credentials, policy content,
 ciphertext, signatures, and machine keys stay outside source and evidence.
 
-## Gate C — deploy and independently re-observe
+## Gate C — deploy and independently re-observe (candidate passed)
 
 Use the existing plan commands before any broadcast. Broadcasting requires the
 release owner to supply keys through ignored local environment files and give
