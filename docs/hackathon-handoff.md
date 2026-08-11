@@ -4,8 +4,8 @@
 > `d5f81f341843bf9ad71113065d2597ebc36c1f3d`. The later V2 candidate and
 > documentation work does not alter or upgrade the deployed demo evidence.
 > The current production web artifact is pinned to source commit
-> `256fa0fcb9a97a2eec20e4c7a33f8873b9cb11c3` and deployment
-> `dpl_FZ8kL4CMwM6jCiu7SWdVCE2yygjq`. Its hosted FCC UI, production bytes, and
+> `544c5ce88a9fda5b4a26a39e3994756e5a1c3cdd` and deployment
+> `dpl_4qxpyf3wU7jQJJbtfWro7Zz2mR46`. Its hosted FCC UI, production bytes, and
 > 22-entry evidence corpus were checked on 2026-08-11. The full interactive
 > lifecycle/browser record in `9305976` remains evidence for the earlier
 > source-pinned artifact and is not silently reassigned to the refreshed UI.
@@ -45,8 +45,8 @@ path may be presented as hardware-backed confidentiality or mainnet production.
 - Evidence index: <https://xrp-payguard.vercel.app/evidence/index.json>
 - Demo video: local validated MP4 exists under ignored `evidence/local/`; public
   upload remains owner-only and no public video URL is claimed.
-- Vercel deployment ID: `dpl_FZ8kL4CMwM6jCiu7SWdVCE2yygjq`
-- Deployed source commit: `256fa0fcb9a97a2eec20e4c7a33f8873b9cb11c3`
+- Vercel deployment ID: `dpl_4qxpyf3wU7jQJJbtfWro7Zz2mR46`
+- Deployed source commit: `544c5ce88a9fda5b4a26a39e3994756e5a1c3cdd`
 - Railway relay: <https://payguard-live-relay-production.up.railway.app>
 
 The deployment was built and uploaded through Vercel CLI. It serves the static
@@ -96,8 +96,8 @@ Observed results on the current baseline:
 
 - The toolchain gate resolved Node `24.19.0`, pnpm `10.33.0`, Go `1.25.12`,
   Foundry `1.7.1`, and Solidity `0.8.25` requirements.
-- 211 workspace package tests passed: bindings 2, protocol 50, relay 19,
-  demo protocol 7, integrations 83, demo API 4, web 42, and SDK examples 4.
+- 212 workspace package tests passed: bindings 2, protocol 50, relay 19,
+  demo protocol 7, integrations 83, demo API 4, web 43, and SDK examples 4.
   Three web-live cases are gated out of the ordinary unit run; the full
   production-origin Coston2 lifecycle gate passed separately. The top-level gate also passed
   the separate public-web evidence, four deployment-corpus auditor tests,
@@ -168,7 +168,7 @@ public RPC:
   review/upload.
 
 A fresh HTTPS read of deployment
-`dpl_FZ8kL4CMwM6jCiu7SWdVCE2yygjq` returned 200 for the application and
+`dpl_4qxpyf3wU7jQJJbtfWro7Zz2mR46` returned 200 for the application and
 22-entry evidence index. The deployed JavaScript and CSS
 matched the locally built artifact byte-for-byte, and the public-corpus audit
 matched every hosted evidence body to its reviewed local source. The prior

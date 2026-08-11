@@ -123,6 +123,11 @@ Run locally with the pinned Node toolchain:
 PATH="$PWD/.local/toolchains/bin:$PATH" pnpm --filter @xrp-payguard/web dev
 ```
 
+The verified Railway relay origin is also the source default, so a plain
+production build cannot silently omit the live path. A reviewed deployment may
+override it with `VITE_PAYGUARD_LIVE_RELAY_ORIGIN`; config preflight and exact
+CORS still fail closed on any wrong or unavailable origin.
+
 The connected public account/vault reader and hosted simulated-FCC V1 path are
 real Coston2 features, but the UI is not evidence of a complete PayGuard release
 or hardware FCC authorization.

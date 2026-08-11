@@ -167,7 +167,7 @@ are not included in this headline count.
 | Solution-3 demo lifecycle | Fourteen successful Coston2 transactions cover simulated three-machine registration, policy registration, recurring allow, cap denial, stop/resume/revoke, and exact vault conservation | The older demo identities and result signers are explicitly ephemeral simulation and separate from the live Railway run |
 | FAssets exit | Amount-based and `redeemWithTag` Coston2 requests have matching validated XRPL payouts and `RedemptionPerformed` observations | Partial/default recovery and canonical PayGuard settlement consumption remain open |
 | Web2Json | Local source commitment allowlist, exact public request, jq/tuple ABI, MIC/response, source-asserted freshness, replay, and verifier failure tests pass | No production source, live proof, source-truth guarantee, private policy evaluation, or on-chain consumer |
-| Web + hosted relay | The production Vercel dApp connects to the Railway relay and registered A/B/D machines for authenticated ciphertext-only ingress, three custody receipts, V1 registration, request-ID-only two-of-three evaluation, execution, cap denial, and stop/resume/revoke. Its 22-asset evidence mirror is byte-verified at deployed source `256fa0f` | This is the Coston2 `SIMULATED_TEE=true` V1 operator path. It is not hardware-backed, permissionless V2, a verified PayGuard release, or mainnet production; the isolated three-actor demo remains historical evidence, not a route in the current static deployment |
+| Web + hosted relay | The production Vercel dApp connects to the Railway relay and registered A/B/D machines for authenticated ciphertext-only ingress, three custody receipts, V1 registration, request-ID-only two-of-three evaluation, execution, cap denial, and stop/resume/revoke. Its 22-asset evidence mirror is byte-verified at deployed source `544c5ce` | This is the Coston2 `SIMULATED_TEE=true` V1 operator path. It is not hardware-backed, permissionless V2, a verified PayGuard release, or mainnet production; the isolated three-actor demo remains historical evidence, not a route in the current static deployment |
 | Release | Release and V2 candidate validators fail closed | `pnpm release:check` reports `planned`; separate V2 plan/build and lifecycle/outage/redemption/user-study validators prepare future promotion without creating a verified manifest |
 
 ## Coston2 public identifiers
@@ -281,7 +281,7 @@ Public evidence is allowlisted, sanitized, and testnet-only. Start with
 | [`coston2-interactive-demo-deployment-2026-08-10.json`](evidence/simulation/coston2-interactive-demo-deployment-2026-08-10.json) | Separate demo contracts, three public actor descriptors, registrations, wiring, and mandatory false production assertions |
 | [`vercel-interactive-demo-2026-08-10.json`](evidence/web/vercel-interactive-demo-2026-08-10.json) | Production-origin API, full automated Coston2 ALLOW/DENY/governance lifecycle, and laptop browser smoke |
 | [`vercel-preview-2026-08-09.json`](evidence/web/vercel-preview-2026-08-09.json) | Reviewed Vercel artifact, browser, keyboard, responsive, evidence, and Lighthouse audit |
-| [`public-evidence-deployment-audit-2026-08-11.json`](evidence/web/public-evidence-deployment-audit-2026-08-11.json) | Current production origin, source commit `256fa0f`, and all 22 hosted evidence bodies matched byte-for-byte to reviewed local sources |
+| [`public-evidence-deployment-audit-2026-08-11.json`](evidence/web/public-evidence-deployment-audit-2026-08-11.json) | Current production origin, source commit `544c5ce`, and all 22 hosted evidence bodies matched byte-for-byte to reviewed local sources |
 
 Evidence may contain only public addresses, hashes, blocks, transaction IDs,
 result commitments, timings, amounts already public by protocol design, and
@@ -364,8 +364,8 @@ conditions are in the
 
 The current validated baseline reports:
 
-- 211 workspace tests: bindings 2, protocol 50, relay 19, demo protocol 7,
-  integrations 83, demo API 4, web 42, and SDK examples 4; three explicitly
+- 212 workspace tests: bindings 2, protocol 50, relay 19, demo protocol 7,
+  integrations 83, demo API 4, web 43, and SDK examples 4; three explicitly
   gated web-live cases remain skipped in the ordinary unit run, while the full
   interactive Coston2 lifecycle gate passed separately;
 - all workspace TypeScript typechecks and all Go packages passing;

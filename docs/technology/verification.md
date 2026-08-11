@@ -200,7 +200,7 @@ it is intentionally excluded from the hosted index and does not upgrade the
 interactive testnet client into an FCC or verified-release claim.
 
 The refreshed production-corpus audit recorded on 2026-08-11 is pinned to
-source `256fa0fcb9a97a2eec20e4c7a33f8873b9cb11c3`. It matched the current
+source `544c5ce88a9fda5b4a26a39e3994756e5a1c3cdd`. It matched the current
 metadata index and all 22 hosted bodies byte-for-byte to reviewed local sources,
 including 21 chain-114 records and three explicitly bounded simulation records.
 Its repository-only result is
