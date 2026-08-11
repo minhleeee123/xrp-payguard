@@ -70,6 +70,7 @@ export interface CLIOptions {
   writeLivePrivatePolicy: boolean;
   broadcast: boolean;
   origins: readonly [string, string, string];
+  relayOrigin?: string;
 }
 
 export interface LiveCustodyOptions extends CLIOptions {
@@ -169,6 +170,7 @@ export function parseLiveCustodyCLI(argv: readonly string[]): CLIOptions {
   const origins: string[] = [];
   let writeLivePrivatePolicy = false;
   let broadcast = false;
+  let relayOrigin: string | undefined;
   for (let index = 0; index < tokens.length; index += 1) {
     const token = tokens[index];
     if (token === "--write-live-private-policy") {
@@ -188,6 +190,14 @@ export function parseLiveCustodyCLI(argv: readonly string[]): CLIOptions {
       index += 1;
       continue;
     }
+    if (token === "--relay" && index + 1 < tokens.length) {
+      if (relayOrigin) throw new Error("duplicate relay origin");
+      const origin = new URL(tokens[index + 1]!).origin;
+      if (!origin.startsWith("https://") || origin !== tokens[index + 1]) throw new Error("relay origin must be a bare HTTPS origin");
+      relayOrigin = origin;
+      index += 1;
+      continue;
+    }
     throw new Error(`invalid argument ${token}`);
   }
   if (mode === "plan" && (writeLivePrivatePolicy || broadcast)) throw new Error("plan cannot acknowledge live writes");
@@ -196,7 +206,7 @@ export function parseLiveCustodyCLI(argv: readonly string[]): CLIOptions {
   if (mode !== "freeze" && broadcast) throw new Error("--broadcast is accepted only in freeze mode");
   const selected = origins.length === 0 ? [...defaultOrigins] : origins;
   if (selected.length !== 3 || new Set(selected).size !== 3) throw new Error("exactly three distinct FCC origins are required");
-  return { mode, writeLivePrivatePolicy, broadcast, origins: selected as [string, string, string] };
+  return { mode, writeLivePrivatePolicy, broadcast, origins: selected as [string, string, string], ...(relayOrigin ? { relayOrigin } : {}) };
 }
 
 export function buildSanitizedCustodyEvidence(input: SanitizedCustodyEvidenceInput) {
@@ -439,7 +449,8 @@ async function freezePolicyOnchain(
   if (await client.getBalance({ address: account.address }) < 50_000_000_000_000_000n) throw new Error("owner gas balance is below the custody-freeze safety buffer");
   const wallet = createWalletClient({ account, chain, transport: http(rpc, { timeout: 15_000, retryCount: 2 }) });
   const machineRegistrationTransactions: Hash[] = [];
-  for (const machine of machines) {
+  for (let index = 0; index < machines.length; index += 1) {
+    const machine = machines[index]!;
     const current = await client.readContract({ address: registry, abi: PayGuardPolicyRegistryAbi, functionName: "machine", args: [machine.machineId] });
     if (current[2]) {
       if (getAddress(current[0]) !== machine.signer || !sameHex(current[1], machine.keyFingerprint)) throw new Error("V1 machine registration conflicts with the live identity");
@@ -544,7 +555,10 @@ export async function executeLiveCustody(options: LiveCustodyOptions) {
       keyFingerprint: machine.keyFingerprint,
     });
     const authorization = await account.signMessage({ message: { raw: authorizationDigest } });
-    const rawReceipt = await boundedJson(`${machine.origin}/private/ingress`, {
+    const ingressUrl = options.relayOrigin
+      ? `${options.relayOrigin}/v1/ingress/${index + 1}`
+      : `${machine.origin}/private/ingress`;
+    const rawReceipt = await boundedJson(ingressUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
       body: serialize({

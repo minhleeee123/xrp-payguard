@@ -14,6 +14,11 @@ test("live custody CLI requires an explicit private write acknowledgement", () =
   assert.throws(() => parseLiveCustodyCLI(["freeze", "--write-live-private-policy"]), /requires --broadcast/);
   assert.throws(() => parseLiveCustodyCLI(["plan", "--write-live-private-policy"]), /plan cannot/);
   assert.throws(() => parseLiveCustodyCLI(["run", "--write-live-private-policy", "--url", "http:\/\/unsafe.example"]), /HTTPS/);
+  assert.equal(
+    parseLiveCustodyCLI(["freeze", "--write-live-private-policy", "--broadcast", "--relay", "https://relay.example"]).relayOrigin,
+    "https://relay.example",
+  );
+  assert.throws(() => parseLiveCustodyCLI(["freeze", "--write-live-private-policy", "--broadcast", "--relay", "http://relay.example"]), /HTTPS/);
 });
 
 test("public evidence includes only sanitized custody facts", () => {
