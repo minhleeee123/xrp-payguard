@@ -76,7 +76,9 @@ machines and independently verifies all-three custody plus a two-of-three
 evaluation/execute/deny lifecycle. It is stronger than a local simulation, but
 does not satisfy hardware-attestation or verified-release requirements. A live
 C→D loss/re-registration/new-policy drill now passes without swapping a frozen
-identity. Do not describe the Confidential Compute Apps bounty as
+identity; the same live path also remains pending with unchanged vault
+accounting during a measured full executor pause, then resumes successfully.
+Do not describe the Confidential Compute Apps bounty as
 production-complete unless the remaining hardware, V2, full-outage, and release
 gates pass.
 

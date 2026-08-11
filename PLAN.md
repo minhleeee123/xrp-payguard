@@ -492,9 +492,9 @@ privacy, secret, evidence, release, documentation, and binding-drift gates.
 - [x] Make relay/executor orchestration stateless and recoverable from public
   checkpoints.
 - [ ] Post-hackathon: run proxy, RPC, FDC, FTSO, indexer, one-machine, and
-  executor outage drills. The one-machine-loss/replacement and two-submission
-  executor-omission portions now pass live on Coston2 simulated machines; the
-  proxy, RPC, FDC, FTSO, indexer, and full executor-outage cases remain open.
+  executor outage drills. The one-machine-loss/replacement and full executor
+  pause/resume portions now pass live on Coston2 simulated machines; the
+  proxy, RPC, FDC, FTSO, and indexer cases remain open.
 - [x] Run full-history secret scans plus browser/network/log/evidence privacy scans.
 - [x] Add rate limits, idempotency, health bindings, timeout budgets, and
   competing-executor tests.
