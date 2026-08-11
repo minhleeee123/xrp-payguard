@@ -65,11 +65,15 @@ const managerAbi = parseAbi([
   "function isCodeHashPlatformDisabled(uint256 extensionId,bytes32 codeHash,bytes32 platform) view returns (bool disabled)",
 ]);
 
-interface CLIOptions {
+export interface CLIOptions {
   mode: "plan" | "run" | "freeze";
   writeLivePrivatePolicy: boolean;
   broadcast: boolean;
   origins: readonly [string, string, string];
+}
+
+export interface LiveCustodyOptions extends CLIOptions {
+  policyProfile?: "custody" | "lifecycle";
 }
 
 interface InfoResponse {
@@ -84,7 +88,7 @@ interface HealthResponse {
   signer: Address;
 }
 
-interface LiveMachine {
+export interface LiveMachine {
   origin: string;
   teeId: Address;
   machineId: Hex;
@@ -263,7 +267,14 @@ export function buildSanitizedCustodyEvidence(input: SanitizedCustodyEvidenceInp
   };
 }
 
-function policyFor(owner: Address, now: bigint, registry: Address, vault: Address, router: Address): PolicyV1 {
+function policyFor(
+  owner: Address,
+  now: bigint,
+  registry: Address,
+  vault: Address,
+  router: Address,
+  profile: "custody" | "lifecycle" = "custody",
+): PolicyV1 {
   return {
     schemaVersion: 1,
     chainId: CHAIN_ID,
@@ -276,13 +287,13 @@ function policyFor(owner: Address, now: bigint, registry: Address, vault: Addres
     asset: ftestXrp,
     referenceCurrency: padHex(stringToHex("USD"), { size: 32 }),
     maxPerAction: 100_000n,
-    dailyCap: 500_000n,
-    rollingCap: 500_000n,
+    dailyCap: profile === "lifecycle" ? 150_000n : 500_000n,
+    rollingCap: profile === "lifecycle" ? 150_000n : 500_000n,
     rollingWindowSeconds: 86_400n,
     startAt: now - 60n,
     endAt: now + 30n * 86_400n,
-    scheduleIntervalSeconds: 86_400n,
-    scheduleGraceSeconds: 3_600n,
+    scheduleIntervalSeconds: profile === "lifecycle" ? 0n : 86_400n,
+    scheduleGraceSeconds: profile === "lifecycle" ? 0n : 3_600n,
     cooldownSeconds: 0n,
     maxOccurrences: 30,
     allowTargets: [owner],
@@ -494,7 +505,7 @@ async function writeEvidence(value: unknown): Promise<void> {
   await rename(temporary, evidencePath);
 }
 
-async function run(options: CLIOptions): Promise<void> {
+export async function executeLiveCustody(options: LiveCustodyOptions) {
   if (options.mode === "plan") {
     console.log(JSON.stringify({
       status: "planned",
@@ -505,7 +516,7 @@ async function run(options: CLIOptions): Promise<void> {
       broadcasts: false,
       caveat: "SIMULATED_TEE custody is not hardware attestation, on-chain policy freeze, or threshold evaluation",
     }, null, 2));
-    return;
+    return undefined;
   }
   const sourceCommit = await cleanSourceCommit();
   const { account, registry, vault, router, rpc } = loadAccountAndDomain();
@@ -516,7 +527,7 @@ async function run(options: CLIOptions): Promise<void> {
     || new Set(machines.map((item) => item.keyFingerprint.toLowerCase())).size !== 3
     || new Set(machines.map((item) => item.codeHash.toLowerCase())).size !== 1) throw new Error("FCC custody set is not compatible and distinct");
   const now = BigInt(Math.floor(Date.now() / 1000));
-  const policy = policyFor(account.address, now, registry, vault, router);
+  const policy = policyFor(account.address, now, registry, vault, router, options.policyProfile);
   const binding = bindingFor(policy, machines);
   const issuedAt = now;
   const expiry = now + 15n * 60n;
@@ -588,10 +599,11 @@ async function run(options: CLIOptions): Promise<void> {
     evidencePath,
     privateMaterialRecorded: false,
   }));
+  return { sourceCommit, account, registry, vault, router, rpc, client, machines, policy, binding, receipts, freeze };
 }
 
 if (import.meta.url === new URL(process.argv[1]!, "file:").href) {
-  run(parseLiveCustodyCLI(process.argv.slice(2))).catch((error: unknown) => {
+  executeLiveCustody(parseLiveCustodyCLI(process.argv.slice(2))).catch((error: unknown) => {
     console.error(error instanceof Error ? error.message : "live custody failed");
     process.exitCode = 1;
   });
