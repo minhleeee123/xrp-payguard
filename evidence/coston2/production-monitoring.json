@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "suite": "payguard-coston2-production-monitoring",
   "status": "verified-live-production-monitoring",
-  "recordedAt": "2026-08-11T16:37:27.297Z",
-  "sourceCommit": "147aeca6a62ed59b9515199fdaa54acbaf00cce6",
+  "recordedAt": "2026-08-11T16:41:26.667Z",
+  "sourceCommit": "45dfb4be87145d41c196874fa1f92e28a2b5200c",
   "network": {
     "name": "flare-coston2",
     "chainId": 114,
@@ -13,7 +13,7 @@
     "platform": "railway",
     "name": "payguard-monitor",
     "origin": "https://payguard-monitor-production.up.railway.app",
-    "deploymentId": "d7a97fd2-6afb-4d65-a1fb-5cd6fed09642",
+    "deploymentId": "272322ae-40a3-4697-b4aa-6749521e7ba4",
     "profile": "COSTON2_SIMULATED_V2"
   },
   "observation": {
