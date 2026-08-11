@@ -2,17 +2,17 @@
   "schemaVersion": 1,
   "suite": "payguard-coston2-live-simulated-replacement-lifecycle",
   "status": "verified-live-simulated-replacement-lifecycle",
-  "recordedAt": "2026-08-11T05:49:57.007Z",
+  "recordedAt": "2026-08-11T06:01:27.243Z",
   "network": {
     "name": "flare-coston2",
     "chainId": 114,
-    "observedBlock": "33907212"
+    "observedBlock": "33907534"
   },
   "publicIdentifiers": {
-    "verificationSourceCommit": "c2626a2f0221d9a3ba32a537675b74a47c0689e5",
+    "verificationSourceCommit": "60fd9af72015ef69b44fb87f05fea2224d240700",
     "dispatcher": "0x18Ea713cEf10ECf5cAC23c08dD25Ac17D2f07e3d",
-    "policyCommitment": "0xff7faee80fe9df63284e9c60634fbdc665125ca2186caa66449dae08bae98c6c",
-    "custodyFreezeTransaction": "0x365c393e3b32468a4ec5302de4340cb4c2f263350de89b183d29a04c3398bdcd",
+    "policyCommitment": "0x46b630da1c4120d0c6b9f82b4bf1cacae1e4be6b3998a6029098188084d80b5a",
+    "custodyFreezeTransaction": "0x1a97ce4e422721ea55194b12101740fa01ebc314b18db41f666caa3f348c4cab",
     "machines": [
       {
         "teeId": "0x1C911D007f8203484eD4099bC11849d7e9691044",
@@ -34,37 +34,37 @@
       }
     ],
     "allow": {
-      "instructionId": "0x186be8e975f7c569e4df5bb4d73b99a73a9ce3bd8fe298986652c6d225d2bb1d",
-      "evaluationDigest": "0x759a321526600b647ad56fca17902a40c202b3dd96c82725574baeea2793bc38",
+      "instructionId": "0xb10df93837b236cd5c20f33fe3a1367d10661efaee73d584a04ea4d1fb957395",
+      "evaluationDigest": "0x600a064f0716c7bb38879ee07fc657f5b0a0505769a03147447acd76508dd358",
       "transactions": {
-        "create": "0x564bfa5561c6652ac8c6e00defb8e6510aacb28b8a1ecedc27b206d17232bad5",
-        "dispatch": "0x9f5415db4a1c744c925fe7d334df9acdd2fcc9fcd3ad5cdfc80d33d5d0945018",
+        "create": "0x602f14cff949ec4fcea3feeb2b8a0c642eedce212ecf76efc0fe0bb8ec29a489",
+        "dispatch": "0xa8ae0174c3668a26fa0a53df39b8c45d22df59ef3b4ba8fc068fb85ade5573f5",
         "submit": [
-          "0xb4fefccfd0fef7760d8675fac77e0933ddff271eabf886d775f0642eb31ac947",
-          "0xb88507375117d8f9274d27195834ac2896a356e8953c0d7ea767fe87ff88173d"
+          "0x39657038676ffbe8f648ca7d02c482b0b3abe4bf8ef0e35807d44c91c2dd13b9",
+          "0x2a74ee06d1b6e01ebef8b5fdecbafb3f5691a11022a6c453098a366da411ba34"
         ],
-        "execute": "0x04a73fb362fb9f5fed6dd5cdd9a675816456f6293970c77066df6d1d238cd1de"
+        "execute": "0x725619da6f3feb32fcd03be9d1905865654a463a80e16e31d268de9f40224b70"
       },
       "routerStatus": 4
     },
     "deny": {
-      "instructionId": "0x2caf6db705a02143e0ef9cb3f550a550f47d8e1723ce55be834e84fa287e82c1",
-      "evaluationDigest": "0x19463c958d7d78859706be09f90e822fe4a17f88117d85c44830b855c71b4662",
+      "instructionId": "0xaeb56ce244b9923950008ff4c5eb938f9653f682c5be363d188292f08422e40b",
+      "evaluationDigest": "0x46c2c318ac734a0f4bcc7621a4b0efc39a8da90dca21711ee0221f057a6e529b",
       "publicReasonClass": "CAP_EXCEEDED",
       "transactions": {
-        "create": "0xca4ed2047e5c8cf42667faadcec92ecba40938d1b0676317addff5692ed6585f",
-        "dispatch": "0x5a82a43dd31fa2306d88798504c65ee0bb8e96a5112d926589465051ee7dc413",
+        "create": "0x2567dfc4e3e2158711bb1fba76a1c60939f47d4de0ae03f3c34ca48d442889da",
+        "dispatch": "0xcad801628b948c2c9995b2cd425fc5090e34bf63bc53a2bf85e47c50a2bdb3d6",
         "submit": [
-          "0x8ff55cba47307eeaaa175d94b6c83e9da6617e35c59a798c0ba8618b7c818845",
-          "0x305df26208aac35c61fc5a5d2b0ce8ac51f285e62617a05e9a49eeb196fdb904"
+          "0x5a901bf39688f0e7795643857dfdba04ba0b94e013953b12f8cc1e6563481e57",
+          "0x6be7bb0b5c533c791fb049318b0518b408dcbe7253e2d1059d205e735c659e33"
         ]
       },
       "routerStatus": 3
     },
     "policyLifecycleTransactions": {
-      "stop": "0xbc427a4f5ecf5a5b327e1ae9d4cbd792333e9f5b6949bc17eaeb9fbdba71def0",
-      "resume": "0xc928a0a4ac36848be2a32820bca4523b410ce1acca3b8ed421a3ab4a2ee96e85",
-      "revoke": "0x76b79437f946da011e9e55433fda4f7e52bd733cc073385fc6fd001b3ae695b5"
+      "stop": "0xba8f86b2ea49a4df25614b83f886438efb29674a65fa773b9e4993097d08aee2",
+      "resume": "0x45ae37c9bd8304e5c5b09f10ebd2f6259f7684f0517b8c61e1f0be855ba9d49d",
+      "revoke": "0x2ae43afc2c196efe182bf872d3c34b34253279a433c3bbba9ebb3d6b3eaf9515"
     },
     "replacement": {
       "unavailableTeeId": "0xed19Ff73952E4A4783f739194940c0b6823Ae213",
@@ -79,28 +79,35 @@
     "accounting": {
       "before": {
         "deposited": "1000000",
-        "available": "890000",
+        "available": "790000",
         "reserved": "0",
-        "spent": "110000",
+        "spent": "210000",
         "withdrawn": "0",
         "refunded": "0"
       },
       "afterAllow": {
         "deposited": "1000000",
-        "available": "790000",
+        "available": "690000",
         "reserved": "0",
-        "spent": "210000",
+        "spent": "310000",
         "withdrawn": "0",
         "refunded": "0"
       },
       "afterDeny": {
         "deposited": "1000000",
-        "available": "790000",
+        "available": "690000",
         "reserved": "0",
-        "spent": "210000",
+        "spent": "310000",
         "withdrawn": "0",
         "refunded": "0"
       }
+    },
+    "executorPause": {
+      "pendingStatus": 1,
+      "startedBlock": "33907478",
+      "resumedBlock": "33907487",
+      "observedDurationMs": 17093,
+      "accountingStable": true
     }
   },
   "assertions": {
@@ -113,6 +120,7 @@
     "twoMatchingDenyVerified": true,
     "denyMovedNoFundsVerified": true,
     "stopResumeRevokeVerified": true,
+    "fullExecutorPauseRecoveryVerified": true,
     "replacementRegistrationVerified": true,
     "unavailableFrozenIdentityNotSilentlySwapped": true,
     "hardwareAttestationVerified": false,

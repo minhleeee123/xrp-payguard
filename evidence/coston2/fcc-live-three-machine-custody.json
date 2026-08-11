@@ -2,44 +2,42 @@
   "schemaVersion": 1,
   "suite": "payguard-coston2-live-simulated-three-machine-custody",
   "status": "verified-live-simulated-onchain-three-machine-custody",
-  "recordedAt": "2026-08-11T05:47:53.407Z",
+  "recordedAt": "2026-08-11T05:59:30.296Z",
   "network": {
     "name": "flare-coston2",
     "chainId": 114,
-    "observedBlock": "33907155"
+    "observedBlock": "33907461"
   },
   "publicIdentifiers": {
-    "verificationSourceCommit": "c2626a2f0221d9a3ba32a537675b74a47c0689e5",
+    "verificationSourceCommit": "60fd9af72015ef69b44fb87f05fea2224d240700",
     "manager": "0x1a9C4A0f9D76c0b1D91d22E24E573a9b377618aE",
     "extensionId": "66037",
-    "policyCommitment": "0xff7faee80fe9df63284e9c60634fbdc665125ca2186caa66449dae08bae98c6c",
-    "custodyBundleHash": "0xb3e6b8846e704cdb07062795c73dbbb1c378498a69f3bff26d94908e52f2462a",
-    "machineRegistrationTransactions": [
-      "0x0066f137ec655d978b21ec89edfe10e191d80c9b530297d353fd1aeea01808c0"
-    ],
-    "policyFreezeTransaction": "0x365c393e3b32468a4ec5302de4340cb4c2f263350de89b183d29a04c3398bdcd",
-    "policyFreezeBlock": "33907155",
+    "policyCommitment": "0x46b630da1c4120d0c6b9f82b4bf1cacae1e4be6b3998a6029098188084d80b5a",
+    "custodyBundleHash": "0xe20978082752dbbf1822676e6c416de55ab4e4fa4d25f11bc5cc8bf38288183a",
+    "machineRegistrationTransactions": [],
+    "policyFreezeTransaction": "0x1a97ce4e422721ea55194b12101740fa01ebc314b18db41f666caa3f348c4cab",
+    "policyFreezeBlock": "33907461",
     "machines": [
       {
         "teeId": "0x1C911D007f8203484eD4099bC11849d7e9691044",
         "proxyId": "0x8dfd80A00C1C6909E4f3f9439240243f5B193FA3",
         "url": "https://payguard-fcc-a-production.up.railway.app",
         "status": 2,
-        "receiptDigest": "0x959c8f529be62fe1425ecf116927401177b920289dcbb0c7dd15fdb179b7ee6a"
+        "receiptDigest": "0xb008a32e6dd143eda3ff72292907617c3dbab8f0f418152978f5bbbfbb6f31ca"
       },
       {
         "teeId": "0xff49A99535b8c52345D3c0b76bCf60194De7C29b",
         "proxyId": "0x6860a154be5415219E2A197E987e5f34cC48F2Bf",
         "url": "https://payguard-fcc-b-production.up.railway.app",
         "status": 2,
-        "receiptDigest": "0x440826b23a0dad01d1b15110123738a13dc8fb6e7e2d8018268b50585befc07f"
+        "receiptDigest": "0x980a2f0317d64a2f772614b250ebff818ccee31d69eb3717ca9ea09cd0a20df3"
       },
       {
         "teeId": "0xd871bc2044a75e8cc2CF06aCdeaDC4CBbEef349A",
         "proxyId": "0x58b77F524461a990c97Ef9b1AAd429E008252DBE",
         "url": "https://payguard-fcc-d-production.up.railway.app",
         "status": 2,
-        "receiptDigest": "0xfb233b93cc07f2a1407a4279428d0b848c45923999c3d8c3bba9871870b9d5fa"
+        "receiptDigest": "0x189fabef4f7e8b57ba03622a85392caf8e5b4737c7f9642aebe346f21364a8c4"
       }
     ]
   },
