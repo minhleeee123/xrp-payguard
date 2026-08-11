@@ -18,7 +18,7 @@ const entry = (path, chainId = "114") => ({
 });
 
 function manifest() {
-  const coston2 = Array.from({ length: 20 }, (_, index) => entry(`/evidence/coston2/${index}.json`));
+  const coston2 = Array.from({ length: 21 }, (_, index) => entry(`/evidence/coston2/${index}.json`));
   return {
     schemaVersion: 1,
     status: "AVAILABLE",
@@ -44,7 +44,7 @@ describe("public web demo recorder", () => {
   });
 
   it("accepts only the exact public-safe reviewed manifest baseline", () => {
-    assert.deepEqual(verifyDemoManifest(manifest()), { entries: 23, chain114: 22, simulations: 3 });
+    assert.deepEqual(verifyDemoManifest(manifest()), { entries: 24, chain114: 23, simulations: 3 });
     assert.throws(() => verifyDemoManifest({ ...manifest(), staticShellOnly: false }), /unsafe/);
     const unsafe = manifest();
     unsafe.entries[0] = { ...unsafe.entries[0], noCredentialRecorded: false };
