@@ -2,18 +2,18 @@
   "schemaVersion": 1,
   "suite": "payguard-vercel-public-evidence-deployment-audit",
   "status": "public-evidence-deployment-audit-pass",
-  "recordedAt": "2026-08-11T10:41:43.551Z",
-  "sourceCommit": "544c5ce88a9fda5b4a26a39e3994756e5a1c3cdd",
+  "recordedAt": "2026-08-11T11:57:46.647Z",
+  "sourceCommit": "c572bf381afc7818b6a5274673eaf34b8c7ee039",
   "platform": {
     "name": "vercel",
     "origin": "https://xrp-payguard.vercel.app",
     "indexPath": "/evidence/index.json",
-    "indexSha256": "d7cb0ab9e2c0c08123d4aba6348ecee0aa83fde069abd0584f027366d5d60baf",
-    "indexBytes": 9245
+    "indexSha256": "c162c77cc868c552e7d76bb3b5675b55a539932af086b594250622010092911d",
+    "indexBytes": 9637
   },
   "corpus": {
-    "totalEntries": 22,
-    "chain114Entries": 21,
+    "totalEntries": 23,
+    "chain114Entries": 22,
     "simulationEntries": 3,
     "entries": [
       {
@@ -49,6 +49,19 @@
         "chainId": "114",
         "sha256": "e8d0d35bb445fffe308d26cbd6b1cc6c72216d4266b91e0045b6c8a4a419a3fa",
         "bytes": 2947,
+        "httpStatus": 200,
+        "contentType": "application/json; charset=utf-8",
+        "exactSourceBytesVerified": true,
+        "publicFieldScanVerified": true,
+        "explicitSimulationBoundaryVerified": null
+      },
+      {
+        "path": "/evidence/coston2/contracts-v2-simulated.json",
+        "suite": "payguard-coston2-v2-simulated-deployment",
+        "status": "live-candidate",
+        "chainId": "114",
+        "sha256": "53cf1940614af96b05aa9f51aa50c2af5f8759007d0b32263c6e2c9ffe56385a",
+        "bytes": 3742,
         "httpStatus": 200,
         "contentType": "application/json; charset=utf-8",
         "exactSourceBytesVerified": true,
@@ -164,8 +177,8 @@
         "suite": "payguard-coston2-hosted-live-fcc-relay-lifecycle",
         "status": "verified-hosted-live-simulated-fcc-lifecycle",
         "chainId": "114",
-        "sha256": "9c93f114d3fa091db705441a64ac7dea9155207cb328e505d1c56f705257bf6f",
-        "bytes": 5171,
+        "sha256": "485fd07f9f8a0c70b6650e4f3476d610bdf1c9c3095b0391b2466d16f410f544",
+        "bytes": 5288,
         "httpStatus": 200,
         "contentType": "application/json; charset=utf-8",
         "exactSourceBytesVerified": true,
@@ -203,8 +216,8 @@
         "suite": "payguard-coston2-live-simulated-three-machine-custody",
         "status": "verified-live-simulated-onchain-three-machine-custody",
         "chainId": "114",
-        "sha256": "b487f644107be002fd316be664b0be1c8c284f4cb5d8b7ca3c085abd4785b204",
-        "bytes": 3174,
+        "sha256": "57e87e89e8b2df992b63039c939d8a159b15fe5f3ce303605aa4d3f4b29509f5",
+        "bytes": 3263,
         "httpStatus": 200,
         "contentType": "application/json; charset=utf-8",
         "exactSourceBytesVerified": true,
@@ -322,13 +335,13 @@
   },
   "blockers": [
     "HARDWARE_ATTESTATION_NOT_VERIFIED",
-    "V2_RELEASE_NOT_VERIFIED",
+    "VERIFIED_RELEASE_NOT_PROMOTED",
     "PAYGUARD_RELEASE_MANIFEST_NOT_VERIFIED"
   ],
   "notes": [
     "This audit fetched the pinned production origin and compared the manifest plus every listed JSON body byte-for-byte with the reviewed local Coston2/simulation sources.",
-    "The 21 chain-114 and 3 simulation counts overlap and are not additive.",
+    "The 22 chain-114 and 3 simulation counts overlap and are not additive.",
     "Repository-only evidence/web records are intentionally excluded from the hosted corpus to avoid recursive deployment claims.",
-    "A clean public evidence corpus does not prove hardware TEE confidentiality, a V2 or verified PayGuard release, or production readiness."
+    "A clean public evidence corpus does not turn the live V2 simulated candidate into a hardware-attested verified release or mainnet system."
   ]
 }
