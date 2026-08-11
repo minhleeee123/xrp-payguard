@@ -21,7 +21,7 @@ const assertions = {
 };
 
 function localEntries() {
-  const coston2 = Array.from({ length: 13 }, (_, index) => ({
+  const coston2 = Array.from({ length: 18 }, (_, index) => ({
     path: `evidence/coston2/${index}.json`,
     data: { suite: `coston2-${index}`, status: "pass", chainId: 114, testnetOnly: true, noPrivateKeyRecorded: true },
   }));
@@ -35,6 +35,28 @@ function localEntries() {
         mode: "SIMULATED_TEE_ONCHAIN",
         network: { name: "flare-coston2", chainId: 114, publicChainConnected: true },
         assertions: { ...assertions, payGuardLocalMachineEntriesVerified: true, onChainTransactionsVerified: true },
+      },
+    },
+    {
+      path: "evidence/simulation/coston2-interactive-demo-deployment-2026-08-10.json",
+      data: {
+        suite: "interactive-onchain-sim",
+        status: "simulation-only",
+        mode: "SIMULATED_FCC_COSTON2_TESTNET_V1",
+        testnetOnly: true,
+        network: { name: "flare-coston2", chainId: 114, publicChainConnected: true },
+        assertions: {
+          ...assertions,
+          separateDemoContractNamespaceVerified: true,
+          threeDistinctActorDescriptorsVerified: true,
+          runtimeAndWiringVerified: true,
+          actorRegistrationReadbackVerified: true,
+          onChainTransactionsVerified: true,
+          registeredProductionMachinesVerified: false,
+          independentOperatorsVerified: false,
+          sealedPersistenceVerified: false,
+          productionFccReleaseVerified: false,
+        },
       },
     },
     {
@@ -77,10 +99,10 @@ describe("public web deployment evidence audit", () => {
   it("verifies every deployed JSON body byte-for-byte against reviewed sources", async () => {
     const entries = localEntries();
     const observation = await auditDeployedPublicEvidence({ localEntries: entries, fetcher: fetcherFor(entries) });
-    assert.deepEqual(observation.counts, { total: 15, chain114: 14, simulation: 2 });
+    assert.deepEqual(observation.counts, { total: 21, chain114: 20, simulation: 3 });
     assert.equal(observation.entries.every((entry) => entry.httpStatus === 200
       && entry.exactSourceBytesVerified && entry.publicFieldScanVerified), true);
-    assert.equal(observation.entries.filter((entry) => entry.explicitSimulationBoundaryVerified).length, 2);
+    assert.equal(observation.entries.filter((entry) => entry.explicitSimulationBoundaryVerified).length, 3);
     const evidence = buildPublicWebDeploymentAuditEvidence(
       observation,
       "a".repeat(40),
@@ -88,7 +110,7 @@ describe("public web deployment evidence audit", () => {
     );
     assert.equal(evidence.status, "public-evidence-deployment-audit-pass");
     assert.equal(evidence.assertions.noPayGuardReleaseClaimed, true);
-    assert.equal(evidence.corpus.entries.length, 15);
+    assert.equal(evidence.corpus.entries.length, 21);
   });
 
   it("fails closed on index, byte, content-type, and private-field drift", async () => {

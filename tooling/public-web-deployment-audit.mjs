@@ -16,10 +16,10 @@ const root = resolve(import.meta.dirname, "..");
 export const PUBLIC_WEB_ORIGIN = "https://xrp-payguard.vercel.app";
 export const PUBLIC_WEB_DEPLOYMENT_AUDIT_PATH = resolve(
   root,
-  "evidence/web/public-evidence-deployment-audit-2026-08-09.json",
+  "evidence/web/public-evidence-deployment-audit-2026-08-11.json",
 );
 const MAX_JSON_BYTES = 256 * 1024;
-const REVIEWED_CORPUS_COUNTS = Object.freeze({ total: 15, chain114: 14, simulation: 2 });
+const REVIEWED_CORPUS_COUNTS = Object.freeze({ total: 21, chain114: 20, simulation: 3 });
 
 function isRecord(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -122,7 +122,7 @@ export async function auditDeployedPublicEvidence({
   if (auditedEntries.length !== REVIEWED_CORPUS_COUNTS.total
     || chain114Count !== REVIEWED_CORPUS_COUNTS.chain114
     || simulationCount !== REVIEWED_CORPUS_COUNTS.simulation) {
-    throw new Error("deployed evidence corpus does not match the reviewed 15/14/2 baseline");
+    throw new Error("deployed evidence corpus does not match the reviewed 21/20/3 baseline");
   }
   return {
     origin,
@@ -156,7 +156,8 @@ function assertAuditObservation(observation) {
     throw new Error("public web deployment audit entry is incomplete");
   }
   const simulations = observation.entries.filter((entry) => entry.path.startsWith("/evidence/simulation/"));
-  if (simulations.length !== 2 || simulations.some((entry) => entry.explicitSimulationBoundaryVerified !== true)) {
+  if (simulations.length !== REVIEWED_CORPUS_COUNTS.simulation
+    || simulations.some((entry) => entry.explicitSimulationBoundaryVerified !== true)) {
     throw new Error("public web deployment audit lost the explicit simulation boundary");
   }
 }
@@ -206,15 +207,16 @@ export function buildPublicWebDeploymentAuditEvidence(
       noPayGuardReleaseClaimed: true,
     },
     blockers: [
-      "LIVE_FCC_POLICY_LIFECYCLE_NOT_VERIFIED",
+      "HARDWARE_ATTESTATION_NOT_VERIFIED",
+      "V2_RELEASE_NOT_VERIFIED",
       "PAYGUARD_RELEASE_MANIFEST_NOT_VERIFIED",
       "HOSTED_POLICY_RELAY_NOT_CONNECTED",
     ],
     notes: [
       "This audit fetched the pinned production origin and compared the manifest plus every listed JSON body byte-for-byte with the reviewed local Coston2/simulation sources.",
-      "The 14 chain-114 and two simulation counts overlap for SIMULATED_TEE_ONCHAIN and are not additive.",
+      `The ${observation.counts.chain114} chain-114 and ${observation.counts.simulation} simulation counts overlap and are not additive.`,
       "Repository-only evidence/web records are intentionally excluded from the hosted corpus to avoid recursive deployment claims.",
-      "A clean public evidence corpus does not prove hardware TEE confidentiality, live FCC custody/evaluation, a verified PayGuard release, or production readiness.",
+      "A clean public evidence corpus does not prove hardware TEE confidentiality, a V2 or verified PayGuard release, hosted-relay integration, or production readiness.",
     ],
   };
   assertPublicSafe(evidence, "public web deployment audit evidence");
