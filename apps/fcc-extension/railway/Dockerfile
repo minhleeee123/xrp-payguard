@@ -10,12 +10,11 @@ RUN apk add --no-cache git
 
 WORKDIR /build/payguard
 COPY go.mod go.sum ./
-RUN --mount=type=cache,id=payguard-fcc-go-mod,target=/go/pkg/mod,sharing=locked go mod download && go mod verify
+RUN go mod download && go mod verify
 COPY cmd/ ./cmd/
 COPY internal/ ./internal/
 COPY pkg/ ./pkg/
-RUN --mount=type=cache,id=payguard-fcc-go-mod,target=/go/pkg/mod,sharing=locked \
-    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GOFLAGS="-buildvcs=false" \
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GOFLAGS="-buildvcs=false" \
     go build -trimpath -ldflags="-buildid= -s -w" -o /out/payguard-fcc ./cmd/docker
 
 WORKDIR /build/tee-proxy
@@ -24,8 +23,7 @@ RUN git init && \
     git fetch --depth 1 origin "${TEE_PROXY_REF}" && \
     test "$(git rev-parse FETCH_HEAD)" = "${TEE_PROXY_REF}" && \
     git checkout --detach FETCH_HEAD
-RUN --mount=type=cache,id=payguard-proxy-go-mod,target=/go/pkg/mod,sharing=locked \
-    go mod download && go mod verify && \
+RUN go mod download && go mod verify && \
     CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GOFLAGS="-buildvcs=false" \
     go build -trimpath -ldflags="-buildid= -s -w" -o /out/tee-proxy ./cmd/proxy
 
