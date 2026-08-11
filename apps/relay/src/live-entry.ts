@@ -12,7 +12,11 @@ if (!/^0x[0-9a-fA-F]{64}$/.test(privateKey ?? "") || !Number.isSafeInteger(port)
   throw new Error("PayGuard live relay runtime configuration is missing or malformed");
 }
 
-const runtime = new Coston2LiveRelayRuntime({ rpcUrl, executorPrivateKey: privateKey as Hex });
+const runtime = new Coston2LiveRelayRuntime({
+  rpcUrl,
+  executorPrivateKey: privateKey as Hex,
+  ...(process.env.COSTON2_EXPLORER_API_URL ? { explorerApiUrl: process.env.COSTON2_EXPLORER_API_URL } : {}),
+});
 const server = createLiveRelayServer(runtime, { allowedOrigins });
 server.listen(port, "0.0.0.0", () => {
   console.log(JSON.stringify({ status: "listening", service: "payguard-live-fcc-relay", port, privateMaterialLogged: false }));

@@ -43,7 +43,6 @@ import {
   numberToHex,
   padHex,
   parseAbi,
-  parseAbiItem,
   recoverMessageAddress,
   stringToHex,
   toHex,
@@ -109,12 +108,12 @@ const dispatcherReadAbi = parseAbi([
   "function owner() view returns (address)",
   "function getExtensionId() view returns (uint256)",
 ]);
-const executedEvent = parseAbiItem("event RequestExecuted(bytes32 indexed requestId,address indexed target,uint256 amount,bytes32 checkpoint)");
 
 interface RuntimeOptions {
   rpcUrl: string;
   executorPrivateKey: Hex;
   fetcher?: typeof fetch;
+  explorerApiUrl?: string;
 }
 
 interface Accounting {
@@ -138,6 +137,7 @@ export class Coston2LiveRelayRuntime implements LiveRelayRuntime {
   private readonly wallet: ReturnType<typeof createWalletClient>;
   private readonly account: ReturnType<typeof privateKeyToAccount>;
   private readonly fetcher: typeof fetch;
+  private readonly explorerApiUrl: string;
   private configCache?: { expiresAt: number; value: LiveFccConfig };
   private readonly evaluations = new Map<string, Promise<LiveEvaluationResponse>>();
 
@@ -150,6 +150,7 @@ export class Coston2LiveRelayRuntime implements LiveRelayRuntime {
     this.client = createPublicClient({ chain, transport: http(options.rpcUrl, { timeout: 15_000, retryCount: 2 }) });
     this.wallet = createWalletClient({ account: this.account, chain, transport: http(options.rpcUrl, { timeout: 15_000, retryCount: 2 }) });
     this.fetcher = options.fetcher ?? fetch;
+    this.explorerApiUrl = normalizeExplorerApiUrl(options.explorerApiUrl ?? "https://coston2-explorer.flare.network/api");
   }
 
   async config(): Promise<LiveFccConfig> {
@@ -404,13 +405,14 @@ export class Coston2LiveRelayRuntime implements LiveRelayRuntime {
 
   private async reconstructHistory(policyCommitment: Hex, expectedCount: number): Promise<SpendHistoryEntryV1[]> {
     if (expectedCount === 0) return [];
-    const latest = await this.client.getBlockNumber();
-    const requestIds: Hex[] = [];
-    for (let from = DEPLOYMENT_BLOCK; from <= latest; from += 50_000n) {
-      const to = from + 49_999n < latest ? from + 49_999n : latest;
-      const logs = await this.client.getLogs({ address: ROUTER, event: executedEvent, fromBlock: from, toBlock: to });
-      for (const log of logs) if (log.args.requestId) requestIds.push(log.args.requestId);
-    }
+    const endpoint = new URL(this.explorerApiUrl);
+    endpoint.searchParams.set("module", "logs");
+    endpoint.searchParams.set("action", "getLogs");
+    endpoint.searchParams.set("fromBlock", DEPLOYMENT_BLOCK.toString());
+    endpoint.searchParams.set("toBlock", "latest");
+    endpoint.searchParams.set("address", ROUTER);
+    endpoint.searchParams.set("topic0", keccak256(stringToHex("RequestExecuted(bytes32,address,uint256,bytes32)")));
+    const requestIds = parseExecutedRequestIds(await boundedJson(this.fetcher, endpoint.toString(), 2 * 1024 * 1024));
     const history: SpendHistoryEntryV1[] = [];
     for (const requestId of requestIds) {
       const stored = await this.readStoredRequest(requestId);
@@ -453,6 +455,39 @@ export class Coston2LiveRelayRuntime implements LiveRelayRuntime {
     if (receipt.status !== "success") throw new Error("live relay transaction reverted");
     return { transaction, receipt };
   }
+}
+
+export function parseExecutedRequestIds(value: unknown): Hex[] {
+  const response = exactObject(value, ["status", "message", "result"], "explorer log response");
+  if (response.status !== "1" || response.message !== "OK" || !Array.isArray(response.result) || response.result.length > 10_000) {
+    throw new Error("explorer log response failed closed");
+  }
+  const topic0 = keccak256(stringToHex("RequestExecuted(bytes32,address,uint256,bytes32)")).toLowerCase();
+  const requestIds: Hex[] = [];
+  const distinct = new Set<string>();
+  for (const item of response.result) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) throw new Error("explorer log item is invalid");
+    const log = item as Record<string, unknown>;
+    const topics = log.topics;
+    if (typeof log.address !== "string" || !isAddress(log.address) || getAddress(log.address) !== ROUTER
+      || !Array.isArray(topics) || topics.length < 3 || String(topics[0]).toLowerCase() !== topic0
+      || typeof log.transactionHash !== "string" || !/^0x[0-9a-fA-F]{64}$/.test(log.transactionHash)
+      || typeof log.blockNumber !== "string" || !/^0x[0-9a-fA-F]+$/.test(log.blockNumber)) {
+      throw new Error("explorer log item is outside the router domain");
+    }
+    const requestId = hex32(topics[1], "executed request ID");
+    if (distinct.has(requestId)) throw new Error("explorer returned a duplicate executed request");
+    distinct.add(requestId);
+    requestIds.push(requestId);
+  }
+  return requestIds;
+}
+
+function normalizeExplorerApiUrl(value: string): string {
+  const url = new URL(value);
+  if (url.protocol !== "https:" || url.username || url.password || url.pathname !== "/api"
+    || url.search || url.hash) throw new Error("explorer API URL is invalid");
+  return url.origin + url.pathname;
 }
 
 interface NormalizedStoredRequest {
