@@ -1,6 +1,6 @@
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
@@ -20,7 +20,7 @@ export function deploymentPlan() {
     source: "apps/monitor",
     publicRoute: "/healthz",
     operatorRoutes: ["/metrics", "/v1/status", "/v1/incidents"],
-    command: "PAYGUARD_ALLOW_PRODUCTION_MONITOR_DEPLOY=1 pnpm monitor:deploy -- --allow-production-monitor",
+    command: "PAYGUARD_ALLOW_PRODUCTION_MONITOR_DEPLOY=1 pnpm monitor:deploy --allow-production-monitor",
     writes: ["Railway service/domain/runtime secret/deployment", "sanitized Coston2 evidence"],
   };
 }
@@ -94,12 +94,30 @@ export function buildMonitoringEvidence({ sourceCommit, deploymentId, origin, he
   };
 }
 
-async function railway(args, input) {
+async function railway(args) {
   try {
-    return await execFileAsync("railway", args, { cwd: root, input, maxBuffer: 32 * 1024 * 1024 });
+    return await execFileAsync("railway", args, { cwd: root, maxBuffer: 32 * 1024 * 1024 });
   } catch {
     throw new Error(`Railway command failed safely: ${args[0] ?? "unknown"}`);
   }
+}
+
+async function railwayWithStdin(args, input) {
+  return await new Promise((resolveRun, rejectRun) => {
+    const child = spawn("railway", args, { cwd: root, stdio: ["pipe", "pipe", "pipe"] });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.setEncoding("utf8");
+    child.stderr.setEncoding("utf8");
+    child.stdout.on("data", (chunk) => { stdout += chunk; });
+    child.stderr.on("data", (chunk) => { stderr += chunk; });
+    child.once("error", () => rejectRun(new Error(`Railway command failed safely: ${args[0] ?? "unknown"}`)));
+    child.once("close", (code) => {
+      if (code === 0) resolveRun({ stdout, stderr });
+      else rejectRun(new Error(`Railway command failed safely: ${args[0] ?? "unknown"}`));
+    });
+    child.stdin.end(input);
+  });
 }
 
 async function gitState() {
@@ -196,7 +214,7 @@ export async function deployProductionMonitor() {
   await ensureService();
   const origin = await ensureDomain();
   const token = randomBytes(32).toString("hex");
-  await railway(["variable", "set", "PAYGUARD_MONITOR_BEARER_TOKEN", "--stdin", "--service", SERVICE, "--environment", ENVIRONMENT, "--skip-deploys", "--json"], token);
+  await railwayWithStdin(["variable", "set", "PAYGUARD_MONITOR_BEARER_TOKEN", "--stdin", "--service", SERVICE, "--environment", ENVIRONMENT, "--skip-deploys", "--json"], token);
   await railway(["up", "apps/monitor", "--path-as-root", "--service", SERVICE, "--environment", ENVIRONMENT, "--detach", "--json", "--message", `Deploy PayGuard monitor from ${sourceCommit.slice(0, 7)}`]);
   const deployment = await waitForDeployment();
   const deploymentId = deployment.id ?? deployment.deploymentId;
