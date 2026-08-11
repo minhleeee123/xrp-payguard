@@ -280,9 +280,10 @@ delivery; any body drift fails the page closed.
 ### Interactive simulated-FCC demo boundary
 
 The deployed hackathon interaction path is additive and isolated from the
-production FCC topology. Its evidence-verified hosted artifact is pinned to
-source `da66c74`; later repository UI changes are not silently promoted into
-that deployment record. It uses a separate Coston2 registry, vault, and router
+live Railway FCC topology. The current production artifact is pinned to source
+`be51006` and deployment `dpl_9Thw4YwLfL24pZpWqF9riioAPQHj`; its 21-entry
+evidence corpus is byte-verified separately from the earlier full interactive
+lifecycle record. It uses a separate Coston2 registry, vault, and router
 namespace plus three stateless serverless actor endpoints. Each actor has a
 distinct demo-only signing/decryption key, independently decrypts the policy in
 memory, runs the canonical deterministic evaluator, and signs only the exact

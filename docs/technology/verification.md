@@ -199,6 +199,15 @@ boundaries. The repository-only result is
 it is intentionally excluded from the hosted index and does not upgrade the
 interactive testnet client into an FCC or verified-release claim.
 
+The refreshed production-corpus audit recorded on 2026-08-11 is pinned to
+source `be51006cf14fa319a4ba34fff3d17176da905520`. It matched the current
+metadata index and all 21 hosted bodies byte-for-byte to reviewed local sources,
+including 20 chain-114 records and three explicitly bounded simulation records.
+Its repository-only result is
+[`public-evidence-deployment-audit-2026-08-11.json`](../../evidence/web/public-evidence-deployment-audit-2026-08-11.json).
+This proves public-artifact integrity, not that the Vercel simulated actors are
+the registered Railway FCC machines.
+
 On 2026-08-10 the isolated interactive namespace passed a 133.29-second gate
 against the public Vercel actor APIs and separate Coston2 contracts. The test
 verified three actor custody receipts, policy registration, two matching

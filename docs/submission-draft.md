@@ -51,7 +51,7 @@ evidence without publishing the policy rules themselves.
   demonstrates two-of-three recurring authorization, cap denial,
   stop/resume/revoke, and vault conservation, but not live FCC custody or
   hardware confidentiality.
-- A public Vercel dApp exposes a reviewed 16-entry evidence mirror and an
+- A public Vercel dApp exposes a reviewed 21-entry evidence mirror and an
   isolated interactive testnet lifecycle backed by three simulated serverless
   actors and separate Coston2 contracts. It permanently labels the shared
   operator/no-hardware-TEE boundary.
@@ -59,9 +59,11 @@ evidence without publishing the policy rules themselves.
   two matching `ALLOW` results and execution, two matching `CAP_EXCEEDED`
   results, stop/resume/revoke, and vault conservation. This is simulation-only,
   not production FCC evidence.
-- A repository-only production-corpus audit fetched all 15 then-hosted evidence
-  assets, required HTTP/JSON boundaries, and matched each body byte-for-byte to
-  its reviewed local source without recursively publishing its own audit.
+- The current repository-only production-corpus audit fetched all 21 hosted
+  evidence assets, required HTTP/JSON boundaries, and matched each body
+  byte-for-byte to its reviewed local source without recursively publishing
+  its own audit. The earlier 15-body audit remains historical evidence for the
+  earlier pinned artifact.
 
 ## How PayGuard uses Flare
 
@@ -112,10 +114,12 @@ evidence without publishing the policy rules themselves.
 
 The exact deployment transactions, blocks, runtime hashes, constructor/wiring
 assertions, machine registration/status, replacement transactions, and live
-lifecycle observations are in sanitized repository evidence. The hosted public
-evidence index predates the Railway lifecycle and must not be presented as its
-deployment authority. Extension and machine facts remain simulated/testnet
-observations, not a hardware-backed release.
+lifecycle observations are in sanitized repository evidence. The current
+hosted public index mirrors those reviewed Railway records, but the Vercel
+interactive actor path is still separate and simulation-only; the index must
+not be presented as proof that the UI drives the live Railway machines.
+Extension and machine facts remain simulated/testnet observations, not a
+hardware-backed release.
 
 ## New work and provenance
 
