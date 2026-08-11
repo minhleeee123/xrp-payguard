@@ -51,8 +51,8 @@ export function landingView(): string {
           <p>The mascots make the trust model easier to remember; they are not claims of live machines. Each represents a protocol responsibility that must fail closed when its evidence is missing.</p>
         </div>
         <div class="guardian-grid">
-          ${guardianCard("cipher", "Cipher", "Policy custodian", "Three compatible machines must acknowledge the same commitment and domain before a policy can become canonical.", "TARGET · 3 OF 3 CUSTODY")}
-          ${guardianCard("quorum", "Quorum", "Threshold witness", "Two distinct registered machines must sign one identical evaluation digest. Split results never combine into approval.", "LOCAL · 2 MATCHING RESULTS")}
+          ${guardianCard("cipher", "Cipher", "Policy custodian", "Three compatible machines must acknowledge the same commitment and domain before a policy can become canonical.", "LIVE V1 · 3 OF 3 CUSTODY")}
+          ${guardianCard("quorum", "Quorum", "Threshold witness", "Two distinct registered machines must sign one identical evaluation digest. Split results never combine into approval.", "LIVE V1 · 2 MATCHING RESULTS")}
           ${guardianCard("ledger", "Ledger", "Checkpoint keeper", "Canonical chain state owns nonce, spend root, occurrence, expiry, and rollback authority across restarts.", "TESTED · FAIL CLOSED")}
         </div>
       </section>
@@ -96,7 +96,7 @@ export function landingView(): string {
           <details open><summary>What does PayGuard keep private?</summary><p>Policy relationships, caps, schedules, delegate rules, private entropy, and intermediate evaluation details are intended to remain inside the fixed FCC custody set. Public commitments and actions remain visible.</p></details>
           <details><summary>Does PayGuard hide XRP or FXRP transfers?</summary><p>No. Amount, recipient, timing, and transaction graph remain public. PayGuard is neither a mixer nor an anonymous payment rail.</p></details>
           <details><summary>What happens when FCC, FDC, FTSO, RPC, or relay fails?</summary><p>The affected path becomes unavailable, denied, or resumable from canonical public state. No dependency failure may become a mock proof, price, payment, evaluation, or execution.</p></details>
-          <details><summary>What is live today?</summary><p>PayGuard has public Coston2 contracts, finalized wallet/vault/request reads, guarded vault and router writes, XRP/FDC/Smart Account/FAssets observations, and a credential-free three-signer lifecycle recorded on Coston2. A registered production FCC policy-machine release is not yet verified.</p></details>
+          <details><summary>What is live today?</summary><p>PayGuard has public Coston2 contracts, finalized wallet/vault/request reads, guarded writes, XRP/FDC/Smart Account/FAssets observations, and a hosted V1 lifecycle through three registered Coston2 SIMULATED_TEE machines. Hardware attestation, V2, and a verified PayGuard release are not yet verified.</p></details>
         </div>
       </section>
 
