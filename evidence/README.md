@@ -49,6 +49,14 @@ an XRP payment, FDC request, or mint transaction.
 credential-free Coston2 RPC, Explorer/API, and faucet page reachability. It
 does not represent a faucet grant, FCC indexer access, or a PayGuard release.
 
+`coston2/production-monitoring.json` records the independent Railway monitor,
+its exact source/deployment identifiers, five-dependency aggregate healthy
+observation, authenticated operator-route checks, bounded retention, and
+credential-free runtime-log assertions. It contains no bearer token, endpoint
+payload, request identifier, policy, decision, signature, or private key. It is
+not an outage-drill result, SLA, security audit, hardware attestation, verified
+release, or mainnet-readiness claim.
+
 `coston2/fcc-hosted-relay-lifecycle.json` records the hosted Coston2 V1 path
 through the production Railway relay and registered A/B/D `SIMULATED_TEE`
 machines. It covers authenticated ciphertext-only ingress, three verified

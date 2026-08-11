@@ -12,6 +12,11 @@ The public `/healthz` route contains only aggregate readiness. Operator-only
 token over HTTPS. Rotate that token through Railway runtime variables; never
 place it in source, evidence, shell output, tickets, or chat.
 
+Live testnet monitor: <https://payguard-monitor-production.up.railway.app>.
+Only `/healthz` is readable without credentials, and browser CORS is restricted
+to the production PayGuard origin. The reviewed deployment observation is
+[`production-monitoring.json`](../../evidence/coston2/production-monitoring.json).
+
 ## Alert classes
 
 | Alert | Severity | Meaning | Immediate action |

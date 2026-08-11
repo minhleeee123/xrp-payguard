@@ -6,7 +6,10 @@
 > `SIMULATED_TEE` machines have
 > completed all-three private custody plus a live two-of-three ALLOW/execute,
 > CAP-denial, stop/resume/revoke, C→D replacement, and executor-pause recovery
-> lifecycle, including one hosted V2 run. Hardware attestation, verified-release
+> lifecycle, including one hosted V2 run. An independent Railway monitor now
+> observes the relay, Coston2 RPC, and A/B/D readiness with authenticated
+> operator routes, bounded aggregate retention, fixed alerts, and sanitized
+> evidence. Hardware attestation, verified-release
 > promotion, the remaining V2 dependency-outage
 > drills, and a complete release remain unverified.
 >
@@ -106,6 +109,12 @@ Unchecked boxes do not all have the same deadline:
   live FAssets conditions, remaining V2 outage drills,
   independent review, release promotion, pilots, hardware, and all
   mainnet/production work remain outside the hackathon boundary.
+
+One formerly post-hackathon production-monitoring row was deliberately pulled
+into the pre-submission boundary and completed on 2026-08-11. Therefore the
+current hackathon count is 103 completed gates out of 105, while the same two
+owner/user gates remain open. No other post-hackathon row is included in that
+headline.
 
 The original hackathon boundary did not require a V2 deployment or a verified
 production FCC release to demonstrate its explicitly simulated solution-3
@@ -556,7 +565,7 @@ Exit: failure is resumable or explicitly denied, never represented as success.
   emergency-stop, recovery, Smart Account funding, and redemption lifecycles.
 - [x] Publish only sanitized public identifiers, hashes, blocks, transactions,
   timings, and assertion booleans; the latest production-corpus audit fetched all
-  23 listed assets, matched every JSON body byte-for-byte to its reviewed source,
+  24 listed assets, matched every JSON body byte-for-byte to its reviewed source,
   reran the public-field/simulation guards, and remains repository-only to avoid
   recursive evidence publication.
 - [x] Post-hackathon: deploy the authenticated hosted relay, connect the
@@ -605,9 +614,11 @@ supported by evidence.
 - [x] Implement aggregate-only relay metrics with fixed labels, disabled-by-
   default bearer access, and tests excluding identifiers, decisions, policy
   material, ciphertext, credentials, signatures, and per-request timing.
-- [ ] Deploy operator-only production monitoring with managed credentials,
-  authenticated transport, retention/access controls, alerts, and sanitized
-  incident integration.
+- [x] Pulled forward before submission: deploy operator-only production
+  monitoring with a Railway-managed bearer, origin-bound public health,
+  authenticated HTTPS operator routes, 1,440-sample/128-incident bounds, fixed
+  alerts, a credential-free incident runbook, and sanitized live evidence in
+  `evidence/coston2/production-monitoring.json`.
 - [ ] Mainnet FXRP pilot with bounded value, support, incident, and rollback plans.
 - [ ] Additional policy primitives only after compatibility and privacy review.
 

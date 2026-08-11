@@ -151,12 +151,13 @@ On-chain state is the canonical replay and rollback authority.
 
 ## What is verified now
 
-Snapshot: 2026-08-11. [`PLAN.md`](PLAN.md) records **102 of 104 pre-hackathon
+Snapshot: 2026-08-11. [`PLAN.md`](PLAN.md) records **103 of 105 pre-hackathon
 gates (98.1%)** complete. The two open pre-hackathon gates require owner/user
 activity: confirm the final submission form/account/bounty details and conduct
 the required five XRPL-user, five treasury/DAO, and five recipient/executor
-validation sessions. Explicit post-hackathon gates are tracked separately and
-are not included in this headline count.
+validation sessions. The live production-monitoring gate was deliberately
+pulled forward and added to both numerator and denominator; all remaining
+explicit post-hackathon gates stay outside this headline count.
 
 | Area | Verified result | Important limitation |
 | --- | --- | --- |
@@ -168,7 +169,8 @@ are not included in this headline count.
 | Solution-3 demo lifecycle | Fourteen successful Coston2 transactions cover simulated three-machine registration, policy registration, recurring allow, cap denial, stop/resume/revoke, and exact vault conservation | The older demo identities and result signers are explicitly ephemeral simulation and separate from the live Railway run |
 | FAssets exit | Amount-based and `redeemWithTag` Coston2 requests have matching validated XRPL payouts and `RedemptionPerformed` observations | Partial/default recovery and canonical PayGuard settlement consumption remain open |
 | Web2Json | Local source commitment allowlist, exact public request, jq/tuple ABI, MIC/response, source-asserted freshness, replay, and verifier failure tests pass | No production source, live proof, source-truth guarantee, private policy evaluation, or on-chain consumer |
-| Web + hosted relay | The production Vercel dApp and Railway relay use the V2 namespace for authenticated ciphertext-only ingress, three custody receipts, request-ID-only two-of-three evaluation, execution, cap denial, and owner lifecycle. Its 23-asset evidence mirror is byte-verified; explicit V1 addresses remain rollback metadata | This is the Coston2 `SIMULATED_TEE=true` V2 candidate, not a hardware-backed verified release or mainnet production |
+| Web + hosted relay | The production Vercel dApp and Railway relay use the V2 namespace for authenticated ciphertext-only ingress, three custody receipts, request-ID-only two-of-three evaluation, execution, cap denial, and owner lifecycle. Its 24-asset evidence mirror includes aggregate production-monitor evidence; explicit V1 addresses remain rollback metadata | This is the Coston2 `SIMULATED_TEE=true` V2 candidate, not a hardware-backed verified release or mainnet production |
+| Production monitoring | An independent Railway service probes the relay, Coston2 RPC, and A/B/D, retains bounded aggregate samples/incidents, exposes only origin-bound aggregate health publicly, and protects status/metrics/incidents with a managed bearer | This is availability monitoring for the simulated testnet candidate, not an SLA, security audit, hardware proof, or release promotion |
 | Release | Release and V2 candidate validators fail closed | `pnpm release:check` remains `planned`; the candidate is live but `verified: false` until V2 outage, canonical redemption, user validation, and hardware release evidence pass |
 
 ## Coston2 public identifiers
@@ -281,6 +283,7 @@ Public evidence is allowlisted, sanitized, and testnet-only. Start with
 | [`fcc-live-threshold-lifecycle.json`](evidence/coston2/fcc-live-threshold-lifecycle.json) | Three-machine live simulated evaluation, two-of-three ALLOW execution, cap denial, conservation, and policy lifecycle |
 | [`fcc-live-replacement-lifecycle.json`](evidence/coston2/fcc-live-replacement-lifecycle.json) | C outage, fresh D registration, new A/B/D custody and threshold lifecycle, measured full executor pause/resume, and no frozen-identity swap |
 | [`fcc-hosted-relay-lifecycle.json`](evidence/coston2/fcc-hosted-relay-lifecycle.json) | Hosted relay health, authenticated ciphertext ingress, request-ID-only quorum evaluation, ALLOW execution, cap denial, governance, and conservation |
+| [`production-monitoring.json`](evidence/coston2/production-monitoring.json) | Independent Railway monitor deployment, 5-dependency aggregate readiness, operator authentication, bounded retention, fixed alerts, and credential-free runtime/evidence checks |
 | [`fcc-local-three-machine-2026-08-09.json`](evidence/simulation/fcc-local-three-machine-2026-08-09.json) | Disposable local three-machine identity, ingress, hardening, restart, and cleanup smoke |
 | [`coston2-simulated-policy-lifecycle-2026-08-09.json`](evidence/simulation/coston2-simulated-policy-lifecycle-2026-08-09.json) | Real Coston2 contract lifecycle with explicitly simulated policy signers |
 | [`coston2-interactive-demo-deployment-2026-08-10.json`](evidence/simulation/coston2-interactive-demo-deployment-2026-08-10.json) | Separate demo contracts, three public actor descriptors, registrations, wiring, and mandatory false production assertions |
@@ -403,6 +406,7 @@ xrp-payguard/
 │   ├── web/                   Vite product, wallet views, Demo, Auditor, evidence UI
 │   ├── demo-api/              HTTP boundary for the three isolated demo actors
 │   ├── relay/                 stateless threshold/result orchestration
+│   ├── monitor/               aggregate-only production health and operator alerts
 │   └── fcc-extension/         Go FCC ingress/evaluator/store and Railway runtime image
 ├── packages/
 │   ├── protocol/              canonical schemas, codecs, hashes, policy math/evaluator
@@ -499,7 +503,7 @@ The remaining technical, release, pilot, and production gates are explicitly
 - a verified PayGuard release manifest and exact consumer bindings;
 - testnet design-partner pilots and measured feedback;
 - independent contract/TEE security review and remediation; and
-- fresh mainnet resolution, canary, managed monitoring, bounded-value pilot,
+- fresh mainnet resolution, canary, bounded-value pilot,
   incident coverage, and explicit real-asset authorization.
 
 No real-asset or mainnet transaction is authorized by this repository or by the

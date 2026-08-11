@@ -3,7 +3,7 @@
 > The current production web artifact is pinned to source commit
 > `3a271bd475637883297ce368109b3aed5df5935c` and Vercel deployment
 > `dpl_Gv6Qb3qgqVEx3soU1RTux5eg6bTq`. Its V2-first FCC UI, production bytes,
-> relay readiness, and 23-entry evidence corpus were checked on 2026-08-11.
+> relay readiness, and 24-entry evidence corpus were checked on 2026-08-11.
 > The older V1 interactive lifecycle remains explicitly historical and is not
 > silently reassigned to the active V2 deployment. The full workspace, Go,
 > Forge, security, privacy, evidence, release, build, production-corpus audit,
@@ -46,13 +46,13 @@ path may be presented as hardware-backed confidentiality or mainnet production.
 - Railway relay: <https://payguard-live-relay-production.up.railway.app>
 
 The deployment was built and uploaded through Vercel CLI. It serves the static
-Vite application and a 23-entry reviewed evidence index. The live FCC
+Vite application and a 24-entry reviewed evidence index. The live FCC
 configuration comes from the separate Railway relay; its evaluation route
 rejects any non-empty/client-decision body. Historical serverless demo actor
 routes are not part of this static artifact and therefore fail closed.
 
 A repository-only audit independently fetched the current production index and
-all 23 listed JSON assets, required HTTP 200 plus JSON content types,
+all 24 listed JSON assets, required HTTP 200 plus JSON content types,
 reran the forbidden-field and explicit-simulation checks, and matched every body
 byte-for-byte to its reviewed local source. Its own record is excluded from the
 hosted index by design.
@@ -107,7 +107,7 @@ Observed results on the current baseline:
   271 revisions with zero history findings. Privacy scan inspected 58
   browser/relay/FCC source and build files and found no browser persistence API.
   The evidence gate accepted 20 sanitized testnet-only repository records. The
-  hosted 23-entry subset is separately byte-audited and includes the reviewed
+  hosted 24-entry subset is separately byte-audited and includes the reviewed
   Railway FCC evidence, including the connected hosted relay lifecycle.
 - The release check returned `planned` because no verified PayGuard Coston2
   release manifest exists; this is the expected fail-closed outcome.
@@ -166,19 +166,21 @@ public RPC:
 
 A fresh HTTPS read of deployment
 `dpl_Gv6Qb3qgqVEx3soU1RTux5eg6bTq` returned 200 for the application and
-23-entry evidence index. The deployed JavaScript and CSS
+23-entry evidence index. This paragraph describes the prior pinned artifact;
+the next production deployment advances the reviewed corpus to 24 entries. The deployed JavaScript and CSS
 matched the locally built artifact byte-for-byte, and the public-corpus audit
 matched every hosted evidence body to its reviewed local source. The prior
 Chrome and full Coston2 lifecycle results remain attached to their earlier
-pinned artifact. The hackathon headline is **102 of 104 pre-hackathon gates
+pinned artifact. The hackathon headline is **103 of 105 pre-hackathon gates
 (98.1%)**. The two open items are owner/account confirmation and real user
-validation. Explicit post-hackathon roadmap rows are tracked separately and are
-not included in that count.
+validation. The completed production-monitoring row was pulled forward and
+added to both sides of the count; other post-hackathon roadmap rows remain
+excluded.
 
 ## Remaining-gate audit
 
-`PLAN.md` retains 18 unchecked full-roadmap rows: two pre-submission items and
-16 post-hackathon items. They require external, user, uncontrolled-protocol,
+`PLAN.md` retains 17 unchecked full-roadmap rows: two pre-submission items and
+15 post-hackathon items. They require external, user, uncontrolled-protocol,
 hardware, audit, or release evidence that the repository cannot manufacture
 through another local unit test. A post-hackathon row is not a pre-submission
 technical blocker:
@@ -192,7 +194,7 @@ technical blocker:
 | Post-hackathon | Independent assurance | External contract/TEE review, exact-candidate remediation, and production security audit |
 | Post-hackathon | Verified release | Complete release manifest/bindings, runtime/wiring/machine/key/signer mapping, and live recurring/deny/stop/recovery/redemption journeys |
 | Post-hackathon | Pilots | Personal and treasury testnet pilots, measurements, and real feedback |
-| Post-hackathon | Production/mainnet | Fresh mainnet resolution/canary, multi-operator FCC design, managed monitoring, bounded-value FXRP pilot, and post-pilot primitive review |
+| Post-hackathon | Production/mainnet | Fresh mainnet resolution/canary, multi-operator FCC design, bounded-value FXRP pilot, and post-pilot primitive review. Managed monitoring is already live and was pulled into the submission boundary. |
 
 The local Web2Json boundary added at `897b54b` does not close any of those live
 gates. It has no configured production source, live FDC request/proof, private
@@ -208,7 +210,8 @@ policy evaluation, or canonical on-chain Web2 consumer.
 | Web2Json | Local source-commitment allowlist, exact jq/tuple-ABI/MIC/response binding, source-asserted freshness, replay, and fail-closed verifier tests | No production source, live proof, source-truth guarantee, private evaluation, or on-chain consumer |
 | FCC foundation | Sender/extension binding, status-2 registered simulated machines, and exact live `PING_V1` TEE/proxy signatures pass | No hardware attestation or verified release |
 | FCC policy path | V2 official-manager binding, A/B/D stable origins, authenticated indexer, all-three live simulated custody, hosted request-ID-only two-of-three ALLOW/DENY, conservation, and owner lifecycle pass; V1 separately records replacement/executor recovery | `SIMULATED_TEE`, remaining V2 dependency outages, and no verified release |
-| Web | Interactive Vercel dApp, hosted Railway FCC V2 controls, refreshed desktop navigation, and byte-verified 23-asset evidence mirror pass | Operator-only simulated V2 candidate; historical actor APIs are not in the current static artifact; hardware release remains unavailable |
+| Web | Interactive Vercel dApp, hosted Railway FCC V2 controls, refreshed desktop navigation, and a 24-asset reviewed evidence mirror including production-monitor evidence | Operator-only simulated V2 candidate; historical actor APIs are not in the current static artifact; hardware release remains unavailable |
+| Monitoring | Independent Railway monitor, fixed 5-dependency probes, origin-bound public aggregate health, bearer-protected operator routes, bounded retention, fixed alerts, and sanitized evidence pass | Testnet candidate availability only; not an outage drill, SLA, audit, hardware proof, or release promotion |
 | Release | Release validators and fail-closed checks pass | No verified release manifest exists |
 | SDK | Compile-tested XRPL-wallet and Flare-dApp preview examples plus integration guide | Package remains private; no live writer or release domain is exposed |
 | Competition | Public deadline, prize/track direction, package, and existing-project policy were refreshed from DoraHacks | Enabled final form, owner eligibility, bounty selection, submission receipt, and FCC grant remain owner/organizer-only |

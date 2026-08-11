@@ -51,7 +51,7 @@ evidence without publishing the policy rules themselves.
   demonstrates two-of-three recurring authorization, cap denial,
   stop/resume/revoke, and vault conservation, but not live FCC custody or
   hardware confidentiality.
-- A public Vercel dApp exposes a reviewed 23-entry evidence mirror and a hosted
+- A public Vercel dApp exposes a reviewed 24-entry evidence mirror and a hosted
   V2 candidate path through the Railway relay and registered A/B/D `SIMULATED_TEE`
   machines. The older isolated serverless-actor lifecycle remains historical
   evidence; neither path is hardware-backed or a verified release.
