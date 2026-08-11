@@ -55,10 +55,12 @@ evidence without publishing the policy rules themselves.
   V2 candidate path through the Railway relay and registered A/B/D `SIMULATED_TEE`
   machines. The older isolated serverless-actor lifecycle remains historical
   evidence; neither path is hardware-backed or a verified release.
-- The deployed lifecycle passed three custody receipts, policy registration,
+- The hosted V2 lifecycle passed three custody receipts, policy registration,
   two matching `ALLOW` results and execution, two matching `CAP_EXCEEDED`
-  results, stop/resume/revoke, and vault conservation. This is simulation-only,
-  not production FCC evidence.
+  results, stop/resume/revoke, and vault conservation with registered status-2
+  simulated FCC machines. It is live simulated-FCC evidence, not hardware-backed
+  production or verified-release evidence; the older isolated V1 run remains
+  simulation-only historical evidence.
 - The current repository-only production-corpus audit fetched all 23 hosted
   evidence assets, required HTTP/JSON boundaries, and matched each body
   byte-for-byte to its reviewed local source without recursively publishing

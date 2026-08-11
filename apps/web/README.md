@@ -7,7 +7,7 @@ repository-level [`DESIGN.md`](../../DESIGN.md). The Policy Studio computes a
 domain-bound commitment from an in-memory draft only. It includes three policy
 templates, structured local validation, fresh browser cryptographic entropy,
 and an exact activation/request/private visibility map. The production app can
-select the hosted V1 Coston2 domain, independently encrypt to registered A/B/D
+select the hosted V2 Coston2 candidate, independently encrypt to registered A/B/D
 machines, collect verified receipts through the Railway relay, and register the
 commitment. It does not use browser storage or provide an authorization result.
 
@@ -47,14 +47,16 @@ on the landing surface, view changes reset scroll and keyboard focus to the new
 main region, and both application and landing surfaces expose a skip link.
 Transient notices auto-dismiss and also provide an explicit close control.
 
-Demo lifecycle parses the reviewed solution-3 artifact instead of rendering
-hard-coded success copy. It requires exactly three distinct simulated machine
-identities, two matching results per decision, fourteen successful Coston2
-checkpoints, allow execution, cap denial, stop/resume/revoke, conservation, and
-all negative production assertions. Schema, transaction, threshold,
-conservation, or limitation drift makes the entire demo unavailable. The Vite
-development server and production build expose the same scanner-approved
-same-origin evidence bodies with JSON/nosniff headers.
+Demo lifecycle makes the reviewed hosted V2 candidate the primary wallet-free
+proof. Its strict decoder requires exactly three distinct status-2 simulated
+machine identities, all-three custody, two matching results for each decision,
+thirteen successful Coston2 transactions, allow execution, cap denial,
+stop/resume/revoke, conservation, and all negative hardware/release assertions.
+Schema, transaction, threshold, conservation, or limitation drift makes the
+entire proof unavailable. The older isolated V1 simulation remains collapsed
+under an explicitly historical sandbox boundary and cannot become the active
+deployment fallback. The Vite development server and production build expose
+the same scanner-approved same-origin evidence bodies with JSON/nosniff headers.
 
 The Vaults surface accepts only the verified finalized Coston2 account snapshot;
 it verifies the conservation equation and shows no balance when the wallet or
@@ -128,9 +130,9 @@ production build cannot silently omit the live path. A reviewed deployment may
 override it with `VITE_PAYGUARD_LIVE_RELAY_ORIGIN`; config preflight and exact
 CORS still fail closed on any wrong or unavailable origin.
 
-The connected public account/vault reader and hosted simulated-FCC V1 path are
-real Coston2 features, but the UI is not evidence of a complete PayGuard release
-or hardware FCC authorization.
+The connected public account/vault reader and hosted simulated-FCC V2 candidate
+are real Coston2 features, but the UI is not evidence of a complete PayGuard
+release or hardware FCC authorization.
 Deploy the built static artifact with the Vercel CLI from the
 repository root:
 

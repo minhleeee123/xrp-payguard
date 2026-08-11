@@ -1,8 +1,9 @@
 # FCC private policy wire and TEE identity
 
 Status: local cross-language ECIES plus live Coston2 authenticated ingress,
-registered simulated-machine custody receipts, and threshold evaluation pass.
-Hardware-backed confidentiality and V2 release are not claimed.
+registered simulated-machine custody receipts, and threshold evaluation pass on
+the hosted V2 candidate. Hardware-backed confidentiality and a verified release
+are not claimed.
 
 ## Machine identity
 

@@ -10,8 +10,9 @@ binding vector. Its sender deployment, extension registration, explicit binding,
 owner permissions, and EVM key-type configuration are verified on Coston2.
 Stable A/B/D origins, authenticated indexer access, registered simulated
 machines, signed `PING_V1`, private custody/evaluation, C→D replacement, and
-executor-pause recovery are now evidenced separately. Hardware-backed machines,
-sealed identity recovery, V2 deployment, and a verified release remain open.
+executor-pause recovery are now evidenced separately. The hosted V2 simulated
+candidate is deployed; hardware-backed machines, sealed identity recovery, and
+a verified release remain open.
 
 ## Pinned local toolchain
 

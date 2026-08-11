@@ -211,9 +211,11 @@ production-target contracts:
 
 ### Judge and operator test paths
 
-The judge-safe path needs no wallet: open **Demo lifecycle**, inspect the live
-relay/machine readiness card, then open the hosted lifecycle evidence and its
-Coston2 transactions. Never enter a real operational policy or use mainnet value.
+The judge-safe path needs no wallet: open **Demo lifecycle** and inspect the
+primary V2 proof with three status-2 machines, ALLOW execution, `CAP_EXCEEDED`
+denial, conservation, and thirteen linked Coston2 checkpoints. The live
+relay/machine readiness card remains visible beside it. Never enter a real
+operational policy or use mainnet value.
 
 The write path is intentionally restricted to the currently configured V2
 operator wallet. That operator can connect on chain ID `114`, select the hosted
@@ -244,12 +246,12 @@ Suggested five-minute walkthrough:
    then use the two-step FTestXRP transaction preview without exposing a key.
 5. In **Requests**, load the prefilled canonical request; compare its router
    status, Payee projection, Auditor boundary, and guarded expiry action.
-6. Open **Demo lifecycle** and inspect the hosted V2 readiness card for the
-   Railway relay and registered A/B/D machines. Judges can verify the complete
-   run through sanitized evidence without a wallet. The configured operator may
+6. Open **Demo lifecycle** and inspect the primary wallet-free V2 proof and its
+   thirteen explorer-linked checkpoints, then the hosted readiness card for the
+   Railway relay and registered A/B/D machines. The configured operator may
    rerun custody/request/evaluation/governance from the UI; everyone else stays
-   read-only. The historical isolated actor run remains separately labelled and
-   is not silently reassigned to the current artifact.
+   read-only. The historical isolated V1 actor run remains collapsed, separately
+   labelled, and is never reassigned to the active V2 artifact.
 
 The deployed artifact is a public-safe static Vite bundle with an interactive
 injected-wallet Coston2 client, evidence mirror, and an explicit HTTPS connection

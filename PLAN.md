@@ -14,9 +14,9 @@
 > evidence retains the credential-free local and isolated Vercel simulation
 > boundaries. The current Vercel application additionally connects to a hosted
 > Railway relay and three registered A/B/D machines using organizer-supported
-> `SIMULATED_TEE=true`. They remain labelled `SIMULATED` and do not satisfy
-> V2 Coston2 simulated profile. They do not satisfy hardware-attestation,
-> verified-release, or mainnet gates.
+> `SIMULATED_TEE=true`. They satisfy the hosted V2 Coston2 simulated-candidate
+> profile and remain labelled `SIMULATED`. They do not satisfy
+> hardware-attestation, verified-release, or mainnet gates.
 
 ## 1. Product objective
 
@@ -275,7 +275,8 @@ open.
   manager/extension/code binding, rechecks production machine status and
   platform at receipt/result time, limits individual lifecycle controls to the
   owner, and gives governance only a global pause with safe permanent
-  renunciation. V2 deployment/verification remains open.
+  renunciation. The V2 simulated candidate is deployed and verified against
+  its reviewed public evidence; hardware-attested release promotion remains open.
 - [x] Commit policy hash plus frozen machine/key/code policy after all-three
   receipts; never publish ciphertext.
 - [x] Implement deposit, request, evaluate, execute, deny, expire, revoke,
@@ -431,7 +432,7 @@ release gates.
 ### Phase 6 — full application
 
 The checked items describe the reviewed source application and the current
-Vercel deployment. Hosted simulated V1 custody/evaluation and owner governance
+Vercel deployment. Hosted simulated V2 custody/evaluation and owner governance
 now pass; fresh non-operator user-wallet evidence and verified-release FCC remain
 open.
 
@@ -526,7 +527,8 @@ Exit: failure is resumable or explicitly denied, never represented as success.
   simulated machines; verified-release smoke remains open.
 - [x] Emit an allowlisted public-safe evidence index and JSON assets at the
   Vercel `/evidence/` endpoint. The hosted relay lifecycle is now included as a
-  sanitized FCC observation; hardware, V2, and release claims remain unavailable.
+  sanitized FCC observation; hardware-attested and verified-release claims remain
+  unavailable while the V2 simulated candidate remains explicitly labelled.
 - [x] Freeze the hackathon demo to the local three-machine simulated FCC mode
   and document that it proves deterministic/fail-closed behavior, not TEE
   confidentiality, registered custody, or a live PayGuard release.
