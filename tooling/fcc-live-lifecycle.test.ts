@@ -42,6 +42,7 @@ test("live lifecycle evidence is sanitized and preserves conservation claims", (
   for (const forbidden of ["privateKey", "ciphertext", "signature", "policyPlaintext", "authorization"]) assert.equal(serialized.includes(`\"${forbidden}\"`), false);
   assert.equal(evidence.assertions.twoMatchingAllowVerified, true);
   assert.equal(evidence.assertions.twoMatchingDenyVerified, true);
+  assert.equal(evidence.assertions.noPrivateKeyRecorded, true);
   assert.equal(evidence.assertions.hardwareAttestationVerified, false);
 });
 

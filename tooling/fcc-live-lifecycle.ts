@@ -351,6 +351,8 @@ export function buildSanitizedLifecycleEvidence(input: {
       hardwareAttestationVerified: false,
       simulatedTee: true,
       v2ReleaseVerified: false,
+      noPrivateKeyRecorded: true,
+      noCredentialRecorded: true,
       noPolicyRecorded: true,
       noCiphertextRecorded: true,
       noSignatureRecorded: true,
