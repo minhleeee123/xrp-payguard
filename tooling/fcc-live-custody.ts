@@ -22,7 +22,7 @@ import {
   type PolicyV1,
   type TeePublicKeyV1,
 } from "../packages/protocol/src/index.js";
-import { PayGuardPolicyRegistryAbi } from "../packages/bindings/src/index.js";
+import { PayGuardPolicyRegistryAbi, PayGuardPolicyRegistryV2Abi } from "../packages/bindings/src/index.js";
 import {
   createPublicClient,
   createWalletClient,
@@ -119,6 +119,7 @@ export interface SanitizedCustodyEvidenceInput {
   machineRegistrationTransactions?: readonly Hash[];
   policyFreezeTransaction?: Hash;
   policyFreezeBlock?: bigint;
+  registryVersion?: "V1" | "V2";
   recordedAt?: string;
 }
 
@@ -229,6 +230,7 @@ export function buildSanitizedCustodyEvidence(input: SanitizedCustodyEvidenceInp
       policyCommitment: input.policyCommitment,
       custodyBundleHash: input.bundleHash,
       ...(frozen ? {
+        registryVersion: input.registryVersion ?? "V1",
         machineRegistrationTransactions: input.machineRegistrationTransactions ?? [],
         policyFreezeTransaction: input.policyFreezeTransaction,
         policyFreezeBlock: input.policyFreezeBlock!.toString(),
@@ -254,6 +256,7 @@ export function buildSanitizedCustodyEvidence(input: SanitizedCustodyEvidenceInp
       ciphertextStoreWriteVerified: true,
       restartRecoveryVerified: false,
       onchainPolicyFreezeVerified: frozen,
+      v2OfficialManagerAuthorizationVerified: frozen && input.registryVersion === "V2",
       liveThresholdEvaluationVerified: false,
       hardwareAttestationVerified: false,
       simulatedTee: true,
@@ -272,7 +275,9 @@ export function buildSanitizedCustodyEvidence(input: SanitizedCustodyEvidenceInp
     notes: [
       "Organizer-approved SIMULATED_TEE=true was used on Coston2.",
       "The private policy, three ciphertexts, owner authorizations, and machine signatures existed only in process memory and are excluded from public evidence.",
-      ...(frozen ? ["The on-chain freeze uses the deployed V1 administrator mapping; official-manager authorization remains a V2 release blocker."] : []),
+      ...(frozen && input.registryVersion === "V2"
+        ? ["The on-chain freeze uses PayGuardPolicyRegistryV2 with immutable official-manager live rechecks under the Coston2 simulated profile."]
+        : frozen ? ["The on-chain freeze uses the deployed V1 administrator mapping."] : []),
     ],
   };
 }
@@ -431,6 +436,22 @@ function loadAccountAndDomain() {
   return { account, registry: getAddress(registry!), vault: getAddress(vault!), router: getAddress(router!), rpc };
 }
 
+async function loadRelayDomain(relayOrigin: string, owner: Address) {
+  const value = await boundedJson(`${relayOrigin}/v1/config`) as Record<string, unknown>;
+  const contracts = value.contracts as Record<string, unknown> | undefined;
+  if (value.mode !== "LIVE_SIMULATED_TEE_C2" || value.chainId !== 114
+    || value.registryVersion !== "V2" || value.deploymentProfile !== "COSTON2_SIMULATED_V2"
+    || !contracts || getAddress(String(value.operator)) !== owner
+    || !isAddress(String(contracts.registry)) || !isAddress(String(contracts.vault)) || !isAddress(String(contracts.router))) {
+    throw new Error("relay V2 domain is invalid");
+  }
+  return {
+    registry: getAddress(String(contracts.registry)),
+    vault: getAddress(String(contracts.vault)),
+    router: getAddress(String(contracts.router)),
+  };
+}
+
 async function freezePolicyOnchain(
   client: ReturnType<typeof createPublicClient>,
   rpc: string,
@@ -439,7 +460,7 @@ async function freezePolicyOnchain(
   binding: PolicyBindingV1,
   machines: readonly LiveMachine[],
   receipts: readonly { receipt: PolicyReceiptV1; signature: Hex }[],
-): Promise<{ machineRegistrationTransactions: Hash[]; policyFreezeTransaction: Hash; policyFreezeBlock: bigint }> {
+): Promise<{ machineRegistrationTransactions: Hash[]; policyFreezeTransaction: Hash; policyFreezeBlock: bigint; registryVersion: "V1" | "V2" }> {
   const chain = {
     id: 114,
     name: "Flare Coston2",
@@ -449,7 +470,15 @@ async function freezePolicyOnchain(
   if (await client.getBalance({ address: account.address }) < 50_000_000_000_000_000n) throw new Error("owner gas balance is below the custody-freeze safety buffer");
   const wallet = createWalletClient({ account, chain, transport: http(rpc, { timeout: 15_000, retryCount: 2 }) });
   const machineRegistrationTransactions: Hash[] = [];
-  for (let index = 0; index < machines.length; index += 1) {
+  let registryVersion: "V1" | "V2" = "V1";
+  try {
+    const configuredManager = await client.readContract({ address: registry, abi: PayGuardPolicyRegistryV2Abi, functionName: "teeManager" });
+    if (getAddress(configuredManager) !== manager) throw new Error("V2 registry manager mismatch");
+    registryVersion = "V2";
+  } catch (error) {
+    if (error instanceof Error && error.message === "V2 registry manager mismatch") throw error;
+  }
+  for (let index = 0; registryVersion === "V1" && index < machines.length; index += 1) {
     const machine = machines[index]!;
     const current = await client.readContract({ address: registry, abi: PayGuardPolicyRegistryAbi, functionName: "machine", args: [machine.machineId] });
     if (current[2]) {
@@ -481,21 +510,22 @@ async function freezePolicyOnchain(
     { machineId: Hex; keyFingerprint: Hex; submissionNonce: Hex; receiptNonce: bigint; issuedAt: bigint; expiry: bigint; signature: Hex },
     { machineId: Hex; keyFingerprint: Hex; submissionNonce: Hex; receiptNonce: bigint; issuedAt: bigint; expiry: bigint; signature: Hex },
   ];
+  const registryAbi = registryVersion === "V2" ? PayGuardPolicyRegistryV2Abi : PayGuardPolicyRegistryAbi;
   const simulation = await client.simulateContract({
     account: account.address,
     address: registry,
-    abi: PayGuardPolicyRegistryAbi,
+    abi: registryAbi,
     functionName: "registerPolicy",
     args: [binding, receiptArguments],
   });
   const policyFreezeTransaction = await wallet.writeContract({ ...simulation.request, account, chain });
   const freezeReceipt = await client.waitForTransactionReceipt({ hash: policyFreezeTransaction, confirmations: 2, timeout: 180_000 });
-  if (freezeReceipt.status !== "success") throw new Error("V1 policy freeze reverted");
-  const [stored, status] = await client.readContract({ address: registry, abi: PayGuardPolicyRegistryAbi, functionName: "getPolicy", args: [binding.policyCommitment] });
+  if (freezeReceipt.status !== "success") throw new Error(`${registryVersion} policy freeze reverted`);
+  const [stored, status] = await client.readContract({ address: registry, abi: registryAbi, functionName: "getPolicy", args: [binding.policyCommitment] });
   if (Number(status) !== 1 || !sameHex(stored.policyCommitment, binding.policyCommitment)
     || getAddress(stored.owner) !== getAddress(binding.owner)
-    || stored.machineIds.some((item, index) => !sameHex(item, binding.machineIds[index]!))) throw new Error("V1 policy freeze readback mismatch");
-  return { machineRegistrationTransactions, policyFreezeTransaction, policyFreezeBlock: freezeReceipt.blockNumber };
+    || stored.machineIds.some((item, index) => !sameHex(item, binding.machineIds[index]!))) throw new Error(`${registryVersion} policy freeze readback mismatch`);
+  return { machineRegistrationTransactions, policyFreezeTransaction, policyFreezeBlock: freezeReceipt.blockNumber, registryVersion };
 }
 
 async function cleanSourceCommit(): Promise<string> {
@@ -530,7 +560,12 @@ export async function executeLiveCustody(options: LiveCustodyOptions) {
     return undefined;
   }
   const sourceCommit = await cleanSourceCommit();
-  const { account, registry, vault, router, rpc } = loadAccountAndDomain();
+  const configured = loadAccountAndDomain();
+  const relayDomain = options.relayOrigin
+    ? await loadRelayDomain(options.relayOrigin, configured.account.address)
+    : { registry: configured.registry, vault: configured.vault, router: configured.router };
+  const { account, rpc } = configured;
+  const { registry, vault, router } = relayDomain;
   const client = createPublicClient({ transport: http(rpc, { timeout: 15_000, retryCount: 2 }) });
   if (await client.getChainId() !== 114) throw new Error("RPC is not Coston2");
   const machines = await Promise.all(options.origins.map((origin) => machineFor(origin, client)));

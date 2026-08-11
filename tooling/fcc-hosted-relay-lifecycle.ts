@@ -12,12 +12,13 @@ import {
 } from "../packages/protocol/src/index.js";
 import {
   PayGuardActionRouterAbi,
-  PayGuardPolicyRegistryAbi,
+  PayGuardPolicyRegistryV2Abi,
   PayGuardVaultAbi,
 } from "../packages/bindings/src/index.js";
 import { liveEvaluationAuthorizationDigest } from "../apps/relay/src/live-runtime.js";
 import {
   createWalletClient,
+  erc20Abi,
   encodeAbiParameters,
   getAddress,
   http,
@@ -117,6 +118,8 @@ export function buildHostedLifecycleEvidence(input: {
     schemaVersion: 1,
     suite: "payguard-coston2-hosted-live-fcc-relay-lifecycle",
     status: "verified-hosted-live-simulated-fcc-lifecycle",
+    registryVersion: "V2",
+    deploymentProfile: "COSTON2_SIMULATED_V2",
     recordedAt: input.recordedAt ?? new Date().toISOString(),
     network: { name: "flare-coston2", chainId: 114, observedBlock: input.observedBlock.toString() },
     publicIdentifiers: {
@@ -145,6 +148,7 @@ export function buildHostedLifecycleEvidence(input: {
       vaultConservationVerified: true,
       hardwareAttestationVerified: false,
       simulatedTee: true,
+      v2LiveCandidateVerified: true,
       v2ReleaseVerified: false,
       verifiedPayGuardRelease: false,
       noPrivateKeyRecorded: true,
@@ -154,13 +158,13 @@ export function buildHostedLifecycleEvidence(input: {
       noSignatureRecorded: true,
       testnetOnly: true,
     },
-    blockers: ["HARDWARE_ATTESTATION_NOT_VERIFIED", "V2_RELEASE_NOT_VERIFIED"],
+    blockers: ["HARDWARE_ATTESTATION_NOT_VERIFIED", "VERIFIED_RELEASE_NOT_PROMOTED"],
     notes: [
       "Organizer-approved SIMULATED_TEE=true was used on Coston2.",
       "The hosted relay received independently encrypted policy ciphertext only during authenticated ingress, then received request IDs with empty JSON bodies for evaluation.",
       "The relay reconstructed canonical public request, vault, policy, and spend state from Coston2 and did not accept a client decision.",
       "Private policy material, ciphertexts, owner authorizations, signatures, credentials, and keys are excluded from this evidence.",
-      "This verifies the deployed V1 operator path; it is not hardware attestation, V2, a verified PayGuard release, or mainnet readiness.",
+      "This verifies the deployed V2 Coston2 simulated profile; it is not hardware attestation, a verified PayGuard release, or mainnet readiness.",
     ],
   };
 }
@@ -173,12 +177,14 @@ async function run(options: HostedLifecycleCLI): Promise<void> {
       relayOrigin: options.relayOrigin,
       operations: ["hosted private ingress A/B/D", "policy register", "request-id-only ALLOW", "execute", "request-id-only CAP_EXCEEDED DENY", "stop/resume/revoke"],
       broadcasts: false,
-      caveat: "Planned V1 simulated-TEE verification only; not a hardware-attested or V2 release claim.",
+      caveat: "Planned V2 Coston2 simulated-profile verification only; not a hardware-attested release claim.",
     }, null, 2));
     return;
   }
   const health = await boundedJson(`${options.relayOrigin}/healthz`, { headers: { accept: "application/json" } }, 64 * 1024);
   if (health.status !== "ready" || health.mode !== "LIVE_SIMULATED_TEE_C2" || health.machineCount !== 3
+    || health.registryVersion !== "V2" || health.deploymentProfile !== "COSTON2_SIMULATED_V2"
+    || health.v2LiveCandidateVerified !== true
     || health.simulatedTee !== true || health.hardwareTeeVerified !== false || health.verifiedPayGuardRelease !== false) {
     throw new Error("hosted relay health preflight failed");
   }
@@ -197,8 +203,16 @@ async function run(options: HostedLifecycleCLI): Promise<void> {
     if (receipt.status !== "success") throw new Error(`${functionName} reverted`);
     return { transaction, receipt };
   };
-  const accountingBefore = accountingOf(await client.readContract({ address: vault, abi: PayGuardVaultAbi, functionName: "accounting", args: [account.address, ftestXrp] }));
-  if (accountingBefore.available < 200_000n) throw new Error("vault balance is below the hosted lifecycle safety buffer");
+  let accountingBefore = accountingOf(await client.readContract({ address: vault, abi: PayGuardVaultAbi, functionName: "accounting", args: [account.address, ftestXrp] }));
+  if (accountingBefore.available < 200_000n) {
+    const fundingAmount = 500_000n;
+    const walletBalance = await client.readContract({ address: ftestXrp, abi: erc20Abi, functionName: "balanceOf", args: [account.address] });
+    if (walletBalance < fundingAmount) throw new Error("wallet FTestXRP balance is below the V2 lifecycle safety buffer");
+    await write(ftestXrp, erc20Abi, "approve", [vault, fundingAmount]);
+    await write(vault, PayGuardVaultAbi, "deposit", [ftestXrp, fundingAmount, account.address]);
+    accountingBefore = accountingOf(await client.readContract({ address: vault, abi: PayGuardVaultAbi, functionName: "accounting", args: [account.address, ftestXrp] }));
+    if (accountingBefore.available < 200_000n) throw new Error("V2 vault funding postcondition failed");
+  }
 
   const firstBlock = await client.getBlock({ blockTag: "latest" });
   const firstRequest = buildRequest(binding, account.address, registry, vault, router, 1, genesisSpendCheckpoint(binding.policyCommitment), balanceCheckpoint(accountingBefore, 1n), firstBlock.timestamp);
@@ -230,10 +244,10 @@ async function run(options: HostedLifecycleCLI): Promise<void> {
   const accountingAfterDeny = accountingOf(await client.readContract({ address: vault, abi: PayGuardVaultAbi, functionName: "accounting", args: [account.address, ftestXrp] }));
   if (!sameAccounting(accountingAfterAllow, accountingAfterDeny)) throw new Error("hosted DENY moved vault accounting");
 
-  const stopped = await write(registry, PayGuardPolicyRegistryAbi, "stopPolicy", [binding.policyCommitment]);
-  const resumed = await write(registry, PayGuardPolicyRegistryAbi, "resumePolicy", [binding.policyCommitment]);
-  const revoked = await write(registry, PayGuardPolicyRegistryAbi, "revokePolicy", [binding.policyCommitment]);
-  if (Number(await client.readContract({ address: registry, abi: PayGuardPolicyRegistryAbi, functionName: "policyStatus", args: [binding.policyCommitment] })) !== 3) {
+  const stopped = await write(registry, PayGuardPolicyRegistryV2Abi, "stopPolicy", [binding.policyCommitment]);
+  const resumed = await write(registry, PayGuardPolicyRegistryV2Abi, "resumePolicy", [binding.policyCommitment]);
+  const revoked = await write(registry, PayGuardPolicyRegistryV2Abi, "revokePolicy", [binding.policyCommitment]);
+  if (Number(await client.readContract({ address: registry, abi: PayGuardPolicyRegistryV2Abi, functionName: "policyStatus", args: [binding.policyCommitment] })) !== 3) {
     throw new Error("hosted policy governance readback failed");
   }
   const evidence = buildHostedLifecycleEvidence({
