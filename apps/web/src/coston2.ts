@@ -1,6 +1,6 @@
 import {
   PayGuardActionRouterAbi,
-  PayGuardPolicyRegistryAbi,
+  PayGuardPolicyRegistryV2Abi,
   PayGuardVaultAbi,
 } from "@xrp-payguard/bindings";
 import {
@@ -52,6 +52,20 @@ export const COSTON2_CHAIN = {
 export const COSTON2_CHAIN_HEX = "0x72";
 
 export const PAYGUARD_COSTON2 = {
+  registry: getAddress("0xbB89d68Efd3994CD688816c175343511bA5c0E88"),
+  vault: getAddress("0xe8f5b30F9adCea6b8532bFbD65f804E771520214"),
+  router: getAddress("0x452988f04bE9602EC0CEB0239EBA5Fe60d8988D3"),
+  asset: getAddress("0x0b6A3645c240605887a5532109323A3E12273dc7"),
+  runtimeCodeHashes: {
+    registry: "0x1ed44c1bdb9df8d47f81cb1e1d80a699799236e17a2251dd08ec9d1b93244f8d",
+    vault: "0x5971e2ef67c18d4c9365aec05e063c65a484617f70a5e7ffde792e0dcd7cc006",
+    router: "0x5c33c9e11ab8a2e4a4ff56a6ea4d0774e302146c32dcf3325b9341aa0160915f",
+  },
+  registryVersion: "V2",
+  deploymentProfile: "COSTON2_SIMULATED_V2",
+} as const;
+
+export const PAYGUARD_COSTON2_V1 = {
   registry: getAddress("0x8DFb2D7D7a2608Ee7Cd78983fbe28cCE00e1D4A4"),
   vault: getAddress("0xFFe7522075412B2eBA5b8B91c9aA4E1c2c6f84dB"),
   router: getAddress("0x28A969018975Fb40aEd0BfA98f6d1c3023B6a7Da"),
@@ -250,7 +264,7 @@ export async function loadCoston2PublicRequest(
     || getAddress(snapshot.asset) !== PAYGUARD_COSTON2.asset) {
     throw new Error("REQUEST_DOMAIN_MISMATCH");
   }
-  const policy = await read(PAYGUARD_COSTON2.registry, PayGuardPolicyRegistryAbi, "getPolicy", [snapshot.policyCommitment]);
+  const policy = await read(PAYGUARD_COSTON2.registry, PayGuardPolicyRegistryV2Abi, "getPolicy", [snapshot.policyCommitment]);
   const binding = tupleField(policy, "binding", 0);
   const policyOwner = parseAddress(tupleField(binding, "owner", 4), "POLICY_OWNER_INVALID");
   if (parseUint(tupleField(binding, "chainId", 0), "POLICY_CHAIN_INVALID") !== snapshot.chainId

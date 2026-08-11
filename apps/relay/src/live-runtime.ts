@@ -2,7 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import {
   PayGuardActionRouterAbi,
   PayGuardFccDispatcherAbi,
-  PayGuardPolicyRegistryAbi,
+  PayGuardPolicyRegistryV2Abi,
   PayGuardVaultAbi,
 } from "@xrp-payguard/bindings";
 import {
@@ -60,15 +60,21 @@ const CHAIN = {
   nativeCurrency: { name: "Coston2 Flare", symbol: "C2FLR", decimals: 18 },
   rpcUrls: { default: { http: ["https://coston2-api.flare.network/ext/C/rpc"] } },
 } as const;
-const REGISTRY = getAddress("0x8DFb2D7D7a2608Ee7Cd78983fbe28cCE00e1D4A4");
-const VAULT = getAddress("0xFFe7522075412B2eBA5b8B91c9aA4E1c2c6f84dB");
-const ROUTER = getAddress("0x28A969018975Fb40aEd0BfA98f6d1c3023B6a7Da");
+const REGISTRY = getAddress("0xbB89d68Efd3994CD688816c175343511bA5c0E88");
+const VAULT = getAddress("0xe8f5b30F9adCea6b8532bFbD65f804E771520214");
+const ROUTER = getAddress("0x452988f04bE9602EC0CEB0239EBA5Fe60d8988D3");
+const V1_FALLBACK = {
+  registry: getAddress("0x8DFb2D7D7a2608Ee7Cd78983fbe28cCE00e1D4A4"),
+  vault: getAddress("0xFFe7522075412B2eBA5b8B91c9aA4E1c2c6f84dB"),
+  router: getAddress("0x28A969018975Fb40aEd0BfA98f6d1c3023B6a7Da"),
+} as const;
 const DISPATCHER = getAddress("0x18Ea713cEf10ECf5cAC23c08dD25Ac17D2f07e3d");
 const MANAGER = getAddress("0x1a9C4A0f9D76c0b1D91d22E24E573a9b377618aE");
 const ASSET = getAddress("0x0b6A3645c240605887a5532109323A3E12273dc7");
 const EXTENSION_ID = 66037n;
 const EXTENSION_ID_BYTES = padHex(toHex(EXTENSION_ID), { size: 32 });
-const DEPLOYMENT_BLOCK = 33792913n;
+const DEPLOYMENT_BLOCK = 33918762n;
+const EXPECTED_CODE_HASH = "0x194844cf417dde867073e5ab7199fa4d21fd82b5dbe2bdea8b3d7fc18d10fdc2";
 const ORIGINS = [
   "https://payguard-fcc-a-production.up.railway.app",
   "https://payguard-fcc-b-production.up.railway.app",
@@ -209,17 +215,23 @@ export class Coston2LiveRelayRuntime implements LiveRelayRuntime {
 
   private async loadConfig(): Promise<LiveFccConfig> {
     if (await this.client.getChainId() !== 114) throw new Error("relay RPC is not Coston2");
-    const [dispatcherOwner, dispatcherExtension, registryCode, vaultCode, routerCode, routerRegistry, routerVault, vaultRouter] = await Promise.all([
+    const [dispatcherOwner, dispatcherExtension, registryCode, vaultCode, routerCode, routerRegistry, routerVault, vaultRouter, registryManager, registryExtension, registryCodeHash, allowSimulatedTee] = await Promise.all([
       this.client.readContract({ address: DISPATCHER, abi: dispatcherReadAbi, functionName: "owner" }),
       this.client.readContract({ address: DISPATCHER, abi: dispatcherReadAbi, functionName: "getExtensionId" }),
       this.client.getCode({ address: REGISTRY }), this.client.getCode({ address: VAULT }), this.client.getCode({ address: ROUTER }),
       this.client.readContract({ address: ROUTER, abi: PayGuardActionRouterAbi, functionName: "registry" }),
       this.client.readContract({ address: ROUTER, abi: PayGuardActionRouterAbi, functionName: "vault" }),
       this.client.readContract({ address: VAULT, abi: PayGuardVaultAbi, functionName: "router" }),
+      this.client.readContract({ address: REGISTRY, abi: PayGuardPolicyRegistryV2Abi, functionName: "teeManager" }),
+      this.client.readContract({ address: REGISTRY, abi: PayGuardPolicyRegistryV2Abi, functionName: "expectedExtensionId" }),
+      this.client.readContract({ address: REGISTRY, abi: PayGuardPolicyRegistryV2Abi, functionName: "expectedCodeHash" }),
+      this.client.readContract({ address: REGISTRY, abi: PayGuardPolicyRegistryV2Abi, functionName: "allowSimulatedTee" }),
     ]);
     if (getAddress(dispatcherOwner) !== this.account.address || dispatcherExtension !== EXTENSION_ID
       || !registryCode || registryCode === "0x" || !vaultCode || vaultCode === "0x" || !routerCode || routerCode === "0x"
-      || getAddress(routerRegistry) !== REGISTRY || getAddress(routerVault) !== VAULT || getAddress(vaultRouter) !== ROUTER) {
+      || getAddress(routerRegistry) !== REGISTRY || getAddress(routerVault) !== VAULT || getAddress(vaultRouter) !== ROUTER
+      || getAddress(registryManager) !== MANAGER || registryExtension !== EXTENSION_ID
+      || !sameHex(registryCodeHash, EXPECTED_CODE_HASH) || allowSimulatedTee !== true) {
       throw new Error("live relay contract domain failed verification");
     }
     const machines = await Promise.all(ORIGINS.map((origin, index) => this.loadMachine(origin, (index + 1) as 1 | 2 | 3)));
@@ -236,6 +248,9 @@ export class Coston2LiveRelayRuntime implements LiveRelayRuntime {
       extensionId: EXTENSION_ID_BYTES,
       deploymentBlock: DEPLOYMENT_BLOCK.toString(),
       operator: this.account.address,
+      registryVersion: "V2",
+      deploymentProfile: "COSTON2_SIMULATED_V2",
+      fallback: { strategy: "RAILWAY_ROLLBACK_TO_V1", ...V1_FALLBACK },
       contracts: { registry: REGISTRY, vault: VAULT, router: ROUTER, dispatcher: DISPATCHER, manager: MANAGER, asset: ASSET },
       machines: machines as [LiveMachineConfig, LiveMachineConfig, LiveMachineConfig],
       assertions: {
@@ -244,6 +259,7 @@ export class Coston2LiveRelayRuntime implements LiveRelayRuntime {
         authenticatedPrivateIngressVerified: true,
         simulatedTee: true,
         hardwareTeeVerified: false,
+        v2LiveCandidateVerified: true,
         v2ReleaseVerified: false,
         verifiedPayGuardRelease: false,
       },
@@ -268,20 +284,19 @@ export class Coston2LiveRelayRuntime implements LiveRelayRuntime {
     }
     const codeHash = hex32(info.machineData.codeHash, "code hash");
     const platform = hex32(info.machineData.platform, "platform");
-    const [registered, attestation, status, extension, supported, disabled, localMachine] = await Promise.all([
+    const [registered, attestation, status, extension, supported, disabled] = await Promise.all([
       this.client.readContract({ address: MANAGER, abi: managerAbi, functionName: "getTeeMachine", args: [teeId] }),
       this.client.readContract({ address: MANAGER, abi: managerAbi, functionName: "getTeeMachineWithAttestationData", args: [teeId] }),
       this.client.readContract({ address: MANAGER, abi: managerAbi, functionName: "getTeeMachineStatus", args: [teeId] }),
       this.client.readContract({ address: MANAGER, abi: managerAbi, functionName: "getExtensionId", args: [teeId] }),
       this.client.readContract({ address: MANAGER, abi: managerAbi, functionName: "isCodeHashPlatformSupported", args: [EXTENSION_ID, codeHash, platform] }),
       this.client.readContract({ address: MANAGER, abi: managerAbi, functionName: "isCodeHashPlatformDisabled", args: [EXTENSION_ID, codeHash, platform] }),
-      this.client.readContract({ address: REGISTRY, abi: PayGuardPolicyRegistryAbi, functionName: "machine", args: [descriptor.machineId] }),
     ]);
     if (Number(status) !== 2 || extension !== EXTENSION_ID || !supported || disabled
       || getAddress(registered.teeId) !== teeId || getAddress(attestation.teeId) !== teeId
       || getAddress(attestation.initialTeeId) !== zeroAddress || registered.url !== origin || attestation.url !== origin
-      || !sameHex(attestation.codeHash, codeHash) || !sameHex(attestation.platform, platform) || !sameHex(platform, SIMULATED_PLATFORM)
-      || !localMachine[2] || getAddress(localMachine[0]) !== teeId || !sameHex(localMachine[1], descriptor.keyFingerprint)) {
+      || !sameHex(attestation.codeHash, codeHash) || !sameHex(attestation.codeHash, EXPECTED_CODE_HASH)
+      || !sameHex(attestation.platform, platform) || !sameHex(platform, SIMULATED_PLATFORM)) {
       throw new Error("machine manager/registry readback mismatch");
     }
     return {
@@ -303,7 +318,7 @@ export class Coston2LiveRelayRuntime implements LiveRelayRuntime {
     const config = await this.config();
     const stored = await this.readStoredRequest(requestId);
     const request = stored.request;
-    const policyRead = await this.client.readContract({ address: REGISTRY, abi: PayGuardPolicyRegistryAbi, functionName: "getPolicy", args: [request.policyCommitment] });
+    const policyRead = await this.client.readContract({ address: REGISTRY, abi: PayGuardPolicyRegistryV2Abi, functionName: "getPolicy", args: [request.policyCommitment] });
     const binding = normalizeBinding(policyRead[0]);
     await authorizeEvaluation(requestId, binding, authorization, this.account.address);
     if ([2, 3, 4].includes(stored.status)) return finalizedResponse(stored, config);

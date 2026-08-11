@@ -13,6 +13,9 @@ const config: LiveFccConfig = {
   extensionId: hex("101f5"),
   deploymentBlock: "1",
   operator: address("77"),
+  registryVersion: "V2",
+  deploymentProfile: "COSTON2_SIMULATED_V2",
+  fallback: { strategy: "RAILWAY_ROLLBACK_TO_V1", registry: address("7"), vault: address("8"), router: address("9") },
   contracts: { registry: address("1"), vault: address("2"), router: address("3"), dispatcher: address("4"), manager: address("5"), asset: address("6") },
   machines: [1, 2, 3].map((index) => ({
     index: index as 1 | 2 | 3,
@@ -23,7 +26,7 @@ const config: LiveFccConfig = {
   assertions: {
     registeredMachinesVerified: true, stableHttpsOriginsVerified: true,
     authenticatedPrivateIngressVerified: true, simulatedTee: true,
-    hardwareTeeVerified: false, v2ReleaseVerified: false, verifiedPayGuardRelease: false,
+    hardwareTeeVerified: false, v2LiveCandidateVerified: true, v2ReleaseVerified: false, verifiedPayGuardRelease: false,
   },
 };
 

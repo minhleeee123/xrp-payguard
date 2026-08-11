@@ -24,6 +24,14 @@ export interface LiveFccConfig {
   extensionId: Hex;
   deploymentBlock: string;
   operator: Address;
+  registryVersion: "V2";
+  deploymentProfile: "COSTON2_SIMULATED_V2";
+  fallback: {
+    strategy: "RAILWAY_ROLLBACK_TO_V1";
+    registry: Address;
+    vault: Address;
+    router: Address;
+  };
   contracts: {
     registry: Address;
     vault: Address;
@@ -39,6 +47,7 @@ export interface LiveFccConfig {
     authenticatedPrivateIngressVerified: true;
     simulatedTee: true;
     hardwareTeeVerified: false;
+    v2LiveCandidateVerified: true;
     v2ReleaseVerified: false;
     verifiedPayGuardRelease: false;
   };

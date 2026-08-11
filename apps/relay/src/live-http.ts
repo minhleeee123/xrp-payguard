@@ -41,9 +41,12 @@ export function createLiveRelayServer(runtime: LiveRelayRuntime, options: LiveHt
           service: "payguard-live-fcc-relay",
           mode: config.mode,
           chainId: config.chainId,
+          registryVersion: config.registryVersion,
+          deploymentProfile: config.deploymentProfile,
           machineCount: config.machines.length,
           simulatedTee: true,
           hardwareTeeVerified: false,
+          v2LiveCandidateVerified: true,
           verifiedPayGuardRelease: false,
         }, cors);
       }

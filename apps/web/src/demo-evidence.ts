@@ -1,5 +1,5 @@
 import { getAddress, type Address, type Hex } from "viem";
-import { PAYGUARD_COSTON2 } from "./coston2.js";
+import { PAYGUARD_COSTON2_V1 } from "./coston2.js";
 
 const DEMO_PATH = "/evidence/simulation/coston2-simulated-policy-lifecycle-2026-08-09.json";
 const HEX32 = /^0x[0-9a-fA-F]{64}$/;
@@ -55,11 +55,11 @@ export function decodeSimulatedLifecycleEvidence(value: unknown): SimulatedLifec
   const identifiers = object(root.publicIdentifiers, "publicIdentifiers");
   exactFields(identifiers, IDENTIFIER_FIELDS, "publicIdentifiers");
   const owner = address(identifiers.owner, "owner");
-  if (address(identifiers.asset, "asset") !== PAYGUARD_COSTON2.asset) throw new Error("simulation asset mismatch");
+  if (address(identifiers.asset, "asset") !== PAYGUARD_COSTON2_V1.asset) throw new Error("simulation asset mismatch");
   const contracts = object(identifiers.contracts, "contracts");
-  if (address(contracts.registry, "registry") !== PAYGUARD_COSTON2.registry
-    || address(contracts.vault, "vault") !== PAYGUARD_COSTON2.vault
-    || address(contracts.router, "router") !== PAYGUARD_COSTON2.router) throw new Error("simulation contract mismatch");
+  if (address(contracts.registry, "registry") !== PAYGUARD_COSTON2_V1.registry
+    || address(contracts.vault, "vault") !== PAYGUARD_COSTON2_V1.vault
+    || address(contracts.router, "router") !== PAYGUARD_COSTON2_V1.router) throw new Error("simulation contract mismatch");
   if (!Array.isArray(identifiers.machines) || identifiers.machines.length !== 3) throw new Error("simulation machine set invalid");
   const machines = identifiers.machines.map((entry, index) => {
     const machine = object(entry, `machines[${index}]`);

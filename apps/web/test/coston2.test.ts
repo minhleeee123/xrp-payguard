@@ -51,7 +51,7 @@ class ProviderStub implements Eip1193Provider {
   }
 }
 
-function runtime(contract: "PayGuardPolicyRegistry" | "PayGuardVault" | "PayGuardActionRouter"): Hex {
+function runtime(contract: "PayGuardPolicyRegistryV2" | "PayGuardVault" | "PayGuardActionRouter"): Hex {
   const artifact = JSON.parse(readFileSync(
     new URL(`../../../packages/contracts/out/${contract}.sol/${contract}.json`, import.meta.url),
     "utf8",
@@ -61,7 +61,7 @@ function runtime(contract: "PayGuardPolicyRegistry" | "PayGuardVault" | "PayGuar
 
 function readClient(overrides: Partial<Coston2ReadClient> = {}): Coston2ReadClient {
   const runtimes = new Map<string, Hex>([
-    [PAYGUARD_COSTON2.registry.toLowerCase(), runtime("PayGuardPolicyRegistry")],
+    [PAYGUARD_COSTON2.registry.toLowerCase(), runtime("PayGuardPolicyRegistryV2")],
     [PAYGUARD_COSTON2.vault.toLowerCase(), runtime("PayGuardVault")],
     [PAYGUARD_COSTON2.router.toLowerCase(), runtime("PayGuardActionRouter")],
   ]);
@@ -91,7 +91,7 @@ function readClient(overrides: Partial<Coston2ReadClient> = {}): Coston2ReadClie
 }
 
 const testRuntimeHashes = {
-  registry: keccak256(runtime("PayGuardPolicyRegistry")),
+  registry: keccak256(runtime("PayGuardPolicyRegistryV2")),
   vault: keccak256(runtime("PayGuardVault")),
   router: keccak256(runtime("PayGuardActionRouter")),
 };

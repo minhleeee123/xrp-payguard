@@ -1,6 +1,6 @@
 import {
   PayGuardActionRouterAbi,
-  PayGuardPolicyRegistryAbi,
+  PayGuardPolicyRegistryV2Abi,
 } from "@xrp-payguard/bindings";
 import {
   ACTION_FTESTXRP_TRANSFER,
@@ -43,6 +43,7 @@ import {
 import {
   COSTON2_CHAIN,
   PAYGUARD_COSTON2,
+  PAYGUARD_COSTON2_V1,
   loadCoston2AccountSnapshot,
   type Coston2AccountSnapshot,
   type Eip1193Provider,
@@ -84,6 +85,14 @@ export interface LiveFccConfig {
   extensionId: Hex;
   deploymentBlock: bigint;
   operator: Address;
+  registryVersion: "V2";
+  deploymentProfile: "COSTON2_SIMULATED_V2";
+  fallback: {
+    strategy: "RAILWAY_ROLLBACK_TO_V1";
+    registry: Address;
+    vault: Address;
+    router: Address;
+  };
   relayOrigin: string;
   contracts: {
     registry: Address;
@@ -100,6 +109,7 @@ export interface LiveFccConfig {
     authenticatedPrivateIngressVerified: true;
     simulatedTee: true;
     hardwareTeeVerified: false;
+    v2LiveCandidateVerified: true;
     v2ReleaseVerified: false;
     verifiedPayGuardRelease: false;
   };
@@ -286,13 +296,13 @@ export async function registerLivePolicy(
   const simulation = await publicClient.simulateContract({
     account,
     address: config.contracts.registry,
-    abi: PayGuardPolicyRegistryAbi,
+    abi: PayGuardPolicyRegistryV2Abi,
     functionName: "registerPolicy",
     args: [session.binding, receipts],
   });
   const hash = await wallet.writeContract(simulation.request);
   const receipt = await waitForFinalizedReceipt(hash);
-  requireEvent(receipt, config.contracts.registry, PayGuardPolicyRegistryAbi, "PolicyRegistered", session.binding.policyCommitment);
+  requireEvent(receipt, config.contracts.registry, PayGuardPolicyRegistryV2Abi, "PolicyRegistered", session.binding.policyCommitment);
   if (await loadLivePolicyStatus(session.binding.policyCommitment, config) !== 1) throw new Error("LIVE_POLICY_POSTCONDITION_FAILED");
   return { hash, blockNumber: receipt.blockNumber };
 }
@@ -425,10 +435,10 @@ export async function governLivePolicy(
   const functionName = action === "STOP" ? "stopPolicy" : action === "RESUME" ? "resumePolicy" : "revokePolicy";
   const expected = action === "STOP" ? 2 : action === "RESUME" ? 1 : 3;
   const wallet = createWalletClient({ account, chain: COSTON2_CHAIN, transport: custom(provider) });
-  const simulation = await publicClient.simulateContract({ account, address: config.contracts.registry, abi: PayGuardPolicyRegistryAbi, functionName, args: [commitment] });
+  const simulation = await publicClient.simulateContract({ account, address: config.contracts.registry, abi: PayGuardPolicyRegistryV2Abi, functionName, args: [commitment] });
   const hash = await wallet.writeContract(simulation.request);
   const receipt = await waitForFinalizedReceipt(hash);
-  requireEvent(receipt, config.contracts.registry, PayGuardPolicyRegistryAbi,
+  requireEvent(receipt, config.contracts.registry, PayGuardPolicyRegistryV2Abi,
     action === "STOP" ? "PolicyStopped" : action === "RESUME" ? "PolicyResumed" : "PolicyRevoked", commitment);
   if (await loadLivePolicyStatus(commitment, config) !== expected) throw new Error("LIVE_GOVERNANCE_POSTCONDITION_FAILED");
   return { hash, blockNumber: receipt.blockNumber };
@@ -439,7 +449,7 @@ export async function loadLivePolicyStatus(commitment: Hex, config: LiveFccConfi
   if (!block.number) throw new Error("LIVE_FINALITY_UNAVAILABLE");
   return Number(await publicClient.readContract({
     address: config.contracts.registry,
-    abi: PayGuardPolicyRegistryAbi,
+    abi: PayGuardPolicyRegistryV2Abi,
     functionName: "policyStatus",
     args: [commitment],
     blockNumber: block.number,
@@ -463,11 +473,18 @@ function parseLiveFccConfig(value: unknown, relayOrigin: string): LiveFccConfig 
   const record = object(value, "live config");
   const contracts = object(record.contracts, "live contracts");
   const assertions = object(record.assertions, "live assertions");
+  const fallback = object(record.fallback, "live fallback");
   const machines = array(record.machines, "live machines");
   if (record.schemaVersion !== 1 || record.mode !== LIVE_FCC_MODE || record.status !== "ready" || record.chainId !== 114
     || machines.length !== 3 || assertions.registeredMachinesVerified !== true
     || assertions.stableHttpsOriginsVerified !== true || assertions.authenticatedPrivateIngressVerified !== true
+    || record.registryVersion !== "V2" || record.deploymentProfile !== "COSTON2_SIMULATED_V2"
+    || fallback.strategy !== "RAILWAY_ROLLBACK_TO_V1"
+    || address(fallback.registry, "fallback.registry") !== PAYGUARD_COSTON2_V1.registry
+    || address(fallback.vault, "fallback.vault") !== PAYGUARD_COSTON2_V1.vault
+    || address(fallback.router, "fallback.router") !== PAYGUARD_COSTON2_V1.router
     || assertions.simulatedTee !== true || assertions.hardwareTeeVerified !== false
+    || assertions.v2LiveCandidateVerified !== true
     || assertions.v2ReleaseVerified !== false || assertions.verifiedPayGuardRelease !== false) {
     throw new Error("LIVE_FCC_CONFIG_INVALID");
   }
@@ -495,13 +512,22 @@ function parseLiveFccConfig(value: unknown, relayOrigin: string): LiveFccConfig 
     extensionId: bytes32(record.extensionId, "extensionId"),
     deploymentBlock: decimal(record.deploymentBlock, "deploymentBlock"),
     operator: address(record.operator, "operator"),
+    registryVersion: "V2",
+    deploymentProfile: "COSTON2_SIMULATED_V2",
+    fallback: {
+      strategy: "RAILWAY_ROLLBACK_TO_V1",
+      registry: PAYGUARD_COSTON2_V1.registry,
+      vault: PAYGUARD_COSTON2_V1.vault,
+      router: PAYGUARD_COSTON2_V1.router,
+    },
     relayOrigin,
     contracts: parsedContracts,
     machines: parsedMachines,
     assertions: {
       registeredMachinesVerified: true, stableHttpsOriginsVerified: true,
       authenticatedPrivateIngressVerified: true, simulatedTee: true,
-      hardwareTeeVerified: false, v2ReleaseVerified: false, verifiedPayGuardRelease: false,
+      hardwareTeeVerified: false, v2LiveCandidateVerified: true,
+      v2ReleaseVerified: false, verifiedPayGuardRelease: false,
     },
   };
 }

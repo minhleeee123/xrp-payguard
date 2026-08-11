@@ -18,7 +18,7 @@ describe("live FCC relay authorization domain", () => {
 
 describe("executed history discovery", () => {
   const topic0 = "0x4d3c486e056cfb79101ca2f7e2e656f03944aae15d67bc0c48d8904b502df6d3";
-  const router = "0x28A969018975Fb40aEd0BfA98f6d1c3023B6a7Da";
+  const router = "0x452988f04bE9602EC0CEB0239EBA5Fe60d8988D3";
   const item = {
     address: router,
     blockNumber: "0x20582f9",

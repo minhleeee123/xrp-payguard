@@ -8,7 +8,7 @@ import {
   liveEvaluationAuthorizationDigest,
   type LiveFccConfig,
 } from "../src/live-fcc.js";
-import { PAYGUARD_COSTON2, type Eip1193Provider } from "../src/coston2.js";
+import { PAYGUARD_COSTON2, PAYGUARD_COSTON2_V1, type Eip1193Provider } from "../src/coston2.js";
 
 const address = (byte: string) => `0x${byte.repeat(40 / byte.length)}` as Address;
 const hash = (byte: string) => `0x${byte.repeat(64 / byte.length)}` as Hex;
@@ -21,8 +21,16 @@ function configWire() {
     status: "ready",
     chainId: 114,
     extensionId: hash("01"),
-    deploymentBlock: "33792913",
+    deploymentBlock: "33918762",
     operator,
+    registryVersion: "V2",
+    deploymentProfile: "COSTON2_SIMULATED_V2",
+    fallback: {
+      strategy: "RAILWAY_ROLLBACK_TO_V1",
+      registry: PAYGUARD_COSTON2_V1.registry,
+      vault: PAYGUARD_COSTON2_V1.vault,
+      router: PAYGUARD_COSTON2_V1.router,
+    },
     contracts: {
       registry: PAYGUARD_COSTON2.registry,
       vault: PAYGUARD_COSTON2.vault,
@@ -50,6 +58,7 @@ function configWire() {
       authenticatedPrivateIngressVerified: true,
       simulatedTee: true,
       hardwareTeeVerified: false,
+      v2LiveCandidateVerified: true,
       v2ReleaseVerified: false,
       verifiedPayGuardRelease: false,
     },
@@ -67,7 +76,7 @@ describe("live FCC browser boundary", () => {
     expect(fetcher).toHaveBeenCalledWith(`${DEFAULT_LIVE_FCC_RELAY_ORIGIN}/v1/config`, expect.any(Object));
   });
 
-  it("accepts only the explicit V1 simulated-TEE domain", async () => {
+  it("accepts only the explicit V2 simulated-TEE domain with V1 rollback metadata", async () => {
     const fetcher = vi.fn(async () => new Response(JSON.stringify(configWire()), {
       status: 200,
       headers: { "content-type": "application/json" },
@@ -101,7 +110,7 @@ describe("live FCC browser boundary", () => {
   });
 
   it("sends an empty evaluation body and never supplies ALLOW or DENY", async () => {
-    const config = { ...configWire(), deploymentBlock: 33792913n, relayOrigin: "https://relay.example.test" } as LiveFccConfig;
+    const config = { ...configWire(), deploymentBlock: 33918762n, relayOrigin: "https://relay.example.test" } as LiveFccConfig;
     const provider: Eip1193Provider = {
       request: vi.fn(async () => `0x${"11".repeat(65)}`),
     };
