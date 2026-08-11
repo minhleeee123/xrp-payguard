@@ -76,9 +76,12 @@ describe("operator-only monitor HTTP boundary", () => {
     await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
     const address = server.address();
     const origin = `http://127.0.0.1:${address.port}`;
-    const health = await fetch(`${origin}/healthz`);
+    const health = await fetch(`${origin}/healthz`, { headers: { origin: "https://xrp-payguard.vercel.app" } });
     assert.equal(health.status, 200);
+    assert.equal(health.headers.get("access-control-allow-origin"), "https://xrp-payguard.vercel.app");
     assert.equal((await health.json()).operatorAuthenticationRequired, true);
+    const untrustedHealth = await fetch(`${origin}/healthz`, { headers: { origin: "https://untrusted.example" } });
+    assert.equal(untrustedHealth.headers.get("access-control-allow-origin"), null);
     for (const path of ["/metrics", "/v1/status", "/v1/incidents"]) {
       const denied = await fetch(`${origin}${path}`);
       assert.equal(denied.status, 401);

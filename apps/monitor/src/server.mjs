@@ -1,11 +1,14 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { createServer } from "node:http";
 
-export function createMonitorServer(monitor, { bearerToken }) {
+export function createMonitorServer(monitor, { bearerToken, publicOrigin = "https://xrp-payguard.vercel.app" }) {
   const token = normalizeToken(bearerToken);
+  const allowedOrigin = normalizeOrigin(publicOrigin);
   return createServer((request, response) => {
     try {
-      if (request.method === "GET" && request.url === "/healthz") return sendJson(response, 200, monitor.publicHealth());
+      if (request.method === "GET" && request.url === "/healthz") {
+        return sendJson(response, 200, monitor.publicHealth(), corsHeaders(request.headers.origin, allowedOrigin));
+      }
       if (request.method === "GET" && ["/metrics", "/v1/status", "/v1/incidents"].includes(request.url ?? "")) {
         if (!authorized(request.headers.authorization, token)) {
           return sendJson(response, 401, { error: "operator authentication required" }, { "www-authenticate": "Bearer" });
@@ -19,6 +22,20 @@ export function createMonitorServer(monitor, { bearerToken }) {
       return sendJson(response, 503, { error: "monitor unavailable" });
     }
   });
+}
+
+function normalizeOrigin(value) {
+  const url = new URL(value);
+  if (url.protocol !== "https:" || url.username || url.password || url.pathname !== "/" || url.search || url.hash) {
+    throw new Error("monitor public origin is invalid");
+  }
+  return url.origin;
+}
+
+function corsHeaders(origin, allowedOrigin) {
+  return origin === allowedOrigin
+    ? { "access-control-allow-origin": allowedOrigin, vary: "Origin" }
+    : {};
 }
 
 function normalizeToken(value) {
