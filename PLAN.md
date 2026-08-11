@@ -4,8 +4,9 @@
 > tests. The V1 contracts and a three-machine FCC dispatcher are deployed and
 > verified on Coston2. Three stable, registered `SIMULATED_TEE` machines have
 > completed all-three private custody plus a live two-of-three ALLOW/execute,
-> CAP-denial, and stop/resume/revoke lifecycle. Hardware attestation, V2 release,
-> outage/replacement drills, and a complete release remain unverified.
+> CAP-denial, stop/resume/revoke, C→D replacement, and executor-pause recovery
+> lifecycle. Hardware attestation, V2 release, the remaining dependency-outage
+> drills, and a complete release remain unverified.
 >
 > Hackathon delivery decision (updated 2026-08-10): the current demo uses the
 > credential-free local three-machine stack, verified public Coston2
@@ -95,10 +96,13 @@ Unchecked boxes do not all have the same deadline:
   sessions improve product evidence but remain honestly `0 sessions` until real
   participants complete them. Local tests cannot close this gate, and the
   submission must not imply that it passed.
-- **Post-hackathon — live/release work:** V2 deployment, stable FCC/indexer/
-  relay infrastructure, registered custody/evaluation, uncontrolled live
-  FAssets conditions, outage drills, independent review, release-manifest
-  promotion, pilots, and all mainnet/production work.
+- **Post-hackathon — live/release work:** these gates stay separate from the
+  submission count even when completed later. Stable A/B/D FCC origins,
+  authenticated indexer access, registered simulated custody/evaluation,
+  replacement, and executor-pause recovery now pass. V2, hosted relay/web
+  integration, uncontrolled live FAssets conditions, remaining outage drills,
+  independent review, release promotion, pilots, hardware, and all
+  mainnet/production work remain outside the hackathon boundary.
 
 The current hackathon artifact does not need a V2 deployment or a verified
 production FCC release to demonstrate its explicitly simulated solution-3
@@ -142,8 +146,8 @@ connectivity are now verified separately from the frozen hackathon web artifact.
   FAssets, Smart Account, verifier, and DA addresses through supported sources;
   record block/runtime observations without promoting them to release facts.
 - [x] Verify the supported Coston2 faucet page, public Explorer ABI path, and
-  their current reachability without committing credentials; the authenticated
-  FCC indexer remains a separate open dependency.
+  their current reachability without committing credentials; authenticated FCC
+  indexer access is evidenced separately and its credentials remain local-only.
 - [x] Build the official FCC scaffold unchanged and run its local smoke first.
 - [x] Build a digest-pinned reproducible PayGuard FCC image and pass a
   credential-free local three-machine identity/restart/hardening smoke.
@@ -293,7 +297,9 @@ open.
 
 Exit: the local multi-policy state machine cannot overspend, replay, partially
 execute, or bypass FCC authorization, and its exact public contract layer is
-verified on Coston2. External review and registered FCC execution remain open.
+verified on Coston2. Separate registered simulated FCC execution now passes;
+external review, hardware attestation, and V2 official-manager deployment remain
+open.
 
 ### Phase 5 — XRP-native funding and external triggers
 
@@ -545,7 +551,7 @@ Exit: failure is resumable or explicitly denied, never represented as success.
   listed assets, matched every JSON body byte-for-byte to its reviewed source,
   reran the public-field/simulation guards, and remains repository-only to avoid
   recursive evidence publication.
-- [ ] Post-hackathon: deploy stable FCC origins and proxy/relay, connect the
+- [ ] Post-hackathon: complete the hosted proxy/relay release path, connect the
   hosted web to the verified release, and run complete production
   desktop/mobile/keyboard smokes against the exact deployed commit.
 - [x] Deploy and audit the separate Interactive Demo contracts/serverless

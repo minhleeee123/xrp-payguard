@@ -5,8 +5,10 @@
 Everything in this document is **planned**. It records the work required after
 the hackathon; it is not evidence of an audit, operator agreement, paid usage,
 support SLA, production FCC deployment, or mainnet readiness. The current
-hackathon boundary remains a local three-machine `SIMULATED_TEE` demonstration,
-public Coston2 observations, and a static Vercel shell.
+hackathon web boundary remains a three-actor simulation and public Coston2
+observations. Separate post-freeze evidence now covers three registered Railway
+`SIMULATED_TEE` machines, live custody/evaluation, replacement, and executor
+recovery; none of that is hardware-backed production or a verified release.
 
 The plans below preserve the V1 invariant: three frozen compatible machines
 hold every canonical policy and two matching machine evaluations are required

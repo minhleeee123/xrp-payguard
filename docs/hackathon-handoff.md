@@ -6,9 +6,12 @@
 > The production web/API artifact is pinned to source commit
 > `da66c74b1c4f4fc118f5cc268e169b2d5ee2d324`; its interactive lifecycle and
 > browser evidence was recorded in `9305976`.
-> The full workspace, Go, Forge, security, privacy, evidence, release, and build
-> baseline was rerun on 2026-08-10. This is a testnet/simulation
-> handoff, not a verified PayGuard release.
+> The later live simulated FCC evidence is bound to source commit
+> `60fd9af72015ef69b44fb87f05fea2224d240700`; its evidence and documentation
+> updates are in `7cd8acd` and `bd4337a`. The full workspace, Go, Forge,
+> security, privacy, evidence, release, and build baseline was rerun on
+> 2026-08-11. This remains a testnet/simulation handoff, not a verified PayGuard
+> release.
 
 ## Delivery boundary
 
@@ -23,11 +26,14 @@ The hackathon build uses solution 3:
   simulated actors on Vercel; and
 - an interactive Vercel dApp plus reviewed static evidence mirror.
 
-Stable FCC servers, authenticated indexer access, hardware TEE attestation,
-production machine registration, production relay/proxy, hardware-backed
-policy custody/evaluation, and a complete release manifest are post-hackathon
-work. Neither simulation path may be presented as hardware-backed
-confidentiality or a production FCC authorization result.
+After the web artifact was frozen, three stable Railway origins, authenticated
+indexer access, registered status-2 `SIMULATED_TEE` machines, signed `PING_V1`,
+all-three custody, two-of-three evaluation, C→D replacement, and executor-pause
+recovery passed separately on Coston2. Those facts are repository evidence and
+are not retroactively part of the deployed Vercel demo. Hardware TEE
+attestation, V2 release, hosted release relay/web integration, remaining
+dependency outages, and a complete release remain open. No simulation path may
+be presented as hardware-backed confidentiality or mainnet production.
 
 ## Public demo
 
@@ -64,8 +70,9 @@ hosted index by design.
 5. Create a `0.1` request, call all three actors, submit two matching `ALLOW`
    results, and execute. Repeat `0.1` to demonstrate canonical
    `DENY · CAP_EXCEEDED`, then stop/resume/revoke.
-6. Point out the permanent boundary labels: one Vercel operator, no hardware
-   TEE, no registered production machines, and no verified release.
+6. Point out the permanent web boundary labels: one Vercel operator, no
+   hardware TEE, serverless actors that are separate from registered A/B/D, and
+   no verified release.
 
 ## Validation actually run
 
@@ -91,15 +98,14 @@ Observed results on the current baseline:
   the separate public-web evidence, four deployment-corpus auditor tests,
   three demo-recorder tests, and deployment/release/FCC tooling suites.
 - All workspace TypeScript typechecks and all Go packages passed.
-- Forge passed 50 tests, including seven V2 official-manager/adversarial cases,
+- Forge passed 53 tests, including seven V2 official-manager/adversarial cases,
   256 fuzz runs, and a 128-run/8192-call conservation invariant with zero
   reverts.
-- The final documentation review secret scan inspected 424 current files and
-  195 then-existing revisions with zero history findings. Privacy scan
-  inspected 49 browser/relay/FCC source and build files and found no browser
-  persistence API;
-  the Coston2 evidence gate retained 13 testnet-only records, while the public
-  web validator separately accepted three explicitly limited simulation records.
+- The final documentation review secret scan inspected all current tracked
+  files and 227 revisions with zero history findings. Privacy scan inspected 51
+  browser/relay/FCC source and build files and found no browser persistence API.
+  The evidence gate accepted 18 sanitized testnet-only records; the frozen
+  hosted evidence mirror remains an older, separately audited deployment.
 - The release check returned `planned` because no verified PayGuard Coston2
   release manifest exists; this is the expected fail-closed outcome.
 
@@ -115,6 +121,16 @@ public RPC:
   [`../evidence/simulation/fcc-local-three-machine-2026-08-09.json`](../evidence/simulation/fcc-local-three-machine-2026-08-09.json).
 - Two no-cache `linux/amd64` FCC image builds produced the same local image
   digest `sha256:8b62d0b9eb714d433b0b2eb6de7640462893f87f0d2994af36b8d76888c848bd`.
+- Registered Railway machines A/B/D under extension `66037` returned manager
+  status `2`, exact proxy/TEE identities, three custody receipts, three matching
+  ALLOW results, and three matching `CAP_EXCEEDED` results. Two exact results
+  authorized V1 execution; denial moved no funds. Machine C was made
+  unavailable, D completed fresh supported registration/production, and only a
+  newly frozen A/B/D policy used D. During a measured 17.093-second complete
+  executor pause across blocks `33907478`–`33907487`, the request remained
+  `Pending` and vault accounting stayed unchanged before successful resume.
+  The sanitized record is
+  [`../evidence/coston2/fcc-live-replacement-lifecycle.json`](../evidence/coston2/fcc-live-replacement-lifecycle.json).
 - The guarded solution-3 on-chain run produced 14 unique successful Coston2
   transactions across blocks `33811935`–`33811981`. A separate credential-free
   RPC read reverified all receipts, three PayGuard-local machine entries,
@@ -150,25 +166,24 @@ A fresh HTTPS and Chrome read of deployment
 configuration, found 16 hosted evidence assets, and observed HTTP 400 when a
 client attempted to supply `decision: ALLOW`. Landing, Overview, Demo lifecycle,
 and Policy Studio at 1440×1100 had zero browser storage, HTTP/console errors, or
-horizontal overflow. `PLAN.md` records 105 checked and 23 open checkboxes
-(82.0%). The open items are not
-silently promoted:
-organizer/account actions, user research/pilots, live FCC
-infrastructure/lifecycle, remaining canonical live drills, external review,
-release, and mainnet work remain outstanding.
+horizontal overflow. The hackathon headline is **102 of 104 pre-hackathon gates
+(98.1%)**. The two open items are owner/account confirmation and real user
+validation. Explicit post-hackathon roadmap rows are tracked separately and are
+not included in that count.
 
 ## Remaining-gate audit
 
-The 23 unchecked `PLAN.md` gates are deliberately retained. They require
-evidence that this repository cannot manufacture through another local unit
-test. They have different deadlines; an unchecked box is not automatically a
-pre-submission technical blocker:
+`PLAN.md` retains 18 unchecked full-roadmap rows: two pre-submission items and
+16 post-hackathon items. They require external, user, uncontrolled-protocol,
+hardware, audit, or release evidence that the repository cannot manufacture
+through another local unit test. A post-hackathon row is not a pre-submission
+technical blocker:
 
 | Timing | Dependency | Open evidence required |
 | --- | --- | --- |
 | Before submission — owner-only | Organizer/account | Enabled final form, owner eligibility, bounty selection, public video URL, submission URL/receipt |
 | Before submission — validation target | Users | 15 interviews/usability sessions; retain the explicit zero-session disclosure until they occur |
-| Post-hackathon | Live FCC infrastructure | Three stable HTTPS origins and indexer access; one registered-machine `PING`; all-three custody; replacement; hosted relay/proxy; live policy lifecycle and outage drills |
+| Post-hackathon | Remaining FCC operations | Hardware-backed independent operators; hosted release relay/web; proxy, RPC, FDC, FTSO, and indexer outage drills. Stable simulated origins/indexer, `PING`, custody, threshold lifecycle, C→D replacement, one-machine loss, and full executor pause/resume already pass separately. |
 | Post-hackathon | Uncontrolled protocol conditions | A real `DirectMintingDelayed` resume and official partial/default FAssets recovery with canonical PayGuard consumption |
 | Post-hackathon | Independent assurance | External contract/TEE review, exact-candidate remediation, and production security audit |
 | Post-hackathon | Verified release | Complete release manifest/bindings, runtime/wiring/machine/key/signer mapping, and live recurring/deny/stop/recovery/redemption journeys |
@@ -187,8 +202,8 @@ policy evaluation, or canonical on-chain Web2 consumer.
 | XRP funding | One PayGuard-owned XRPL Testnet → FDC → Smart Account/direct-mint → vault accounting observation | Does not prove a recurring private-policy payment |
 | FAssets exits | Public amount and destination-tag redemption observations | Canonical PayGuard consumption/default recovery remain limited as recorded |
 | Web2Json | Local source-commitment allowlist, exact jq/tuple-ABI/MIC/response binding, source-asserted freshness, replay, and fail-closed verifier tests | No production source, live proof, source-truth guarantee, private evaluation, or on-chain consumer |
-| FCC foundation | Sender/extension binding exists and local `PING_V1` vectors pass | No registered production machine or signed live FCC result |
-| FCC policy path | Three-machine local simulation, deterministic threshold/replay tests, and one 14-transaction Coston2 simulated-signer lifecycle pass | No hardware TEE confidentiality, official FCC registration, stable HTTPS origins, authenticated indexer, or live custody |
+| FCC foundation | Sender/extension binding, status-2 registered simulated machines, and exact live `PING_V1` TEE/proxy signatures pass | No hardware attestation or V2 release |
+| FCC policy path | A/B/D stable origins, authenticated indexer, all-three live simulated custody, two-of-three ALLOW/DENY, conservation, replacement, and executor recovery pass | V1 administrator mapping, `SIMULATED_TEE`, no hosted-web integration, remaining dependency outages, and no verified release |
 | Web | Interactive Vercel dApp, three simulated actor APIs, separate Coston2 demo contracts, responsive/keyboard smoke, and 16-asset evidence mirror pass | Actors share one operator and are not production FCC machines; production relay/release remains unavailable |
 | Release | Release validators and fail-closed checks pass | No verified release manifest exists |
 | SDK | Compile-tested XRPL-wallet and Flare-dApp preview examples plus integration guide | Package remains private; no live writer or release domain is exposed |
@@ -231,6 +246,13 @@ policy evaluation, or canonical on-chain Web2 consumer.
 - `da66c74` — bounded canonical Coston2 history scans for public RPC limits.
 - `9305976` — deployed interactive lifecycle and laptop browser evidence.
 - `d5f81f3` — direct fail-closed HTTP-boundary tests for the demo API.
+- `7f0563d` — live threshold lifecycle runner.
+- `e03a204` — sanitized live A/B/C threshold lifecycle evidence.
+- `c2626a2` — supported C→D replacement lifecycle mode.
+- `7d89b76` — live C→D replacement evidence.
+- `60fd9af` — measured full executor pause/recovery drill.
+- `7cd8acd` — sanitized executor-recovery evidence.
+- `bd4337a` — current FCC recovery documentation boundary.
 
 This list is a handoff-oriented index, not the complete implementation history;
 the remote Git history is authoritative.

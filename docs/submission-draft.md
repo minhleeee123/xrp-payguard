@@ -1,6 +1,6 @@
 # XRP PayGuard submission draft
 
-> Prepared 2026-08-09. This is a copy-ready draft, not evidence that a
+> Prepared 2026-08-09 and technically refreshed 2026-08-11. This is a copy-ready draft, not evidence that a
 > DoraHacks submission, demo video, organizer review, or user pilot occurred.
 
 ## Project
@@ -40,6 +40,12 @@ evidence without publishing the policy rules themselves.
 - Three disposable local `SIMULATED_TEE` containers demonstrate distinct
   identities, ciphertext-only ingress, threshold behavior, restart rotation,
   hardening, and fail-closed errors.
+- Three stable Railway A/B/D `SIMULATED_TEE` machines are registered under
+  extension `66037` with manager status `2`. Separate live Coston2 evidence
+  verifies exact TEE/proxy signatures, all-three encrypted custody receipts,
+  two-of-three ALLOW execution and `CAP_EXCEEDED` denial, conservation,
+  stop/resume/revoke, supported C→D replacement without frozen-policy identity
+  mutation, and complete executor pause/resume with unchanged pending state.
 - One separate solution-3 run exercised the deployed Coston2 contracts through
   14 successful transactions using three ephemeral simulated signers. It
   demonstrates two-of-three recurring authorization, cap denial,
@@ -73,11 +79,12 @@ evidence without publishing the policy rules themselves.
 5. **FTSO:** deterministic freshness/value gates and runtime dependency
    resolution exist, but no full live FCC policy lifecycle using an FTSO
    snapshot is claimed.
-6. **FCC:** the intended authorization path freezes three compatible machine
-   identities and requires two matching evaluations. The hackathon artifact
-   demonstrates the protocol locally and through an explicitly simulated
-   three-actor Vercel/Coston2 path; stable registered hardware-backed machines
-   and production policy custody/results are post-hackathon.
+6. **FCC:** the authorization path freezes three compatible machine identities
+   and requires two matching evaluations. The hosted hackathon UI remains an
+   explicitly simulated three-actor Vercel/Coston2 path. Separately, registered
+   A/B/D `SIMULATED_TEE` machines now pass live private custody, threshold
+   evaluation, replacement, and executor recovery on Coston2. Hardware-backed
+   independent operators, V2, and a verified release remain post-hackathon.
 
 ## Public links
 
@@ -100,11 +107,15 @@ evidence without publishing the policy rules themselves.
 | PayGuardVault | `0xFFe7522075412B2eBA5b8B91c9aA4E1c2c6f84dB` |
 | PayGuardActionRouter | `0x28A969018975Fb40aEd0BfA98f6d1c3023B6a7Da` |
 | FCC foundation sender extension | `66037` |
+| FCC three-machine dispatcher | `0x18Ea713cEf10ECf5cAC23c08dD25Ac17D2f07e3d` |
+| Active simulated FCC machines | A `0x1C911D007f8203484eD4099bC11849d7e9691044`; B `0xff49A99535b8c52345D3c0b76bCf60194De7C29b`; D `0xd871bc2044a75e8cc2CF06aCdeaDC4CBbEef349A` |
 
 The exact deployment transactions, blocks, runtime hashes, constructor/wiring
-assertions, and official runtime dependency observations are in the public
-evidence index. Extension `66037` proves only the foundation sender binding;
-it is not a registered PayGuard policy machine or a live FCC result.
+assertions, machine registration/status, replacement transactions, and live
+lifecycle observations are in sanitized repository evidence. The hosted public
+evidence index predates the Railway lifecycle and must not be presented as its
+deployment authority. Extension and machine facts remain simulated/testnet
+observations, not a hardware-backed release.
 
 ## New work and provenance
 
@@ -121,9 +132,9 @@ The complete retrospective new-work classification is in
 
 ## Honest limitations
 
-- No hardware-backed PayGuard FCC machine, stable HTTPS machine origin,
-  authenticated FCC indexer, live policy custody, or signed live policy result
-  has been verified.
+- Stable A/B/D HTTPS origins, authenticated indexer access, registered
+  simulated-machine custody, and signed live results are verified on Coston2.
+  No hardware-backed independent machine set or V2 release has been verified.
 - No live supported Web2Json source, request/proof, private policy evaluation,
   source-truth guarantee, or canonical Web2 consumer has been verified.
 - The Vercel build supports a full isolated testnet demo through three
@@ -137,13 +148,13 @@ The complete retrospective new-work classification is in
 
 ## Roadmap
 
-After the hackathon: operate three independent hardware-backed FCC machines
-with stable origins and authenticated indexers; register and verify exact
-machine/code/key domains; run live custody/evaluation/recovery/outage drills;
-connect the hosted relay and web; commission independent contract/FCC reviews;
-then run a bounded design-partner testnet pilot. Mainnet requires fresh address
-resolution, a new audited candidate, disposable canary, strict value caps,
-incident coverage, and a verified release manifest.
+After the hackathon: replace the simulated A/B/D set with independently operated
+hardware-backed FCC machines; deploy and verify V2; finish proxy/RPC/FDC/FTSO/
+indexer outage drills and canonical partial/default redemption; connect the
+hosted relay and web to the exact release; commission independent contract/FCC
+reviews; then run a bounded design-partner testnet pilot. Mainnet requires fresh
+address resolution, a new audited candidate, disposable canary, strict value
+caps, incident coverage, and a verified release manifest.
 
 ## Final submission checklist
 

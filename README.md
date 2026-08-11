@@ -153,8 +153,9 @@ On-chain state is the canonical replay and rollback authority.
 Snapshot: 2026-08-11. [`PLAN.md`](PLAN.md) records **102 of 104 pre-hackathon
 gates (98.1%)** complete. The two open pre-hackathon gates require owner/user
 activity: confirm the final submission form/account/bounty details and conduct
-at least five real XRPL-user validation sessions. Explicit post-hackathon gates
-are tracked separately and are not included in this headline count.
+the required five XRPL-user, five treasury/DAO, and five recipient/executor
+validation sessions. Explicit post-hackathon gates are tracked separately and
+are not included in this headline count.
 
 | Area | Verified result | Important limitation |
 | --- | --- | --- |
