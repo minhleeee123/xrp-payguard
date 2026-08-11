@@ -50,6 +50,7 @@ import {
 
 const root = resolve(import.meta.dirname, "..");
 const evidencePath = resolve(root, "evidence/coston2/fcc-live-threshold-lifecycle.json");
+const replacementEvidencePath = resolve(root, "evidence/coston2/fcc-live-replacement-lifecycle.json");
 const dispatcher = getAddress("0x18Ea713cEf10ECf5cAC23c08dD25Ac17D2f07e3d");
 const ftestXrp = getAddress("0x0b6A3645c240605887a5532109323A3E12273dc7");
 const opType = stringToHex("PAYGUARD", { size: 32 });
@@ -67,6 +68,8 @@ interface LifecycleCLI {
   plan: boolean;
   broadcast: boolean;
   writeLivePrivatePolicy: boolean;
+  replacement: boolean;
+  origins: string[];
 }
 
 interface EvaluationEnvelope {
@@ -251,11 +254,25 @@ async function pollEvaluation(origin: string, instructionId: Hex, request: Actio
 
 export function parseLifecycleCLI(argv: readonly string[]): LifecycleCLI {
   const [mode, ...flags] = argv;
-  if (mode === "plan" && flags.length === 0) return { plan: true, broadcast: false, writeLivePrivatePolicy: false };
-  if (mode !== "run" || flags.length !== 2 || !flags.includes("--broadcast") || !flags.includes("--write-live-private-policy")) {
-    throw new Error("run requires exactly --broadcast and --write-live-private-policy");
+  if (mode === "plan" && flags.length === 0) return { plan: true, broadcast: false, writeLivePrivatePolicy: false, replacement: false, origins: [] };
+  if (mode !== "run") throw new Error("mode must be plan or run");
+  let broadcast = false;
+  let writeLivePrivatePolicy = false;
+  let replacement = false;
+  const origins: string[] = [];
+  for (let index = 0; index < flags.length; index += 1) {
+    const flag = flags[index];
+    if (flag === "--broadcast" && !broadcast) { broadcast = true; continue; }
+    if (flag === "--write-live-private-policy" && !writeLivePrivatePolicy) { writeLivePrivatePolicy = true; continue; }
+    if (flag === "--replacement" && !replacement) { replacement = true; continue; }
+    if (flag === "--url" && index + 1 < flags.length) { origins.push(new URL(flags[++index]!).origin); continue; }
+    throw new Error(`invalid or duplicate lifecycle argument ${flag}`);
   }
-  return { plan: false, broadcast: true, writeLivePrivatePolicy: true };
+  if (!broadcast || !writeLivePrivatePolicy) throw new Error("run requires --broadcast and --write-live-private-policy");
+  if (origins.length !== 0 && (origins.length !== 3 || new Set(origins).size !== 3 || origins.some((origin) => !origin.startsWith("https://")))) {
+    throw new Error("lifecycle override requires exactly three distinct HTTPS origins");
+  }
+  return { plan: false, broadcast, writeLivePrivatePolicy, replacement, origins };
 }
 
 function accountingOf(value: unknown): Accounting {
@@ -310,6 +327,14 @@ export function buildSanitizedLifecycleEvidence(input: {
   allow: { instructionId: Hex; digest: Hex; transactions: TransactionSet; status: number; accountingBefore: Accounting; accountingAfter: Accounting };
   deny: { instructionId: Hex; digest: Hex; reason: PublicReasonClass; transactions: TransactionSet; status: number; accountingAfter: Accounting };
   policyTransactions: { stop: Hash; resume: Hash; revoke: Hash };
+  replacement?: {
+    unavailableTeeId: Address;
+    unavailableUrl: string;
+    replacementTeeId: Address;
+    replacementUrl: string;
+    registrationTransaction: Hash;
+    productionTransaction: Hash;
+  };
   recordedAt?: string;
 }) {
   if (!/^[0-9a-f]{40}$/.test(input.sourceCommit) || input.machines.length !== 3) throw new Error("lifecycle evidence provenance is invalid");
@@ -332,6 +357,11 @@ export function buildSanitizedLifecycleEvidence(input: {
       allow: { instructionId: input.allow.instructionId, evaluationDigest: input.allow.digest, transactions: input.allow.transactions, routerStatus: input.allow.status },
       deny: { instructionId: input.deny.instructionId, evaluationDigest: input.deny.digest, publicReasonClass: input.deny.reason, transactions: input.deny.transactions, routerStatus: input.deny.status },
       policyLifecycleTransactions: input.policyTransactions,
+      ...(input.replacement ? { replacement: {
+        ...input.replacement,
+        unavailableEndpointReachable: false,
+        frozenPolicyIdentitySwapAttempted: false,
+      } } : {}),
       accounting: {
         before: input.allow.accountingBefore,
         afterAllow: input.allow.accountingAfter,
@@ -348,6 +378,8 @@ export function buildSanitizedLifecycleEvidence(input: {
       twoMatchingDenyVerified: true,
       denyMovedNoFundsVerified: true,
       stopResumeRevokeVerified: true,
+      replacementRegistrationVerified: Boolean(input.replacement),
+      unavailableFrozenIdentityNotSilentlySwapped: Boolean(input.replacement),
       hardwareAttestationVerified: false,
       simulatedTee: true,
       v2ReleaseVerified: false,
@@ -368,12 +400,12 @@ export function buildSanitizedLifecycleEvidence(input: {
   };
 }
 
-async function writeEvidence(value: unknown): Promise<void> {
+async function writeEvidence(value: unknown, target = evidencePath): Promise<void> {
   await mkdir(resolve(root, "evidence/coston2"), { recursive: true });
-  const temporary = `${evidencePath}.${process.pid}.tmp`;
+  const temporary = `${target}.${process.pid}.tmp`;
   const serialized = `${JSON.stringify(value, (_key, item) => typeof item === "bigint" ? item.toString() : item, 2)}\n`;
   await writeFile(temporary, serialized, { encoding: "utf8", mode: 0o600, flag: "wx" });
-  await rename(temporary, evidencePath);
+  await rename(temporary, target);
 }
 
 async function run(options: LifecycleCLI): Promise<void> {
@@ -386,7 +418,18 @@ async function run(options: LifecycleCLI): Promise<void> {
     }, null, 2));
     return;
   }
-  const custodyOptions = parseLiveCustodyCLI(["freeze", "--write-live-private-policy", "--broadcast"]);
+  const custodyArguments = ["freeze", "--write-live-private-policy", "--broadcast"];
+  for (const origin of options.origins) custodyArguments.push("--url", origin);
+  if (options.replacement) {
+    const unavailable = "https://payguard-fcc-c-production.up.railway.app";
+    try {
+      const response = await fetch(`${unavailable}/private/health`, { signal: AbortSignal.timeout(5_000), redirect: "error" });
+      if (response.ok) throw new Error("retired machine C is still reachable; replacement outage was not established");
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("still reachable")) throw error;
+    }
+  }
+  const custodyOptions = parseLiveCustodyCLI(custodyArguments);
   const context = await executeLiveCustody({ ...custodyOptions, policyProfile: "lifecycle" });
   if (!context?.freeze) throw new Error("live custody freeze did not complete");
   const { account, registry, vault, router, rpc, client, machines, binding, sourceCommit } = context;
@@ -472,19 +515,30 @@ async function run(options: LifecycleCLI): Promise<void> {
   if (Number(await client.readContract({ address: registry, abi: PayGuardPolicyRegistryAbi, functionName: "policyStatus", args: [binding.policyCommitment] })) !== 3) throw new Error("policy revoke readback failed");
 
   const observedBlock = revoked.receipt.blockNumber;
+  const replacementMachine = machines.find((machine) => machine.origin === "https://payguard-fcc-d-production.up.railway.app");
+  if (options.replacement && !replacementMachine) throw new Error("replacement lifecycle did not include machine D");
   const evidence = buildSanitizedLifecycleEvidence({
     sourceCommit, observedBlock, policyCommitment: binding.policyCommitment,
     custodyFreeze: context.freeze.policyFreezeTransaction, machines,
     allow: { instructionId: allow.instructionId, digest: allow.digest, transactions: allow.transactions, status: Number(storedAllow.status), accountingBefore, accountingAfter: accountingAfterAllow },
     deny: { instructionId: deny.instructionId, digest: deny.digest, reason: "CAP_EXCEEDED", transactions: deny.transactions, status: deny.status, accountingAfter: accountingAfterDeny },
     policyTransactions: { stop: stopped.transaction, resume: resumed.transaction, revoke: revoked.transaction },
+    ...(options.replacement ? { replacement: {
+      unavailableTeeId: getAddress("0xed19Ff73952E4A4783f739194940c0b6823Ae213"),
+      unavailableUrl: "https://payguard-fcc-c-production.up.railway.app",
+      replacementTeeId: replacementMachine!.teeId,
+      replacementUrl: replacementMachine!.origin,
+      registrationTransaction: "0xa0d199b625c04e386f08e68d6d8a83ee3a623d2c12092bc61a3cae0ea936c34d",
+      productionTransaction: "0x855d3a8acaf170c351a8c7101fca7ffa9671164e55dd0d38720b9acca52d0148",
+    } } : {}),
   });
-  await writeEvidence(evidence);
+  const targetEvidencePath = options.replacement ? replacementEvidencePath : evidencePath;
+  await writeEvidence(evidence, targetEvidencePath);
   console.log(JSON.stringify({
     status: evidence.status, policyCommitment: binding.policyCommitment,
     allowInstructionId: allow.instructionId, allowStatus: Number(storedAllow.status),
     denyInstructionId: deny.instructionId, denyStatus: deny.status,
-    observedBlock: observedBlock.toString(), evidencePath, privateMaterialRecorded: false,
+    observedBlock: observedBlock.toString(), evidencePath: targetEvidencePath, privateMaterialRecorded: false,
   }));
 }
 

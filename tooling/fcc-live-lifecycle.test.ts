@@ -19,9 +19,10 @@ const accounting = (available: bigint, spent: bigint) => ({
 
 test("live lifecycle CLI requires both explicit write acknowledgements", () => {
   assert.equal(parseLifecycleCLI(["plan"]).plan, true);
-  assert.throws(() => parseLifecycleCLI(["run", "--broadcast"]), /requires exactly/);
-  assert.throws(() => parseLifecycleCLI(["run", "--write-live-private-policy"]), /requires exactly/);
+  assert.throws(() => parseLifecycleCLI(["run", "--broadcast"]), /requires --broadcast/);
+  assert.throws(() => parseLifecycleCLI(["run", "--write-live-private-policy"]), /requires --broadcast/);
   assert.equal(parseLifecycleCLI(["run", "--broadcast", "--write-live-private-policy"]).broadcast, true);
+  assert.equal(parseLifecycleCLI(["run", "--broadcast", "--write-live-private-policy", "--replacement"]).replacement, true);
 });
 
 test("live lifecycle evidence is sanitized and preserves conservation claims", () => {

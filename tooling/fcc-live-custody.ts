@@ -54,7 +54,7 @@ const simulatedPlatform = padHex(stringToHex("TEST_PLATFORM"), { size: 32, dir: 
 const defaultOrigins = [
   "https://payguard-fcc-a-production.up.railway.app",
   "https://payguard-fcc-b-production.up.railway.app",
-  "https://payguard-fcc-c-production.up.railway.app",
+  "https://payguard-fcc-d-production.up.railway.app",
 ] as const;
 const managerAbi = parseAbi([
   "function getTeeMachine(address teeId) view returns ((address teeId,address teeProxyId,string url) machine)",
