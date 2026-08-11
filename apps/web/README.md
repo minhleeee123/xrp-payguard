@@ -145,8 +145,9 @@ The current production deployment at <https://xrp-payguard.vercel.app/> contains
 only `apps/web/dist`; wallet signing stays in the injected wallet. It calls the
 pinned public Railway relay, while its executor key, FCC machines, and indexer
 credentials remain external/server-side. A verified PayGuard release remains
-unavailable. The latest sanitized deployment record is
-[`vercel-preview-2026-08-09.json`](../../evidence/web/vercel-preview-2026-08-09.json).
+unavailable. The latest production-corpus integrity record is
+[`public-evidence-deployment-audit-2026-08-11.json`](../../evidence/web/public-evidence-deployment-audit-2026-08-11.json),
+pinned to deployed source `3a271bd475637883297ce368109b3aed5df5935c`.
 
 The build also emits only the allowlisted public evidence files under
 `/evidence/`, with [`/evidence/index.json`](https://xrp-payguard.vercel.app/evidence/index.json)

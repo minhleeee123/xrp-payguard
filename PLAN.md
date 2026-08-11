@@ -224,8 +224,8 @@ machines authorize one domain-bound test action.
 Live Coston2 simulated-machine evidence now additionally covers three matching
 machine evaluations, two accepted on-chain attestations, one atomic ALLOW
 execution, one deterministic `CAP_EXCEEDED` denial with no accounting change,
-and stop/resume/revoke. The V1 administrator mapping and simulated attestation
-remain release blockers.
+and stop/resume/revoke. The active V2 path removes the V1 administrator mapping;
+simulated attestation remains a verified-release blocker.
 
 ### Phase 3 — deterministic policy protocol
 

@@ -1,20 +1,15 @@
 # XRP PayGuard hackathon handoff
 
-> Interactive demo baseline validated before the V2 preparation work:
-> `d5f81f341843bf9ad71113065d2597ebc36c1f3d`. The later V2 candidate and
-> documentation work does not alter or upgrade the deployed demo evidence.
 > The current production web artifact is pinned to source commit
-> `544c5ce88a9fda5b4a26a39e3994756e5a1c3cdd` and deployment
-> `dpl_4qxpyf3wU7jQJJbtfWro7Zz2mR46`. Its hosted FCC UI, production bytes, and
-> 22-entry evidence corpus were checked on 2026-08-11. The full interactive
-> lifecycle/browser record in `9305976` remains evidence for the earlier
-> source-pinned artifact and is not silently reassigned to the refreshed UI.
-> The later live simulated FCC evidence is bound to source commit
-> `60fd9af72015ef69b44fb87f05fea2224d240700`; its evidence and documentation
-> updates are in `7cd8acd` and `bd4337a`. The full workspace, Go, Forge,
-> security, privacy, evidence, release, and build baseline was rerun on
-> 2026-08-11. This remains a testnet/simulation handoff, not a verified PayGuard
-> release.
+> `3a271bd475637883297ce368109b3aed5df5935c` and Vercel deployment
+> `dpl_Gv6Qb3qgqVEx3soU1RTux5eg6bTq`. Its V2-first FCC UI, production bytes,
+> relay readiness, and 23-entry evidence corpus were checked on 2026-08-11.
+> The older V1 interactive lifecycle remains explicitly historical and is not
+> silently reassigned to the active V2 deployment. The full workspace, Go,
+> Forge, security, privacy, evidence, release, build, production-corpus audit,
+> and browser-recorder baseline was rerun on 2026-08-11. This remains a
+> Coston2 `SIMULATED_TEE` candidate handoff, not a hardware-attested verified
+> PayGuard release.
 
 ## Delivery boundary
 
@@ -29,13 +24,14 @@ The hackathon build uses solution 3:
   simulated actors on Vercel; and
 - an interactive Vercel dApp plus reviewed static evidence mirror; and
 - one authenticated Railway relay connected to registered A/B/D machines for
-  the V1 operator lifecycle.
+  the active V2 operator lifecycle.
 
 Three stable Railway origins, authenticated indexer access, registered status-2
 `SIMULATED_TEE` machines, signed `PING_V1`, all-three custody, two-of-three
 evaluation, C→D replacement, and executor-pause recovery pass on Coston2. The
-current Vercel app is wired to the hosted V2 simulated-candidate path, and a sanitized end-to-end
-relay run is mirrored in public evidence. Hardware TEE attestation, V2 release,
+current Vercel app is wired to the hosted V2 simulated-candidate path, and a
+sanitized end-to-end relay run is mirrored in public evidence. Hardware TEE
+attestation, verified-release promotion,
 remaining dependency outages, and a complete release remain open. No simulated
 path may be presented as hardware-backed confidentiality or mainnet production.
 
@@ -45,12 +41,12 @@ path may be presented as hardware-backed confidentiality or mainnet production.
 - Evidence index: <https://xrp-payguard.vercel.app/evidence/index.json>
 - Demo video: local validated MP4 exists under ignored `evidence/local/`; public
   upload remains owner-only and no public video URL is claimed.
-- Vercel deployment ID: `dpl_4qxpyf3wU7jQJJbtfWro7Zz2mR46`
-- Deployed source commit: `544c5ce88a9fda5b4a26a39e3994756e5a1c3cdd`
+- Vercel deployment ID: `dpl_Gv6Qb3qgqVEx3soU1RTux5eg6bTq`
+- Deployed source commit: `3a271bd475637883297ce368109b3aed5df5935c`
 - Railway relay: <https://payguard-live-relay-production.up.railway.app>
 
 The deployment was built and uploaded through Vercel CLI. It serves the static
-Vite application and a 22-entry reviewed evidence index. The live FCC
+Vite application and a 23-entry reviewed evidence index. The live FCC
 configuration comes from the separate Railway relay; its evaluation route
 rejects any non-empty/client-decision body. Historical serverless demo actor
 routes are not part of this static artifact and therefore fail closed.
@@ -65,19 +61,20 @@ hosted index by design.
 
 1. Open `/#landing` and explain: private policy is the target boundary; amount,
    recipient, timing, and settlement remain public.
-2. Open **Demo lifecycle** and inspect the live V1 card: one Railway relay,
-   three registered A/B/D machines, manager status `2`, and explicit
-   `SIMULATED_TEE`/operator-only labels.
-3. Open the hosted lifecycle evidence without a wallet. Follow the custody,
-   ALLOW submission/execution, `CAP_EXCEEDED` DENY, stop/resume/revoke, and
-   conservation transaction identifiers to Coston2 Explorer.
+2. Open **Demo lifecycle** and inspect the primary wallet-free V2 proof: three
+   registered A/B/D machines at manager status `2`, all-three custody,
+   two-matching-result ALLOW execution, `CAP_EXCEEDED` DENY, governance,
+   conservation, and thirteen Coston2 checkpoints.
+3. Follow any public checkpoint to Coston2 Explorer. Then inspect the live
+   Railway readiness card and explicit `SIMULATED_TEE`/operator-only labels.
 4. If the configured operator is demonstrating, connect that testnet wallet,
    prepare a hosted V2 policy in **Policy Studio**, collect three receipts,
    register it, create a request, and ask the relay for quorum evaluation.
 5. Point out that the evaluation body is empty and owner-authenticated; the
    browser cannot supply `ALLOW` or override canonical chain history.
-6. Close with the permanent boundary: simulated TEE, V1 operator dispatcher,
-   no hardware attestation and no verified release.
+6. Close with the permanent boundary: V2 simulated candidate, operator-only
+   writes, no hardware attestation and no verified release. The V1 sandbox is
+   collapsed historical evidence and its actor APIs are intentionally absent.
 
 ## Validation actually run
 
@@ -96,21 +93,21 @@ Observed results on the current baseline:
 
 - The toolchain gate resolved Node `24.19.0`, pnpm `10.33.0`, Go `1.25.12`,
   Foundry `1.7.1`, and Solidity `0.8.25` requirements.
-- 212 workspace package tests passed: bindings 2, protocol 50, relay 19,
-  demo protocol 7, integrations 83, demo API 4, web 43, and SDK examples 4.
+- 216 workspace package tests passed: bindings 2, protocol 50, relay 19,
+  demo protocol 7, integrations 83, demo API 4, web 47, and SDK examples 4.
   Three web-live cases are gated out of the ordinary unit run; the full
   production-origin Coston2 lifecycle gate passed separately. The top-level gate also passed
   the separate public-web evidence, four deployment-corpus auditor tests,
   three demo-recorder tests, and deployment/release/FCC tooling suites.
 - All workspace TypeScript typechecks and all Go packages passed.
-- Forge passed 53 tests, including seven V2 official-manager/adversarial cases,
+- Forge passed 56 tests, including ten V2 official-manager/adversarial cases,
   256 fuzz runs, and a 128-run/8192-call conservation invariant with zero
   reverts.
-- The final documentation review secret scan inspected 468 current files and
-  246 revisions with zero history findings. Privacy scan inspected 57
+- The final documentation review secret scan inspected 477 current files and
+  271 revisions with zero history findings. Privacy scan inspected 58
   browser/relay/FCC source and build files and found no browser persistence API.
-  The evidence gate accepted 19 sanitized testnet-only repository records. The
-  hosted 22-entry subset is separately byte-audited and includes the reviewed
+  The evidence gate accepted 20 sanitized testnet-only repository records. The
+  hosted 23-entry subset is separately byte-audited and includes the reviewed
   Railway FCC evidence, including the connected hosted relay lifecycle.
 - The release check returned `planned` because no verified PayGuard Coston2
   release manifest exists; this is the expected fail-closed outcome.
@@ -160,16 +157,16 @@ public RPC:
   the reduced-motion CSS gate reran against the deployed source.
   Lighthouse 13.4.1 scored both Landing and Overview at 99 performance and 100
   accessibility, best practices, and SEO, with zero recorded contrast failures.
-- The fixed-origin demo recorder produced a 74-second, 592-frame, 1440×900 H.264
+- The fixed-origin V2 demo recorder produced a 74-second, 592-frame, 1440×900 H.264
   MP4 with a silent AAC track and burned captions. `ffprobe` verified the media,
   and the current SHA-256 is
-  `1a8b09c4c11376a96075582c47ac8193760fe989477a44984ff04ebb630dd157`.
+  `ad21d8e65a7c19fc7d997188ea49f59ece2de76d792664447d541d59f1bc574e`.
   It excludes Policy Studio/private inputs and remains ignored until owner
   review/upload.
 
 A fresh HTTPS read of deployment
-`dpl_4qxpyf3wU7jQJJbtfWro7Zz2mR46` returned 200 for the application and
-22-entry evidence index. The deployed JavaScript and CSS
+`dpl_Gv6Qb3qgqVEx3soU1RTux5eg6bTq` returned 200 for the application and
+23-entry evidence index. The deployed JavaScript and CSS
 matched the locally built artifact byte-for-byte, and the public-corpus audit
 matched every hosted evidence body to its reviewed local source. The prior
 Chrome and full Coston2 lifecycle results remain attached to their earlier
@@ -209,8 +206,8 @@ policy evaluation, or canonical on-chain Web2 consumer.
 | XRP funding | One PayGuard-owned XRPL Testnet → FDC → Smart Account/direct-mint → vault accounting observation | Does not prove a recurring private-policy payment |
 | FAssets exits | Public amount and destination-tag redemption observations | Canonical PayGuard consumption/default recovery remain limited as recorded |
 | Web2Json | Local source-commitment allowlist, exact jq/tuple-ABI/MIC/response binding, source-asserted freshness, replay, and fail-closed verifier tests | No production source, live proof, source-truth guarantee, private evaluation, or on-chain consumer |
-| FCC foundation | Sender/extension binding, status-2 registered simulated machines, and exact live `PING_V1` TEE/proxy signatures pass | No hardware attestation or V2 release |
-| FCC policy path | A/B/D stable origins, authenticated indexer, all-three live simulated custody, hosted request-ID-only two-of-three ALLOW/DENY, conservation, replacement, and executor recovery pass | V1 administrator mapping, `SIMULATED_TEE`, remaining dependency outages, and no verified release |
+| FCC foundation | Sender/extension binding, status-2 registered simulated machines, and exact live `PING_V1` TEE/proxy signatures pass | No hardware attestation or verified release |
+| FCC policy path | V2 official-manager binding, A/B/D stable origins, authenticated indexer, all-three live simulated custody, hosted request-ID-only two-of-three ALLOW/DENY, conservation, and owner lifecycle pass; V1 separately records replacement/executor recovery | `SIMULATED_TEE`, remaining V2 dependency outages, and no verified release |
 | Web | Interactive Vercel dApp, hosted Railway FCC V2 controls, refreshed desktop navigation, and byte-verified 23-asset evidence mirror pass | Operator-only simulated V2 candidate; historical actor APIs are not in the current static artifact; hardware release remains unavailable |
 | Release | Release validators and fail-closed checks pass | No verified release manifest exists |
 | SDK | Compile-tested XRPL-wallet and Flare-dApp preview examples plus integration guide | Package remains private; no live writer or release domain is exposed |
@@ -268,6 +265,11 @@ policy evaluation, or canonical on-chain Web2 consumer.
 - `a0bb2da` — sanitized hosted relay lifecycle evidence.
 - `1d9ad09` — expanded 22-entry public-evidence baseline.
 - `2fbea13` — byte-verified 22-entry production-corpus audit.
+- `c169f61` — V2 candidate made the primary web experience.
+- `ae09e38` — fail-closed V2 proof and deployment-copy tests.
+- `ea02ba9` — V2-first production demo recorder.
+- `fb626ef` — canonical documentation aligned with the V2 candidate.
+- `3a271bd` — retired V1 actor probes removed from production startup.
 
 This list is a handoff-oriented index, not the complete implementation history;
 the remote Git history is authoritative.

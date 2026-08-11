@@ -200,9 +200,9 @@ it is intentionally excluded from the hosted index and does not upgrade the
 interactive testnet client into an FCC or verified-release claim.
 
 The refreshed production-corpus audit recorded on 2026-08-11 is pinned to
-source `544c5ce88a9fda5b4a26a39e3994756e5a1c3cdd`. It matched the current
+source `3a271bd475637883297ce368109b3aed5df5935c`. It matched the current
 metadata index and all 23 hosted bodies byte-for-byte to reviewed local sources,
-including 21 chain-114 records and three explicitly bounded simulation records.
+including 22 chain-114 records and three explicitly bounded simulation records.
 Its repository-only result is
 [`public-evidence-deployment-audit-2026-08-11.json`](../../evidence/web/public-evidence-deployment-audit-2026-08-11.json).
 This proves public-artifact integrity and includes the sanitized hosted-relay

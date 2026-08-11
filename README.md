@@ -370,8 +370,8 @@ conditions are in the
 
 The current validated baseline reports:
 
-- 212 workspace tests: bindings 2, protocol 50, relay 19, demo protocol 7,
-  integrations 83, demo API 4, web 43, and SDK examples 4; three explicitly
+- 216 workspace tests: bindings 2, protocol 50, relay 19, demo protocol 7,
+  integrations 83, demo API 4, web 47, and SDK examples 4; three explicitly
   gated web-live cases remain skipped in the ordinary unit run, while the full
   interactive Coston2 lifecycle gate passed separately;
 - all workspace TypeScript typechecks and all Go packages passing;
