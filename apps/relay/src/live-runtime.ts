@@ -704,7 +704,7 @@ function signature(value: unknown, label: string): Hex {
   const s = BigInt(`0x${value.slice(66, 130)}`);
   const v = Number.parseInt(value.slice(130, 132), 16);
   const halfOrder = BigInt("0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0");
-  if (s === 0n || s > halfOrder || ![0, 1].includes(v)) throw new Error(`${label} is non-canonical`);
+  if (s === 0n || s > halfOrder || ![0, 1, 27, 28].includes(v)) throw new Error(`${label} is non-canonical`);
   return value as Hex;
 }
 function strictBase64(value: string): Buffer { if (!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(value)) throw new Error("ciphertext must be canonical base64"); const bytes = Buffer.from(value, "base64"); if (bytes.length === 0 || bytes.length > 64 * 1024 || bytes.toString("base64") !== value) throw new Error("ciphertext size is invalid"); return bytes; }
