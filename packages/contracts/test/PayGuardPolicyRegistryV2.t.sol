@@ -44,6 +44,13 @@ contract FlareTeeManagerMock is IFlareTeeManager {
         });
     }
 
+    function setInitialTeeId(
+        address teeId,
+        address initialTeeId
+    ) external {
+        entries[teeId].attestation.initialTeeId = initialTeeId;
+    }
+
     function setStatus(
         address teeId,
         uint8 status
@@ -135,7 +142,7 @@ contract PayGuardPolicyRegistryV2Test is TestBase {
         owner = vm.addr(_key("v2-owner"));
         manager = new FlareTeeManagerMock();
         registry = new PayGuardPolicyRegistryV2(
-            address(this), address(manager), EXTENSION_ID, CODE_HASH
+            address(this), address(manager), EXTENSION_ID, CODE_HASH, false
         );
         vault = new PayGuardVault(address(this));
         router = new PayGuardActionRouter(address(registry), address(vault));
@@ -217,6 +224,46 @@ contract PayGuardPolicyRegistryV2Test is TestBase {
         manager.setCodeHash(vm.addr(machineKeys[2]), keccak256("wrong-code"));
         vm.expectRevert();
         registry.registerPolicy(binding, _receipts(binding));
+    }
+
+    function testHardwareProfileRejectsSimulatedMachine() public {
+        manager.setInitialTeeId(vm.addr(machineKeys[0]), address(0));
+        vm.expectRevert(
+            abi.encodeWithSelector(PayGuardPolicyRegistryV2.OfficialMachineUnavailable.selector, 0)
+        );
+        registry.registerPolicy(binding, _receipts(binding));
+    }
+
+    function testCoston2SimulatedProfileAcceptsOnlyTestPlatform() public {
+        PayGuardPolicyRegistryV2 simulatedRegistry = new PayGuardPolicyRegistryV2(
+            address(this), address(manager), EXTENSION_ID, CODE_HASH, true
+        );
+        binding.registry = address(simulatedRegistry);
+        for (uint256 index; index < 3; index++) {
+            manager.setInitialTeeId(vm.addr(machineKeys[index]), address(0));
+            manager.setMachine(
+                vm.addr(machineKeys[index]), EXTENSION_ID, CODE_HASH, bytes32("TEST_PLATFORM")
+            );
+            manager.setInitialTeeId(vm.addr(machineKeys[index]), address(0));
+        }
+        simulatedRegistry.registerPolicy(binding, _receipts(binding));
+
+        PayGuardPolicyRegistryV2 rejectedRegistry = new PayGuardPolicyRegistryV2(
+            address(this), address(manager), EXTENSION_ID, CODE_HASH, true
+        );
+        binding.registry = address(rejectedRegistry);
+        manager.setMachine(vm.addr(machineKeys[0]), EXTENSION_ID, CODE_HASH, keccak256("OTHER"));
+        manager.setInitialTeeId(vm.addr(machineKeys[0]), address(0));
+        vm.expectRevert(
+            abi.encodeWithSelector(PayGuardPolicyRegistryV2.OfficialMachineUnavailable.selector, 0)
+        );
+        rejectedRegistry.registerPolicy(binding, _receipts(binding));
+    }
+
+    function testSimulatedProfileCannotDeployOutsideCoston2() public {
+        vm.chainId(14);
+        vm.expectRevert(PayGuardPolicyRegistryV2.InvalidBinding.selector);
+        new PayGuardPolicyRegistryV2(address(this), address(manager), EXTENSION_ID, CODE_HASH, true);
     }
 
     function testFingerprintSubstitutionInvalidatesReceiptSignature() public {

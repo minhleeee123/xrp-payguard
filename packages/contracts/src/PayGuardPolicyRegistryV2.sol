@@ -26,6 +26,8 @@ contract PayGuardPolicyRegistryV2 {
     uint8 public constant STATUS_STOPPED = 2;
     uint8 public constant STATUS_REVOKED = 3;
     uint8 public constant TEE_STATUS_PRODUCTION = 2;
+    uint256 public constant COSTON2_CHAIN_ID = 114;
+    bytes32 public constant SIMULATED_TEE_PLATFORM = bytes32("TEST_PLATFORM");
 
     struct PolicyRecord {
         PayGuardTypes.PolicyBinding binding;
@@ -37,6 +39,7 @@ contract PayGuardPolicyRegistryV2 {
     IFlareTeeManager public immutable teeManager;
     uint256 public immutable expectedExtensionId;
     bytes32 public immutable expectedCodeHash;
+    bool public immutable allowSimulatedTee;
     bool public globallyPaused;
 
     mapping(bytes32 policyCommitment => PolicyRecord policy) private policies;
@@ -57,7 +60,8 @@ contract PayGuardPolicyRegistryV2 {
         address admin_,
         address teeManager_,
         uint256 expectedExtensionId_,
-        bytes32 expectedCodeHash_
+        bytes32 expectedCodeHash_,
+        bool allowSimulatedTee_
     ) {
         if (
             admin_ == address(0) || teeManager_ == address(0) || expectedExtensionId_ == 0
@@ -65,10 +69,12 @@ contract PayGuardPolicyRegistryV2 {
         ) {
             revert InvalidBinding();
         }
+        if (allowSimulatedTee_ && block.chainid != COSTON2_CHAIN_ID) revert InvalidBinding();
         admin = admin_;
         teeManager = IFlareTeeManager(teeManager_);
         expectedExtensionId = expectedExtensionId_;
         expectedCodeHash = expectedCodeHash_;
+        allowSimulatedTee = allowSimulatedTee_;
     }
 
     function getPolicy(
@@ -239,9 +245,13 @@ contract PayGuardPolicyRegistryV2 {
         IFlareTeeManager.TeeMachine memory machine = teeManager.getTeeMachine(teeId);
         IFlareTeeManager.TeeMachineAttestation memory attestation =
             teeManager.getTeeMachineWithAttestationData(teeId);
+        bool acceptedAttestationIdentity = attestation.initialTeeId == teeId
+            || (allowSimulatedTee
+                && attestation.initialTeeId == address(0)
+                && attestation.platform == SIMULATED_TEE_PLATFORM);
         return machine.teeId == teeId && machine.teeProxyId != address(0)
             && bytes(machine.url).length != 0 && attestation.teeId == teeId
-            && attestation.initialTeeId == teeId && attestation.codeHash == expectedCodeHash
+            && acceptedAttestationIdentity && attestation.codeHash == expectedCodeHash
             && attestation.platform != bytes32(0)
             && keccak256(bytes(machine.url)) == keccak256(bytes(attestation.url))
             && teeManager.isCodeHashPlatformSupported(

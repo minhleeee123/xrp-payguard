@@ -21,6 +21,9 @@ interface Vm {
     function expectRevert(
         bytes4 selector
     ) external;
+    function expectRevert(
+        bytes calldata revertData
+    ) external;
     function expectRevert() external;
     function readFile(
         string calldata path
