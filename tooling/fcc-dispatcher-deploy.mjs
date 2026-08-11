@@ -33,6 +33,8 @@ const managerAbi = parseAbi([
 ]);
 const dispatcherAbi = parseAbi([
   "function owner() view returns (address)",
+  "function teeExtensionRegistry() view returns (address)",
+  "function teeMachineRegistry() view returns (address)",
   "function getExtensionId() view returns (uint256)",
   "function setExtensionIdExplicit(uint256 candidate)",
   "function sendFoundationPing(bytes32 requestNonce,bytes32 payloadHash) payable returns (bytes32 instructionId)",
@@ -47,15 +49,34 @@ const chain = {
 
 export function parseDispatcherCLI(argv) {
   const [mode, ...tokens] = argv;
-  if (mode !== "plan" && mode !== "deploy") throw new Error("mode must be plan or deploy");
+  if (mode !== "plan" && mode !== "deploy" && mode !== "verify") throw new Error("mode must be plan, deploy, or verify");
   let broadcast = false;
-  for (const token of tokens) {
-    if (token !== "--broadcast" || broadcast) throw new Error(`invalid or duplicate argument ${token}`);
-    broadcast = true;
+  const options = { mode, broadcast, dispatcher: undefined, deploymentTransaction: undefined, managerUpdateTransaction: undefined, extensionBindingTransaction: undefined, deploymentSourceCommit: undefined };
+  const fields = new Map([
+    ["--dispatcher", "dispatcher"],
+    ["--deployment-tx", "deploymentTransaction"],
+    ["--manager-tx", "managerUpdateTransaction"],
+    ["--binding-tx", "extensionBindingTransaction"],
+    ["--deployment-source-commit", "deploymentSourceCommit"],
+  ]);
+  for (let index = 0; index < tokens.length; index += 1) {
+    const token = tokens[index];
+    if (token === "--broadcast") {
+      if (broadcast) throw new Error("duplicate --broadcast");
+      broadcast = true;
+      continue;
+    }
+    const field = fields.get(token);
+    if (!field || options[field] !== undefined || index + 1 >= tokens.length) throw new Error(`invalid or duplicate argument ${token}`);
+    options[field] = tokens[index + 1];
+    index += 1;
   }
   if (mode === "deploy" && !broadcast) throw new Error("deploy requires --broadcast");
-  if (mode === "plan" && broadcast) throw new Error("plan cannot broadcast");
-  return { mode, broadcast };
+  if (mode !== "deploy" && broadcast) throw new Error(`${mode} cannot broadcast`);
+  const verifyFields = ["dispatcher", "deploymentTransaction", "managerUpdateTransaction", "extensionBindingTransaction", "deploymentSourceCommit"];
+  if (mode === "verify" && verifyFields.some((field) => options[field] === undefined)) throw new Error("verify requires dispatcher, three transaction hashes, and deployment source commit");
+  if (mode !== "verify" && verifyFields.some((field) => options[field] !== undefined)) throw new Error("deployment recovery arguments are accepted only in verify mode");
+  return { ...options, broadcast };
 }
 
 export function buildDispatcherEvidence(input) {
@@ -77,10 +98,12 @@ export function buildDispatcherEvidence(input) {
     network: { name: "flare-coston2", chainId: 114, observedBlock: input.observedBlock.toString() },
     publicIdentifiers: {
       verificationSourceCommit: input.sourceCommit,
+      deploymentSourceCommit: input.deploymentSourceCommit ?? input.sourceCommit,
       manager: FCC_TEE_MANAGER,
       extensionId: PAYGUARD_EXTENSION_ID.toString(),
       dispatcher: getAddress(input.dispatcher),
       runtimeHash: input.runtimeHash,
+      runtimeTemplateHash: input.runtimeTemplateHash,
       deploymentTransaction: input.deploymentTransaction,
       managerUpdateTransaction: input.managerUpdateTransaction,
       extensionBindingTransaction: input.extensionBindingTransaction,
@@ -129,7 +152,23 @@ async function artifact() {
   const bytecode = parsed?.bytecode?.object;
   const deployedBytecode = parsed?.deployedBytecode?.object;
   if (!/^0x[0-9a-fA-F]+$/.test(bytecode) || !/^0x[0-9a-fA-F]+$/.test(deployedBytecode)) throw new Error("dispatcher artifact is missing bytecode");
-  return { abi: parsed.abi, bytecode, deployedBytecode, runtimeHash: keccak256(deployedBytecode) };
+  return { abi: parsed.abi, bytecode, deployedBytecode, immutableReferences: parsed.deployedBytecode.immutableReferences ?? {}, runtimeTemplateHash: keccak256(deployedBytecode) };
+}
+
+function normalizedRuntime(code, immutableReferences) {
+  const bytes = Buffer.from(code.slice(2), "hex");
+  for (const ranges of Object.values(immutableReferences)) {
+    for (const range of ranges) bytes.fill(0, range.start, range.start + range.length);
+  }
+  return `0x${bytes.toString("hex")}`;
+}
+
+function verifyRuntime(code, compiled) {
+  if (!code || code === "0x" || code.length !== compiled.deployedBytecode.length) throw new Error("dispatcher runtime length mismatch");
+  if (keccak256(normalizedRuntime(code, compiled.immutableReferences)) !== keccak256(normalizedRuntime(compiled.deployedBytecode, compiled.immutableReferences))) {
+    throw new Error("dispatcher runtime differs outside constructor immutables");
+  }
+  return keccak256(code);
 }
 
 function account() {
@@ -150,7 +189,7 @@ async function write(client, wallet, signer, address, abi, functionName, args) {
   return { transaction, receipt };
 }
 
-async function preflight() {
+async function preflight(options) {
   const signer = account();
   const compiled = await artifact();
   const client = createPublicClient({ chain, transport: http(rpc, { timeout: 15_000, retryCount: 2 }) });
@@ -163,8 +202,9 @@ async function preflight() {
     client.getBalance({ address: signer.address }),
     client.getBlockNumber(),
   ]);
+  const expectedSender = options.mode === "verify" ? getAddress(options.dispatcher) : PAYGUARD_FOUNDATION_SENDER;
   if (chainId !== 114 || !managerCode || managerCode === "0x" || getAddress(owner) !== signer.address
-    || getAddress(stateVerifier) !== zeroAddress || getAddress(currentSender) !== PAYGUARD_FOUNDATION_SENDER
+    || getAddress(stateVerifier) !== zeroAddress || getAddress(currentSender) !== expectedSender
     || balance < 50_000_000_000_000_000n) throw new Error("dispatcher preflight failed closed");
   return { signer, compiled, client, blockNumber, currentSender: getAddress(currentSender) };
 }
@@ -177,7 +217,7 @@ async function saveEvidence(value) {
 
 async function main() {
   const options = parseDispatcherCLI(process.argv.slice(2));
-  const plan = await preflight();
+  const plan = await preflight(options);
   if (options.mode === "plan") {
     console.log(JSON.stringify({
       status: "ready",
@@ -185,13 +225,47 @@ async function main() {
       extensionId: PAYGUARD_EXTENSION_ID.toString(),
       currentSender: plan.currentSender,
       creationCodeHash: keccak256(plan.compiled.bytecode),
-      runtimeHash: plan.compiled.runtimeHash,
+      runtimeTemplateHash: plan.compiled.runtimeTemplateHash,
       transactions: ["deploy dispatcher", "set extension contracts", "bind extension ID"],
       note: "Read-only plan; no transaction was signed or broadcast.",
     }, null, 2));
     return;
   }
   const commit = await sourceCommit(true);
+  if (options.mode === "verify") {
+    const dispatcher = getAddress(options.dispatcher);
+    const [code, owner, extensionRegistry, machineRegistry, boundExtension, deploymentReceipt, managerReceipt, bindingReceipt, observedBlock] = await Promise.all([
+      plan.client.getCode({ address: dispatcher }),
+      plan.client.readContract({ address: dispatcher, abi: dispatcherAbi, functionName: "owner" }),
+      plan.client.readContract({ address: dispatcher, abi: dispatcherAbi, functionName: "teeExtensionRegistry" }),
+      plan.client.readContract({ address: dispatcher, abi: dispatcherAbi, functionName: "teeMachineRegistry" }),
+      plan.client.readContract({ address: dispatcher, abi: dispatcherAbi, functionName: "getExtensionId" }),
+      plan.client.getTransactionReceipt({ hash: options.deploymentTransaction }),
+      plan.client.getTransactionReceipt({ hash: options.managerUpdateTransaction }),
+      plan.client.getTransactionReceipt({ hash: options.extensionBindingTransaction }),
+      plan.client.getBlockNumber(),
+    ]);
+    const runtimeHash = verifyRuntime(code, plan.compiled);
+    if (getAddress(owner) !== plan.signer.address || getAddress(extensionRegistry) !== FCC_TEE_MANAGER
+      || getAddress(machineRegistry) !== FCC_TEE_MANAGER || boundExtension !== PAYGUARD_EXTENSION_ID
+      || deploymentReceipt.status !== "success" || getAddress(deploymentReceipt.contractAddress) !== dispatcher
+      || managerReceipt.status !== "success" || bindingReceipt.status !== "success"
+      || deploymentReceipt.blockNumber > managerReceipt.blockNumber || managerReceipt.blockNumber > bindingReceipt.blockNumber) throw new Error("dispatcher recovery readback mismatch");
+    const evidence = buildDispatcherEvidence({
+      sourceCommit: commit,
+      deploymentSourceCommit: options.deploymentSourceCommit,
+      observedBlock,
+      dispatcher,
+      runtimeHash,
+      runtimeTemplateHash: plan.compiled.runtimeTemplateHash,
+      deploymentTransaction: options.deploymentTransaction,
+      managerUpdateTransaction: options.managerUpdateTransaction,
+      extensionBindingTransaction: options.extensionBindingTransaction,
+    });
+    await saveEvidence(evidence);
+    console.log(JSON.stringify({ status: evidence.status, dispatcher, recovered: true, evidencePath }));
+    return;
+  }
   const wallet = createWalletClient({ account: plan.signer, chain, transport: http(rpc, { timeout: 15_000, retryCount: 2 }) });
   const deploymentTransaction = await wallet.deployContract({
     account: plan.signer,
@@ -211,20 +285,25 @@ async function main() {
     await write(plan.client, wallet, plan.signer, FCC_TEE_MANAGER, managerAbi, "setExtensionContracts", [PAYGUARD_EXTENSION_ID, zeroAddress, PAYGUARD_FOUNDATION_SENDER]);
     throw error;
   }
-  const [code, owner, boundExtension, currentSender, observedBlock] = await Promise.all([
+  const [code, owner, extensionRegistry, machineRegistry, boundExtension, currentSender, observedBlock] = await Promise.all([
     plan.client.getCode({ address: dispatcher }),
     plan.client.readContract({ address: dispatcher, abi: dispatcherAbi, functionName: "owner" }),
+    plan.client.readContract({ address: dispatcher, abi: dispatcherAbi, functionName: "teeExtensionRegistry" }),
+    plan.client.readContract({ address: dispatcher, abi: dispatcherAbi, functionName: "teeMachineRegistry" }),
     plan.client.readContract({ address: dispatcher, abi: dispatcherAbi, functionName: "getExtensionId" }),
     plan.client.readContract({ address: FCC_TEE_MANAGER, abi: managerAbi, functionName: "getTeeExtensionInstructionsSender", args: [PAYGUARD_EXTENSION_ID] }),
     plan.client.getBlockNumber(),
   ]);
-  if (!code || code === "0x" || keccak256(code) !== plan.compiled.runtimeHash || getAddress(owner) !== plan.signer.address
-    || boundExtension !== PAYGUARD_EXTENSION_ID || getAddress(currentSender) !== dispatcher) throw new Error("dispatcher deployment readback mismatch");
+  const runtimeHash = verifyRuntime(code, plan.compiled);
+  if (getAddress(owner) !== plan.signer.address || getAddress(extensionRegistry) !== FCC_TEE_MANAGER
+    || getAddress(machineRegistry) !== FCC_TEE_MANAGER || boundExtension !== PAYGUARD_EXTENSION_ID
+    || getAddress(currentSender) !== dispatcher) throw new Error("dispatcher deployment readback mismatch");
   const evidence = buildDispatcherEvidence({
     sourceCommit: commit,
     observedBlock,
     dispatcher,
-    runtimeHash: plan.compiled.runtimeHash,
+    runtimeHash,
+    runtimeTemplateHash: plan.compiled.runtimeTemplateHash,
     deploymentTransaction,
     managerUpdateTransaction: managerUpdate.transaction,
     extensionBindingTransaction: extensionBinding.transaction,
@@ -236,4 +315,3 @@ async function main() {
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
   main().catch((error) => { console.error(error instanceof Error ? error.message : "dispatcher deployment failed"); process.exitCode = 1; });
 }
-
