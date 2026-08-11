@@ -2,42 +2,43 @@
   "schemaVersion": 1,
   "suite": "payguard-coston2-live-simulated-three-machine-custody",
   "status": "verified-live-simulated-onchain-three-machine-custody",
-  "recordedAt": "2026-08-11T10:23:10.310Z",
+  "recordedAt": "2026-08-11T11:53:10.468Z",
   "network": {
     "name": "flare-coston2",
     "chainId": 114,
-    "observedBlock": "33915818"
+    "observedBlock": "33919013"
   },
   "publicIdentifiers": {
-    "verificationSourceCommit": "5a48651cecaa43c8e1989503c85651b5f87b85aa",
+    "verificationSourceCommit": "83cba0109fd60ed2e5a272089e804965e6ed001d",
     "manager": "0x1a9C4A0f9D76c0b1D91d22E24E573a9b377618aE",
     "extensionId": "66037",
-    "policyCommitment": "0xf0264315bcf494fc4b4f2dacd70876a210fc4c126929b4a2938fe82293911647",
-    "custodyBundleHash": "0x512b0d5fc66da89b9fb54a9dc76e5236de7d155dc8f426e87cb0dad0ae331099",
+    "policyCommitment": "0xc44f4701c011880a20158b1edf852ee3d92aa298280ae949f57633dbb6b0655c",
+    "custodyBundleHash": "0x319290bd1026a3bafaef12ad39514964af39d95e9b04b2daf1f19c9859431f87",
+    "registryVersion": "V2",
     "machineRegistrationTransactions": [],
-    "policyFreezeTransaction": "0x0ed2075a519cbf0996071ea0635d081d76a6e0bcd146e1bf14ff7ddb6752b3ff",
-    "policyFreezeBlock": "33915818",
+    "policyFreezeTransaction": "0x683c2c3dfdbe9c201428b9a50c6b08df1340dda102f9c9c47c07dd3b620c1bfb",
+    "policyFreezeBlock": "33919013",
     "machines": [
       {
         "teeId": "0x1C911D007f8203484eD4099bC11849d7e9691044",
         "proxyId": "0x8dfd80A00C1C6909E4f3f9439240243f5B193FA3",
         "url": "https://payguard-fcc-a-production.up.railway.app",
         "status": 2,
-        "receiptDigest": "0x38b337734af9ce2002e7cec0c9231bcc884b677d2d6c2047d938fa888684178b"
+        "receiptDigest": "0xcaf7b2c73c6fcf4b7b5ebe42de1929a162e6b3edc48868b0f3b2330e31f1c59f"
       },
       {
         "teeId": "0xff49A99535b8c52345D3c0b76bCf60194De7C29b",
         "proxyId": "0x6860a154be5415219E2A197E987e5f34cC48F2Bf",
         "url": "https://payguard-fcc-b-production.up.railway.app",
         "status": 2,
-        "receiptDigest": "0x2d949d5067964dfcd359fc0953e20322aec4526c106a187bae82117b71e449b8"
+        "receiptDigest": "0x6a5c4df49d277df0f8f3d6f3787196bacb4978c2cc7e034c040f14130b69c436"
       },
       {
         "teeId": "0xd871bc2044a75e8cc2CF06aCdeaDC4CBbEef349A",
         "proxyId": "0x58b77F524461a990c97Ef9b1AAd429E008252DBE",
         "url": "https://payguard-fcc-d-production.up.railway.app",
         "status": 2,
-        "receiptDigest": "0x17126f71db20980f788f294aa4bdfa38e317b02ae4f0a2a3ce5984526a89358a"
+        "receiptDigest": "0x988738b5287884fd869518aaea0e02c74451fae8adfe0acd623cc2d2f800eedf"
       }
     ]
   },
@@ -54,6 +55,7 @@
     "ciphertextStoreWriteVerified": true,
     "restartRecoveryVerified": false,
     "onchainPolicyFreezeVerified": true,
+    "v2OfficialManagerAuthorizationVerified": true,
     "liveThresholdEvaluationVerified": false,
     "hardwareAttestationVerified": false,
     "simulatedTee": true,
@@ -71,6 +73,6 @@
   "notes": [
     "Organizer-approved SIMULATED_TEE=true was used on Coston2.",
     "The private policy, three ciphertexts, owner authorizations, and machine signatures existed only in process memory and are excluded from public evidence.",
-    "The on-chain freeze uses the deployed V1 administrator mapping; official-manager authorization remains a V2 release blocker."
+    "The on-chain freeze uses PayGuardPolicyRegistryV2 with immutable official-manager live rechecks under the Coston2 simulated profile."
   ]
 }

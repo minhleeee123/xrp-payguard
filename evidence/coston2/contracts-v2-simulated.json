@@ -6,12 +6,12 @@
   "hardwareTeeVerified": false,
   "simulatedTee": true,
   "profile": "COSTON2_SIMULATED_V2",
-  "recordedAt": "2026-08-11T11:45:27.054Z",
+  "recordedAt": "2026-08-11T11:55:29.806Z",
   "sourceCommit": "4bb30adb18dc2366439c71eb756638573af8007c",
   "network": {
     "name": "flare-coston2",
     "chainId": 114,
-    "observedBlock": "33918796"
+    "observedBlock": "33919116"
   },
   "teeManager": "0x1a9C4A0f9D76c0b1D91d22E24E573a9b377618aE",
   "extensionId": "66037",
@@ -88,6 +88,9 @@
     "supportedAssetVerified": true,
     "noHardwareAttestationClaimed": true,
     "noVerifiedReleaseClaimed": true,
+    "noPrivateKeyRecorded": true,
+    "noCredentialRecorded": true,
+    "testnetOnly": true,
     "publicOnly": true
   },
   "notes": [

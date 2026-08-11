@@ -2,17 +2,19 @@
   "schemaVersion": 1,
   "suite": "payguard-coston2-hosted-live-fcc-relay-lifecycle",
   "status": "verified-hosted-live-simulated-fcc-lifecycle",
-  "recordedAt": "2026-08-11T10:24:35.242Z",
+  "registryVersion": "V2",
+  "deploymentProfile": "COSTON2_SIMULATED_V2",
+  "recordedAt": "2026-08-11T11:54:37.733Z",
   "network": {
     "name": "flare-coston2",
     "chainId": 114,
-    "observedBlock": "33915884"
+    "observedBlock": "33919084"
   },
   "publicIdentifiers": {
-    "verificationSourceCommit": "5a48651cecaa43c8e1989503c85651b5f87b85aa",
+    "verificationSourceCommit": "83cba0109fd60ed2e5a272089e804965e6ed001d",
     "relayOrigin": "https://payguard-live-relay-production.up.railway.app",
-    "policyCommitment": "0xf0264315bcf494fc4b4f2dacd70876a210fc4c126929b4a2938fe82293911647",
-    "custodyFreezeTransaction": "0x0ed2075a519cbf0996071ea0635d081d76a6e0bcd146e1bf14ff7ddb6752b3ff",
+    "policyCommitment": "0xc44f4701c011880a20158b1edf852ee3d92aa298280ae949f57633dbb6b0655c",
+    "custodyFreezeTransaction": "0x683c2c3dfdbe9c201428b9a50c6b08df1340dda102f9c9c47c07dd3b620c1bfb",
     "machines": [
       {
         "teeId": "0x1C911D007f8203484eD4099bC11849d7e9691044",
@@ -34,54 +36,54 @@
       }
     ],
     "allow": {
-      "requestId": "0xd6802d2ef53e53c752a4fbc48fcf9fec6a6448904d5d74b1ae2e41c9481e2afa",
-      "instructionId": "0xf3fa64bda2c9bcd17b750f945a1e14cc18eb63c3e98be360c9b0a83f9e4a2ba2",
-      "create": "0xcb884de127ec18db99974209706dc606a2f7857c330d126763a93612fc513a17",
-      "dispatch": "0x15cbe325e7d56ad9ac2714404452cd8e036d1327fd2924ecd2badeb0ee0c58d8",
+      "requestId": "0xc4147a7004fcbd31d2832d9e60c82bf86f217dfc4eb9c87ae0cf65ed90783658",
+      "instructionId": "0xb1b656520ee1658afbb482b59dce5b373756e0afbc9277306a1bb000eec158d3",
+      "create": "0xfc97f5f4ef268eed72dd58b3065cc40247daa405cfaac9faa373f6709ba500f8",
+      "dispatch": "0x20427512479246a182bb6a02c0754042b6e52037963457037dc02c684b2c5d81",
       "submit": [
-        "0x910e54240abec1f8dc776aa62e4492d3eba064ef4debd8e6a0ad8a5e797472bd",
-        "0xcd9af878379e682ab9caabd697be5b78ee66e078299eea7d7cb43289bd70cfee"
+        "0xdb70ab245c9a30c5a2813e000e57701b906d3ad451fbfc348334dae899943f38",
+        "0x12325d68d067f933455f41812ae29c49859cc9678c00ae2219862ae39a587311"
       ],
-      "execute": "0x556fc7fe412174e1aa178aad0dbd57cfb87459acbc289b4c5b17146ada3cb72f"
+      "execute": "0x110302617ac630812eb052f53de04c139891c4468ba1fc4ba76d82ac1786db45"
     },
     "deny": {
-      "requestId": "0x998cdc014500111910a17f5b7407e78f70bf8cfa894ee8b3ab0ff5d30568c065",
-      "instructionId": "0x27a0749ae2ead00235de645b8eb8a024c0ce2cc9a3aed3dd6c4faa7ee68db39b",
+      "requestId": "0x61dfc0cdc94d074bd63fbde3dfeb7ab72c72025a49d1955892266ad47b093817",
+      "instructionId": "0xde681624253b16872f15b2bb609763d6b01a2e0cecac85fd6acfb32ffdd8c57d",
       "reason": "CAP_EXCEEDED",
-      "create": "0xf9b996c5080c2fd1481dd3b61c67a150c647cf91bb5649d6ebf6e5b41ef9342b",
-      "dispatch": "0x3fbd8aec6e705205c169837682ab252090e6ef6e554be36b5c4a06400c7f8f31",
+      "create": "0x4751422b1d3156e6f72bce5d9973ff12aa3a676c32ab8ef8964d0e18b03fa9bf",
+      "dispatch": "0xa5c819c226f05842d761b6276cb8d2e63d0f42ae5770b8c7b267efe5bfc03609",
       "submit": [
-        "0x6e4da6f1379b72d8291f31f5f4c3916d5adb2deed60bd126ff2f5739832b1bcf",
-        "0x95b55f0dbb7f3cced623870cd13a24a0bec56dbc17998669202044ffafbb01c5"
+        "0xfd4aa6312c79a7c410410c1059016a6fb3a992baf34f64edd04c5e0c66b4f2b6",
+        "0xa00136236f13e23b1015c03c88d4280fd3b92f338a3b28a562efb8ed05d52a44"
       ]
     },
     "policyLifecycleTransactions": {
-      "stop": "0x2ebc171023aaaf42c9b91c9124f28a43b97178773d467f655c8d99c193dcaa91",
-      "resume": "0x1184ec05b29f5a9a6a3cd68e90c3d620fbc4906884bb6ebed814fc22423e24d5",
-      "revoke": "0x42380adc7eea05668cebfeaf13ea7a08aaa57f3d8242679cd812fd0f04404ea3"
+      "stop": "0x3e0db20ae9b6e450c82c8b5dfd4d0bb82b96dc0327a0f76cae6e8316fdac9080",
+      "resume": "0x2b15a194d0f9108c53a8a41f91d0d1ea80593de4374559cf6ee4d7cc1bcf9967",
+      "revoke": "0x07561ca2e27c38bea3ade12cb7e9201701e16fda718803bac14edc0e0b52cd97"
     },
     "accounting": {
       "before": {
-        "deposited": "1000000",
-        "available": "590000",
+        "deposited": "500000",
+        "available": "500000",
         "reserved": "0",
-        "spent": "410000",
+        "spent": "0",
         "withdrawn": "0",
         "refunded": "0"
       },
       "afterAllow": {
-        "deposited": "1000000",
-        "available": "490000",
+        "deposited": "500000",
+        "available": "400000",
         "reserved": "0",
-        "spent": "510000",
+        "spent": "100000",
         "withdrawn": "0",
         "refunded": "0"
       },
       "afterDeny": {
-        "deposited": "1000000",
-        "available": "490000",
+        "deposited": "500000",
+        "available": "400000",
         "reserved": "0",
-        "spent": "510000",
+        "spent": "100000",
         "withdrawn": "0",
         "refunded": "0"
       }
@@ -102,6 +104,7 @@
     "vaultConservationVerified": true,
     "hardwareAttestationVerified": false,
     "simulatedTee": true,
+    "v2LiveCandidateVerified": true,
     "v2ReleaseVerified": false,
     "verifiedPayGuardRelease": false,
     "noPrivateKeyRecorded": true,
@@ -113,13 +116,13 @@
   },
   "blockers": [
     "HARDWARE_ATTESTATION_NOT_VERIFIED",
-    "V2_RELEASE_NOT_VERIFIED"
+    "VERIFIED_RELEASE_NOT_PROMOTED"
   ],
   "notes": [
     "Organizer-approved SIMULATED_TEE=true was used on Coston2.",
     "The hosted relay received independently encrypted policy ciphertext only during authenticated ingress, then received request IDs with empty JSON bodies for evaluation.",
     "The relay reconstructed canonical public request, vault, policy, and spend state from Coston2 and did not accept a client decision.",
     "Private policy material, ciphertexts, owner authorizations, signatures, credentials, and keys are excluded from this evidence.",
-    "This verifies the deployed V1 operator path; it is not hardware attestation, V2, a verified PayGuard release, or mainnet readiness."
+    "This verifies the deployed V2 Coston2 simulated profile; it is not hardware attestation, a verified PayGuard release, or mainnet readiness."
   ]
 }
