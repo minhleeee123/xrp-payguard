@@ -2,7 +2,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { extname, join, relative, resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
-const targets = ["apps/web/src", "apps/web/dist", "apps/relay/src", "apps/fcc-extension/internal"];
+const targets = ["apps/web/src", "apps/web/dist", "apps/relay/src", "apps/monitor/src", "apps/fcc-extension/internal"];
 const skipped = new Set(["node_modules", ".git"]);
 const extensions = new Set([".ts", ".tsx", ".js", ".mjs", ".html", ".css", ".go"]);
 const files = [];

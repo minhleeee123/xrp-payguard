@@ -1,0 +1,10 @@
+{
+  "name": "@xrp-payguard/monitor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "typecheck": "node --check src/monitor.mjs && node --check src/server.mjs && node --check src/entry.mjs"
+  }
+}
