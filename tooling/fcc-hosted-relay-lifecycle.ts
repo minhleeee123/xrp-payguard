@@ -217,7 +217,11 @@ async function run(options: HostedLifecycleCLI): Promise<void> {
 
   const spend = await client.readContract({ address: router, abi: PayGuardActionRouterAbi, functionName: "spendState", args: [binding.policyCommitment] });
   const secondBlock = await client.getBlock({ blockTag: "latest" });
-  const secondRequest = buildRequest(binding, account.address, registry, vault, router, Number(spend.occurrence) + 1, spend.checkpoint, balanceCheckpoint(accountingAfterAllow, BigInt(Number(spend.occurrence) + 1)), secondBlock.timestamp);
+  const nextOccurrence = Number(spend[1]) + 1;
+  const secondRequest = buildRequest(
+    binding, account.address, registry, vault, router, nextOccurrence, spend[0],
+    balanceCheckpoint(accountingAfterAllow, BigInt(nextOccurrence)), secondBlock.timestamp,
+  );
   const createdDeny = await write(router, PayGuardActionRouterAbi, "createRequest", [secondRequest]);
   const deny = await requestRelayEvaluation(options.relayOrigin, secondRequest.requestId, account);
   if (deny.decision !== "DENY" || deny.publicReasonClass !== "CAP_EXCEEDED" || deny.routerStatus !== 3 || !deny.instructionId || !deny.transactions.dispatch || deny.transactions.submit.length < 2) {
