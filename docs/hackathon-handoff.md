@@ -1,8 +1,8 @@
 # XRP PayGuard hackathon handoff
 
 > The current production web artifact is pinned to source commit
-> `3a271bd475637883297ce368109b3aed5df5935c` and Vercel deployment
-> `dpl_Gv6Qb3qgqVEx3soU1RTux5eg6bTq`. Its V2-first FCC UI, production bytes,
+> `290d17c4d9588783c0c680026cf62fcfdde228c8` and Vercel deployment
+> `dpl_Ew9MVPjkQGTxvF9zBaysReGtW7Wr`. Its V2-first FCC UI, production bytes,
 > relay readiness, and 24-entry evidence corpus were checked on 2026-08-11.
 > The older V1 interactive lifecycle remains explicitly historical and is not
 > silently reassigned to the active V2 deployment. The full workspace, Go,
@@ -41,9 +41,10 @@ path may be presented as hardware-backed confidentiality or mainnet production.
 - Evidence index: <https://xrp-payguard.vercel.app/evidence/index.json>
 - Demo video: local validated MP4 exists under ignored `evidence/local/`; public
   upload remains owner-only and no public video URL is claimed.
-- Vercel deployment ID: `dpl_Gv6Qb3qgqVEx3soU1RTux5eg6bTq`
-- Deployed source commit: `3a271bd475637883297ce368109b3aed5df5935c`
+- Vercel deployment ID: `dpl_Ew9MVPjkQGTxvF9zBaysReGtW7Wr`
+- Deployed source commit: `290d17c4d9588783c0c680026cf62fcfdde228c8`
 - Railway relay: <https://payguard-live-relay-production.up.railway.app>
+- Railway monitor: <https://payguard-monitor-production.up.railway.app>
 
 The deployment was built and uploaded through Vercel CLI. It serves the static
 Vite application and a 24-entry reviewed evidence index. The live FCC
@@ -165,13 +166,13 @@ public RPC:
   review/upload.
 
 A fresh HTTPS read of deployment
-`dpl_Gv6Qb3qgqVEx3soU1RTux5eg6bTq` returned 200 for the application and
-23-entry evidence index. This paragraph describes the prior pinned artifact;
-the next production deployment advances the reviewed corpus to 24 entries. The deployed JavaScript and CSS
-matched the locally built artifact byte-for-byte, and the public-corpus audit
-matched every hosted evidence body to its reviewed local source. The prior
-Chrome and full Coston2 lifecycle results remain attached to their earlier
-pinned artifact. The hackathon headline is **103 of 105 pre-hackathon gates
+`dpl_Ew9MVPjkQGTxvF9zBaysReGtW7Wr` returned 200 for the application and
+24-entry evidence index. The public-corpus audit matched every hosted evidence
+body byte-for-byte to its reviewed local source. A fresh production Chrome
+read also observed `production monitor healthy` and the aggregate `5
+dependencies · 0 active alerts` row with no browser credential. The prior full
+Coston2 lifecycle and Lighthouse results remain attached to their earlier
+pinned artifacts. The hackathon headline is **103 of 105 pre-hackathon gates
 (98.1%)**. The two open items are owner/account confirmation and real user
 validation. The completed production-monitoring row was pulled forward and
 added to both sides of the count; other post-hackathon roadmap rows remain

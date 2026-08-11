@@ -2,18 +2,18 @@
   "schemaVersion": 1,
   "suite": "payguard-vercel-public-evidence-deployment-audit",
   "status": "public-evidence-deployment-audit-pass",
-  "recordedAt": "2026-08-11T12:37:05.658Z",
-  "sourceCommit": "3a271bd475637883297ce368109b3aed5df5935c",
+  "recordedAt": "2026-08-11T16:46:18.361Z",
+  "sourceCommit": "290d17c4d9588783c0c680026cf62fcfdde228c8",
   "platform": {
     "name": "vercel",
     "origin": "https://xrp-payguard.vercel.app",
     "indexPath": "/evidence/index.json",
-    "indexSha256": "c162c77cc868c552e7d76bb3b5675b55a539932af086b594250622010092911d",
-    "indexBytes": 9637
+    "indexSha256": "39d8b26caae9bb0db83210226baa6272e8547fc845daf241165531d9a11c63d5",
+    "indexBytes": 10047
   },
   "corpus": {
-    "totalEntries": 23,
-    "chain114Entries": 22,
+    "totalEntries": 24,
+    "chain114Entries": 23,
     "simulationEntries": 3,
     "entries": [
       {
@@ -238,6 +238,19 @@
         "explicitSimulationBoundaryVerified": null
       },
       {
+        "path": "/evidence/coston2/production-monitoring.json",
+        "suite": "payguard-coston2-production-monitoring",
+        "status": "verified-live-production-monitoring",
+        "chainId": "114",
+        "sha256": "05a5b35e85af99c153e6d4015e0f3eef7e0905250f9cfb5632a8977fd7724e2b",
+        "bytes": 2535,
+        "httpStatus": 200,
+        "contentType": "application/json; charset=utf-8",
+        "exactSourceBytesVerified": true,
+        "publicFieldScanVerified": true,
+        "explicitSimulationBoundaryVerified": null
+      },
+      {
         "path": "/evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json",
         "suite": "payguard-coston2-xrp-fdc-smart-account-funding",
         "status": "UNSPECIFIED",
@@ -340,7 +353,7 @@
   ],
   "notes": [
     "This audit fetched the pinned production origin and compared the manifest plus every listed JSON body byte-for-byte with the reviewed local Coston2/simulation sources.",
-    "The 22 chain-114 and 3 simulation counts overlap and are not additive.",
+    "The 23 chain-114 and 3 simulation counts overlap and are not additive.",
     "Repository-only evidence/web records are intentionally excluded from the hosted corpus to avoid recursive deployment claims.",
     "A clean public evidence corpus does not turn the live V2 simulated candidate into a hardware-attested verified release or mainnet system."
   ]
