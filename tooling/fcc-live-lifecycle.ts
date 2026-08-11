@@ -96,6 +96,14 @@ interface TransactionSet {
   execute?: Hash;
 }
 
+interface ExecutorPause {
+  pendingStatus: number;
+  startedBlock: bigint;
+  resumedBlock: bigint;
+  observedDurationMs: number;
+  accountingStable: boolean;
+}
+
 function randomHex32(): Hex {
   return `0x${randomBytes(32).toString("hex")}`;
 }
@@ -324,7 +332,7 @@ export function buildSanitizedLifecycleEvidence(input: {
   policyCommitment: Hex;
   custodyFreeze: Hash;
   machines: readonly LiveMachine[];
-  allow: { instructionId: Hex; digest: Hex; transactions: TransactionSet; status: number; accountingBefore: Accounting; accountingAfter: Accounting };
+  allow: { instructionId: Hex; digest: Hex; transactions: TransactionSet; status: number; accountingBefore: Accounting; accountingAfter: Accounting; executorPause: ExecutorPause };
   deny: { instructionId: Hex; digest: Hex; reason: PublicReasonClass; transactions: TransactionSet; status: number; accountingAfter: Accounting };
   policyTransactions: { stop: Hash; resume: Hash; revoke: Hash };
   replacement?: {
@@ -339,6 +347,10 @@ export function buildSanitizedLifecycleEvidence(input: {
 }) {
   if (!/^[0-9a-f]{40}$/.test(input.sourceCommit) || input.machines.length !== 3) throw new Error("lifecycle evidence provenance is invalid");
   if (input.allow.status !== 4 || input.deny.status !== 3 || input.deny.reason !== "CAP_EXCEEDED") throw new Error("lifecycle terminal states are invalid");
+  if (input.allow.executorPause.pendingStatus !== 1
+    || input.allow.executorPause.resumedBlock <= input.allow.executorPause.startedBlock
+    || input.allow.executorPause.observedDurationMs < 10_000
+    || !input.allow.executorPause.accountingStable) throw new Error("executor pause/recovery evidence is invalid");
   if (input.allow.accountingAfter.available !== input.allow.accountingBefore.available - 100_000n
     || input.allow.accountingAfter.spent !== input.allow.accountingBefore.spent + 100_000n
     || !sameAccounting(input.allow.accountingAfter, input.deny.accountingAfter)) throw new Error("lifecycle conservation evidence is invalid");
@@ -371,6 +383,7 @@ export function buildSanitizedLifecycleEvidence(input: {
         afterAllow: input.allow.accountingAfter,
         afterDeny: input.deny.accountingAfter,
       },
+      executorPause: input.allow.executorPause,
     },
     assertions: {
       liveThreeMachineDispatchVerified: true,
@@ -382,6 +395,7 @@ export function buildSanitizedLifecycleEvidence(input: {
       twoMatchingDenyVerified: true,
       denyMovedNoFundsVerified: true,
       stopResumeRevokeVerified: true,
+      fullExecutorPauseRecoveryVerified: true,
       replacementRegistrationVerified: Boolean(input.replacement),
       unavailableFrozenIdentityNotSilentlySwapped: Boolean(input.replacement),
       hardwareAttestationVerified: false,
@@ -454,7 +468,13 @@ async function run(options: LifecycleCLI): Promise<void> {
   const accountingBefore = accountingOf(await client.readContract({ address: vault, abi: PayGuardVaultAbi, functionName: "accounting", args: [account.address, ftestXrp] }));
   if (accountingBefore.available < 200_000n) throw new Error("vault balance is below the live lifecycle safety buffer");
 
-  const dispatchAndEvaluate = async (request: ActionRequestV1, state: SpendStateV1, expectedDecision: "ALLOW" | "DENY", expectedReason: PublicReasonClass) => {
+  const dispatchAndEvaluate = async (
+    request: ActionRequestV1,
+    state: SpendStateV1,
+    expectedDecision: "ALLOW" | "DENY",
+    expectedReason: PublicReasonClass,
+    exerciseExecutorPause = false,
+  ) => {
     const created = await write(router, PayGuardActionRouterAbi, "createRequest", [request]);
     const message = stringToHex(JSON.stringify({ request: wireRequest(request), state: wireState(state) }));
     const dispatched = await write(dispatcher, PayGuardFccDispatcherAbi, "sendEvaluation", [machines.map((machine) => machine.teeId), message], 3_000_000n);
@@ -470,6 +490,25 @@ async function run(options: LifecycleCLI): Promise<void> {
     if (new Set(evaluations.map((item) => item.digest)).size !== 1
       || evaluations.some((item) => item.result.decision !== expectedDecision || item.result.publicReasonClass !== expectedReason)) {
       throw new Error("three live machines did not return one matching expected decision");
+    }
+    let executorPause: ExecutorPause | undefined;
+    if (exerciseExecutorPause) {
+      const startedAt = Date.now();
+      const startedBlock = await client.getBlockNumber();
+      const storedBeforePause = await client.readContract({ address: router, abi: PayGuardActionRouterAbi, functionName: "getRequest", args: [request.requestId] });
+      const accountingBeforePause = accountingOf(await client.readContract({ address: vault, abi: PayGuardVaultAbi, functionName: "accounting", args: [account.address, ftestXrp] }));
+      await new Promise((resolveDelay) => setTimeout(resolveDelay, 15_000));
+      const resumedBlock = await client.getBlockNumber();
+      const storedAfterPause = await client.readContract({ address: router, abi: PayGuardActionRouterAbi, functionName: "getRequest", args: [request.requestId] });
+      const accountingAfterPause = accountingOf(await client.readContract({ address: vault, abi: PayGuardVaultAbi, functionName: "accounting", args: [account.address, ftestXrp] }));
+      if (Number(storedBeforePause.status) !== 1 || Number(storedAfterPause.status) !== 1
+        || resumedBlock <= startedBlock || !sameAccounting(accountingBeforePause, accountingAfterPause)) {
+        throw new Error("request did not remain fail-closed during the executor pause");
+      }
+      executorPause = {
+        pendingStatus: 1, startedBlock, resumedBlock,
+        observedDurationMs: Date.now() - startedAt, accountingStable: true,
+      };
     }
     const submitted: Hash[] = [];
     for (const evaluation of evaluations.slice(0, 2)) {
@@ -490,6 +529,7 @@ async function run(options: LifecycleCLI): Promise<void> {
       instructionId, digest: evaluations[0]!.digest, results: evaluations,
       transactions,
       status: Number(stored.status),
+      executorPause,
     };
   };
 
@@ -497,7 +537,8 @@ async function run(options: LifecycleCLI): Promise<void> {
   const firstCheckpoint = genesisSpendCheckpoint(binding.policyCommitment);
   const firstRequest = buildRequest(binding, account.address, registry, vault, router, 1, firstCheckpoint, balanceCheckpoint(accountingBefore, 1n), firstBlock.timestamp);
   const firstState: SpendStateV1 = { availableBalance: accountingBefore.available, history: [], occurrenceCount: 0, lastAccountingAt: 0n, spendCheckpoint: firstCheckpoint, balanceCheckpoint: firstRequest.balanceCheckpoint, now: firstBlock.timestamp };
-  const allow = await dispatchAndEvaluate(firstRequest, firstState, "ALLOW", "OK");
+  const allow = await dispatchAndEvaluate(firstRequest, firstState, "ALLOW", "OK", true);
+  if (!allow.executorPause) throw new Error("executor pause/recovery drill did not complete");
   if (allow.status !== 2) throw new Error("two matching ALLOW results did not reserve the request");
   const executed = await write(router, PayGuardActionRouterAbi, "execute", [firstRequest.requestId]);
   allow.transactions.execute = executed.transaction;
@@ -529,7 +570,7 @@ async function run(options: LifecycleCLI): Promise<void> {
   const evidence = buildSanitizedLifecycleEvidence({
     sourceCommit, observedBlock, policyCommitment: binding.policyCommitment,
     custodyFreeze: context.freeze.policyFreezeTransaction, machines,
-    allow: { instructionId: allow.instructionId, digest: allow.digest, transactions: allow.transactions, status: Number(storedAllow.status), accountingBefore, accountingAfter: accountingAfterAllow },
+    allow: { instructionId: allow.instructionId, digest: allow.digest, transactions: allow.transactions, status: Number(storedAllow.status), accountingBefore, accountingAfter: accountingAfterAllow, executorPause: allow.executorPause },
     deny: { instructionId: deny.instructionId, digest: deny.digest, reason: "CAP_EXCEEDED", transactions: deny.transactions, status: deny.status, accountingAfter: accountingAfterDeny },
     policyTransactions: { stop: stopped.transaction, resume: resumed.transaction, revoke: revoked.transaction },
     ...(options.replacement ? { replacement: {
