@@ -240,7 +240,7 @@ export async function recordDemo({ overwrite = false } = {}) {
 
     const landing = await cdp.evaluate(`({title:document.title,sections:document.querySelectorAll(".landing-shell main > section").length,mascots:document.querySelectorAll(".guardian-svg").length,storage:localStorage.length+sessionStorage.length})`);
     if (!landing.title.startsWith("XRP PayGuard") || landing.sections !== 8 || landing.mascots !== 3 || landing.storage !== 0) {
-      throw new Error("production landing did not match the reviewed demo baseline");
+      throw new Error(`production landing did not match the reviewed demo baseline: ${JSON.stringify(landing)}`);
     }
     await hold(stages[0].seconds);
     await scrollTo("#why"); await hold(stages[1].seconds);
