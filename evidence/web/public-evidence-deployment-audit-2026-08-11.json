@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "suite": "payguard-vercel-public-evidence-deployment-audit",
   "status": "public-evidence-deployment-audit-pass",
-  "recordedAt": "2026-08-11T11:57:46.647Z",
-  "sourceCommit": "c572bf381afc7818b6a5274673eaf34b8c7ee039",
+  "recordedAt": "2026-08-11T12:37:05.658Z",
+  "sourceCommit": "3a271bd475637883297ce368109b3aed5df5935c",
   "platform": {
     "name": "vercel",
     "origin": "https://xrp-payguard.vercel.app",
