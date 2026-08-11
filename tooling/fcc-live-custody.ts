@@ -22,8 +22,10 @@ import {
   type PolicyV1,
   type TeePublicKeyV1,
 } from "../packages/protocol/src/index.js";
+import { PayGuardPolicyRegistryAbi } from "../packages/bindings/src/index.js";
 import {
   createPublicClient,
+  createWalletClient,
   encodeAbiParameters,
   getAddress,
   hexToBytes,
@@ -36,6 +38,7 @@ import {
   stringToHex,
   toHex,
   type Address,
+  type Hash,
   zeroAddress,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
@@ -63,8 +66,9 @@ const managerAbi = parseAbi([
 ]);
 
 interface CLIOptions {
-  mode: "plan" | "run";
+  mode: "plan" | "run" | "freeze";
   writeLivePrivatePolicy: boolean;
+  broadcast: boolean;
   origins: readonly [string, string, string];
 }
 
@@ -107,6 +111,9 @@ export interface SanitizedCustodyEvidenceInput {
   bundleHash: Hex;
   machines: readonly LiveMachine[];
   receiptDigests: readonly Hex[];
+  machineRegistrationTransactions?: readonly Hash[];
+  policyFreezeTransaction?: Hash;
+  policyFreezeBlock?: bigint;
   recordedAt?: string;
 }
 
@@ -154,14 +161,20 @@ async function boundedJson(url: string, init?: RequestInit): Promise<unknown> {
 
 export function parseLiveCustodyCLI(argv: readonly string[]): CLIOptions {
   const [mode, ...tokens] = argv;
-  if (mode !== "plan" && mode !== "run") throw new Error("mode must be plan or run");
+  if (mode !== "plan" && mode !== "run" && mode !== "freeze") throw new Error("mode must be plan, run, or freeze");
   const origins: string[] = [];
   let writeLivePrivatePolicy = false;
+  let broadcast = false;
   for (let index = 0; index < tokens.length; index += 1) {
     const token = tokens[index];
     if (token === "--write-live-private-policy") {
       if (writeLivePrivatePolicy) throw new Error("duplicate live-private-policy acknowledgement");
       writeLivePrivatePolicy = true;
+      continue;
+    }
+    if (token === "--broadcast") {
+      if (broadcast) throw new Error("duplicate broadcast acknowledgement");
+      broadcast = true;
       continue;
     }
     if (token === "--url" && index + 1 < tokens.length) {
@@ -173,11 +186,13 @@ export function parseLiveCustodyCLI(argv: readonly string[]): CLIOptions {
     }
     throw new Error(`invalid argument ${token}`);
   }
-  if (mode === "plan" && writeLivePrivatePolicy) throw new Error("plan cannot acknowledge a live private-policy write");
-  if (mode === "run" && !writeLivePrivatePolicy) throw new Error("run requires --write-live-private-policy");
+  if (mode === "plan" && (writeLivePrivatePolicy || broadcast)) throw new Error("plan cannot acknowledge live writes");
+  if (mode !== "plan" && !writeLivePrivatePolicy) throw new Error(`${mode} requires --write-live-private-policy`);
+  if (mode === "freeze" && !broadcast) throw new Error("freeze requires --broadcast");
+  if (mode !== "freeze" && broadcast) throw new Error("--broadcast is accepted only in freeze mode");
   const selected = origins.length === 0 ? [...defaultOrigins] : origins;
   if (selected.length !== 3 || new Set(selected).size !== 3) throw new Error("exactly three distinct FCC origins are required");
-  return { mode, writeLivePrivatePolicy, origins: selected as [string, string, string] };
+  return { mode, writeLivePrivatePolicy, broadcast, origins: selected as [string, string, string] };
 }
 
 export function buildSanitizedCustodyEvidence(input: SanitizedCustodyEvidenceInput) {
@@ -185,10 +200,12 @@ export function buildSanitizedCustodyEvidence(input: SanitizedCustodyEvidenceInp
   if (input.machines.length !== 3 || input.receiptDigests.length !== 3) throw new Error("custody evidence requires three machines and receipts");
   if (new Set(input.machines.map((item) => item.teeId.toLowerCase())).size !== 3) throw new Error("machine identities must be distinct");
   if (new Set(input.receiptDigests.map((item) => item.toLowerCase())).size !== 3) throw new Error("receipt digests must be distinct");
+  const frozen = Boolean(input.policyFreezeTransaction && input.policyFreezeBlock !== undefined);
+  if ((input.policyFreezeTransaction === undefined) !== (input.policyFreezeBlock === undefined)) throw new Error("policy freeze transaction and block must be supplied together");
   return {
     schemaVersion: 1,
     suite: "payguard-coston2-live-simulated-three-machine-custody",
-    status: "verified-live-simulated-three-machine-custody",
+    status: frozen ? "verified-live-simulated-onchain-three-machine-custody" : "verified-live-simulated-three-machine-custody",
     recordedAt: input.recordedAt ?? new Date().toISOString(),
     network: { name: "flare-coston2", chainId: 114, observedBlock: input.observedBlock.toString() },
     publicIdentifiers: {
@@ -197,6 +214,11 @@ export function buildSanitizedCustodyEvidence(input: SanitizedCustodyEvidenceInp
       extensionId: extensionId.toString(),
       policyCommitment: input.policyCommitment,
       custodyBundleHash: input.bundleHash,
+      ...(frozen ? {
+        machineRegistrationTransactions: input.machineRegistrationTransactions ?? [],
+        policyFreezeTransaction: input.policyFreezeTransaction,
+        policyFreezeBlock: input.policyFreezeBlock!.toString(),
+      } : {}),
       machines: input.machines.map((item, index) => ({
         teeId: item.teeId,
         proxyId: item.proxyId,
@@ -217,7 +239,7 @@ export function buildSanitizedCustodyEvidence(input: SanitizedCustodyEvidenceInp
       allThreeReceiptSignersVerified: true,
       ciphertextStoreWriteVerified: true,
       restartRecoveryVerified: false,
-      onchainPolicyFreezeVerified: false,
+      onchainPolicyFreezeVerified: frozen,
       liveThresholdEvaluationVerified: false,
       hardwareAttestationVerified: false,
       simulatedTee: true,
@@ -230,12 +252,13 @@ export function buildSanitizedCustodyEvidence(input: SanitizedCustodyEvidenceInp
     },
     blockers: [
       "HARDWARE_ATTESTATION_NOT_VERIFIED",
-      "ONCHAIN_POLICY_FREEZE_NOT_YET_VERIFIED",
+      ...(frozen ? [] : ["ONCHAIN_POLICY_FREEZE_NOT_YET_VERIFIED"]),
       "TWO_OF_THREE_LIVE_EVALUATION_NOT_YET_VERIFIED",
     ],
     notes: [
       "Organizer-approved SIMULATED_TEE=true was used on Coston2.",
       "The private policy, three ciphertexts, owner authorizations, and machine signatures existed only in process memory and are excluded from public evidence.",
+      ...(frozen ? ["The on-chain freeze uses the deployed V1 administrator mapping; official-manager authorization remains a V2 release blocker."] : []),
     ],
   };
 }
@@ -387,6 +410,72 @@ function loadAccountAndDomain() {
   return { account, registry: getAddress(registry!), vault: getAddress(vault!), router: getAddress(router!), rpc };
 }
 
+async function freezePolicyOnchain(
+  client: ReturnType<typeof createPublicClient>,
+  rpc: string,
+  account: ReturnType<typeof privateKeyToAccount>,
+  registry: Address,
+  binding: PolicyBindingV1,
+  machines: readonly LiveMachine[],
+  receipts: readonly { receipt: PolicyReceiptV1; signature: Hex }[],
+): Promise<{ machineRegistrationTransactions: Hash[]; policyFreezeTransaction: Hash; policyFreezeBlock: bigint }> {
+  const chain = {
+    id: 114,
+    name: "Flare Coston2",
+    nativeCurrency: { name: "Coston2 Flare", symbol: "C2FLR", decimals: 18 },
+    rpcUrls: { default: { http: [rpc] } },
+  } as const;
+  if (await client.getBalance({ address: account.address }) < 50_000_000_000_000_000n) throw new Error("owner gas balance is below the custody-freeze safety buffer");
+  const wallet = createWalletClient({ account, chain, transport: http(rpc, { timeout: 15_000, retryCount: 2 }) });
+  const machineRegistrationTransactions: Hash[] = [];
+  for (const machine of machines) {
+    const current = await client.readContract({ address: registry, abi: PayGuardPolicyRegistryAbi, functionName: "machine", args: [machine.machineId] });
+    if (current[2]) {
+      if (getAddress(current[0]) !== machine.signer || !sameHex(current[1], machine.keyFingerprint)) throw new Error("V1 machine registration conflicts with the live identity");
+      continue;
+    }
+    const simulation = await client.simulateContract({
+      account: account.address,
+      address: registry,
+      abi: PayGuardPolicyRegistryAbi,
+      functionName: "registerMachine",
+      args: [machine.machineId, machine.keyFingerprint, machine.signer],
+    });
+    const transaction = await wallet.writeContract({ ...simulation.request, account, chain });
+    const receipt = await client.waitForTransactionReceipt({ hash: transaction, confirmations: 2, timeout: 180_000 });
+    if (receipt.status !== "success") throw new Error("V1 machine registration reverted");
+    machineRegistrationTransactions.push(transaction);
+  }
+  const receiptArguments = receipts.map((item) => ({
+    machineId: item.receipt.machineId,
+    keyFingerprint: item.receipt.keyFingerprint,
+    submissionNonce: item.receipt.submissionNonce,
+    receiptNonce: item.receipt.receiptNonce,
+    issuedAt: item.receipt.issuedAt,
+    expiry: item.receipt.expiry,
+    signature: item.signature,
+  })) as [
+    { machineId: Hex; keyFingerprint: Hex; submissionNonce: Hex; receiptNonce: bigint; issuedAt: bigint; expiry: bigint; signature: Hex },
+    { machineId: Hex; keyFingerprint: Hex; submissionNonce: Hex; receiptNonce: bigint; issuedAt: bigint; expiry: bigint; signature: Hex },
+    { machineId: Hex; keyFingerprint: Hex; submissionNonce: Hex; receiptNonce: bigint; issuedAt: bigint; expiry: bigint; signature: Hex },
+  ];
+  const simulation = await client.simulateContract({
+    account: account.address,
+    address: registry,
+    abi: PayGuardPolicyRegistryAbi,
+    functionName: "registerPolicy",
+    args: [binding, receiptArguments],
+  });
+  const policyFreezeTransaction = await wallet.writeContract({ ...simulation.request, account, chain });
+  const freezeReceipt = await client.waitForTransactionReceipt({ hash: policyFreezeTransaction, confirmations: 2, timeout: 180_000 });
+  if (freezeReceipt.status !== "success") throw new Error("V1 policy freeze reverted");
+  const [stored, status] = await client.readContract({ address: registry, abi: PayGuardPolicyRegistryAbi, functionName: "getPolicy", args: [binding.policyCommitment] });
+  if (Number(status) !== 1 || !sameHex(stored.policyCommitment, binding.policyCommitment)
+    || getAddress(stored.owner) !== getAddress(binding.owner)
+    || stored.machineIds.some((item, index) => !sameHex(item, binding.machineIds[index]!))) throw new Error("V1 policy freeze readback mismatch");
+  return { machineRegistrationTransactions, policyFreezeTransaction, policyFreezeBlock: freezeReceipt.blockNumber };
+}
+
 async function cleanSourceCommit(): Promise<string> {
   const [{ stdout: status }, { stdout: commit }] = await Promise.all([
     execFileAsync("git", ["status", "--porcelain=v1"], { cwd: root }),
@@ -473,22 +562,29 @@ async function run(options: CLIOptions): Promise<void> {
     [custodyBundleDomain, receiptDigests],
   ));
   const observedBlock = await client.getBlockNumber();
+  const freeze = options.mode === "freeze"
+    ? await freezePolicyOnchain(client, rpc, account, registry, binding, machines, receipts)
+    : undefined;
+  const finalObservedBlock = freeze?.policyFreezeBlock ?? observedBlock;
   const evidence = buildSanitizedCustodyEvidence({
     sourceCommit,
-    observedBlock,
+    observedBlock: finalObservedBlock,
     policyCommitment: binding.policyCommitment,
     bundleHash,
     machines,
     receiptDigests,
+    ...(freeze ?? {}),
   });
   await writeEvidence(evidence);
   console.log(JSON.stringify({
     status: evidence.status,
-    observedBlock: observedBlock.toString(),
+    observedBlock: finalObservedBlock.toString(),
     policyCommitment: binding.policyCommitment,
     custodyBundleHash: bundleHash,
     machineCount: machines.length,
     receiptCount: receipts.length,
+    onchainPolicyFreezeVerified: Boolean(freeze),
+    ...(freeze ? { policyFreezeTransaction: freeze.policyFreezeTransaction } : {}),
     evidencePath,
     privateMaterialRecorded: false,
   }));

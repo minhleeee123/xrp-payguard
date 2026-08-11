@@ -11,6 +11,7 @@ const address = (character: string) => getAddress(`0x${character.repeat(40)}`);
 test("live custody CLI requires an explicit private write acknowledgement", () => {
   assert.equal(parseLiveCustodyCLI(["plan"]).mode, "plan");
   assert.throws(() => parseLiveCustodyCLI(["run"]), /requires --write-live-private-policy/);
+  assert.throws(() => parseLiveCustodyCLI(["freeze", "--write-live-private-policy"]), /requires --broadcast/);
   assert.throws(() => parseLiveCustodyCLI(["plan", "--write-live-private-policy"]), /plan cannot/);
   assert.throws(() => parseLiveCustodyCLI(["run", "--write-live-private-policy", "--url", "http:\/\/unsafe.example"]), /HTTPS/);
 });
