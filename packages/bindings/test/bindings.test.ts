@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   PayGuardActionRouterAbi,
+  PayGuardFccDispatcherAbi,
   PayGuardFoundationSenderAbi,
   PayGuardPolicyRegistryAbi,
   PayGuardVaultAbi,
@@ -18,11 +19,13 @@ describe("generated PayGuard bindings", () => {
     for (const name of ["deposit", "reserve", "release", "execute"]) expect(names(PayGuardVaultAbi).has(name)).toBe(true);
     for (const name of ["createRequest", "submitEvaluation", "execute", "expire"]) expect(names(PayGuardActionRouterAbi).has(name)).toBe(true);
     for (const name of ["setExtensionIdExplicit", "sendFoundationPing", "foundationBindingHash"]) expect(names(PayGuardFoundationSenderAbi).has(name)).toBe(true);
+    for (const name of ["setExtensionIdExplicit", "sendFoundationPing", "sendEvaluation"]) expect(names(PayGuardFccDispatcherAbi).has(name)).toBe(true);
   });
 
   it("contain no private policy fields", () => {
     const serialized = JSON.stringify([
       PayGuardActionRouterAbi,
+      PayGuardFccDispatcherAbi,
       PayGuardFoundationSenderAbi,
       PayGuardPolicyRegistryAbi,
       PayGuardVaultAbi,

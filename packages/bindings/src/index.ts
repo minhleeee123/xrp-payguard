@@ -1,5 +1,6 @@
 export {
   PayGuardActionRouterAbi,
+  PayGuardFccDispatcherAbi,
   PayGuardFoundationSenderAbi,
   PayGuardPolicyRegistryAbi,
   PayGuardVaultAbi,

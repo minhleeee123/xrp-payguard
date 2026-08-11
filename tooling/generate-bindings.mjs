@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const contracts = [
   ["PayGuardActionRouter", "PayGuardActionRouter.sol"],
+  ["PayGuardFccDispatcher", "PayGuardFccDispatcher.sol"],
   ["PayGuardFoundationSender", "PayGuardFoundationSender.sol"],
   ["PayGuardPolicyRegistry", "PayGuardPolicyRegistry.sol"],
   ["PayGuardPolicyRegistryV2", "PayGuardPolicyRegistryV2.sol"],
