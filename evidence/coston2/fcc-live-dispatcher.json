@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "suite": "payguard-coston2-live-fcc-dispatcher",
+  "status": "verified-live-simulated-fcc-dispatcher",
+  "recordedAt": "2026-08-11T05:18:42.122Z",
+  "network": {
+    "name": "flare-coston2",
+    "chainId": 114,
+    "observedBlock": "33906501"
+  },
+  "publicIdentifiers": {
+    "verificationSourceCommit": "a31bd01eccc0235231090e49d226e46b0465af8d",
+    "deploymentSourceCommit": "80556619b4bad827b6117e1d520713a648a65a0b",
+    "manager": "0x1a9C4A0f9D76c0b1D91d22E24E573a9b377618aE",
+    "extensionId": "66037",
+    "dispatcher": "0x18Ea713cEf10ECf5cAC23c08dD25Ac17D2f07e3d",
+    "runtimeHash": "0x4fe1134e3489269fc3fdf614ea76a537effd6906507b7783809d3e2ce26362f3",
+    "runtimeTemplateHash": "0x403ef2728b49fa8b1d755142e8551e33375da0d486f2c002229de9f219ac002c",
+    "deploymentTransaction": "0xfde1a0d19e51230e0be07231565a227f2f9a50105313ca55cf9477a3a3e09423",
+    "managerUpdateTransaction": "0xa81169dacb7a08a22d28845c7084c51981ff7b6788764e8365caa6424ce44eb6",
+    "extensionBindingTransaction": "0x3f1611988b3b363e09e437ba1201ba834369b4b1fb6ed08c7bdfeb97181b717f"
+  },
+  "assertions": {
+    "chainIdVerified": true,
+    "ownerVerified": true,
+    "managerRuntimeVerified": true,
+    "priorFoundationSenderVerified": true,
+    "dispatcherRuntimeVerified": true,
+    "managerSenderUpdatedVerified": true,
+    "extensionBindingVerified": true,
+    "foundationPingSurfacePreserved": true,
+    "evaluationSurfaceVerified": true,
+    "clientDecisionFieldAbsent": true,
+    "simulatedTee": true,
+    "hardwareAttestationVerified": false,
+    "liveThresholdEvaluationVerified": false,
+    "noPrivateKeyRecorded": true,
+    "noCredentialRecorded": true,
+    "noPolicyRecorded": true,
+    "noCiphertextRecorded": true,
+    "noSignatureRecorded": true,
+    "testnetOnly": true
+  },
+  "blockers": [
+    "LIVE_TWO_OF_THREE_EVALUATION_NOT_YET_VERIFIED",
+    "V2_RELEASE_NOT_VERIFIED",
+    "HARDWARE_ATTESTATION_NOT_VERIFIED"
+  ],
+  "notes": [
+    "The dispatcher accepts only public request/state bytes and never accepts an ALLOW/DENY decision.",
+    "This Coston2 deployment supports an explicitly simulated FCC lifecycle and is not a verified V2 or hardware release."
+  ]
+}
