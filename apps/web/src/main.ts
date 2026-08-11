@@ -33,6 +33,7 @@ import {
 } from "./model.js";
 import { fetchPublicWebEvidenceIndex, type PublicWebEvidenceIndex } from "./web-evidence.js";
 import { fetchSimulatedLifecycleEvidence, type SimulatedLifecycleEvidence } from "./demo-evidence.js";
+import { fetchLiveV2LifecycleEvidence, type LiveV2LifecycleEvidence } from "./live-lifecycle-evidence.js";
 import { landingView } from "./landing.js";
 import { appViewHash, durationHint, parseAppRoute, requestStateLabels, unixTimeHint, type View } from "./ui-state.js";
 import {
@@ -105,6 +106,7 @@ type PublicEvidenceMirrorState =
   | { status: "READY"; index: PublicWebEvidenceIndex }
   | { status: "UNAVAILABLE"; reason: "NOT_PUBLISHED" | "INVALID" };
 type DemoUiState = { status: "LOADING" } | { status: "READY"; evidence: SimulatedLifecycleEvidence } | { status: "UNAVAILABLE" };
+type LiveV2EvidenceUiState = { status: "LOADING" } | { status: "READY"; evidence: LiveV2LifecycleEvidence } | { status: "UNAVAILABLE" };
 type InteractiveConfigUiState = { status: "LOADING" } | { status: "READY"; config: DemoDomainConfig } | { status: "UNAVAILABLE" };
 type LiveFccConfigUiState = { status: "LOADING" } | { status: "READY"; config: LiveFccConfig } | { status: "UNAVAILABLE" };
 type WalletUiState =
@@ -153,6 +155,7 @@ let mobileMenuOpen = false;
 let landingOpen = initialRoute.surface === "landing";
 let publicEvidenceMirrorState: PublicEvidenceMirrorState = { status: "LOADING" };
 let demoState: DemoUiState = { status: "LOADING" };
+let liveV2EvidenceState: LiveV2EvidenceUiState = { status: "LOADING" };
 let interactiveConfigState: InteractiveConfigUiState = { status: "LOADING" };
 let interactiveSession: DemoPolicySession | null = null;
 let interactivePolicyRegistration: DemoTransactionResult | null = null;
@@ -229,6 +232,7 @@ function render(): void {
       </aside>
       <main class="main-area">
         <header class="topbar"><div class="breadcrumbs"><span>Workspace</span><b>/</b><strong>${label(activeView)}</strong></div><div class="top-actions">${headerBalances()}${networkChip()}<button class="icon-button" type="button" data-action="notifications" aria-label="Notifications" aria-expanded="${notificationOpen}">♢${notificationState.status === "READY" && notificationState.feed.notifications.length > 0 ? '<span class="notification-dot"></span>' : ""}</button><button class="outline-button wallet-button" type="button" data-action="connect">${walletButtonLabel()}</button></div></header>
+        ${candidateContextBar()}
         ${notificationOpen ? notificationTray() : ""}
         <section class="content" id="app-main" tabindex="-1">${viewContent()}</section>
         ${appNotice ? `<div class="toast" role="status"><span>${esc(appNotice)}</span><button type="button" data-action="dismiss-notice" aria-label="Dismiss notification">×</button></div>` : ""}
@@ -262,15 +266,25 @@ function networkChip(): string {
   return `<span class="network-chip"><span class="status-dot amber"></span>Coston2 <em>not connected</em></span>`;
 }
 
+function candidateContextBar(): string {
+  if (liveFccConfigState.status === "READY") {
+    return `<div class="candidate-context candidate-ready" role="status"><span class="status-dot green"></span><strong>V2 LIVE CANDIDATE</strong><span>Coston2 · 3 registered status-2 machines · SIMULATED_TEE</span><em>Hardware release not verified</em></div>`;
+  }
+  if (liveFccConfigState.status === "LOADING") {
+    return `<div class="candidate-context" role="status"><span class="status-dot amber"></span><strong>VERIFYING V2 CANDIDATE</strong><span>Checking relay, contracts, manager and A/B/D machine bindings</span><em>No readiness asserted yet</em></div>`;
+  }
+  return `<div class="candidate-context candidate-unavailable" role="status"><span class="status-dot amber"></span><strong>V2 LIVE PATH UNAVAILABLE</strong><span>Production checks failed closed</span><em>No simulated fallback is shown as live</em></div>`;
+}
+
 function headerBalances(): string {
   const live = liveSnapshot();
   return `<div class="header-balances" aria-label="Coston2 wallet balances"><span class="header-balance" title="FTestXRP wallet balance"><small>FTESTXRP</small><strong>${live ? token(live.tokenBalance) : "—"}</strong></span><span class="header-balance" title="C2FLR gas balance"><small>C2FLR</small><strong>${live ? nativeToken(live.nativeBalance) : "—"}</strong></span><a class="header-faucet" href="${COSTON2_FAUCET}" target="_blank" rel="noreferrer" aria-label="Get Coston2 test tokens">FAUCET ↗</a></div>`;
 }
 
 function sidebarNetworkCard(): string {
-  if (coston2State.status === "READY") return `<div class="security-card live-card"><span class="status-dot green"></span><div><strong>Verified Coston2 reads</strong><small>Runtime, wiring & asset checked</small></div></div>`;
-  if (coston2State.status === "LOADING") return `<div class="security-card"><span class="status-dot amber"></span><div><strong>Checking Coston2</strong><small>Reading one finalized block</small></div></div>`;
-  return `<div class="security-card"><span class="status-dot amber"></span><div><strong>Testnet dApp</strong><small>FCC authorization remains simulated</small></div></div>`;
+  if (liveFccConfigState.status === "READY") return `<div class="security-card live-card"><span class="status-dot green"></span><div><strong>V2 live candidate</strong><small>3 registered simulated machines</small></div></div>`;
+  if (liveFccConfigState.status === "LOADING") return `<div class="security-card"><span class="status-dot amber"></span><div><strong>Checking V2 domain</strong><small>Relay, manager & machines</small></div></div>`;
+  return `<div class="security-card"><span class="status-dot amber"></span><div><strong>V2 path unavailable</strong><small>Authorization failed closed</small></div></div>`;
 }
 
 function sidebarUserRow(): string {
@@ -326,11 +340,11 @@ function quickStartView(): string {
   const request = requestState.status === "UNAVAILABLE" ? null : requestState;
   const reviewed = isReviewedRequestInput();
   return `<section class="panel quick-start" aria-labelledby="quick-start-title"><div class="panel-heading"><div><div class="eyebrow">FIRST-TIME TEST PATH</div><h2 id="quick-start-title">Try the product without guessing</h2></div><span class="state-tag gray-tag">COSTON2 ONLY</span></div><p class="panel-copy">Start with the wallet-free proof, then connect a disposable testnet wallet only when you want to move faucet tokens.</p><div class="quick-start-grid">
-    <article><span class="quick-index">01</span><div><strong>Inspect the reviewed lifecycle</strong><small>No wallet. Review three simulated machines, ALLOW, DENY, governance, and 14 Coston2 transactions.</small></div><button class="text-button" type="button" data-view="demo">View lifecycle ↗</button></article>
+    <article><span class="quick-index">01</span><div><strong>Verify the live V2 candidate</strong><small>No wallet. Inspect A/B/D readiness, the hosted ALLOW/DENY lifecycle, V2 transactions, governance, and conservation.</small></div><button class="text-button" type="button" data-view="demo">Open V2 proof ↗</button></article>
     <article><span class="quick-index">02</span><div><strong>${account ? "Coston2 wallet connected" : "Prepare a testnet wallet"}</strong><small>${account ? `${esc(short(account))} · PayGuard never receives its private key.` : "Use an injected EVM wallet. Get C2FLR gas and FTestXRP only from the official faucet."}</small></div>${account ? `<button class="text-button" type="button" data-action="refresh">Verify again ↗</button>` : `<div class="quick-actions"><button class="text-button" type="button" data-action="connect">Connect ↗</button><a href="${COSTON2_FAUCET}" target="_blank" rel="noreferrer">Official faucet ↗</a></div>`}</article>
     <article><span class="quick-index">03</span><div><strong>${live ? "Vault controls ready" : "Fund and inspect your vault"}</strong><small>${live ? `${token(live.tokenBalance)} FTestXRP in wallet · every write uses an exact two-step preview.` : "Approve, deposit, and withdraw are enabled only after finalized runtime, wiring, and accounting checks."}</small></div><button class="text-button" type="button" data-view="vaults">Open vault ↗</button></article>
     <article><span class="quick-index">04</span><div><strong>${request ? `${reviewed ? "Reviewed" : "Public"} request loaded` : "Verify a public request"}</strong><small>${request ? `On-chain ${request.status} · timing ${requestReadinessLabel(request.readiness)}.${reviewed ? " This public example is not your wallet activity." : " This is the public ID currently loaded in this tab."}` : "The reviewed request is prefilled. Reading it needs no wallet and reveals no private policy."}</small></div><button class="text-button" type="button" data-view="requests">Inspect request ↗</button></article>
-  </div><div class="quick-boundary"><span>◈</span><p><strong>Policy activation is intentionally not a browser shortcut.</strong> Policy Studio computes an in-memory commitment; production activation still requires three registered FCC custody receipts.</p><button class="text-button" type="button" data-view="studio">Draft locally ↗</button></div></section>`;
+  </div><div class="quick-boundary"><span>◈</span><p><strong>Policy activation is intentionally not a browser shortcut.</strong> The V2 live candidate requires three registered FCC custody receipts; only the configured operator can rerun writes, while judges can verify the completed lifecycle wallet-free.</p><button class="text-button" type="button" data-view="studio">Inspect Policy Studio ↗</button></div></section>`;
 }
 
 function overviewView(): string {
@@ -367,8 +381,8 @@ function studioView(): string {
 
 function interactiveStudioPanel(): string {
   const account = connectedAccount();
-  if (interactiveConfigState.status === "LOADING") return `<section class="panel receipt-card interactive-studio-card"><div class="eyebrow">INTERACTIVE TESTNET DEMO</div><h3>Loading isolated demo domain…</h3><p class="panel-copy">No production FCC availability is inferred.</p></section>`;
-  if (interactiveConfigState.status === "UNAVAILABLE") return `<section class="panel receipt-card interactive-studio-card"><div class="eyebrow">INTERACTIVE TESTNET DEMO</div><h3>Serverless actors unavailable</h3><div class="activation-block"><span class="status-dot amber"></span><div><strong>No fallback approval</strong><small>The production FCC panel remains blocked independently.</small></div></div></section>`;
+  if (interactiveConfigState.status === "LOADING") return `<details class="legacy-sandbox-panel"><summary>Legacy V1 sandbox <span>loading isolated actors</span></summary><section class="panel receipt-card interactive-studio-card"><div class="eyebrow">LEGACY V1 SANDBOX</div><h3>Loading isolated demo domain…</h3><p class="panel-copy">This is not the active V2 candidate.</p></section></details>`;
+  if (interactiveConfigState.status === "UNAVAILABLE") return `<details class="legacy-sandbox-panel"><summary>Legacy V1 sandbox <span>unavailable</span></summary><section class="panel receipt-card interactive-studio-card"><div class="eyebrow">LEGACY V1 SANDBOX</div><h3>Serverless actors unavailable</h3><div class="activation-block"><span class="status-dot amber"></span><div><strong>No fallback approval</strong><small>The active V2 FCC panel remains independent.</small></div></div></section></details>`;
   const config = interactiveConfigState.config;
   const exactDomain = studioCompilation
     && studioCompilation.policy.registry.toLowerCase() === config.registry.toLowerCase()
@@ -388,13 +402,13 @@ function interactiveStudioPanel(): string {
         : !interactivePolicyRegistration
           ? `<button class="primary-button" type="button" data-action="register-demo-policy" ${interactiveBusy ? "disabled" : ""}>${interactiveBusy === "REGISTER" ? "Waiting for wallet / finality…" : "Register in demo contracts"}</button>`
           : `<button class="outline-button" type="button" data-view="demo">Open interactive lifecycle ↗</button>`;
-  return `<section class="panel receipt-card interactive-studio-card"><div class="eyebrow">INTERACTIVE TESTNET DEMO</div><h3>Separate simulation namespace</h3><span class="state-tag gray-tag">SIMULATED FCC · NOT PRODUCTION TEE</span><p class="panel-copy">Three actor signatures exercise the protocol on Coston2. They share one Vercel operator and do not count as production custody.</p>${rows}<div class="activation-block"><span class="status-dot ${interactivePolicyRegistration ? "green" : "amber"}"></span><div><strong>${interactivePolicyRegistration ? "Demo policy registered" : interactiveSession ? "3 / 3 simulated receipts checked" : "Production activation remains blocked"}</strong><small>${interactivePolicyRegistration ? `Coston2 block ${interactivePolicyRegistration.blockNumber}` : "Policy ciphertext and owner signatures stay memory-only; refresh discards them."}</small></div></div>${action}</section>`;
+  return `<details class="legacy-sandbox-panel"><summary>Legacy V1 sandbox <span>optional · separate contracts</span></summary><section class="panel receipt-card interactive-studio-card"><div class="eyebrow">LEGACY V1 SANDBOX</div><h3>Separate simulation namespace</h3><span class="state-tag gray-tag">V1 ACTORS · NOT REGISTERED FCC</span><p class="panel-copy">Three serverless actor signatures exercise the older V1 contract path. They share one Vercel operator and never count as V2 custody.</p>${rows}<div class="activation-block"><span class="status-dot ${interactivePolicyRegistration ? "green" : "amber"}"></span><div><strong>${interactivePolicyRegistration ? "Legacy sandbox policy registered" : interactiveSession ? "3 / 3 simulated receipts checked" : "V2 activation remains separate"}</strong><small>${interactivePolicyRegistration ? `Coston2 block ${interactivePolicyRegistration.blockNumber}` : "Policy ciphertext and owner signatures stay memory-only; refresh discards them."}</small></div></div>${action}</section></details>`;
 }
 
 function studioCustodyPanel(): string {
   const account = connectedAccount();
-  if (liveFccConfigState.status === "LOADING") return `<section class="panel receipt-card"><div class="eyebrow">LIVE FCC · COSTON2</div><h3>Verifying relay and three machines…</h3><p class="panel-copy">No readiness is asserted until the relay checks contracts, manager status, stable HTTPS origins, keys and code hash.</p></section>`;
-  if (liveFccConfigState.status === "UNAVAILABLE") return `<section class="panel receipt-card"><div class="eyebrow">LIVE FCC · COSTON2</div><h3>Live path unavailable</h3><div class="activation-block"><span class="status-dot amber"></span><div><strong>Failed closed</strong><small>No local receipt or simulated browser decision replaces the hosted FCC path.</small></div></div></section>`;
+  if (liveFccConfigState.status === "LOADING") return `<section class="panel receipt-card"><div class="eyebrow">V2 LIVE CANDIDATE · COSTON2</div><h3>Verifying relay and three machines…</h3><p class="panel-copy">No readiness is asserted until the relay checks V2 contracts, manager status, stable HTTPS origins, keys and code hash.</p></section>`;
+  if (liveFccConfigState.status === "UNAVAILABLE") return `<section class="panel receipt-card"><div class="eyebrow">V2 LIVE CANDIDATE · COSTON2</div><h3>Live path unavailable</h3><div class="activation-block"><span class="status-dot amber"></span><div><strong>Failed closed</strong><small>No local receipt or legacy simulation replaces the hosted V2 path.</small></div></div></section>`;
   const config = liveFccConfigState.config;
   const exactDomain = studioCompilation
     && studioCompilation.policy.registry.toLowerCase() === config.contracts.registry.toLowerCase()
@@ -405,19 +419,19 @@ function studioCustodyPanel(): string {
   const operatorConnected = account?.toLowerCase() === config.operator.toLowerCase();
   const rows = liveFccSession
     ? liveFccSession.custody.map((receipt, index) => `<div class="receipt-row"><span class="machine-index">0${index + 1}</span><div><strong>${esc(short(receipt.receipt.machineId))}</strong><small>Registered machine receipt · ${esc(short(receipt.digest))}</small></div><span class="state-tag green-tag">SIGNED</span></div>`).join("")
-    : config.machines.map((machine) => `<div class="receipt-row"><span class="machine-index">0${machine.index}</span><div><strong>${esc(short(machine.teeId))}</strong><small>Status 2 · ${esc(short(machine.codeHash))}</small></div><span class="state-tag green-tag">PRODUCTION SET</span></div>`).join("");
+    : config.machines.map((machine) => `<div class="receipt-row"><span class="machine-index">0${machine.index}</span><div><strong>${esc(short(machine.teeId))}</strong><small>Status 2 · ${esc(short(machine.codeHash))}</small></div><span class="state-tag green-tag">MANAGER STATUS 2</span></div>`).join("");
   const action = !account
     ? `<button class="outline-button" type="button" data-action="connect">Connect operator wallet</button>`
     : !operatorConnected
-      ? `<div class="unavailable-box"><span class="status-dot amber"></span><div><strong>Operator wallet required for V1</strong><small>Expected ${esc(short(config.operator))}. The open public demo remains available below.</small></div></div>`
+      ? `<div class="unavailable-box"><span class="status-dot amber"></span><div><strong>Operator wallet required for V2 writes</strong><small>Expected ${esc(short(config.operator))}. The wallet-free V2 evidence remains available in Demo and Auditor.</small></div></div>`
       : !exactDomain
-        ? `<button class="outline-button" type="button" data-action="prepare-live-draft">Use live V1 domain</button>`
+        ? `<button class="outline-button" type="button" data-action="prepare-live-draft">Use live V2 domain</button>`
         : !liveFccSession
           ? `<button class="primary-button" type="button" data-action="collect-live-custody" ${liveFccBusy ? "disabled" : ""}>${liveFccBusy === "CUSTODY" ? "Signing & contacting A/B/D…" : "Collect 3 live FCC receipts"}</button>`
           : !liveFccPolicyRegistration
             ? `<button class="primary-button" type="button" data-action="register-live-policy" ${liveFccBusy ? "disabled" : ""}>${liveFccBusy === "REGISTER" ? "Waiting for finality…" : "Register live policy on Coston2"}</button>`
             : `<button class="outline-button" type="button" data-view="demo">Continue live lifecycle ↗</button>`;
-  return `<section class="panel receipt-card"><div class="eyebrow">LIVE FCC · COSTON2 V1</div><h3>Three registered machines</h3><span class="state-tag gray-tag">SIMULATED TEE · NOT HARDWARE / V2 RELEASE</span><p class="panel-copy">The hosted ciphertext-only relay reaches A/B/D. Each machine owns a distinct registered identity and signs its own custody receipt.</p>${rows}<div class="activation-block"><span class="status-dot ${liveFccPolicyRegistration ? "green" : "amber"}"></span><div><strong>${liveFccPolicyRegistration ? "Live V1 policy active" : liveFccSession ? "3 / 3 receipts verified in memory" : "Machines verified; policy not yet registered"}</strong><small>${liveFccPolicyRegistration ? `Coston2 block ${liveFccPolicyRegistration.blockNumber}` : "Private policy, ciphertexts and signatures are discarded on refresh."}</small></div></div>${action}<small class="panel-copy">${esc(liveFccNotice)}</small></section>`;
+  return `<section class="panel receipt-card"><div class="eyebrow">LIVE FCC · COSTON2 V2</div><h3>Three registered machines</h3><span class="state-tag green-tag">V2 LIVE CANDIDATE</span><span class="state-tag gray-tag">SIMULATED TEE · NOT HARDWARE-VERIFIED</span><p class="panel-copy">The hosted ciphertext-only relay reaches A/B/D through the manager-backed V2 domain. Each machine owns a distinct registered identity and signs its own custody receipt.</p>${rows}<div class="activation-block"><span class="status-dot ${liveFccPolicyRegistration ? "green" : "amber"}"></span><div><strong>${liveFccPolicyRegistration ? "Live V2 policy active" : liveFccSession ? "3 / 3 receipts verified in memory" : "V2 machines verified; policy not yet registered"}</strong><small>${liveFccPolicyRegistration ? `Coston2 block ${liveFccPolicyRegistration.blockNumber}` : "Private policy, ciphertexts and signatures are discarded on refresh."}</small></div></div>${action}<small class="panel-copy">${esc(liveFccNotice)}</small></section>`;
 }
 
 function custodyUnavailableReason(reason: string): string {
@@ -458,11 +472,20 @@ function updateStudioHumanHints(form: HTMLFormElement): void {
 
 function studioPreview(): string {
   const commitment = studioCompilation?.publicEvidence.policyCommitment ?? "Not computed";
+  const liveV2Domain = studioCompilation && liveFccConfigState.status === "READY"
+    && studioCompilation.policy.registry.toLowerCase() === liveFccConfigState.config.contracts.registry.toLowerCase()
+    && studioCompilation.policy.vault.toLowerCase() === liveFccConfigState.config.contracts.vault.toLowerCase()
+    && studioCompilation.policy.router.toLowerCase() === liveFccConfigState.config.contracts.router.toLowerCase();
   const demoDomain = studioCompilation && interactiveConfigState.status === "READY"
     && studioCompilation.policy.registry.toLowerCase() === interactiveConfigState.config.registry.toLowerCase()
     && studioCompilation.policy.vault.toLowerCase() === interactiveConfigState.config.vault.toLowerCase()
     && studioCompilation.policy.router.toLowerCase() === interactiveConfigState.config.router.toLowerCase();
-  return `<section class="panel commitment-card"><div class="eyebrow">DOMAIN-BOUND COMMITMENT</div><div class="commitment-value" id="commitment-value">${esc(commitment)}</div><small>${studioCompilation ? "Validated locally · not registered" : "Validate the in-memory draft to compute"}</small><div class="commitment-state"><span class="status-dot ${demoDomain ? "green" : "amber"}"></span> ${demoDomain ? "Simulation contract domain loaded · not production" : "Production Coston2 release remains unverified"}</div></section>
+  const domainStatus = liveV2Domain
+    ? "V2 live-candidate domain loaded · hardware release not verified"
+    : demoDomain
+      ? "Legacy V1 sandbox domain loaded · not active V2"
+      : "Local example domain · select V2 only with the configured operator";
+  return `<section class="panel commitment-card"><div class="eyebrow">DOMAIN-BOUND COMMITMENT</div><div class="commitment-value" id="commitment-value">${esc(commitment)}</div><small>${studioCompilation ? "Validated locally · not registered" : "Validate the in-memory draft to compute"}</small><div class="commitment-state"><span class="status-dot ${liveV2Domain ? "green" : "amber"}"></span> ${domainStatus}</div></section>
     <section class="panel boundary-card"><div class="eyebrow">EXACT DATA MAP</div><h3>Public versus private</h3>${studioCompilation ? `${previewGroup("Public at activation", studioCompilation.publicAtActivation, "public")} ${previewGroup("Public at request", studioCompilation.publicAtRequest, "request")} ${previewGroup("Private in FCC", studioCompilation.privateInFcc, "private")}` : `<p class="boundary-empty">Compute the draft to inspect every policy field by when and where it becomes visible.</p>`}</section>`;
 }
 
@@ -522,12 +545,34 @@ function isReviewedRequestInput(): boolean {
 }
 
 function demoView(): string {
-  return `${pageIntro("LIVE + REVIEWED TESTNET PATHS", "FCC lifecycle on Coston2", "The live operator path reaches three registered simulated-TEE machines. Reviewed evidence and the open simulation remain separate below.")}${liveFccDemoView()}${recordedDemoView()}${interactiveDemoView()}`;
+  return `${pageIntro("V2 LIVE CANDIDATE", "Verify PayGuard on Coston2", "Start with the wallet-free hosted V2 proof. Operator-only controls can rerun the same registered three-machine path; the older V1 sandbox is retained only as a clearly separated historical tool.")}${liveV2EvidenceView()}${liveFccDemoView()}${legacyDemoArchiveView()}`;
+}
+
+function liveV2EvidenceView(): string {
+  if (liveV2EvidenceState.status === "LOADING") {
+    return `${demoSectionIntro("WALLET-FREE V2 PROOF", "Validating the hosted lifecycle evidence", "No wallet or private material is required.")}<section class="panel demo-loading"><div class="empty-orbit">◌</div><h2>Checking V2 evidence…</h2></section>`;
+  }
+  if (liveV2EvidenceState.status === "UNAVAILABLE") {
+    return `${demoSectionIntro("WALLET-FREE V2 PROOF", "Hosted evidence unavailable", "The UI fails closed instead of replacing missing V2 evidence with the legacy sandbox.")}<section class="panel"><div class="unavailable-box"><span class="status-dot amber"></span><div><strong>No V2 lifecycle proof asserted</strong><small>Use the public evidence index or retry after the hosted body is available.</small></div></div></section>`;
+  }
+  const evidence = liveV2EvidenceState.evidence;
+  const executed = evidence.afterAllow.spent - evidence.before.spent;
+  const machines = evidence.machines.map((machine, index) => `<article class="demo-machine machine-${index + 1}"><div class="machine-glyph">${index === 0 ? "◇" : index === 1 ? "⌁" : "▣"}</div><div><span>REGISTERED MACHINE ${index + 1}</span><strong>${esc(short(machine.teeId))}</strong><small>Status ${machine.status} · ${esc(new URL(machine.url).hostname)}</small></div></article>`).join("");
+  const steps = evidence.steps.map((step, index) => `<li><span class="demo-step-index">${String(index + 1).padStart(2, "0")}</span><div><strong>${esc(step.label)}</strong><small>${esc(short(step.transactionHash))}</small></div><a href="${explorerTransaction(step.transactionHash)}" target="_blank" rel="noreferrer" aria-label="Open ${esc(step.label)} transaction">↗</a></li>`).join("");
+  return `${demoSectionIntro("WALLET-FREE V2 PROOF", "One complete hosted lifecycle", "Strictly decoded from the published V2 evidence body; every transaction opens in the Coston2 explorer.")}
+    <div class="demo-boundary v2-proof-boundary"><span class="state-tag green-tag">V2 LIVE CANDIDATE VERIFIED</span><strong>3 registered status-2 machines · 3 custody receipts · 2 matching results</strong><span>SIMULATED_TEE=true · hardware attestation and verified release remain open</span></div>
+    <section class="demo-machine-grid">${machines}</section>
+    <div class="demo-summary-grid"><section class="panel demo-result allow-result"><div class="eyebrow">ALLOW · 2 MATCHING RESULTS</div><h2>Transfer executed</h2><strong>${token(executed)} FTestXRP</strong><p>The relay reconstructed canonical Coston2 state and submitted two registered machine results. The client supplied no decision.</p><a class="text-button inline-link" href="${explorerTransaction(evidence.steps[5]!.transactionHash)}" target="_blank" rel="noreferrer">Open execution ↗</a></section><section class="panel demo-result deny-result"><div class="eyebrow">DENY · 2 MATCHING RESULTS</div><h2>${evidence.denyReason}</h2><strong>No funds moved</strong><p>The second request was denied and the exact post-ALLOW accounting remained unchanged.</p><span class="mono-value">${esc(short(evidence.denyRequestId))}</span></section><section class="panel demo-result"><div class="eyebrow">V2 CONSERVATION</div><h2>Vault still balances</h2><strong>${token(evidence.afterDeny.deposited)} deposited</strong><p>${token(evidence.afterDeny.available)} available + ${token(evidence.afterDeny.spent)} spent. Stop, resume, and revoke are also evidenced.</p></section></div>
+    <div class="demo-detail-grid"><section class="panel demo-timeline"><div class="panel-heading"><div><div class="eyebrow">HOSTED V2 TRANSACTION TIMELINE</div><h2>${evidence.steps.length} public checkpoints</h2></div><span class="state-tag green-tag">COSTON2 VERIFIED RUN</span></div><ol>${steps}</ol></section><aside class="panel demo-limitations"><div class="eyebrow">EXACT TRUST BOUNDARY</div><h2>Live candidate, not hardware release</h2><ul>${evidence.blockers.map((blocker) => `<li>${esc(blocker.replaceAll("_", " "))}</li>`).join("")}</ul><p>The evidence proves the deployed V2 simulated profile. It does not claim hardware attestation, mainnet readiness, or independent operators.</p><a class="outline-button inline-link" href="/evidence/coston2/fcc-hosted-relay-lifecycle.json" target="_blank" rel="noreferrer">Open reviewed V2 JSON ↗</a></aside></div>`;
+}
+
+function legacyDemoArchiveView(): string {
+  return `<details class="legacy-demo-archive"><summary><span><strong>Historical V1 simulation tools</strong><small>Optional isolated sandbox and the earlier 14-transaction record · not the active V2 path</small></span><em>Expand legacy evidence</em></summary><div class="legacy-demo-content">${recordedDemoView()}${interactiveDemoView()}</div></details>`;
 }
 
 function liveFccDemoView(): string {
-  if (liveFccConfigState.status === "LOADING") return `${demoSectionIntro("LIVE FCC · COSTON2 V1", "Checking the hosted lifecycle", "The relay is validating contracts and all three registered machine identities.")}<section class="panel demo-loading"><div class="empty-orbit">◌</div><h2>Live preflight in progress…</h2></section>`;
-  if (liveFccConfigState.status === "UNAVAILABLE") return `${demoSectionIntro("LIVE FCC · COSTON2 V1", "Hosted lifecycle unavailable", "The path fails closed; the reviewed public evidence below remains independently available.")}<section class="panel"><div class="unavailable-box"><span class="status-dot amber"></span><div><strong>No live success asserted</strong><small>The browser cannot substitute a decision, receipt, machine identity, or release claim.</small></div></div></section>`;
+  if (liveFccConfigState.status === "LOADING") return `${demoSectionIntro("V2 LIVE CANDIDATE · COSTON2", "Checking the hosted lifecycle", "The relay is validating the V2 contracts, official manager binding, and all three registered machine identities.")}<section class="panel demo-loading"><div class="empty-orbit">◌</div><h2>V2 preflight in progress…</h2></section>`;
+  if (liveFccConfigState.status === "UNAVAILABLE") return `${demoSectionIntro("V2 LIVE CANDIDATE · COSTON2", "Hosted lifecycle unavailable", "The V2 path fails closed; reviewed public evidence remains independently available below.")}<section class="panel"><div class="unavailable-box"><span class="status-dot amber"></span><div><strong>No live success asserted</strong><small>The browser cannot substitute a decision, receipt, machine identity, or release claim.</small></div></div></section>`;
   const config = liveFccConfigState.config;
   const account = connectedAccount();
   const operatorConnected = account?.toLowerCase() === config.operator.toLowerCase();
@@ -538,12 +583,12 @@ function liveFccDemoView(): string {
   const transactionRows = liveFccTransactions.length === 0
     ? `<div class="boundary-empty">No live wallet or relay transaction has been submitted from this tab.</div>`
     : `<ol class="interactive-transaction-list">${liveFccTransactions.map((item, index) => `<li><span class="demo-step-index">${String(index + 1).padStart(2, "0")}</span><div><strong>${esc(item.label)}</strong><small>${item.blockNumber ? `Block ${item.blockNumber} · ` : "Relay broadcast · "}${esc(short(item.hash))}</small></div><a href="${explorerTransaction(item.hash)}" target="_blank" rel="noreferrer">↗</a></li>`).join("")}</ol>`;
-  return `${demoSectionIntro("LIVE FCC · COSTON2 V1", "Run the registered three-machine lifecycle", "Operator-only V1 control plane: policy ciphertext goes independently to A/B/D; the relay reconstructs public state and submits two matching signed results.")}
-    <div class="demo-boundary interactive-boundary"><span class="state-tag green-tag">3 REGISTERED MACHINES · STATUS 2</span><strong>Live Coston2 · ciphertext-only relay</strong><span>SIMULATED_TEE=true · not hardware attestation · not verified V2 release</span></div>
+  return `${demoSectionIntro("V2 LIVE CANDIDATE · COSTON2", "Run or verify the registered three-machine lifecycle", "Active V2 control plane: policy ciphertext goes independently to A/B/D; the relay reconstructs public state and submits two matching signed results. Writes remain operator-only.")}
+    <div class="demo-boundary interactive-boundary"><span class="state-tag green-tag">V2 · 3 REGISTERED MACHINES · STATUS 2</span><strong>Live Coston2 · ciphertext-only relay</strong><span>SIMULATED_TEE=true · not hardware attestation · live candidate, not verified release</span></div>
     <div class="demo-actor-mini">${config.machines.map((machine) => `<span>MACHINE ${machine.index} · ${esc(short(machine.teeId))} · PRODUCTION SET</span>`).join("")}</div>
-    <div class="section-grid interactive-demo-grid"><section class="panel"><div class="panel-heading"><div><div class="eyebrow">01 · OPERATOR & VAULT</div><h2>${operatorConnected ? "V1 operator connected" : "Operator wallet required"}</h2></div><span class="state-tag ${operatorConnected ? "green-tag" : "amber-tag"}">${operatorConnected ? "AUTHORIZED" : "READ ONLY"}</span></div><p class="panel-copy">The dispatcher is owner-only in deployed V1, so sponsored live broadcasts require ${esc(short(config.operator))}. This restriction prevents public relay balance drain.</p>${operatorConnected ? `<div class="demo-account-grid"><div><span>C2FLR gas</span><strong>${snapshot ? nativeToken(snapshot.nativeBalance) : "—"}</strong></div><div><span>Vault available</span><strong>${snapshot ? token(snapshot.accounting.available) : "—"} FTestXRP</strong></div><div><span>Finalized block</span><strong>${snapshot?.finalizedBlock ?? "—"}</strong></div></div><div class="vault-actions"><button class="outline-button" type="button" data-action="refresh">Refresh</button><button class="primary-button" type="button" data-view="vaults">Fund V1 vault</button></div>` : `<div class="vault-actions"><button class="primary-button" type="button" data-action="connect">Connect wallet</button><button class="outline-button" type="button" data-view="auditor">Wallet-free audit</button></div>`}</section>
+    <div class="section-grid interactive-demo-grid"><section class="panel"><div class="panel-heading"><div><div class="eyebrow">01 · OPERATOR & V2 VAULT</div><h2>${operatorConnected ? "V2 operator connected" : "Operator wallet required"}</h2></div><span class="state-tag ${operatorConnected ? "green-tag" : "amber-tag"}">${operatorConnected ? "AUTHORIZED" : "READ ONLY"}</span></div><p class="panel-copy">The dispatcher is owner-only in the deployed V2 candidate, so live broadcasts require ${esc(short(config.operator))}. This restriction prevents public relay balance drain; wallet-free verification remains open to judges.</p>${operatorConnected ? `<div class="demo-account-grid"><div><span>C2FLR gas</span><strong>${snapshot ? nativeToken(snapshot.nativeBalance) : "—"}</strong></div><div><span>V2 vault available</span><strong>${snapshot ? token(snapshot.accounting.available) : "—"} FTestXRP</strong></div><div><span>Finalized block</span><strong>${snapshot?.finalizedBlock ?? "—"}</strong></div></div><div class="vault-actions"><button class="outline-button" type="button" data-action="refresh">Refresh</button><button class="primary-button" type="button" data-view="vaults">Fund V2 vault</button></div>` : `<div class="vault-actions"><button class="primary-button" type="button" data-action="connect">Connect wallet</button><button class="outline-button" type="button" data-view="auditor">Wallet-free audit</button></div>`}</section>
     <section class="panel"><div class="panel-heading"><div><div class="eyebrow">02 · PRIVATE CUSTODY</div><h2>${liveFccPolicyRegistration ? "Live policy registered" : liveFccSession ? "Three receipts ready" : "Prepare in Policy Studio"}</h2></div><span class="state-tag ${liveFccPolicyRegistration ? "green-tag" : "gray-tag"}">${liveFccPolicyStatus === 1 ? "ACTIVE" : liveFccPolicyStatus === 2 ? "STOPPED" : liveFccPolicyStatus === 3 ? "REVOKED" : "NOT REGISTERED"}</span></div>${liveFccSession ? `<div class="commitment-value">${esc(liveFccSession.binding.policyCommitment)}</div><div class="demo-actor-mini">${liveFccSession.custody.map((item, index) => `<span>MACHINE ${index + 1} · ${esc(short(item.digest))}</span>`).join("")}</div>` : `<p class="panel-copy">Policy Studio encrypts the same private policy independently for all three registered public keys and verifies all three receipts before registration.</p>`}<div class="vault-actions"><button class="outline-button" type="button" data-view="studio">Open Policy Studio</button>${liveFccSession && !liveFccPolicyRegistration && operatorConnected ? `<button class="primary-button" type="button" data-action="register-live-policy" ${liveFccBusy ? "disabled" : ""}>Register policy</button>` : ""}</div></section></div>
-    <div class="section-grid interactive-demo-grid"><section class="panel"><div class="panel-heading"><div><div class="eyebrow">03 · PUBLIC REQUEST</div><h2>${request ? `Occurrence ${request.occurrence}` : "Create exact action"}</h2></div><span class="state-tag ${request ? "green-tag" : "gray-tag"}">${esc(requestStatus)}</span></div><p class="panel-copy">Amount, target and timing are public. Caps, schedule relationships, salt and policy plaintext remain private.</p>${policyActive && operatorConnected ? `<label class="demo-amount-label">Request amount<input id="live-fcc-request-amount" value="${esc(liveFccRequestAmountInput)}" inputmode="decimal" autocomplete="off" /></label>${request ? `<dl class="demo-request-facts"><div><dt>Request</dt><dd>${esc(short(request.requestId))}</dd></div><div><dt>Amount</dt><dd>${token(request.amount)} FTestXRP</dd></div><div><dt>Checkpoint</dt><dd>${esc(short(request.spendCheckpoint))}</dd></div><div><dt>Expiry</dt><dd>${utc(request.expiry)}</dd></div></dl><button class="outline-button" type="button" data-action="reset-live-request" ${liveFccBusy ? "disabled" : ""}>Prepare next request</button>` : `<button class="primary-button" type="button" data-action="create-live-request" ${liveFccBusy || !snapshot || snapshot.accounting.available <= 0n ? "disabled" : ""}>${liveFccBusy === "REQUEST" ? "Waiting for finality…" : "Create V1 request"}</button>`}` : `<div class="unavailable-box"><span class="status-dot amber"></span><div><strong>Prerequisite missing</strong><small>Connect the operator, fund the V1 vault, and register an active live policy.</small></div></div>`}</section>
+    <div class="section-grid interactive-demo-grid"><section class="panel"><div class="panel-heading"><div><div class="eyebrow">03 · PUBLIC V2 REQUEST</div><h2>${request ? `Occurrence ${request.occurrence}` : "Create exact action"}</h2></div><span class="state-tag ${request ? "green-tag" : "gray-tag"}">${esc(requestStatus)}</span></div><p class="panel-copy">Amount, target and timing are public. Caps, schedule relationships, salt and policy plaintext remain private.</p>${policyActive && operatorConnected ? `<label class="demo-amount-label">Request amount<input id="live-fcc-request-amount" value="${esc(liveFccRequestAmountInput)}" inputmode="decimal" autocomplete="off" /></label>${request ? `<dl class="demo-request-facts"><div><dt>Request</dt><dd>${esc(short(request.requestId))}</dd></div><div><dt>Amount</dt><dd>${token(request.amount)} FTestXRP</dd></div><div><dt>Checkpoint</dt><dd>${esc(short(request.spendCheckpoint))}</dd></div><div><dt>Expiry</dt><dd>${utc(request.expiry)}</dd></div></dl><button class="outline-button" type="button" data-action="reset-live-request" ${liveFccBusy ? "disabled" : ""}>Prepare next request</button>` : `<button class="primary-button" type="button" data-action="create-live-request" ${liveFccBusy || !snapshot || snapshot.accounting.available <= 0n ? "disabled" : ""}>${liveFccBusy === "REQUEST" ? "Waiting for finality…" : "Create V2 request"}</button>`}` : `<div class="unavailable-box"><span class="status-dot amber"></span><div><strong>Prerequisite missing</strong><small>Connect the operator, fund the V2 vault, and register an active V2 policy.</small></div></div>`}</section>
     <section class="panel"><div class="panel-heading"><div><div class="eyebrow">04 · FCC QUORUM</div><h2>${liveFccEvaluation ? `${liveFccEvaluation.decision} · ${esc(liveFccEvaluation.publicReasonClass)}` : "Dispatch and verify"}</h2></div><span class="state-tag ${liveFccEvaluation ? "green-tag" : "gray-tag"}">${liveFccEvaluation ? `ROUTER ${liveFccEvaluation.routerStatus}` : "WAITING"}</span></div><p class="panel-copy">The browser signs request-specific relay authorization, then sends only an empty JSON object. The relay reads the request from chain; no client decision field exists.</p><div class="vault-actions">${request && !liveFccEvaluation && operatorConnected ? `<button class="primary-button" type="button" data-action="evaluate-live-request" ${liveFccBusy ? "disabled" : ""}>${liveFccBusy === "EVALUATE" ? "A/B/D evaluating…" : "Evaluate with live A/B/D"}</button>` : ""}${liveFccEvaluation?.decision === "ALLOW" && liveFccEvaluation.routerStatus === 2 && !liveFccExecution ? `<button class="primary-button" type="button" data-action="execute-live-request" ${liveFccBusy ? "disabled" : ""}>Execute authorized transfer</button>` : ""}</div></section></div>
     <div class="section-grid interactive-demo-grid"><section class="panel"><div class="panel-heading"><div><div class="eyebrow">05 · GOVERNANCE</div><h2>Canonical owner controls</h2></div><span class="state-tag gray-tag">NO DECISION OVERRIDE</span></div><p class="panel-copy">Stop/resume/revoke changes policy availability only. Revocation remains terminal.</p><div class="vault-actions"><button class="outline-button" type="button" data-live-policy-action="STOP" ${liveFccPolicyStatus !== 1 || liveFccBusy ? "disabled" : ""}>Stop</button><button class="outline-button" type="button" data-live-policy-action="RESUME" ${liveFccPolicyStatus !== 2 || liveFccBusy ? "disabled" : ""}>Resume</button><button class="outline-button" type="button" data-live-policy-action="REVOKE" ${!liveFccPolicyRegistration || liveFccPolicyStatus === 3 || liveFccBusy ? "disabled" : ""}>Revoke</button></div></section><section class="panel"><div class="panel-heading"><div><div class="eyebrow">PUBLIC TRANSACTION LOG</div><h2>${liveFccTransactions.length} writes</h2></div><span class="state-tag gray-tag">THIS TAB ONLY</span></div>${transactionRows}</section></div>
     <div class="interactive-notice" role="status"><span class="status-dot ${liveFccBusy ? "amber" : "green"}"></span><strong>${esc(liveFccBusy ? `Working: ${liveFccBusy}` : liveFccNotice)}</strong></div>`;
@@ -551,8 +596,8 @@ function liveFccDemoView(): string {
 
 function interactiveDemoView(): string {
   const account = connectedAccount();
-  if (interactiveConfigState.status === "LOADING") return `${demoSectionIntro("INTERACTIVE TESTNET DEMO", "Preparing the optional interactive lifecycle", "Loading the simulation-only Coston2 contract and actor domain.")}<section class="panel demo-loading"><div class="empty-orbit">◌</div><h2>Checking demo configuration…</h2></section>`;
-  if (interactiveConfigState.status === "UNAVAILABLE") return `${demoSectionIntro("INTERACTIVE TESTNET DEMO", "Optional interactive actors unavailable", "The reviewed lifecycle above remains usable. The website will not replace an unavailable actor quorum with a browser decision.")}<section class="panel"><div class="unavailable-box"><span class="status-dot amber"></span><div><strong>No interactive success asserted</strong><small>The recorded public-safe lifecycle above remains available; production FCC remains blocked independently.</small></div></div></section>`;
+  if (interactiveConfigState.status === "LOADING") return `${demoSectionIntro("LEGACY V1 SANDBOX", "Preparing the optional isolated lifecycle", "Loading the simulation-only V1 contract and actor domain. This is not the active V2 candidate.")}<section class="panel demo-loading"><div class="empty-orbit">◌</div><h2>Checking legacy sandbox configuration…</h2></section>`;
+  if (interactiveConfigState.status === "UNAVAILABLE") return `${demoSectionIntro("LEGACY V1 SANDBOX", "Optional actors unavailable", "The wallet-free V2 proof above remains independent. No unavailable legacy actor is replaced with a browser decision.")}<section class="panel"><div class="unavailable-box"><span class="status-dot amber"></span><div><strong>No sandbox success asserted</strong><small>The active V2 candidate remains a separate hosted path.</small></div></div></section>`;
   const config = interactiveConfigState.config;
   const snapshot = interactiveAccountSnapshot;
   const policyRegistered = Boolean(interactiveSession && interactivePolicyRegistration);
@@ -566,8 +611,8 @@ function interactiveDemoView(): string {
   const transactionRows = interactiveTransactions.length === 0
     ? `<div class="boundary-empty">No wallet transaction has been submitted from this interactive session.</div>`
     : `<ol class="interactive-transaction-list">${interactiveTransactions.map((item, index) => `<li><span class="demo-step-index">${String(index + 1).padStart(2, "0")}</span><div><strong>${esc(item.label)}</strong><small>Block ${item.blockNumber} · ${esc(short(item.hash))}</small></div><a href="${explorerTransaction(item.hash)}" target="_blank" rel="noreferrer">↗</a></li>`).join("")}</ol>`;
-  return `${demoSectionIntro("OPTIONAL INTERACTIVE TESTNET DEMO", "Run the isolated simulation", "Use faucet FTestXRP and an injected wallet. Three serverless actors compute signed results; the browser never supplies ALLOW.")}
-    <div class="demo-boundary interactive-boundary"><span class="state-tag gray-tag">SIMULATED FCC · COSTON2 TESTNET</span><strong>Real testnet transactions · shared serverless trust domain</strong><span>Not production TEE · not Gate A/B/C</span></div>
+  return `${demoSectionIntro("LEGACY V1 SANDBOX · OPTIONAL", "Run the isolated simulation", "Use faucet FTestXRP and an injected wallet. Three serverless actors compute signed V1 results; this sandbox never becomes V2 evidence.")}
+    <div class="demo-boundary interactive-boundary"><span class="state-tag gray-tag">V1 SIMULATION · SEPARATE CONTRACTS</span><strong>Real testnet transactions · shared serverless trust domain</strong><span>Not registered FCC · not active V2 · not Gate A/B/C</span></div>
     <div class="interactive-stepper" aria-label="Interactive demo progress">${["FUND", "RECEIPTS", "REGISTER", "REQUEST", "QUORUM", "EXECUTE / DENY", "GOVERNANCE"].map((step, index) => `<span class="${interactiveStepReached(index) ? "reached" : ""}">${String(index + 1).padStart(2, "0")} ${step}</span>`).join("")}</div>
     <div class="section-grid interactive-demo-grid"><section class="panel"><div class="panel-heading"><div><div class="eyebrow">01 · TEST TOKEN FUNDING</div><h2>Simulation-only vault</h2></div><span class="state-tag ${snapshot ? "green-tag" : "gray-tag"}">${snapshot ? "FINALIZED READ" : "NOT LOADED"}</span></div><p class="panel-copy">Approve and deposit faucet FTestXRP into the separate demo vault. The production-observation vault remains untouched.</p>${account ? `<div class="demo-account-grid"><div><span>Wallet</span><strong>${snapshot ? token(snapshot.tokenBalance) : "—"} FTestXRP</strong></div><div><span>Allowance</span><strong>${snapshot ? token(snapshot.allowance) : "—"}</strong></div><div><span>Demo available</span><strong>${snapshot ? token(snapshot.accounting.available) : "—"}</strong></div></div><label class="demo-amount-label">Funding amount<input id="interactive-fund-amount" value="${esc(interactiveFundInput)}" inputmode="decimal" autocomplete="off" /></label><div class="vault-actions"><button class="outline-button" type="button" data-action="refresh-interactive-account" ${interactiveBusy ? "disabled" : ""}>Refresh finalized state</button><button class="outline-button" type="button" data-action="demo-approve" ${interactiveBusy || !snapshot ? "disabled" : ""}>Approve</button><button class="primary-button" type="button" data-action="demo-deposit" ${interactiveBusy || !snapshot ? "disabled" : ""}>Deposit</button></div>` : `<button class="primary-button" type="button" data-action="connect">Connect Coston2 wallet</button>`}</section>
     <section class="panel"><div class="panel-heading"><div><div class="eyebrow">02 · POLICY & CUSTODY</div><h2>${policyLabel}</h2></div><span class="state-tag gray-tag">SIMULATION ONLY</span></div>${interactiveSession ? `<div class="commitment-value">${esc(interactiveSession.binding.policyCommitment)}</div><div class="demo-actor-mini">${interactiveSession.custody.map((item) => `<span>ACTOR ${item.actor} · ${esc(short(item.digest))}</span>`).join("")}</div>` : `<p class="panel-copy">Use the adjacent demo panel in Policy Studio to bind your wallet, encrypt the draft three times, and collect owner-authorized receipts.</p>`}<div class="vault-actions"><button class="outline-button" type="button" data-view="studio">Open Policy Studio</button>${interactiveSession && !interactivePolicyRegistration ? `<button class="primary-button" type="button" data-action="register-demo-policy" ${interactiveBusy ? "disabled" : ""}>Register policy</button>` : ""}</div></section></div>
@@ -588,24 +633,24 @@ function interactiveStepReached(index: number): boolean {
 }
 
 function demoSectionIntro(eyebrow: string, title: string, copy: string): string {
-  return `<div class="demo-section-intro" id="interactive-demo"><div class="eyebrow">${eyebrow}</div><h2>${title}</h2><p>${copy}</p></div>`;
+  return `<div class="demo-section-intro"><div class="eyebrow">${eyebrow}</div><h2>${title}</h2><p>${copy}</p></div>`;
 }
 
 function recordedDemoView(): string {
   if (demoState.status === "LOADING") {
-    return `<section class="panel demo-loading recorded-demo-section" id="recorded-lifecycle"><div class="eyebrow">RECORDED SOLUTION 3 EVIDENCE</div><div class="empty-orbit">◌</div><h2>Validating evidence schema…</h2></section>`;
+    return `<section class="panel demo-loading recorded-demo-section" id="recorded-lifecycle"><div class="eyebrow">HISTORICAL V1 SIMULATION EVIDENCE</div><div class="empty-orbit">◌</div><h2>Validating legacy evidence schema…</h2></section>`;
   }
   if (demoState.status === "UNAVAILABLE") {
-    return `<section class="panel recorded-demo-section" id="recorded-lifecycle"><div class="eyebrow">RECORDED SOLUTION 3 EVIDENCE</div><div class="unavailable-box"><span class="status-dot amber"></span><div><strong>No recorded success asserted</strong><small>Build or evidence validation failed closed. Live FCC remains unavailable independently.</small></div></div></section>`;
+    return `<section class="panel recorded-demo-section" id="recorded-lifecycle"><div class="eyebrow">HISTORICAL V1 SIMULATION EVIDENCE</div><div class="unavailable-box"><span class="status-dot amber"></span><div><strong>No legacy success asserted</strong><small>Evidence validation failed closed. The active V2 path remains independent.</small></div></div></section>`;
   }
   const evidence = demoState.evidence;
   const machines = evidence.machines.map((machine, index) => `<article class="demo-machine machine-${index + 1}"><div class="machine-glyph">${index === 0 ? "◇" : index === 1 ? "⌁" : "▣"}</div><div><span>SIMULATED MACHINE ${index + 1}</span><strong>${esc(short(machine.machineId))}</strong><small>Key ${esc(short(machine.keyFingerprint))}<br>Signer ${esc(short(machine.signer))}</small></div></article>`).join("");
   const steps = evidence.steps.map((step, index) => `<li><span class="demo-step-index">${String(index + 1).padStart(2, "0")}</span><div><strong>${esc(step.label)}</strong><small>Block ${step.blockNumber} · ${esc(short(step.transactionHash))}</small></div><a href="${explorerTransaction(step.transactionHash)}" target="_blank" rel="noreferrer" aria-label="Open ${esc(step.label)} transaction">↗</a></li>`).join("");
-  return `<div id="recorded-lifecycle"><div class="recorded-demo-lede"><span class="state-tag sample-context-tag">WALLET-FREE · REVIEWED PUBLIC EVIDENCE</span><p>A prior Coston2 contract run driven by three ephemeral simulated signers. It proves the contract path, not hardware confidentiality or production FCC.</p></div>
+  return `<div id="recorded-lifecycle"><div class="recorded-demo-lede"><span class="state-tag sample-context-tag">HISTORICAL V1 · REVIEWED PUBLIC EVIDENCE</span><p>A prior Coston2 V1 contract run driven by three ephemeral simulated signers. It proves the older isolated contract path and is not the active V2 candidate.</p></div>
     <div class="demo-boundary"><span class="state-tag amber-tag">SIMULATION ONLY</span><strong>On-chain transactions verified · hardware TEE not present</strong><span>Observed through Coston2 block ${evidence.observedBlock}</span></div>
     <section class="demo-machine-grid">${machines}</section>
     <div class="demo-summary-grid"><section class="panel demo-result allow-result"><div class="eyebrow">2 MATCHING RESULTS</div><h2>Recurring payment allowed</h2><strong>${token(evidence.amount)} FTestXRP</strong><p>Two simulated machines produced one matching ALLOW digest, the vault reserved value, and the router executed the exact transfer.</p><span class="mono-value">${esc(short(evidence.allowRequestId))}</span></section><section class="panel demo-result deny-result"><div class="eyebrow">DETERMINISTIC POLICY RESULT</div><h2>Next request denied</h2><strong>CAP_EXCEEDED</strong><p>Two matching DENY results kept the vault unchanged. The private cap itself is not present in this public evidence.</p><span class="mono-value">${esc(short(evidence.denyRequestId))}</span></section><section class="panel demo-result"><div class="eyebrow">VAULT CONSERVATION</div><h2>Accounting still balances</h2><strong>${token(evidence.deposited)} deposited</strong><p>${token(evidence.availableAfter)} available + ${token(evidence.spentAfter)} spent. Stop, resume, and revoke were also verified.</p></section></div>
-    <div class="demo-detail-grid"><section class="panel demo-timeline"><div class="panel-heading"><div><div class="eyebrow">COSTON2 TRANSACTION TIMELINE</div><h2>${evidence.steps.length} verified checkpoints</h2></div><span class="state-tag green-tag">PUBLIC EVIDENCE</span></div><ol>${steps}</ol></section><aside class="panel demo-limitations"><div class="eyebrow">NOT PROVEN HERE</div><h2>Production gates stay explicit</h2><ul>${evidence.blockers.map((blocker) => `<li>${esc(blocker.replaceAll("_", " "))}</li>`).join("")}</ul><p>This demonstration cannot activate a new private browser draft or authorize a new request without the future three production FCC machines.</p><a class="outline-button inline-link" href="/evidence/simulation/coston2-simulated-policy-lifecycle-2026-08-09.json" target="_blank" rel="noreferrer">Open reviewed JSON ↗</a></aside></div></div>`;
+    <div class="demo-detail-grid"><section class="panel demo-timeline"><div class="panel-heading"><div><div class="eyebrow">COSTON2 TRANSACTION TIMELINE</div><h2>${evidence.steps.length} verified checkpoints</h2></div><span class="state-tag green-tag">PUBLIC EVIDENCE</span></div><ol>${steps}</ol></section><aside class="panel demo-limitations"><div class="eyebrow">NOT PROVEN BY THIS V1 RECORD</div><h2>Historical boundaries stay explicit</h2><ul>${evidence.blockers.map((blocker) => `<li>${esc(blocker.replaceAll("_", " "))}</li>`).join("")}</ul><p>This older simulation cannot activate or authorize within the active V2 domain. Use the wallet-free V2 proof above for current deployment facts.</p><a class="outline-button inline-link" href="/evidence/simulation/coston2-simulated-policy-lifecycle-2026-08-09.json" target="_blank" rel="noreferrer">Open reviewed V1 JSON ↗</a></aside></div></div>`;
 }
 
 function requestTransactionPanel(snapshot: PublicRequestSnapshotV1 | undefined): string {
@@ -1235,10 +1280,10 @@ function prepareLiveFccDraft(): void {
     };
     studioCompilation = null;
     studioIssues = [];
-    resetLiveFccPolicySession("Live V1 domain loaded. Review private rules, then validate and compute.");
+    resetLiveFccPolicySession("Live V2 domain loaded. Review private rules, then validate and compute.");
     studioNotice = "Live A/B/D domain loaded with fresh in-memory entropy. Nothing has been sent yet.";
   } catch {
-    liveFccNotice = "Connect the exact V1 operator wallet before preparing the live domain.";
+    liveFccNotice = "Connect the exact V2 operator wallet before preparing the live domain.";
   }
   render();
 }
@@ -1279,14 +1324,14 @@ async function submitLiveFccCustody(): Promise<void> {
 async function submitLiveFccPolicyRegistration(): Promise<void> {
   if (!liveFccSession) return;
   liveFccBusy = "REGISTER";
-  liveFccNotice = "Confirm the exact V1 policy binding and three machine receipts, then wait for finalized readback.";
+  liveFccNotice = "Confirm the exact V2 policy binding and three machine receipts, then wait for finalized readback.";
   render();
   try {
     const { account, config, provider } = liveFccContext();
     liveFccPolicyRegistration = await registerLivePolicy(liveFccSession, account, provider, config);
     liveFccPolicyStatus = 1;
     addLiveFccTransaction("Register live FCC policy", liveFccPolicyRegistration);
-    liveFccNotice = "Live V1 policy is active on Coston2 with all three registered custody receipts.";
+    liveFccNotice = "Live V2 policy is active on Coston2 with all three registered custody receipts.";
     await refreshCoston2State();
   } catch {
     liveFccPolicyRegistration = null;
@@ -1386,7 +1431,7 @@ function resetLiveFccRequest(): void {
   liveFccRequest = null;
   liveFccEvaluation = null;
   liveFccExecution = null;
-  liveFccNotice = "Ready to create the next request from the canonical V1 spend checkpoint.";
+  liveFccNotice = "Ready to create the next request from the canonical V2 deployment checkpoint.";
   render();
 }
 
@@ -1708,6 +1753,9 @@ void fetchPublicWebEvidenceIndex()
 void fetchSimulatedLifecycleEvidence()
   .then((evidence) => { demoState = { status: "READY", evidence }; if (!landingOpen) render(); })
   .catch(() => { demoState = { status: "UNAVAILABLE" }; if (!landingOpen) render(); });
+void fetchLiveV2LifecycleEvidence()
+  .then((evidence) => { liveV2EvidenceState = { status: "READY", evidence }; if (!landingOpen) render(); })
+  .catch(() => { liveV2EvidenceState = { status: "UNAVAILABLE" }; if (!landingOpen) render(); });
 void fetchInteractiveDemoConfig()
   .then(async (config) => {
     interactiveConfigState = { status: "READY", config };
@@ -1722,7 +1770,7 @@ void fetchInteractiveDemoConfig()
 void fetchLiveFccConfig()
   .then(async (config) => {
     liveFccConfigState = { status: "READY", config };
-    liveFccNotice = "Relay, V1 contracts and registered FCC machines A/B/D passed live preflight.";
+    liveFccNotice = "Relay, V2 contracts and registered FCC machines A/B/D passed live preflight.";
     if (liveFccSession) liveFccPolicyStatus = await loadLivePolicyStatus(liveFccSession.binding.policyCommitment, config);
     if (!landingOpen) render();
   })

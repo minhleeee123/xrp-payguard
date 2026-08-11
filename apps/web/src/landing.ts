@@ -26,9 +26,9 @@ export function landingView(): string {
         <div class="landing-eyebrow">PRIVATE POLICY · PUBLIC ACTION</div>
         <h1 id="landing-title">Authorize public value with <em>private</em> rules.</h1>
         <p class="landing-lede">XRP PayGuard is an XRP-native policy control layer designed for Flare: keep the authorization rule inside a fixed FCC machine set, while every requested action and settlement remains public and auditable.</p>
-        <div class="landing-actions"><button class="primary-button" type="button" data-action="landing-demo">View recorded lifecycle</button><button class="outline-button" type="button" data-action="landing-studio">Open Policy Studio</button><a class="landing-text-link" href="#why">Understand the boundary ↘</a></div>
-        <div class="landing-status"><span class="status-dot amber"></span><span>Coston2 public facts + simulated FCC signers · <strong>no production FCC claim</strong></span></div>
-        <div class="hero-proof-strip" aria-label="Current delivery boundary"><span>01 · TESTNET FACTS</span><span>02 · 3-SIGNER COSTON2 SIMULATION</span><span>03 · FAIL-CLOSED UI</span></div>
+        <div class="landing-actions"><button class="primary-button" type="button" data-action="landing-demo">Verify live V2 lifecycle</button><button class="outline-button" type="button" data-action="landing-studio">Open Policy Studio</button><a class="landing-text-link" href="#why">Understand the boundary ↘</a></div>
+        <div class="landing-status"><span class="status-dot green"></span><span>Coston2 <strong>V2 live candidate</strong> · 3 registered simulated FCC machines · hardware release not verified</span></div>
+        <div class="hero-proof-strip" aria-label="Current delivery boundary"><span>01 · V2 CONTRACT DOMAIN</span><span>02 · 3 REGISTERED FCC MACHINES</span><span>03 · PUBLIC ON-CHAIN PROOF</span></div>
       </section>
       <div class="neon-divider" aria-hidden="true"></div>
 
@@ -48,11 +48,11 @@ export function landingView(): string {
       <section class="landing-section landing-reveal guardian-section" id="guardians" aria-labelledby="guardians-title">
         <div class="landing-section-heading">
           <div><div class="eyebrow">MEET THE CONTROL LAYERS</div><h2 id="guardians-title">Three guardians.<br />One <em>exact</em> request.</h2></div>
-          <p>The mascots make the trust model easier to remember; they are not claims of live machines. Each represents a protocol responsibility that must fail closed when its evidence is missing.</p>
+          <p>The mascots make the trust model easier to remember; the status badges separately report verified deployment facts. Each guardian represents a protocol responsibility that must fail closed when its evidence is missing.</p>
         </div>
         <div class="guardian-grid">
-          ${guardianCard("cipher", "Cipher", "Policy custodian", "Three compatible machines must acknowledge the same commitment and domain before a policy can become canonical.", "LIVE V1 · 3 OF 3 CUSTODY")}
-          ${guardianCard("quorum", "Quorum", "Threshold witness", "Two distinct registered machines must sign one identical evaluation digest. Split results never combine into approval.", "LIVE V1 · 2 MATCHING RESULTS")}
+          ${guardianCard("cipher", "Cipher", "Policy custodian", "Three compatible machines must acknowledge the same commitment and domain before a policy can become canonical.", "LIVE V2 CANDIDATE · 3 OF 3 CUSTODY")}
+          ${guardianCard("quorum", "Quorum", "Threshold witness", "Two distinct registered machines must sign one identical evaluation digest. Split results never combine into approval.", "LIVE V2 CANDIDATE · 2 MATCHING RESULTS")}
           ${guardianCard("ledger", "Ledger", "Checkpoint keeper", "Canonical chain state owns nonce, spend root, occurrence, expiry, and rollback authority across restarts.", "TESTED · FAIL CLOSED")}
         </div>
       </section>
@@ -66,9 +66,9 @@ export function landingView(): string {
           <div class="journey-arrow" aria-hidden="true">→</div>
           ${journeyStep("03", "PayGuard vault", "Public balance and conservation checkpoints advance atomically on Flare.", "COSTON2")}
           <div class="journey-arrow" aria-hidden="true">→</div>
-          ${journeyStep("04", "FCC policy gate", "Private rules evaluate the public request against one frozen machine and code domain.", "SIMULATED")}
+          ${journeyStep("04", "FCC policy gate", "Private rules evaluate the public request against one frozen machine and code domain.", "LIVE SIMULATED")}
           <div class="journey-arrow" aria-hidden="true">→</div>
-          ${journeyStep("05", "Public action", "Only an exact threshold result may reach the allowlisted router action.", "TARGET")}
+          ${journeyStep("05", "Public action", "Only an exact threshold result may reach the allowlisted router action.", "V2 VERIFIED RUN")}
         </div>
         <div class="protocol-tape" aria-label="Protocol composition"><span>XRPL PAYMENT</span><i>+</i><span>FDC PROOF</span><i>+</i><span>SMART ACCOUNT</span><i>+</i><span>FASSETS</span><i>+</i><span>FCC POLICY</span><i>→</i><span>PUBLIC RECEIPT</span></div>
       </section>
@@ -87,7 +87,7 @@ export function landingView(): string {
 
       <section class="landing-section landing-reveal evidence-section" id="evidence" aria-labelledby="evidence-title">
         <div class="evidence-story"><div class="eyebrow">PUBLIC-SAFE EVIDENCE</div><h2 id="evidence-title">Inspect facts,<br />not <em>promises.</em></h2><p>The hosted mirror publishes only testnet addresses, hashes, transactions, blocks, timings, and assertion booleans. Private policy material, credentials, and raw signatures are excluded.</p><div class="evidence-actions"><button class="outline-button" type="button" data-action="landing-auditor">Open Auditor</button><button class="outline-button" type="button" data-action="landing-demo">Open lifecycle</button><a class="landing-text-link" href="/evidence/index.json" target="_blank" rel="noreferrer">Evidence index ↗</a></div></div>
-        <div class="evidence-terminal" role="group" aria-label="Current verified versus limited scope"><div class="terminal-bar"><span>PAYGUARD / SCOPE</span><span>2026-08-09</span></div><dl><div><dt>NETWORK</dt><dd>Coston2 · testnet only</dd></div><div><dt>CONTRACTS</dt><dd>Runtime + wiring checked</dd></div><div><dt>XRP → FDC → VAULT</dt><dd>One public run observed</dd></div><div><dt>FCC POLICY PATH</dt><dd>Simulated signers only</dd></div><div><dt>WEB DAPP</dt><dd>Wallet reads + guarded writes</dd></div><div><dt>RELEASE</dt><dd>Not yet verified</dd></div></dl><span class="terminal-cursor" aria-hidden="true">_</span></div>
+        <div class="evidence-terminal" role="group" aria-label="Current verified versus limited scope"><div class="terminal-bar"><span>PAYGUARD / V2 CANDIDATE</span><span>2026-08-11</span></div><dl><div><dt>NETWORK</dt><dd>Coston2 · testnet only</dd></div><div><dt>V2 CONTRACTS</dt><dd>Runtime + wiring checked</dd></div><div><dt>XRP → FDC → VAULT</dt><dd>One public run observed</dd></div><div><dt>FCC POLICY PATH</dt><dd>3 registered simulated machines</dd></div><div><dt>V2 LIFECYCLE</dt><dd>Custody + ALLOW + DENY verified</dd></div><div><dt>RELEASE</dt><dd>Live candidate · hardware not verified</dd></div></dl><span class="terminal-cursor" aria-hidden="true">_</span></div>
       </section>
 
       <section class="landing-section landing-reveal faq-section" id="limits" aria-labelledby="limits-title">
@@ -96,7 +96,7 @@ export function landingView(): string {
           <details open><summary>What does PayGuard keep private?</summary><p>Policy relationships, caps, schedules, delegate rules, private entropy, and intermediate evaluation details are intended to remain inside the fixed FCC custody set. Public commitments and actions remain visible.</p></details>
           <details><summary>Does PayGuard hide XRP or FXRP transfers?</summary><p>No. Amount, recipient, timing, and transaction graph remain public. PayGuard is neither a mixer nor an anonymous payment rail.</p></details>
           <details><summary>What happens when FCC, FDC, FTSO, RPC, or relay fails?</summary><p>The affected path becomes unavailable, denied, or resumable from canonical public state. No dependency failure may become a mock proof, price, payment, evaluation, or execution.</p></details>
-          <details><summary>What is live today?</summary><p>PayGuard has public Coston2 contracts, finalized wallet/vault/request reads, guarded writes, XRP/FDC/Smart Account/FAssets observations, and a hosted V1 lifecycle through three registered Coston2 SIMULATED_TEE machines. Hardware attestation, V2, and a verified PayGuard release are not yet verified.</p></details>
+          <details><summary>What is live today?</summary><p>PayGuard's active web and Railway route use the V2 Coston2 contract domain and three registered status-2 SIMULATED_TEE machines. The hosted run verifies all-three custody, two-matching-result ALLOW execution, CAP_EXCEEDED denial, governance, and conservation. Hardware attestation and a verified PayGuard release remain open.</p></details>
         </div>
       </section>
 
@@ -104,7 +104,7 @@ export function landingView(): string {
         <div class="final-mark" aria-hidden="true">P</div><div><div class="eyebrow">START WITH THE BOUNDARY</div><h2 id="final-title">Draft the rule locally.<br /><em>Verify</em> every next gate.</h2><p>No wallet is required to explore the product model. Validation computes an in-memory commitment only; it does not create custody receipts or authorization.</p></div><button class="primary-button" type="button" data-action="landing-studio">Open Policy Studio</button>
       </section>
     </main>
-    <footer class="landing-footer"><span>PAYGUARD · PUBLIC CONTROL / PRIVATE RULES</span><span>TESTNET + SIMULATED SIGNERS · NO RELEASE CLAIM</span></footer>
+    <footer class="landing-footer"><span>PAYGUARD · PUBLIC CONTROL / PRIVATE RULES</span><span>V2 LIVE CANDIDATE · SIMULATED TEE · NO HARDWARE RELEASE CLAIM</span></footer>
   </div>`;
 }
 
