@@ -19,7 +19,7 @@ export const PUBLIC_WEB_DEPLOYMENT_AUDIT_PATH = resolve(
   "evidence/web/public-evidence-deployment-audit-2026-08-11.json",
 );
 const MAX_JSON_BYTES = 256 * 1024;
-const REVIEWED_CORPUS_COUNTS = Object.freeze({ total: 22, chain114: 21, simulation: 3 });
+const REVIEWED_CORPUS_COUNTS = Object.freeze({ total: 23, chain114: 22, simulation: 3 });
 
 function isRecord(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -122,7 +122,7 @@ export async function auditDeployedPublicEvidence({
   if (auditedEntries.length !== REVIEWED_CORPUS_COUNTS.total
     || chain114Count !== REVIEWED_CORPUS_COUNTS.chain114
     || simulationCount !== REVIEWED_CORPUS_COUNTS.simulation) {
-    throw new Error("deployed evidence corpus does not match the reviewed 22/21/3 baseline");
+    throw new Error("deployed evidence corpus does not match the reviewed 23/22/3 baseline");
   }
   return {
     origin,
@@ -208,14 +208,14 @@ export function buildPublicWebDeploymentAuditEvidence(
     },
     blockers: [
       "HARDWARE_ATTESTATION_NOT_VERIFIED",
-      "V2_RELEASE_NOT_VERIFIED",
+      "VERIFIED_RELEASE_NOT_PROMOTED",
       "PAYGUARD_RELEASE_MANIFEST_NOT_VERIFIED",
     ],
     notes: [
       "This audit fetched the pinned production origin and compared the manifest plus every listed JSON body byte-for-byte with the reviewed local Coston2/simulation sources.",
       `The ${observation.counts.chain114} chain-114 and ${observation.counts.simulation} simulation counts overlap and are not additive.`,
       "Repository-only evidence/web records are intentionally excluded from the hosted corpus to avoid recursive deployment claims.",
-      "A clean public evidence corpus does not prove hardware TEE confidentiality, a V2 or verified PayGuard release, or production readiness.",
+      "A clean public evidence corpus does not turn the live V2 simulated candidate into a hardware-attested verified release or mainnet system.",
     ],
   };
   assertPublicSafe(evidence, "public web deployment audit evidence");
