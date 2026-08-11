@@ -71,26 +71,27 @@ Required evidence:
 - denial/replay/domain/recovery tests;
 - no private policy/ciphertext in public artifacts.
 
-The local `SIMULATED_TEE` path remains useful architecture and deterministic
-behavior evidence, but it does not satisfy this live bounty gate. Do not select
-or describe the Confidential Compute Apps bounty as live-complete unless the
-post-hackathon machine/custody/result/release gates are independently verified.
+The live Coston2 path now uses three stable registered `SIMULATED_TEE` Railway
+machines and independently verifies all-three custody plus a two-of-three
+evaluation/execute/deny lifecycle. It is stronger than a local simulation, but
+does not satisfy hardware-attestation or verified-release requirements. Do not
+describe the Confidential Compute Apps bounty as production-complete unless the
+remaining hardware, V2, recovery/outage, and release gates pass.
 
 ### Current hackathon delivery boundary
 
-The 2026-08-09 delivery decision uses the credential-free local
-three-machine simulated FCC stack for the hackathon demo. Public Coston2
-contracts, XRP/FDC/Smart Account funding observations, the Vercel shell, and
-the public-safe evidence mirror remain real testnet/public artifacts. The FCC
-custody/evaluation segment remains a local deterministic simulation.
+The frozen 2026-08-09 web delivery uses the credential-free local
+three-machine simulated FCC demo. Separately, the repository now records a live
+Coston2 three-Railway-machine custody/evaluation lifecycle. The web artifact is
+not retroactively described as using that live path, and neither path is a
+hardware-backed or verified V2 release.
 
-The submission must therefore say `LOCAL`, `SIMULATED`, `PLANNED`, or
-`NOT VERIFIED` wherever a registered machine, TEE confidentiality, signed live
-FCC result, hosted relay/proxy, or complete release would otherwise be implied.
-It must not claim that the current artifact has passed the Confidential Compute
-Apps live-authorization gate. Stable FCC servers, authenticated indexer access,
-production registration, and the complete hosted lifecycle are post-hackathon
-roadmap work.
+The submission must say `SIMULATED`, `PLANNED`, or `NOT VERIFIED` wherever
+hardware TEE confidentiality, V2 release, hosted-web integration, recovery, or
+a complete production release would otherwise be implied. Stable FCC servers,
+authenticated indexer access, registered simulated custody, and threshold
+evaluation are now verified repository facts; they must not be inflated into a
+hardware or mainnet claim.
 
 ## 3. Expected submission package
 

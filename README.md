@@ -49,10 +49,11 @@ testnet XRP interoperability path:
 
 The **Confidential Compute Apps** track is not selected for the current
 submission boundary. PayGuard now has three stable, registered Coston2
-`SIMULATED_TEE` machines, authenticated indexer connectivity, and a verified
-live FCC delivery/result. This organizer-approved simulated setup is suitable
-for Coston2 hackathon judging, but it is not hardware attestation and does not
-yet prove live three-machine policy custody or two-of-three evaluation. See
+`SIMULATED_TEE` machines, authenticated indexer connectivity, all-three live
+private-policy custody, and a verified two-of-three evaluation/execute/deny
+lifecycle. This organizer-approved simulated setup is suitable for Coston2
+hackathon judging, but it is not hardware attestation or a verified V2
+release. See
 [`docs/competition.md`](docs/competition.md) for the evidence-based track
 decision.
 
@@ -97,14 +98,13 @@ different assurance levels:
   observation.
 - A second live XRPL/FDC proof was atomically consumed into one canonical
   `Pending` router request, with replay markers and request hash verified.
-- The private policy, three-machine custody, threshold evaluation, recurring
-  execution, denial, stop/resume/revoke, and conservation lifecycle passes
-  locally and on Coston2 with ephemeral **simulated** signers.
-- Separately, three stable Railway FCC machines are registered to extension
-  `66037`, report manager status `2 = PRODUCTION`, and have completed a real
-  Coston2 dispatch/delivery/signed-result round trip. The runtime is still
-  explicitly `SIMULATED_TEE`; live policy custody and threshold evaluation are
-  not inferred from the PING result.
+- The private policy, three-machine custody, threshold evaluation, execution,
+  cap denial, stop/resume/revoke, and conservation lifecycle passes locally and
+  in a separate live Coston2 run using three stable Railway FCC machines.
+- Those machines are registered to extension `66037`, report manager status
+  `2 = PRODUCTION`, and completed real dispatch/delivery plus verified TEE,
+  proxy, custody, and evaluation signatures. The runtime remains explicitly
+  `SIMULATED_TEE`; status `2` is not represented as hardware attestation.
 
 ## How PayGuard uses Flare
 
@@ -114,7 +114,7 @@ different assurance levels:
 | FDC | Verify exact XRPL payments and selected external trigger facts | Live `XRPPayment` funding and one atomic `Pending` trigger pass; Web2Json remains local-only |
 | Smart Accounts | Bind an XRPL user, PersonalAccount, nonce, fee, and exact `0xFE` operation | One direct-mint-to-vault transaction and a credential-free historical reconstruction pass |
 | FTSOv2 | Supply a canonical, bounded, fresh reference value for policies denominated outside the native asset | Deterministic TypeScript/Go/Solidity logic and fail-closed adapters pass locally; no live FCC lifecycle using an FTSO snapshot is claimed |
-| FCC | Store sealed policy copies and produce machine-signed deterministic evaluations | Typed extension, ciphertext-only atomic store, reproducible Railway image, authenticated Coston2 indexer, three stable registered simulated machines, and one live signed PING result; hardware attestation, live all-three policy custody, live two-of-three evaluation, and V2 deployment remain unverified |
+| FCC | Store sealed policy copies and produce machine-signed deterministic evaluations | Typed extension, ciphertext-only atomic store, reproducible Railway image, authenticated Coston2 indexer, three stable registered simulated machines, signed PING, all-three live custody, and live two-of-three ALLOW/execute/CAP-denial; hardware attestation, replacement/outage drills, and V2 release remain unverified |
 
 ## Policy and authorization model
 
@@ -161,8 +161,9 @@ are tracked separately and are not included in this headline count.
 | Contracts | Non-upgradeable V1 policy registry, vault, router, and atomic XRPL FDC consumer are deployed and runtime/constructor/wiring checked on Coston2; a V2 registry candidate now verifies official manager status/extension/code/platform locally | V2 is not deployed, and V1 remains the recorded Coston2 contract; this is not a complete release manifest or FCC authorization proof |
 | XRP-native funding | Validated XRPL Payment → finalized FDC proof → on-chain `verifyXRPPayment` → Smart Account direct mint → `1,000,000` UBA vault deposit | The observed mint did not enter `DirectMintingDelayed` |
 | Canonical FDC trigger | A separate 100-drop payment/proof was atomically replay-consumed into one router request with status `Pending` | No FCC evaluation, `ALLOW`, reserve, or execution followed |
-| Private protocol | Cross-language policy codecs, schedule/spend math, FTSO/FDC composition, threshold domains, replay, atomic ciphertext persistence, adversarial vectors, three stable FCC origins, authenticated indexer access, registration, and one live signed PING round trip pass | Hardware-backed custody/results, live all-three policy custody, live two-of-three evaluation, and production-volume recovery evidence are absent |
-| Solution-3 lifecycle | Fourteen successful Coston2 transactions cover simulated three-machine registration, policy registration, recurring allow, cap denial, stop/resume/revoke, and exact vault conservation | Machine identities and result signers are explicitly ephemeral simulation |
+| Private protocol | Cross-language policy codecs, schedule/spend math, FTSO/FDC composition, threshold domains, replay, atomic ciphertext persistence, adversarial vectors, three stable FCC origins, authenticated indexer access, registration, signed PING, all-three custody, and two-of-three live evaluation pass | The live machines use organizer-supported simulated attestation; hardware-backed custody and replacement/outage evidence remain absent |
+| Live FCC lifecycle | Three registered Railway machines encrypted/stored one policy independently, returned three verified receipts/evaluations, and drove V1 through ALLOW→execute, `CAP_EXCEEDED` DENY, stop/resume/revoke, and exact vault conservation | `SIMULATED_TEE=true`, V1 administrator mapping, and no V2 release manifest; this is not hardware or mainnet production |
+| Solution-3 demo lifecycle | Fourteen successful Coston2 transactions cover simulated three-machine registration, policy registration, recurring allow, cap denial, stop/resume/revoke, and exact vault conservation | The older demo identities and result signers are explicitly ephemeral simulation and separate from the live Railway run |
 | FAssets exit | Amount-based and `redeemWithTag` Coston2 requests have matching validated XRPL payouts and `RedemptionPerformed` observations | Partial/default recovery and canonical PayGuard settlement consumption remain open |
 | Web2Json | Local source commitment allowlist, exact public request, jq/tuple ABI, MIC/response, source-asserted freshness, replay, and verifier failure tests pass | No production source, live proof, source-truth guarantee, private policy evaluation, or on-chain consumer |
 | Web | Interactive Vercel Coston2 dApp, finalized wallet/vault/request reads, guarded writes, 3-actor simulated-FCC lifecycle, 16-asset evidence mirror, and production browser/Lighthouse pass for deployed source `da66c74` | The web artifact predates the live Railway FCC deployment and its hosted lifecycle remains explicitly simulation-only; later repository/infrastructure changes are not claimed as part of that deployed artifact |
@@ -183,11 +184,15 @@ hashes, wiring, and the exact source commit used for each deployment.
 | `PayGuardXrplFdcTrigger` | [`0x4b626E2DA4D45034C8fAA38D10AbDfD4921486b2`](https://coston2-explorer.flare.network/address/0x4b626E2DA4D45034C8fAA38D10AbDfD4921486b2) |
 | `FlareTeeManager` | [`0x1a9C4A0f9D76c0b1D91d22E24E573a9b377618aE`](https://coston2-explorer.flare.network/address/0x1a9C4A0f9D76c0b1D91d22E24E573a9b377618aE) |
 | FCC foundation sender | [`0xA1e95721aD7F96D7f9bcd1d62b3A38A8625Cf8dC`](https://coston2-explorer.flare.network/address/0xA1e95721aD7F96D7f9bcd1d62b3A38A8625Cf8dC) |
+| FCC three-machine dispatcher | [`0x18Ea713cEf10ECf5cAC23c08dD25Ac17D2f07e3d`](https://coston2-explorer.flare.network/address/0x18Ea713cEf10ECf5cAC23c08dD25Ac17D2f07e3d) |
 | FCC foundation extension ID | `66037` — three registered simulated machines; not a hardware-backed production release |
 | FCC machine A | [`0x1C911D007f8203484eD4099bC11849d7e9691044`](https://coston2-systems-explorer.flare.network/tee/objects) · <https://payguard-fcc-a-production.up.railway.app> · manager status `2` |
 | FCC machine B | [`0xff49A99535b8c52345D3c0b76bCf60194De7C29b`](https://coston2-systems-explorer.flare.network/tee/objects) · <https://payguard-fcc-b-production.up.railway.app> · manager status `2` |
 | FCC machine C | [`0xed19Ff73952E4A4783f739194940c0b6823Ae213`](https://coston2-systems-explorer.flare.network/tee/objects) · <https://payguard-fcc-c-production.up.railway.app> · manager status `2` |
 | Live FCC PING | [`0x1c1201a26bd0c7e296a4f7c527823540c65b188979e467104a6f366b1ad59408`](https://coston2-explorer.flare.network/tx/0x1c1201a26bd0c7e296a4f7c527823540c65b188979e467104a6f366b1ad59408) · signed result and both TEE/proxy signers verified |
+| Live policy freeze | [`0xcb8db39e7c083b5c33f4726a7d097f958ee722b65a8961b6c8085d383d43b8dc`](https://coston2-explorer.flare.network/tx/0xcb8db39e7c083b5c33f4726a7d097f958ee722b65a8961b6c8085d383d43b8dc) · three custody receipts frozen |
+| Live threshold ALLOW | [`0xcbbd1ba8f68dceba6d8d19f022109d7b8641f158ed45d9194660e28f4540915e`](https://coston2-explorer.flare.network/tx/0x7054cf4cb77ccc94f5995c778b681916afa69a2be1dc9b3273fd7ffa2b8edeea) · three matching results, two submitted, request executed |
+| Live threshold DENY | [`0x588ebf52e716b1d4d4d307d6381e31a2e6685461ca2ee129ab2f41f565d9bedb`](https://coston2-explorer.flare.network/tx/0x5d114d29bf991176f230083e9912c40599992154af4a77d11589caad0cb51d9d) · `CAP_EXCEEDED`, no vault accounting change |
 | Supported test asset | FTestXRP `0x0b6A3645c240605887a5532109323A3E12273dc7`, resolved and checked through supported Flare runtime sources |
 
 The fully interactive hackathon demo is deliberately isolated from those
@@ -280,6 +285,9 @@ Public evidence is allowlisted, sanitized, and testnet-only. Start with
 | [`fassets-redemption-2026-08-09.json`](evidence/coston2/fassets-redemption-2026-08-09.json) | Amount-based redemption request, XRPL payout, and matching settlement event |
 | [`fassets-tagged-redemption-2026-08-09.json`](evidence/coston2/fassets-tagged-redemption-2026-08-09.json) | Tagged redemption and validated XRPL destination tag |
 | [`fcc-hackathon-simulated-ping.json`](evidence/coston2/fcc-hackathon-simulated-ping.json) | Three stable Railway origins, registered status-2 simulated machines, live Coston2 dispatch/delivery, and verified TEE/proxy-signed PING result |
+| [`fcc-live-three-machine-custody.json`](evidence/coston2/fcc-live-three-machine-custody.json) | Independently encrypted live policy custody, three verified machine receipts, and V1 on-chain freeze |
+| [`fcc-live-dispatcher.json`](evidence/coston2/fcc-live-dispatcher.json) | Dispatcher deployment, immutable-aware runtime verification, extension binding, and simulated limitations |
+| [`fcc-live-threshold-lifecycle.json`](evidence/coston2/fcc-live-threshold-lifecycle.json) | Three-machine live simulated evaluation, two-of-three ALLOW execution, cap denial, conservation, and policy lifecycle |
 | [`fcc-local-three-machine-2026-08-09.json`](evidence/simulation/fcc-local-three-machine-2026-08-09.json) | Disposable local three-machine identity, ingress, hardening, restart, and cleanup smoke |
 | [`coston2-simulated-policy-lifecycle-2026-08-09.json`](evidence/simulation/coston2-simulated-policy-lifecycle-2026-08-09.json) | Real Coston2 contract lifecycle with explicitly simulated policy signers |
 | [`coston2-interactive-demo-deployment-2026-08-10.json`](evidence/simulation/coston2-interactive-demo-deployment-2026-08-10.json) | Separate demo contracts, three public actor descriptors, registrations, wiring, and mandatory false production assertions |
@@ -486,12 +494,11 @@ Interviews and usability sessions remain a pre-submission validation target;
 until real sessions occur, the submission must retain the explicit zero-session
 disclosure rather than treating source tests as user validation.
 
-The following technical, release, pilot, and production gates are explicitly
+The remaining technical, release, pilot, and production gates are explicitly
 **post-hackathon**:
 
-- hardware-attested production machines, all-three live custody receipts, two
-  matching live evaluation results, a verified V2 deployment, and supported
-  replacement recovery evidence;
+- hardware-attested multi-operator machines, a verified V2 deployment, and
+  supported replacement/re-registration recovery evidence;
 - hosted relay/proxy and full dependency-outage drills;
 - a real `DirectMintingDelayed` resume and canonical partial/default FAssets
   recovery;

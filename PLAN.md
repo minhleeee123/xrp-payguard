@@ -1,18 +1,19 @@
 # XRP PayGuard — full product execution plan
 
-> Status: local protocol, FCC custody path, and Foundry contract state machine
-> are implemented with cross-language/unit tests. The three contracts and vault
-> wiring are deployed and runtime/constructor-verified on Coston2; no registered
-> FCC result, private live lifecycle, or complete release is verified.
+> Status: the local protocol and Foundry state machine pass cross-language/unit
+> tests. The V1 contracts and a three-machine FCC dispatcher are deployed and
+> verified on Coston2. Three stable, registered `SIMULATED_TEE` machines have
+> completed all-three private custody plus a live two-of-three ALLOW/execute,
+> CAP-denial, and stop/resume/revoke lifecycle. Hardware attestation, V2 release,
+> outage/replacement drills, and a complete release remain unverified.
 >
 > Hackathon delivery decision (updated 2026-08-10): the current demo uses the
-> credential-free local three-machine simulated FCC stack, verified public
-> Coston2 contract/funding observations, and an isolated Vercel serverless
-> three-actor lifecycle connected to separate Coston2 demo contracts. Stable
-> production FCC servers, authenticated indexer access, and hosted relay/proxy,
-> registered production machines, and the private live lifecycle are explicitly
-> post-hackathon work. Simulation must remain labelled `LOCAL` or `SIMULATED`
-> and cannot satisfy a live FCC or release gate.
+> credential-free local three-machine stack, verified public Coston2
+> contract/funding observations, and an isolated Vercel serverless demo. Since
+> that freeze, three Railway origins, authenticated indexer access, registration,
+> live custody, and live threshold evaluation have been verified separately with
+> organizer-supported `SIMULATED_TEE=true`. They remain labelled `SIMULATED` and
+> do not satisfy hardware-attestation, V2-release, or mainnet gates.
 
 ## 1. Product objective
 
@@ -129,9 +130,9 @@ Exit: one validated policy journey and one real design partner target exist.
 
 ### Phase 1 — pinned official foundations
 
-The checked items below are local reproducibility gates. The dedicated PayGuard
-Coston2 development wallet has verified testnet bootstrap funding; stable FCC
-origins and the authenticated FCC indexer remain open.
+The dedicated PayGuard Coston2 development wallet has verified testnet
+bootstrap funding. Three stable Railway FCC origins and authenticated indexer
+connectivity are now verified separately from the frozen hackathon web artifact.
 
 - [x] Pin Node 24, pnpm, Go, Foundry, Solidity, viem, XRPL, and official Flare
   periphery/FCC revisions.
@@ -146,16 +147,17 @@ origins and the authenticated FCC indexer remain open.
 - [x] Build the official FCC scaffold unchanged and run its local smoke first.
 - [x] Build a digest-pinned reproducible PayGuard FCC image and pass a
   credential-free local three-machine identity/restart/hardening smoke.
-- [ ] Post-hackathon: obtain three stable HTTPS FCC machine origins and an
-  indexer path without committing credentials.
+- [x] Post-hackathon: obtain three stable HTTPS FCC machine origins and an
+  authenticated indexer path without committing credentials. Three Railway
+  services are live and the public evidence contains no credential.
 - [x] Add secret, dependency, source-provenance, and release-doc checks.
 
 Exit: every mandatory dependency is pinned and reachable, or product work pauses.
 
 ### Phase 2 — FCC private-policy feasibility
 
-The checked items below cover the local ciphertext-only/reference adapter. The
-registered Coston2 `PING_V1`, receipt, and evaluation proofs remain open.
+The checked items below cover both the local ciphertext-only/reference adapter
+and the separately evidenced live Coston2 simulated-machine path.
 
 - [x] Implement a typed, domain-bound `PING_V1` sender/handler with a shared
   Solidity/Go golden vector and fail-closed negative coverage.
@@ -181,8 +183,10 @@ registered Coston2 `PING_V1`, receipt, and evaluation proofs remain open.
 - [x] Add a guarded `PING_V1` dispatch/poll/evidence runner with simulation,
   exact sender/machine/event readback, bounded result polling, and public-safe
   testnet evidence that preserves custody/threshold blockers.
-- [ ] Post-hackathon: register a production machine and verify one signed
-  Coston2 `PING_V1` result before treating the live FCC path as available.
+- [x] Post-hackathon: register a Coston2 machine and verify one signed
+  `PING_V1` result before treating the live simulated FCC path as available.
+  Manager status `2`, dispatch/delivery, and distinct TEE/proxy signatures are
+  verified; the machine is explicitly `SIMULATED_TEE`, not hardware production.
 - [x] Implement ciphertext-only policy ingress and an identity-namespaced local
   store with `0700`/`0600` permissions, no-overwrite atomic writes, exact retry,
   corruption/symlink rejection, and same-identity process reconstruction. A new
@@ -191,9 +195,12 @@ registered Coston2 `PING_V1`, receipt, and evaluation proofs remain open.
 - [x] Return machine-signed `POLICY_RECEIPT_V1` values bound to policy owner,
   commitment, schema, code version, chain, contracts, machine, and nonce.
 - [x] Add a TypeScript public custody-bundle verifier for three frozen receipt
-  digests/signatures; registered live receipt evidence remains open.
-- [ ] Post-hackathon: register three distinct machines and require all-three
-  custody receipts.
+  digests/signatures; the live simulated custody runner now records only the
+  sanitized receipt digests and on-chain freeze transaction.
+- [x] Post-hackathon: register three distinct Coston2 simulated machines,
+  independently encrypt the private policy to each, verify all-three custody
+  receipts, and freeze the exact machine/key set on-chain. This is live
+  simulated custody, not hardware attestation.
 - [x] Implement deterministic `EVALUATE_V1` returning only public-safe decision
   fields; prove two matching result signatures in the local adapter.
 - [x] Prove replay, wrong owner, wrong commitment, wrong request, wrong code,
@@ -203,6 +210,12 @@ registered Coston2 `PING_V1`, receipt, and evaluation proofs remain open.
 
 Exit: private policy content never enters a public path and registered threshold
 machines authorize one domain-bound test action.
+
+Live Coston2 simulated-machine evidence now additionally covers three matching
+machine evaluations, two accepted on-chain attestations, one atomic ALLOW
+execution, one deterministic `CAP_EXCEEDED` denial with no accounting change,
+and stop/resume/revoke. The V1 administrator mapping and simulated attestation
+remain release blockers.
 
 ### Phase 3 — deterministic policy protocol
 
@@ -516,8 +529,10 @@ Exit: failure is resumable or explicitly denied, never represented as success.
   promotion runbook, and lifecycle/outage/redemption/user-validation validators
   are prepared. They remain non-authoritative until real Coston2, FCC,
   redemption, fault-drill, and consented study evidence passes.
-- [ ] Post-hackathon: verify runtime bytecode, constructor/wiring, extension ID,
-  code/image hash, governance, machines, key fingerprints, and signer mapping.
+- [x] Post-hackathon: verify runtime bytecode, constructor/wiring, extension ID,
+  code/image hash, governance, machines, key fingerprints, and signer mapping
+  for the live Coston2 simulated V1 stack and its three-machine dispatcher.
+  This does not verify a V2 or hardware-backed release.
 - [ ] Post-hackathon: record live personal recurring-payment, cap-denial,
   emergency-stop, recovery, Smart Account funding, and redemption lifecycles.
 - [x] Publish only sanitized public identifiers, hashes, blocks, transactions,
