@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "suite": "payguard-coston2-hosted-live-fcc-relay-lifecycle",
+  "status": "verified-hosted-live-simulated-fcc-lifecycle",
+  "recordedAt": "2026-08-11T10:24:35.242Z",
+  "network": {
+    "name": "flare-coston2",
+    "chainId": 114,
+    "observedBlock": "33915884"
+  },
+  "publicIdentifiers": {
+    "verificationSourceCommit": "5a48651cecaa43c8e1989503c85651b5f87b85aa",
+    "relayOrigin": "https://payguard-live-relay-production.up.railway.app",
+    "policyCommitment": "0xf0264315bcf494fc4b4f2dacd70876a210fc4c126929b4a2938fe82293911647",
+    "custodyFreezeTransaction": "0x0ed2075a519cbf0996071ea0635d081d76a6e0bcd146e1bf14ff7ddb6752b3ff",
+    "machines": [
+      {
+        "teeId": "0x1C911D007f8203484eD4099bC11849d7e9691044",
+        "proxyId": "0x8dfd80A00C1C6909E4f3f9439240243f5B193FA3",
+        "url": "https://payguard-fcc-a-production.up.railway.app",
+        "status": 2
+      },
+      {
+        "teeId": "0xff49A99535b8c52345D3c0b76bCf60194De7C29b",
+        "proxyId": "0x6860a154be5415219E2A197E987e5f34cC48F2Bf",
+        "url": "https://payguard-fcc-b-production.up.railway.app",
+        "status": 2
+      },
+      {
+        "teeId": "0xd871bc2044a75e8cc2CF06aCdeaDC4CBbEef349A",
+        "proxyId": "0x58b77F524461a990c97Ef9b1AAd429E008252DBE",
+        "url": "https://payguard-fcc-d-production.up.railway.app",
+        "status": 2
+      }
+    ],
+    "allow": {
+      "requestId": "0xd6802d2ef53e53c752a4fbc48fcf9fec6a6448904d5d74b1ae2e41c9481e2afa",
+      "instructionId": "0xf3fa64bda2c9bcd17b750f945a1e14cc18eb63c3e98be360c9b0a83f9e4a2ba2",
+      "create": "0xcb884de127ec18db99974209706dc606a2f7857c330d126763a93612fc513a17",
+      "dispatch": "0x15cbe325e7d56ad9ac2714404452cd8e036d1327fd2924ecd2badeb0ee0c58d8",
+      "submit": [
+        "0x910e54240abec1f8dc776aa62e4492d3eba064ef4debd8e6a0ad8a5e797472bd",
+        "0xcd9af878379e682ab9caabd697be5b78ee66e078299eea7d7cb43289bd70cfee"
+      ],
+      "execute": "0x556fc7fe412174e1aa178aad0dbd57cfb87459acbc289b4c5b17146ada3cb72f"
+    },
+    "deny": {
+      "requestId": "0x998cdc014500111910a17f5b7407e78f70bf8cfa894ee8b3ab0ff5d30568c065",
+      "instructionId": "0x27a0749ae2ead00235de645b8eb8a024c0ce2cc9a3aed3dd6c4faa7ee68db39b",
+      "reason": "CAP_EXCEEDED",
+      "create": "0xf9b996c5080c2fd1481dd3b61c67a150c647cf91bb5649d6ebf6e5b41ef9342b",
+      "dispatch": "0x3fbd8aec6e705205c169837682ab252090e6ef6e554be36b5c4a06400c7f8f31",
+      "submit": [
+        "0x6e4da6f1379b72d8291f31f5f4c3916d5adb2deed60bd126ff2f5739832b1bcf",
+        "0x95b55f0dbb7f3cced623870cd13a24a0bec56dbc17998669202044ffafbb01c5"
+      ]
+    },
+    "policyLifecycleTransactions": {
+      "stop": "0x2ebc171023aaaf42c9b91c9124f28a43b97178773d467f655c8d99c193dcaa91",
+      "resume": "0x1184ec05b29f5a9a6a3cd68e90c3d620fbc4906884bb6ebed814fc22423e24d5",
+      "revoke": "0x42380adc7eea05668cebfeaf13ea7a08aaa57f3d8242679cd812fd0f04404ea3"
+    },
+    "accounting": {
+      "before": {
+        "deposited": "1000000",
+        "available": "590000",
+        "reserved": "0",
+        "spent": "410000",
+        "withdrawn": "0",
+        "refunded": "0"
+      },
+      "afterAllow": {
+        "deposited": "1000000",
+        "available": "490000",
+        "reserved": "0",
+        "spent": "510000",
+        "withdrawn": "0",
+        "refunded": "0"
+      },
+      "afterDeny": {
+        "deposited": "1000000",
+        "available": "490000",
+        "reserved": "0",
+        "spent": "510000",
+        "withdrawn": "0",
+        "refunded": "0"
+      }
+    }
+  },
+  "assertions": {
+    "hostedRelayHealthVerified": true,
+    "hostedAuthenticatedPrivateIngressVerified": true,
+    "threeRegisteredMachineReceiptsVerified": true,
+    "requestIdOnlyEvaluationVerified": true,
+    "clientDecisionAccepted": false,
+    "relayCanonicalChainReconstructionVerified": true,
+    "twoMatchingAllowSubmittedByRelay": true,
+    "allowExecutionVerified": true,
+    "twoMatchingDenySubmittedByRelay": true,
+    "denyMovedNoFundsVerified": true,
+    "stopResumeRevokeVerified": true,
+    "vaultConservationVerified": true,
+    "hardwareAttestationVerified": false,
+    "simulatedTee": true,
+    "v2ReleaseVerified": false,
+    "verifiedPayGuardRelease": false,
+    "noPrivateKeyRecorded": true,
+    "noCredentialRecorded": true,
+    "noPolicyRecorded": true,
+    "noCiphertextRecorded": true,
+    "noSignatureRecorded": true,
+    "testnetOnly": true
+  },
+  "blockers": [
+    "HARDWARE_ATTESTATION_NOT_VERIFIED",
+    "V2_RELEASE_NOT_VERIFIED"
+  ],
+  "notes": [
+    "Organizer-approved SIMULATED_TEE=true was used on Coston2.",
+    "The hosted relay received independently encrypted policy ciphertext only during authenticated ingress, then received request IDs with empty JSON bodies for evaluation.",
+    "The relay reconstructed canonical public request, vault, policy, and spend state from Coston2 and did not accept a client decision.",
+    "Private policy material, ciphertexts, owner authorizations, signatures, credentials, and keys are excluded from this evidence.",
+    "This verifies the deployed V1 operator path; it is not hardware attestation, V2, a verified PayGuard release, or mainnet readiness."
+  ]
+}
