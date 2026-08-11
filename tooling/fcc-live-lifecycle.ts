@@ -344,8 +344,12 @@ export function buildSanitizedLifecycleEvidence(input: {
     || !sameAccounting(input.allow.accountingAfter, input.deny.accountingAfter)) throw new Error("lifecycle conservation evidence is invalid");
   return {
     schemaVersion: 1,
-    suite: "payguard-coston2-live-simulated-threshold-lifecycle",
-    status: "verified-live-simulated-threshold-lifecycle",
+    suite: input.replacement
+      ? "payguard-coston2-live-simulated-replacement-lifecycle"
+      : "payguard-coston2-live-simulated-threshold-lifecycle",
+    status: input.replacement
+      ? "verified-live-simulated-replacement-lifecycle"
+      : "verified-live-simulated-threshold-lifecycle",
     recordedAt: input.recordedAt ?? new Date().toISOString(),
     network: { name: "flare-coston2", chainId: 114, observedBlock: input.observedBlock.toString() },
     publicIdentifiers: {
@@ -390,12 +394,17 @@ export function buildSanitizedLifecycleEvidence(input: {
       noSignatureRecorded: true,
       testnetOnly: true,
     },
-    blockers: ["HARDWARE_ATTESTATION_NOT_VERIFIED", "V2_RELEASE_NOT_VERIFIED", "OUTAGE_AND_REPLACEMENT_DRILLS_NOT_VERIFIED"],
+    blockers: [
+      "HARDWARE_ATTESTATION_NOT_VERIFIED",
+      "V2_RELEASE_NOT_VERIFIED",
+      input.replacement ? "FULL_DEPENDENCY_OUTAGE_MATRIX_NOT_VERIFIED" : "OUTAGE_AND_REPLACEMENT_DRILLS_NOT_VERIFIED",
+    ],
     notes: [
       "Organizer-approved SIMULATED_TEE=true was used on Coston2.",
       "ALLOW and DENY were independently computed by three registered machines; the router accepted two matching attestations.",
       "The private policy, ciphertexts, owner authorizations, and signatures are excluded from public evidence.",
       "The on-chain lifecycle uses the deployed V1 administrator mapping; official-manager authorization remains a V2 release blocker.",
+      ...(input.replacement ? ["Machine C was unavailable; registered machine D was used only in a newly frozen policy and did not replace a frozen identity in-place."] : []),
     ],
   };
 }
