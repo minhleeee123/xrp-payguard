@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "suite": "payguard-coston2-hackathon-simulated-fcc-ping",
+  "status": "verified-hackathon-simulated-fcc-ping",
+  "recordedAt": "2026-08-11T04:45:53.272Z",
+  "network": {
+    "name": "flare-coston2",
+    "chainId": 114,
+    "observedBlock": "33905676"
+  },
+  "publicIdentifiers": {
+    "verificationSourceCommit": "2491f91a82d2defd342b592ca8c085e5f547bba2",
+    "manager": "0x1a9C4A0f9D76c0b1D91d22E24E573a9b377618aE",
+    "foundationSender": "0xA1e95721aD7F96D7f9bcd1d62b3A38A8625Cf8dC",
+    "extensionId": "66037",
+    "machines": [
+      {
+        "teeId": "0x1C911D007f8203484eD4099bC11849d7e9691044",
+        "proxyId": "0x8dfd80A00C1C6909E4f3f9439240243f5B193FA3",
+        "url": "https://payguard-fcc-a-production.up.railway.app",
+        "status": 2,
+        "extensionId": "66037"
+      },
+      {
+        "teeId": "0xff49A99535b8c52345D3c0b76bCf60194De7C29b",
+        "proxyId": "0x6860a154be5415219E2A197E987e5f34cC48F2Bf",
+        "url": "https://payguard-fcc-b-production.up.railway.app",
+        "status": 2,
+        "extensionId": "66037"
+      },
+      {
+        "teeId": "0xed19Ff73952E4A4783f739194940c0b6823Ae213",
+        "proxyId": "0xB18ABc7833156ee6C9A10D251003F191Ec0005F3",
+        "url": "https://payguard-fcc-c-production.up.railway.app",
+        "status": 2,
+        "extensionId": "66037"
+      }
+    ],
+    "selectedTeeId": "0x1C911D007f8203484eD4099bC11849d7e9691044",
+    "selectedProxyId": "0x8dfd80A00C1C6909E4f3f9439240243f5B193FA3",
+    "selectedUrl": "https://payguard-fcc-a-production.up.railway.app",
+    "transactionHash": "0x1c1201a26bd0c7e296a4f7c527823540c65b188979e467104a6f366b1ad59408",
+    "instructionId": "0x4ceca15a4d21f622fdfba023fc4945ef6a9567c512a4ab8f057bb347296a57cf",
+    "requestNonce": "0x9f5cff7514c0669aff36a7871686f9527229c8e0b9854501ae2c78eacc1cff33",
+    "payloadHash": "0x7a551eb799c614d24a0782eae33caa6915af820617ea7196e0ca554954f360ec",
+    "bindingHash": "0x4ccaf251679d5470a5b5d9aef97bcca2e18a7e11f2bfae69794eadafad294320",
+    "resultHash": "0xab6257b35a19e4f07d7f2d8df6d6ea360c6a526dcb572fc0d343a1982d4b1eaa"
+  },
+  "assertions": {
+    "chainIdVerified": true,
+    "officialManagerRuntimeVerified": true,
+    "senderRuntimeVerified": true,
+    "extensionVerified": true,
+    "simulatedCodeVersionVerified": true,
+    "exactlyThreeDistinctMachinesVerified": true,
+    "allMachineUrlsVerified": true,
+    "allMachinesStatusTwoVerified": true,
+    "liveInfoVerified": true,
+    "dispatchVerified": true,
+    "resultVerified": true,
+    "teeSignerVerified": true,
+    "proxySignerVerified": true,
+    "noPrivateKeyRecorded": true,
+    "noCredentialRecorded": true,
+    "noPolicyRecorded": true,
+    "simulatedTee": true,
+    "hardwareAttestationVerified": false,
+    "testnetOnly": true
+  },
+  "blockers": [
+    "HARDWARE_ATTESTATION_NOT_VERIFIED",
+    "THREE_MACHINE_PRIVATE_CUSTODY_NOT_YET_VERIFIED",
+    "TWO_OF_THREE_LIVE_EVALUATION_NOT_YET_VERIFIED"
+  ],
+  "notes": [
+    "Organizer-approved SIMULATED_TEE=true was used for Coston2 hackathon judging.",
+    "This is live FCC delivery and signed-result evidence, not a hardware-backed production release claim."
+  ]
+}
