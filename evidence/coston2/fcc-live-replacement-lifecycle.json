@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "suite": "payguard-coston2-live-simulated-replacement-lifecycle",
+  "status": "verified-live-simulated-replacement-lifecycle",
+  "recordedAt": "2026-08-11T05:49:57.007Z",
+  "network": {
+    "name": "flare-coston2",
+    "chainId": 114,
+    "observedBlock": "33907212"
+  },
+  "publicIdentifiers": {
+    "verificationSourceCommit": "c2626a2f0221d9a3ba32a537675b74a47c0689e5",
+    "dispatcher": "0x18Ea713cEf10ECf5cAC23c08dD25Ac17D2f07e3d",
+    "policyCommitment": "0xff7faee80fe9df63284e9c60634fbdc665125ca2186caa66449dae08bae98c6c",
+    "custodyFreezeTransaction": "0x365c393e3b32468a4ec5302de4340cb4c2f263350de89b183d29a04c3398bdcd",
+    "machines": [
+      {
+        "teeId": "0x1C911D007f8203484eD4099bC11849d7e9691044",
+        "proxyId": "0x8dfd80A00C1C6909E4f3f9439240243f5B193FA3",
+        "url": "https://payguard-fcc-a-production.up.railway.app",
+        "status": 2
+      },
+      {
+        "teeId": "0xff49A99535b8c52345D3c0b76bCf60194De7C29b",
+        "proxyId": "0x6860a154be5415219E2A197E987e5f34cC48F2Bf",
+        "url": "https://payguard-fcc-b-production.up.railway.app",
+        "status": 2
+      },
+      {
+        "teeId": "0xd871bc2044a75e8cc2CF06aCdeaDC4CBbEef349A",
+        "proxyId": "0x58b77F524461a990c97Ef9b1AAd429E008252DBE",
+        "url": "https://payguard-fcc-d-production.up.railway.app",
+        "status": 2
+      }
+    ],
+    "allow": {
+      "instructionId": "0x186be8e975f7c569e4df5bb4d73b99a73a9ce3bd8fe298986652c6d225d2bb1d",
+      "evaluationDigest": "0x759a321526600b647ad56fca17902a40c202b3dd96c82725574baeea2793bc38",
+      "transactions": {
+        "create": "0x564bfa5561c6652ac8c6e00defb8e6510aacb28b8a1ecedc27b206d17232bad5",
+        "dispatch": "0x9f5415db4a1c744c925fe7d334df9acdd2fcc9fcd3ad5cdfc80d33d5d0945018",
+        "submit": [
+          "0xb4fefccfd0fef7760d8675fac77e0933ddff271eabf886d775f0642eb31ac947",
+          "0xb88507375117d8f9274d27195834ac2896a356e8953c0d7ea767fe87ff88173d"
+        ],
+        "execute": "0x04a73fb362fb9f5fed6dd5cdd9a675816456f6293970c77066df6d1d238cd1de"
+      },
+      "routerStatus": 4
+    },
+    "deny": {
+      "instructionId": "0x2caf6db705a02143e0ef9cb3f550a550f47d8e1723ce55be834e84fa287e82c1",
+      "evaluationDigest": "0x19463c958d7d78859706be09f90e822fe4a17f88117d85c44830b855c71b4662",
+      "publicReasonClass": "CAP_EXCEEDED",
+      "transactions": {
+        "create": "0xca4ed2047e5c8cf42667faadcec92ecba40938d1b0676317addff5692ed6585f",
+        "dispatch": "0x5a82a43dd31fa2306d88798504c65ee0bb8e96a5112d926589465051ee7dc413",
+        "submit": [
+          "0x8ff55cba47307eeaaa175d94b6c83e9da6617e35c59a798c0ba8618b7c818845",
+          "0x305df26208aac35c61fc5a5d2b0ce8ac51f285e62617a05e9a49eeb196fdb904"
+        ]
+      },
+      "routerStatus": 3
+    },
+    "policyLifecycleTransactions": {
+      "stop": "0xbc427a4f5ecf5a5b327e1ae9d4cbd792333e9f5b6949bc17eaeb9fbdba71def0",
+      "resume": "0xc928a0a4ac36848be2a32820bca4523b410ce1acca3b8ed421a3ab4a2ee96e85",
+      "revoke": "0x76b79437f946da011e9e55433fda4f7e52bd733cc073385fc6fd001b3ae695b5"
+    },
+    "replacement": {
+      "unavailableTeeId": "0xed19Ff73952E4A4783f739194940c0b6823Ae213",
+      "unavailableUrl": "https://payguard-fcc-c-production.up.railway.app",
+      "replacementTeeId": "0xd871bc2044a75e8cc2CF06aCdeaDC4CBbEef349A",
+      "replacementUrl": "https://payguard-fcc-d-production.up.railway.app",
+      "registrationTransaction": "0xa0d199b625c04e386f08e68d6d8a83ee3a623d2c12092bc61a3cae0ea936c34d",
+      "productionTransaction": "0x855d3a8acaf170c351a8c7101fca7ffa9671164e55dd0d38720b9acca52d0148",
+      "unavailableEndpointReachable": false,
+      "frozenPolicyIdentitySwapAttempted": false
+    },
+    "accounting": {
+      "before": {
+        "deposited": "1000000",
+        "available": "890000",
+        "reserved": "0",
+        "spent": "110000",
+        "withdrawn": "0",
+        "refunded": "0"
+      },
+      "afterAllow": {
+        "deposited": "1000000",
+        "available": "790000",
+        "reserved": "0",
+        "spent": "210000",
+        "withdrawn": "0",
+        "refunded": "0"
+      },
+      "afterDeny": {
+        "deposited": "1000000",
+        "available": "790000",
+        "reserved": "0",
+        "spent": "210000",
+        "withdrawn": "0",
+        "refunded": "0"
+      }
+    }
+  },
+  "assertions": {
+    "liveThreeMachineDispatchVerified": true,
+    "allThreeOuterSignaturesVerified": true,
+    "allThreeInnerSignaturesVerified": true,
+    "twoMatchingAllowVerified": true,
+    "allowExecutionVerified": true,
+    "vaultConservationVerified": true,
+    "twoMatchingDenyVerified": true,
+    "denyMovedNoFundsVerified": true,
+    "stopResumeRevokeVerified": true,
+    "replacementRegistrationVerified": true,
+    "unavailableFrozenIdentityNotSilentlySwapped": true,
+    "hardwareAttestationVerified": false,
+    "simulatedTee": true,
+    "v2ReleaseVerified": false,
+    "noPrivateKeyRecorded": true,
+    "noCredentialRecorded": true,
+    "noPolicyRecorded": true,
+    "noCiphertextRecorded": true,
+    "noSignatureRecorded": true,
+    "testnetOnly": true
+  },
+  "blockers": [
+    "HARDWARE_ATTESTATION_NOT_VERIFIED",
+    "V2_RELEASE_NOT_VERIFIED",
+    "FULL_DEPENDENCY_OUTAGE_MATRIX_NOT_VERIFIED"
+  ],
+  "notes": [
+    "Organizer-approved SIMULATED_TEE=true was used on Coston2.",
+    "ALLOW and DENY were independently computed by three registered machines; the router accepted two matching attestations.",
+    "The private policy, ciphertexts, owner authorizations, and signatures are excluded from public evidence.",
+    "The on-chain lifecycle uses the deployed V1 administrator mapping; official-manager authorization remains a V2 release blocker.",
+    "Machine C was unavailable; registered machine D was used only in a newly frozen policy and did not replace a frozen identity in-place."
+  ]
+}
