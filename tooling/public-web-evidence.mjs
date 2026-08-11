@@ -6,11 +6,13 @@ const PUBLIC_EVIDENCE_SOURCES = [
   { directory: "evidence/simulation", include: () => true },
 ];
 const FORBIDDEN_FIELD = /(?:ciphertext|plaintext|password|mnemonic|private[_-]?key|secret|api[_-]?key|credential|seed)/iu;
-const SAFETY_ASSERTION = /^no(?:private|policy|api|credential)/iu;
+const SAFETY_ASSERTION = /^no(?:private|policy|api|credential|ciphertext|plaintext|password|mnemonic|secret|seed)[a-z_-]*recorded$/iu;
 const FORBIDDEN_VALUE = /-----BEGIN (?:RSA|OPENSSH|EC|PGP) PRIVATE KEY-----/u;
 
 export function assertPublicSafe(value, path = "$", field = "") {
-  if (FORBIDDEN_FIELD.test(field) && !(SAFETY_ASSERTION.test(field) && typeof value === "boolean")) {
+  const booleanSafetyAssertion = typeof value === "boolean"
+    && (SAFETY_ASSERTION.test(field) || path.includes(".assertions."));
+  if (FORBIDDEN_FIELD.test(field) && !booleanSafetyAssertion) {
     throw new Error(`forbidden public-evidence field at ${path}: ${field}`);
   }
   if (typeof value === "string" && FORBIDDEN_VALUE.test(value)) {

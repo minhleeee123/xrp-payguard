@@ -44,7 +44,10 @@ test("rejects private fields and key material", () => {
   assert.throws(() => assertPublicSafe({ secret: "value" }), /forbidden public-evidence field/);
   const pem = ["-----BEGIN EC ", "PRIVATE KEY-----"].join("");
   assert.throws(() => assertPublicSafe({ payload: pem }), /private-key material/);
-  assert.doesNotThrow(() => assertPublicSafe({ noPrivateKeyRecorded: true, notes: ["public only"] }));
+  assert.doesNotThrow(() => assertPublicSafe({ noPrivateKeyRecorded: true, noCiphertextRecorded: true, notes: ["public only"] }));
+  assert.doesNotThrow(() => assertPublicSafe({ assertions: { ciphertextStoreWriteVerified: true } }));
+  assert.throws(() => assertPublicSafe({ noCiphertextRecorded: "true" }), /forbidden public-evidence field/);
+  assert.throws(() => assertPublicSafe({ assertions: { ciphertextStoreWriteVerified: "secret" } }), /forbidden public-evidence field/);
 });
 
 test("rejects simulation evidence that upgrades a live FCC claim", () => {
