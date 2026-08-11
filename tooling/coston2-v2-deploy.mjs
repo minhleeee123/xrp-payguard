@@ -284,6 +284,9 @@ export function buildV2DeploymentEvidence(state) {
       supportedAssetVerified: true,
       noHardwareAttestationClaimed: true,
       noVerifiedReleaseClaimed: true,
+      noPrivateKeyRecorded: true,
+      noCredentialRecorded: true,
+      testnetOnly: true,
       publicOnly: true,
     },
     notes: [
