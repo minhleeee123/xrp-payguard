@@ -15,7 +15,8 @@ COPY cmd/ ./cmd/
 COPY internal/ ./internal/
 COPY pkg/ ./pkg/
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GOFLAGS="-buildvcs=false" \
-    go build -trimpath -ldflags="-buildid= -s -w" -o /out/payguard-fcc ./cmd/docker
+    go build -trimpath -ldflags="-buildid= -s -w" -o /out/payguard-fcc ./cmd/docker && \
+    go build -trimpath -ldflags="-buildid= -s -w" -o /out/payguard-gateway ./cmd/gateway
 
 WORKDIR /build/tee-proxy
 RUN git init && \
@@ -41,6 +42,7 @@ RUN apk add --no-cache ca-certificates redis tini
 
 WORKDIR /app
 COPY --chmod=755 --from=builder /out/payguard-fcc /app/payguard-fcc
+COPY --chmod=755 --from=builder /out/payguard-gateway /app/payguard-gateway
 COPY --chmod=755 --from=builder /out/tee-proxy /app/tee-proxy
 COPY --chmod=755 railway/render-proxy-config.sh /app/render-proxy-config.sh
 COPY --chmod=755 railway/start.sh /app/start.sh
@@ -53,10 +55,10 @@ ENV MODE=1 \
     SIGN_PORT=7701 \
     EXTENSION_PORT=7702 \
     PRIVATE_INGRESS_PORT=7703 \
-    PORT=6664 \
+    PORT=8080 \
     PROXY_URL=http://127.0.0.1:6663 \
     PAYGUARD_POLICY_STORE_DIR=/var/lib/payguard/policies \
     LOG_LEVEL=ERROR
 
-EXPOSE 6664 7703
+EXPOSE 8080
 ENTRYPOINT ["/sbin/tini", "--", "/app/start.sh"]

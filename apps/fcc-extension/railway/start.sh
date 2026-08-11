@@ -9,7 +9,7 @@ fail() {
 [ "${MODE:-}" = "1" ] || fail "this image is restricted to simulated mode"
 [ "${SIMULATED_TEE:-}" = "true" ] || fail "SIMULATED_TEE must be true"
 [ "${CHAIN_ID:-}" = "114" ] || fail "CHAIN_ID must be Coston2 (114)"
-[ "${PORT:-}" = "6664" ] || fail "PORT must expose the tee-proxy external endpoint"
+[ "${PORT:-}" = "8080" ] || fail "PORT must expose the body-opaque FCC gateway"
 [ -n "${INITIAL_OWNER:-}" ] || fail "INITIAL_OWNER is required"
 [ -n "${EXTENSION_ID:-}" ] || fail "EXTENSION_ID is required"
 [ -n "${GOVERNANCE_SIGNERS:-}" ] || fail "GOVERNANCE_SIGNERS is required"
@@ -29,13 +29,14 @@ redis-server \
 redis_pid=$!
 proxy_pid=
 tee_pid=
+gateway_pid=
 
 cleanup() {
   trap - TERM INT EXIT
-  for pid in "$tee_pid" "$proxy_pid" "$redis_pid"; do
+  for pid in "$gateway_pid" "$tee_pid" "$proxy_pid" "$redis_pid"; do
     [ -z "$pid" ] || kill "$pid" 2>/dev/null || true
   done
-  for pid in "$tee_pid" "$proxy_pid" "$redis_pid"; do
+  for pid in "$gateway_pid" "$tee_pid" "$proxy_pid" "$redis_pid"; do
     [ -z "$pid" ] || wait "$pid" 2>/dev/null || true
   done
 }
@@ -58,10 +59,13 @@ done
 proxy_pid=$!
 /app/payguard-fcc &
 tee_pid=$!
+/app/payguard-gateway &
+gateway_pid=$!
 
 while kill -0 "$redis_pid" 2>/dev/null && \
       kill -0 "$proxy_pid" 2>/dev/null && \
-      kill -0 "$tee_pid" 2>/dev/null; do
+      kill -0 "$tee_pid" 2>/dev/null && \
+      kill -0 "$gateway_pid" 2>/dev/null; do
   sleep 1
 done
 
