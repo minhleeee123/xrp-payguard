@@ -11,6 +11,7 @@ describe("V2 deployment copy boundary", () => {
     expect(combined).toContain("LEGACY V1 SANDBOX");
     expect(combined).toContain("HISTORICAL V1 SIMULATION EVIDENCE");
     expect(combined).not.toMatch(/LIVE FCC · COSTON2 V1|LIVE V1 ·|Use live V1 domain|Live V1 policy|V1 operator connected|Create V1 request|Fund V1 vault/);
+    expect(main).not.toContain("fetchInteractiveDemoConfig");
     expect(combined).toContain("POLICY_SCHEMA_V1");
   });
 });

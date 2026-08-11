@@ -42,7 +42,6 @@ import {
   createDemoRequest,
   executeDemoRequest,
   executeDemoVaultAction,
-  fetchInteractiveDemoConfig,
   governDemoPolicy,
   loadDemoAccount,
   registerDemoPolicy,
@@ -156,7 +155,7 @@ let landingOpen = initialRoute.surface === "landing";
 let publicEvidenceMirrorState: PublicEvidenceMirrorState = { status: "LOADING" };
 let demoState: DemoUiState = { status: "LOADING" };
 let liveV2EvidenceState: LiveV2EvidenceUiState = { status: "LOADING" };
-let interactiveConfigState: InteractiveConfigUiState = { status: "LOADING" };
+let interactiveConfigState: InteractiveConfigUiState = { status: "UNAVAILABLE" };
 let interactiveSession: DemoPolicySession | null = null;
 let interactivePolicyRegistration: DemoTransactionResult | null = null;
 let interactiveAccountSnapshot: DemoAccountSnapshot | null = null;
@@ -382,7 +381,7 @@ function studioView(): string {
 function interactiveStudioPanel(): string {
   const account = connectedAccount();
   if (interactiveConfigState.status === "LOADING") return `<details class="legacy-sandbox-panel"><summary>Legacy V1 sandbox <span>loading isolated actors</span></summary><section class="panel receipt-card interactive-studio-card"><div class="eyebrow">LEGACY V1 SANDBOX</div><h3>Loading isolated demo domain…</h3><p class="panel-copy">This is not the active V2 candidate.</p></section></details>`;
-  if (interactiveConfigState.status === "UNAVAILABLE") return `<details class="legacy-sandbox-panel"><summary>Legacy V1 sandbox <span>unavailable</span></summary><section class="panel receipt-card interactive-studio-card"><div class="eyebrow">LEGACY V1 SANDBOX</div><h3>Serverless actors unavailable</h3><div class="activation-block"><span class="status-dot amber"></span><div><strong>No fallback approval</strong><small>The active V2 FCC panel remains independent.</small></div></div></section></details>`;
+  if (interactiveConfigState.status === "UNAVAILABLE") return `<details class="legacy-sandbox-panel"><summary>Legacy V1 sandbox <span>recorded evidence only</span></summary><section class="panel receipt-card interactive-studio-card"><div class="eyebrow">LEGACY V1 SANDBOX</div><h3>Historical actor APIs are intentionally not deployed</h3><div class="activation-block"><span class="status-dot amber"></span><div><strong>No fallback approval</strong><small>The active V2 FCC panel remains independent; review the historical evidence in Demo lifecycle.</small></div></div></section></details>`;
   const config = interactiveConfigState.config;
   const exactDomain = studioCompilation
     && studioCompilation.policy.registry.toLowerCase() === config.registry.toLowerCase()
@@ -1756,17 +1755,6 @@ void fetchSimulatedLifecycleEvidence()
 void fetchLiveV2LifecycleEvidence()
   .then((evidence) => { liveV2EvidenceState = { status: "READY", evidence }; if (!landingOpen) render(); })
   .catch(() => { liveV2EvidenceState = { status: "UNAVAILABLE" }; if (!landingOpen) render(); });
-void fetchInteractiveDemoConfig()
-  .then(async (config) => {
-    interactiveConfigState = { status: "READY", config };
-    if (walletState.status === "CONNECTED") await refreshInteractiveAccount(false);
-    if (!landingOpen) render();
-  })
-  .catch(() => {
-    interactiveConfigState = { status: "UNAVAILABLE" };
-    interactiveAccountSnapshot = null;
-    if (!landingOpen) render();
-  });
 void fetchLiveFccConfig()
   .then(async (config) => {
     liveFccConfigState = { status: "READY", config };
