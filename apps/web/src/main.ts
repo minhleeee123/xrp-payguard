@@ -55,6 +55,22 @@ import {
 } from "./interactive-demo.js";
 import type { DemoDomainConfig } from "@xrp-payguard/demo";
 import {
+  collectLiveCustody,
+  createLiveRequest,
+  evaluateLiveRequest,
+  executeLiveRequest,
+  fetchLiveFccConfig,
+  governLivePolicy,
+  loadLivePolicyStatus,
+  registerLivePolicy,
+  type LiveEvaluationResult,
+  type LiveFccConfig,
+  type LivePolicyAction,
+  type LivePolicySession,
+  type LiveRequestResult,
+  type LiveTransactionResult,
+} from "./live-fcc.js";
+import {
   COSTON2_CHAIN,
   PAYGUARD_COSTON2,
   REVIEWED_PENDING_REQUEST_ID,
@@ -90,6 +106,7 @@ type PublicEvidenceMirrorState =
   | { status: "UNAVAILABLE"; reason: "NOT_PUBLISHED" | "INVALID" };
 type DemoUiState = { status: "LOADING" } | { status: "READY"; evidence: SimulatedLifecycleEvidence } | { status: "UNAVAILABLE" };
 type InteractiveConfigUiState = { status: "LOADING" } | { status: "READY"; config: DemoDomainConfig } | { status: "UNAVAILABLE" };
+type LiveFccConfigUiState = { status: "LOADING" } | { status: "READY"; config: LiveFccConfig } | { status: "UNAVAILABLE" };
 type WalletUiState =
   | { status: "DISCONNECTED" }
   | { status: "CONNECTING" }
@@ -149,6 +166,17 @@ let interactiveNotice = "Connect a disposable Coston2 wallet, then prepare a sim
 let interactiveFundInput = "1";
 let interactiveRequestAmountInput = "0.1";
 let interactiveTransactions: { label: string; hash: `0x${string}`; blockNumber: bigint }[] = [];
+let liveFccConfigState: LiveFccConfigUiState = { status: "LOADING" };
+let liveFccSession: LivePolicySession | null = null;
+let liveFccPolicyRegistration: LiveTransactionResult | null = null;
+let liveFccPolicyStatus: number | null = null;
+let liveFccRequest: LiveRequestResult | null = null;
+let liveFccEvaluation: LiveEvaluationResult | null = null;
+let liveFccExecution: LiveTransactionResult | null = null;
+let liveFccBusy = "";
+let liveFccNotice = "Checking the hosted relay and three registered Coston2 machines.";
+let liveFccRequestAmountInput = "0.1";
+let liveFccTransactions: { label: string; hash: `0x${string}`; blockNumber?: bigint }[] = [];
 const walletProvider = injectedProvider();
 let walletState: WalletUiState = { status: "DISCONNECTED" };
 let coston2State: Coston2UiState = { status: "IDLE" };
@@ -364,12 +392,32 @@ function interactiveStudioPanel(): string {
 }
 
 function studioCustodyPanel(): string {
-  const available = custodyState.status === "READY";
-  const count = available ? custodyState.bundle.receipts.length : 0;
-  const rows = available
-    ? custodyState.bundle.receipts.map((receipt, index) => `<div class="receipt-row"><span class="machine-index">0${index + 1}</span><div><strong>${esc(short(receipt.machineId))}</strong><small>Signed receipt · ${esc(short(receipt.digest))}</small></div><span class="state-tag green-tag">VERIFIED</span></div>`).join("")
-    : [1, 2, 3].map((number) => `<div class="receipt-row"><span class="machine-index">0${number}</span><div><strong>FCC machine ${number}</strong><small>${esc(custodyUnavailableReason(custodyState.reason))}</small></div><span class="state-tag gray-tag">UNAVAILABLE</span></div>`).join("");
-  return `<section class="panel receipt-card"><div class="eyebrow">CUSTODY RECEIPTS</div><h3>Activation progress</h3><div class="receipt-count">${count} <span>/ 3 verified</span></div>${rows}<div class="activation-block"><span class="status-dot ${available ? "green" : "amber"}"></span><div><strong>${available ? "Ready for public activation" : "Activation blocked"}</strong><small>${available ? "All three machine signatures match the frozen binding. The browser still cannot supply an authorization result." : "All three exact machine receipts are required. This UI never substitutes a local receipt."}</small></div></div></section>`;
+  const account = connectedAccount();
+  if (liveFccConfigState.status === "LOADING") return `<section class="panel receipt-card"><div class="eyebrow">LIVE FCC · COSTON2</div><h3>Verifying relay and three machines…</h3><p class="panel-copy">No readiness is asserted until the relay checks contracts, manager status, stable HTTPS origins, keys and code hash.</p></section>`;
+  if (liveFccConfigState.status === "UNAVAILABLE") return `<section class="panel receipt-card"><div class="eyebrow">LIVE FCC · COSTON2</div><h3>Live path unavailable</h3><div class="activation-block"><span class="status-dot amber"></span><div><strong>Failed closed</strong><small>No local receipt or simulated browser decision replaces the hosted FCC path.</small></div></div></section>`;
+  const config = liveFccConfigState.config;
+  const exactDomain = studioCompilation
+    && studioCompilation.policy.registry.toLowerCase() === config.contracts.registry.toLowerCase()
+    && studioCompilation.policy.vault.toLowerCase() === config.contracts.vault.toLowerCase()
+    && studioCompilation.policy.router.toLowerCase() === config.contracts.router.toLowerCase()
+    && studioCompilation.policy.asset.toLowerCase() === config.contracts.asset.toLowerCase()
+    && studioCompilation.policy.owner.toLowerCase() === config.operator.toLowerCase();
+  const operatorConnected = account?.toLowerCase() === config.operator.toLowerCase();
+  const rows = liveFccSession
+    ? liveFccSession.custody.map((receipt, index) => `<div class="receipt-row"><span class="machine-index">0${index + 1}</span><div><strong>${esc(short(receipt.receipt.machineId))}</strong><small>Registered machine receipt · ${esc(short(receipt.digest))}</small></div><span class="state-tag green-tag">SIGNED</span></div>`).join("")
+    : config.machines.map((machine) => `<div class="receipt-row"><span class="machine-index">0${machine.index}</span><div><strong>${esc(short(machine.teeId))}</strong><small>Status 2 · ${esc(short(machine.codeHash))}</small></div><span class="state-tag green-tag">PRODUCTION SET</span></div>`).join("");
+  const action = !account
+    ? `<button class="outline-button" type="button" data-action="connect">Connect operator wallet</button>`
+    : !operatorConnected
+      ? `<div class="unavailable-box"><span class="status-dot amber"></span><div><strong>Operator wallet required for V1</strong><small>Expected ${esc(short(config.operator))}. The open public demo remains available below.</small></div></div>`
+      : !exactDomain
+        ? `<button class="outline-button" type="button" data-action="prepare-live-draft">Use live V1 domain</button>`
+        : !liveFccSession
+          ? `<button class="primary-button" type="button" data-action="collect-live-custody" ${liveFccBusy ? "disabled" : ""}>${liveFccBusy === "CUSTODY" ? "Signing & contacting A/B/D…" : "Collect 3 live FCC receipts"}</button>`
+          : !liveFccPolicyRegistration
+            ? `<button class="primary-button" type="button" data-action="register-live-policy" ${liveFccBusy ? "disabled" : ""}>${liveFccBusy === "REGISTER" ? "Waiting for finality…" : "Register live policy on Coston2"}</button>`
+            : `<button class="outline-button" type="button" data-view="demo">Continue live lifecycle ↗</button>`;
+  return `<section class="panel receipt-card"><div class="eyebrow">LIVE FCC · COSTON2 V1</div><h3>Three registered machines</h3><span class="state-tag gray-tag">SIMULATED TEE · NOT HARDWARE / V2 RELEASE</span><p class="panel-copy">The hosted ciphertext-only relay reaches A/B/D. Each machine owns a distinct registered identity and signs its own custody receipt.</p>${rows}<div class="activation-block"><span class="status-dot ${liveFccPolicyRegistration ? "green" : "amber"}"></span><div><strong>${liveFccPolicyRegistration ? "Live V1 policy active" : liveFccSession ? "3 / 3 receipts verified in memory" : "Machines verified; policy not yet registered"}</strong><small>${liveFccPolicyRegistration ? `Coston2 block ${liveFccPolicyRegistration.blockNumber}` : "Private policy, ciphertexts and signatures are discarded on refresh."}</small></div></div>${action}<small class="panel-copy">${esc(liveFccNotice)}</small></section>`;
 }
 
 function custodyUnavailableReason(reason: string): string {
@@ -474,7 +522,31 @@ function isReviewedRequestInput(): boolean {
 }
 
 function demoView(): string {
-  return `${pageIntro("WALLET-FREE REVIEWED DEMO", "One reviewed lifecycle", "Start with a verified public Coston2 contract run. The separate interactive simulation appears below only when its actors are available.")}${recordedDemoView()}${interactiveDemoView()}`;
+  return `${pageIntro("LIVE + REVIEWED TESTNET PATHS", "FCC lifecycle on Coston2", "The live operator path reaches three registered simulated-TEE machines. Reviewed evidence and the open simulation remain separate below.")}${liveFccDemoView()}${recordedDemoView()}${interactiveDemoView()}`;
+}
+
+function liveFccDemoView(): string {
+  if (liveFccConfigState.status === "LOADING") return `${demoSectionIntro("LIVE FCC · COSTON2 V1", "Checking the hosted lifecycle", "The relay is validating contracts and all three registered machine identities.")}<section class="panel demo-loading"><div class="empty-orbit">◌</div><h2>Live preflight in progress…</h2></section>`;
+  if (liveFccConfigState.status === "UNAVAILABLE") return `${demoSectionIntro("LIVE FCC · COSTON2 V1", "Hosted lifecycle unavailable", "The path fails closed; the reviewed public evidence below remains independently available.")}<section class="panel"><div class="unavailable-box"><span class="status-dot amber"></span><div><strong>No live success asserted</strong><small>The browser cannot substitute a decision, receipt, machine identity, or release claim.</small></div></div></section>`;
+  const config = liveFccConfigState.config;
+  const account = connectedAccount();
+  const operatorConnected = account?.toLowerCase() === config.operator.toLowerCase();
+  const snapshot = liveSnapshot();
+  const policyActive = Boolean(liveFccPolicyRegistration && liveFccPolicyStatus === 1);
+  const request = liveFccRequest?.request;
+  const requestStatus = liveFccExecution ? "EXECUTED" : liveFccEvaluation?.routerStatus === 3 ? "DENIED" : liveFccEvaluation?.routerStatus === 2 ? "ALLOWED" : request ? "PENDING" : "NOT CREATED";
+  const transactionRows = liveFccTransactions.length === 0
+    ? `<div class="boundary-empty">No live wallet or relay transaction has been submitted from this tab.</div>`
+    : `<ol class="interactive-transaction-list">${liveFccTransactions.map((item, index) => `<li><span class="demo-step-index">${String(index + 1).padStart(2, "0")}</span><div><strong>${esc(item.label)}</strong><small>${item.blockNumber ? `Block ${item.blockNumber} · ` : "Relay broadcast · "}${esc(short(item.hash))}</small></div><a href="${explorerTransaction(item.hash)}" target="_blank" rel="noreferrer">↗</a></li>`).join("")}</ol>`;
+  return `${demoSectionIntro("LIVE FCC · COSTON2 V1", "Run the registered three-machine lifecycle", "Operator-only V1 control plane: policy ciphertext goes independently to A/B/D; the relay reconstructs public state and submits two matching signed results.")}
+    <div class="demo-boundary interactive-boundary"><span class="state-tag green-tag">3 REGISTERED MACHINES · STATUS 2</span><strong>Live Coston2 · ciphertext-only relay</strong><span>SIMULATED_TEE=true · not hardware attestation · not verified V2 release</span></div>
+    <div class="demo-actor-mini">${config.machines.map((machine) => `<span>MACHINE ${machine.index} · ${esc(short(machine.teeId))} · PRODUCTION SET</span>`).join("")}</div>
+    <div class="section-grid interactive-demo-grid"><section class="panel"><div class="panel-heading"><div><div class="eyebrow">01 · OPERATOR & VAULT</div><h2>${operatorConnected ? "V1 operator connected" : "Operator wallet required"}</h2></div><span class="state-tag ${operatorConnected ? "green-tag" : "amber-tag"}">${operatorConnected ? "AUTHORIZED" : "READ ONLY"}</span></div><p class="panel-copy">The dispatcher is owner-only in deployed V1, so sponsored live broadcasts require ${esc(short(config.operator))}. This restriction prevents public relay balance drain.</p>${operatorConnected ? `<div class="demo-account-grid"><div><span>C2FLR gas</span><strong>${snapshot ? nativeToken(snapshot.nativeBalance) : "—"}</strong></div><div><span>Vault available</span><strong>${snapshot ? token(snapshot.accounting.available) : "—"} FTestXRP</strong></div><div><span>Finalized block</span><strong>${snapshot?.finalizedBlock ?? "—"}</strong></div></div><div class="vault-actions"><button class="outline-button" type="button" data-action="refresh">Refresh</button><button class="primary-button" type="button" data-view="vaults">Fund V1 vault</button></div>` : `<div class="vault-actions"><button class="primary-button" type="button" data-action="connect">Connect wallet</button><button class="outline-button" type="button" data-view="auditor">Wallet-free audit</button></div>`}</section>
+    <section class="panel"><div class="panel-heading"><div><div class="eyebrow">02 · PRIVATE CUSTODY</div><h2>${liveFccPolicyRegistration ? "Live policy registered" : liveFccSession ? "Three receipts ready" : "Prepare in Policy Studio"}</h2></div><span class="state-tag ${liveFccPolicyRegistration ? "green-tag" : "gray-tag"}">${liveFccPolicyStatus === 1 ? "ACTIVE" : liveFccPolicyStatus === 2 ? "STOPPED" : liveFccPolicyStatus === 3 ? "REVOKED" : "NOT REGISTERED"}</span></div>${liveFccSession ? `<div class="commitment-value">${esc(liveFccSession.binding.policyCommitment)}</div><div class="demo-actor-mini">${liveFccSession.custody.map((item, index) => `<span>MACHINE ${index + 1} · ${esc(short(item.digest))}</span>`).join("")}</div>` : `<p class="panel-copy">Policy Studio encrypts the same private policy independently for all three registered public keys and verifies all three receipts before registration.</p>`}<div class="vault-actions"><button class="outline-button" type="button" data-view="studio">Open Policy Studio</button>${liveFccSession && !liveFccPolicyRegistration && operatorConnected ? `<button class="primary-button" type="button" data-action="register-live-policy" ${liveFccBusy ? "disabled" : ""}>Register policy</button>` : ""}</div></section></div>
+    <div class="section-grid interactive-demo-grid"><section class="panel"><div class="panel-heading"><div><div class="eyebrow">03 · PUBLIC REQUEST</div><h2>${request ? `Occurrence ${request.occurrence}` : "Create exact action"}</h2></div><span class="state-tag ${request ? "green-tag" : "gray-tag"}">${esc(requestStatus)}</span></div><p class="panel-copy">Amount, target and timing are public. Caps, schedule relationships, salt and policy plaintext remain private.</p>${policyActive && operatorConnected ? `<label class="demo-amount-label">Request amount<input id="live-fcc-request-amount" value="${esc(liveFccRequestAmountInput)}" inputmode="decimal" autocomplete="off" /></label>${request ? `<dl class="demo-request-facts"><div><dt>Request</dt><dd>${esc(short(request.requestId))}</dd></div><div><dt>Amount</dt><dd>${token(request.amount)} FTestXRP</dd></div><div><dt>Checkpoint</dt><dd>${esc(short(request.spendCheckpoint))}</dd></div><div><dt>Expiry</dt><dd>${utc(request.expiry)}</dd></div></dl><button class="outline-button" type="button" data-action="reset-live-request" ${liveFccBusy ? "disabled" : ""}>Prepare next request</button>` : `<button class="primary-button" type="button" data-action="create-live-request" ${liveFccBusy || !snapshot || snapshot.accounting.available <= 0n ? "disabled" : ""}>${liveFccBusy === "REQUEST" ? "Waiting for finality…" : "Create V1 request"}</button>`}` : `<div class="unavailable-box"><span class="status-dot amber"></span><div><strong>Prerequisite missing</strong><small>Connect the operator, fund the V1 vault, and register an active live policy.</small></div></div>`}</section>
+    <section class="panel"><div class="panel-heading"><div><div class="eyebrow">04 · FCC QUORUM</div><h2>${liveFccEvaluation ? `${liveFccEvaluation.decision} · ${esc(liveFccEvaluation.publicReasonClass)}` : "Dispatch and verify"}</h2></div><span class="state-tag ${liveFccEvaluation ? "green-tag" : "gray-tag"}">${liveFccEvaluation ? `ROUTER ${liveFccEvaluation.routerStatus}` : "WAITING"}</span></div><p class="panel-copy">The browser signs request-specific relay authorization, then sends only an empty JSON object. The relay reads the request from chain; no client decision field exists.</p><div class="vault-actions">${request && !liveFccEvaluation && operatorConnected ? `<button class="primary-button" type="button" data-action="evaluate-live-request" ${liveFccBusy ? "disabled" : ""}>${liveFccBusy === "EVALUATE" ? "A/B/D evaluating…" : "Evaluate with live A/B/D"}</button>` : ""}${liveFccEvaluation?.decision === "ALLOW" && liveFccEvaluation.routerStatus === 2 && !liveFccExecution ? `<button class="primary-button" type="button" data-action="execute-live-request" ${liveFccBusy ? "disabled" : ""}>Execute authorized transfer</button>` : ""}</div></section></div>
+    <div class="section-grid interactive-demo-grid"><section class="panel"><div class="panel-heading"><div><div class="eyebrow">05 · GOVERNANCE</div><h2>Canonical owner controls</h2></div><span class="state-tag gray-tag">NO DECISION OVERRIDE</span></div><p class="panel-copy">Stop/resume/revoke changes policy availability only. Revocation remains terminal.</p><div class="vault-actions"><button class="outline-button" type="button" data-live-policy-action="STOP" ${liveFccPolicyStatus !== 1 || liveFccBusy ? "disabled" : ""}>Stop</button><button class="outline-button" type="button" data-live-policy-action="RESUME" ${liveFccPolicyStatus !== 2 || liveFccBusy ? "disabled" : ""}>Resume</button><button class="outline-button" type="button" data-live-policy-action="REVOKE" ${!liveFccPolicyRegistration || liveFccPolicyStatus === 3 || liveFccBusy ? "disabled" : ""}>Revoke</button></div></section><section class="panel"><div class="panel-heading"><div><div class="eyebrow">PUBLIC TRANSACTION LOG</div><h2>${liveFccTransactions.length} writes</h2></div><span class="state-tag gray-tag">THIS TAB ONLY</span></div>${transactionRows}</section></div>
+    <div class="interactive-notice" role="status"><span class="status-dot ${liveFccBusy ? "amber" : "green"}"></span><strong>${esc(liveFccBusy ? `Working: ${liveFccBusy}` : liveFccNotice)}</strong></div>`;
 }
 
 function interactiveDemoView(): string {
@@ -698,6 +770,7 @@ function wireEvents(): void {
   });
   app.querySelectorAll<HTMLButtonElement>("[data-template]").forEach((button) => button.addEventListener("click", () => selectTemplate(button.dataset.template ?? "")));
   app.querySelectorAll<HTMLButtonElement>("[data-policy-action]").forEach((button) => button.addEventListener("click", () => void submitInteractiveGovernance(button.dataset.policyAction ?? "")));
+  app.querySelectorAll<HTMLButtonElement>("[data-live-policy-action]").forEach((button) => button.addEventListener("click", () => void submitLiveFccGovernance(button.dataset.livePolicyAction ?? "")));
   app.querySelectorAll<HTMLButtonElement>("[data-request-kind]").forEach((button) => button.addEventListener("click", () => prepareRequestTransaction(button.dataset.requestKind ?? "")));
   app.querySelector<HTMLInputElement>("#request-id")?.addEventListener("input", (event) => {
     requestInput = (event.currentTarget as HTMLInputElement).value;
@@ -712,6 +785,7 @@ function wireEvents(): void {
   });
   app.querySelector<HTMLInputElement>("#interactive-fund-amount")?.addEventListener("input", (event) => { interactiveFundInput = (event.currentTarget as HTMLInputElement).value; });
   app.querySelector<HTMLInputElement>("#interactive-request-amount")?.addEventListener("input", (event) => { interactiveRequestAmountInput = (event.currentTarget as HTMLInputElement).value; });
+  app.querySelector<HTMLInputElement>("#live-fcc-request-amount")?.addEventListener("input", (event) => { liveFccRequestAmountInput = (event.currentTarget as HTMLInputElement).value; });
   const form = app.querySelector<HTMLFormElement>("#studio-form");
   form?.addEventListener("submit", (event) => { event.preventDefault(); computeStudio(form); });
   form?.addEventListener("input", () => {
@@ -724,6 +798,7 @@ function wireEvents(): void {
       const notice = app.querySelector<HTMLElement>("#studio-notice");
       if (notice) notice.textContent = "Draft changed. The previous commitment is no longer current.";
       resetInteractivePolicySession("Draft changed. Recompute before collecting new simulated receipts.");
+      resetLiveFccPolicySession("Draft changed. Recompute before collecting new live machine receipts.");
     }
   });
   wireLandingMotion();
@@ -768,6 +843,13 @@ function handleAction(action: string): void {
   if (action === "cancel-vault-intent") { vaultIntent = null; vaultTransactionState = { status: "IDLE" }; render(); return; }
   if (action === "submit-vault-intent") { void submitVaultTransaction(); return; }
   if (action === "prepare-interactive-draft") { prepareInteractiveDraft(); return; }
+  if (action === "prepare-live-draft") { prepareLiveFccDraft(); return; }
+  if (action === "collect-live-custody") { void submitLiveFccCustody(); return; }
+  if (action === "register-live-policy") { void submitLiveFccPolicyRegistration(); return; }
+  if (action === "create-live-request") { void submitLiveFccRequest(); return; }
+  if (action === "evaluate-live-request") { void submitLiveFccEvaluation(); return; }
+  if (action === "execute-live-request") { void submitLiveFccExecution(); return; }
+  if (action === "reset-live-request") { resetLiveFccRequest(); return; }
   if (action === "collect-demo-custody") { void submitInteractiveCustody(); return; }
   if (action === "register-demo-policy") { void submitInteractivePolicyRegistration(); return; }
   if (action === "refresh-interactive-account") { void refreshInteractiveAccount(); return; }
@@ -1093,6 +1175,8 @@ function walletChanged(): void {
   interactiveAccountSnapshot = null;
   interactiveTransactions = [];
   resetInteractivePolicySession("Wallet changed. Prepare a fresh owner-bound simulation policy.");
+  liveFccTransactions = [];
+  resetLiveFccPolicySession("Wallet changed. Prepare a fresh operator-bound live policy.");
   render();
   void restoreWalletSession();
 }
@@ -1114,6 +1198,202 @@ function exportNotifications(): void {
   URL.revokeObjectURL(url);
   showAppNotice(exported.status === "AVAILABLE" ? "Exported finalized public notifications; no private payload included." : "Exported an unavailable public-feed report; no event was asserted.");
   render();
+}
+
+function liveFccContext(): { account: Address; config: LiveFccConfig; provider: NonNullable<typeof walletProvider> } {
+  if (walletState.status !== "CONNECTED" || !walletProvider || liveFccConfigState.status !== "READY") {
+    throw new Error("LIVE_FCC_PREREQUISITE_MISSING");
+  }
+  if (walletState.account.toLowerCase() !== liveFccConfigState.config.operator.toLowerCase()) {
+    throw new Error("LIVE_OPERATOR_WALLET_REQUIRED");
+  }
+  return { account: walletState.account, config: liveFccConfigState.config, provider: walletProvider };
+}
+
+function prepareLiveFccDraft(): void {
+  try {
+    const { account, config } = liveFccContext();
+    const now = BigInt(Math.floor(Date.now() / 1_000));
+    studioEntropy = createStudioEntropy();
+    studioDraft = {
+      ...studioTemplateDraft("delegated-allowance"),
+      templateId: "delegated-allowance",
+      policyName: `live-fcc-${now}`,
+      owner: account,
+      target: account,
+      registry: config.contracts.registry,
+      vault: config.contracts.vault,
+      router: config.contracts.router,
+      asset: config.contracts.asset,
+      maxPerAction: "100000",
+      dailyCap: "150000",
+      startAt: (now - 60n).toString(),
+      endAt: (now + 86_400n).toString(),
+      scheduleIntervalSeconds: "0",
+      scheduleGraceSeconds: "0",
+      maxOccurrences: "10",
+    };
+    studioCompilation = null;
+    studioIssues = [];
+    resetLiveFccPolicySession("Live V1 domain loaded. Review private rules, then validate and compute.");
+    studioNotice = "Live A/B/D domain loaded with fresh in-memory entropy. Nothing has been sent yet.";
+  } catch {
+    liveFccNotice = "Connect the exact V1 operator wallet before preparing the live domain.";
+  }
+  render();
+}
+
+function resetLiveFccPolicySession(notice: string): void {
+  liveFccSession = null;
+  liveFccPolicyRegistration = null;
+  liveFccPolicyStatus = null;
+  liveFccRequest = null;
+  liveFccEvaluation = null;
+  liveFccExecution = null;
+  liveFccNotice = notice;
+}
+
+async function submitLiveFccCustody(): Promise<void> {
+  if (!studioCompilation) return;
+  liveFccBusy = "CUSTODY";
+  liveFccNotice = "Confirm three owner authorizations. Each binds one independent ciphertext to A, B, or D.";
+  render();
+  try {
+    const { account, config, provider } = liveFccContext();
+    liveFccSession = await collectLiveCustody(studioCompilation.policy, account, provider, config);
+    liveFccPolicyRegistration = null;
+    liveFccPolicyStatus = null;
+    liveFccRequest = null;
+    liveFccEvaluation = null;
+    liveFccExecution = null;
+    liveFccNotice = "Three distinct registered-machine receipts matched one policy binding. Ciphertexts remain memory-only.";
+  } catch {
+    liveFccSession = null;
+    liveFccNotice = "Live custody failed closed. No policy was registered and no receipt quorum is asserted.";
+  } finally {
+    liveFccBusy = "";
+    render();
+  }
+}
+
+async function submitLiveFccPolicyRegistration(): Promise<void> {
+  if (!liveFccSession) return;
+  liveFccBusy = "REGISTER";
+  liveFccNotice = "Confirm the exact V1 policy binding and three machine receipts, then wait for finalized readback.";
+  render();
+  try {
+    const { account, config, provider } = liveFccContext();
+    liveFccPolicyRegistration = await registerLivePolicy(liveFccSession, account, provider, config);
+    liveFccPolicyStatus = 1;
+    addLiveFccTransaction("Register live FCC policy", liveFccPolicyRegistration);
+    liveFccNotice = "Live V1 policy is active on Coston2 with all three registered custody receipts.";
+    await refreshCoston2State();
+  } catch {
+    liveFccPolicyRegistration = null;
+    liveFccPolicyStatus = null;
+    liveFccNotice = "Live policy registration was rejected or failed finalized verification. No activation is asserted.";
+  } finally {
+    liveFccBusy = "";
+    render();
+  }
+}
+
+async function submitLiveFccRequest(): Promise<void> {
+  if (!liveFccSession || !liveFccPolicyRegistration) return;
+  liveFccBusy = "REQUEST";
+  liveFccNotice = "Confirm the public amount and target. This transaction contains no policy plaintext or decision.";
+  render();
+  try {
+    const { account, config, provider } = liveFccContext();
+    const amount = parseFTestXrpAmount(liveFccRequestAmountInput);
+    liveFccRequest = await createLiveRequest(liveFccSession, amount, account, provider, config);
+    addLiveFccTransaction(`Create live request ${short(liveFccRequest.request.requestId)}`, liveFccRequest);
+    liveFccEvaluation = null;
+    liveFccExecution = null;
+    liveFccNotice = "The request is Pending at finality. No funds are reserved until two matching machine results arrive.";
+  } catch {
+    liveFccRequest = null;
+    liveFccNotice = "Live request creation failed closed. No pending action or authorization is asserted.";
+  } finally {
+    liveFccBusy = "";
+    render();
+  }
+}
+
+async function submitLiveFccEvaluation(): Promise<void> {
+  if (!liveFccRequest) return;
+  liveFccBusy = "EVALUATE";
+  liveFccNotice = "Sign the request-specific relay authorization. A/B/D then compute independently from their custodied policy.";
+  render();
+  try {
+    const { account, config, provider } = liveFccContext();
+    liveFccEvaluation = await evaluateLiveRequest(liveFccRequest.request.requestId, account, provider, config);
+    if (liveFccEvaluation.transactions.dispatch) addLiveFccTransaction("Dispatch public state to A/B/D", { hash: liveFccEvaluation.transactions.dispatch });
+    liveFccEvaluation.transactions.submit.forEach((hash, index) => addLiveFccTransaction(`Submit matching FCC result ${index + 1}`, { hash }));
+    liveFccNotice = liveFccEvaluation.decision === "ALLOW"
+      ? "Two matching machine signatures moved the router to Allowed. The exact amount is reserved; execution remains separate."
+      : `Two matching machine signatures finalized Denied · ${liveFccEvaluation.publicReasonClass}. Vault accounting did not move.`;
+    await refreshCoston2State();
+  } catch {
+    liveFccEvaluation = null;
+    liveFccNotice = "Live evaluation failed closed. The browser did not supply or infer any decision.";
+  } finally {
+    liveFccBusy = "";
+    render();
+  }
+}
+
+async function submitLiveFccExecution(): Promise<void> {
+  if (!liveFccRequest) return;
+  liveFccBusy = "EXECUTE";
+  liveFccNotice = "Confirm execution of the already threshold-authorized public transfer.";
+  render();
+  try {
+    const { account, config, provider } = liveFccContext();
+    liveFccExecution = await executeLiveRequest(liveFccRequest.request.requestId, account, provider, config);
+    addLiveFccTransaction("Execute live authorized transfer", liveFccExecution);
+    liveFccNotice = "Execution receipt, router event and finalized terminal state matched.";
+    await refreshCoston2State();
+  } catch {
+    liveFccExecution = null;
+    liveFccNotice = "Execution failed closed or was cancelled. No public transfer is asserted.";
+  } finally {
+    liveFccBusy = "";
+    render();
+  }
+}
+
+async function submitLiveFccGovernance(value: string): Promise<void> {
+  if ((value !== "STOP" && value !== "RESUME" && value !== "REVOKE") || !liveFccSession) return;
+  liveFccBusy = value;
+  liveFccNotice = `Confirm owner ${value.toLowerCase()}. Governance cannot manufacture an FCC result.`;
+  render();
+  try {
+    const { account, config, provider } = liveFccContext();
+    const result = await governLivePolicy(value as LivePolicyAction, liveFccSession.binding.policyCommitment, account, provider, config);
+    addLiveFccTransaction(`${value} live FCC policy`, result);
+    liveFccPolicyStatus = await loadLivePolicyStatus(liveFccSession.binding.policyCommitment, config);
+    liveFccNotice = `${value} matched finalized registry state. Machine-threshold authorization remains unchanged.`;
+  } catch {
+    liveFccNotice = `${value} was rejected, cancelled, or failed finalized verification. No governance change is asserted.`;
+  } finally {
+    liveFccBusy = "";
+    render();
+  }
+}
+
+function resetLiveFccRequest(): void {
+  liveFccRequest = null;
+  liveFccEvaluation = null;
+  liveFccExecution = null;
+  liveFccNotice = "Ready to create the next request from the canonical V1 spend checkpoint.";
+  render();
+}
+
+function addLiveFccTransaction(label: string, result: { hash: `0x${string}`; blockNumber?: bigint }): void {
+  if (!liveFccTransactions.some((item) => item.hash.toLowerCase() === result.hash.toLowerCase())) {
+    liveFccTransactions.push({ label, hash: result.hash, ...(result.blockNumber === undefined ? {} : { blockNumber: result.blockNumber }) });
+  }
 }
 
 function interactiveContext(): { account: Address; config: DemoDomainConfig; provider: NonNullable<typeof walletProvider> } {
@@ -1391,6 +1671,7 @@ function selectTemplate(value: string): void {
   studioIssues = [];
   studioNotice = "Template loaded with fresh in-memory salt and submission nonce.";
   resetInteractivePolicySession("Template changed. Compute a fresh policy before collecting simulated receipts.");
+  resetLiveFccPolicySession("Template changed. Compute a fresh policy before collecting live FCC receipts.");
   render();
 }
 
@@ -1436,6 +1717,18 @@ void fetchInteractiveDemoConfig()
   .catch(() => {
     interactiveConfigState = { status: "UNAVAILABLE" };
     interactiveAccountSnapshot = null;
+    if (!landingOpen) render();
+  });
+void fetchLiveFccConfig()
+  .then(async (config) => {
+    liveFccConfigState = { status: "READY", config };
+    liveFccNotice = "Relay, V1 contracts and registered FCC machines A/B/D passed live preflight.";
+    if (liveFccSession) liveFccPolicyStatus = await loadLivePolicyStatus(liveFccSession.binding.policyCommitment, config);
+    if (!landingOpen) render();
+  })
+  .catch(() => {
+    liveFccConfigState = { status: "UNAVAILABLE" };
+    liveFccNotice = "Hosted FCC relay unavailable. No live readiness or decision is asserted.";
     if (!landingOpen) render();
   });
 window.addEventListener("hashchange", syncRouteFromLocation);
