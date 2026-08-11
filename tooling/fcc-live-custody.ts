@@ -36,6 +36,7 @@ import {
   stringToHex,
   toHex,
   type Address,
+  zeroAddress,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
@@ -46,6 +47,7 @@ const manager = getAddress("0x1a9C4A0f9D76c0b1D91d22E24E573a9b377618aE");
 const extensionId = 66037n;
 const ftestXrp = getAddress("0x0b6A3645c240605887a5532109323A3E12273dc7");
 const custodyBundleDomain = keccak256(stringToHex("POLICY_CUSTODY_BUNDLE_V1"));
+const simulatedPlatform = padHex(stringToHex("TEST_PLATFORM"), { size: 32, dir: "right" });
 const defaultOrigins = [
   "https://payguard-fcc-a-production.up.railway.app",
   "https://payguard-fcc-b-production.up.railway.app",
@@ -341,9 +343,13 @@ async function machineFor(origin: string, client: ReturnType<typeof createPublic
     client.readContract({ address: manager, abi: managerAbi, functionName: "isCodeHashPlatformSupported", args: [extensionId, info.machineData.codeHash, info.machineData.platform] }),
     client.readContract({ address: manager, abi: managerAbi, functionName: "isCodeHashPlatformDisabled", args: [extensionId, info.machineData.codeHash, info.machineData.platform] }),
   ]);
+  // Organizer-supported simulated registrations expose TEST_PLATFORM and a
+  // zero initialTeeId; hardware candidates must use the separate admission and
+  // release pipeline instead of being silently accepted by this runner.
   if (Number(status) !== 2 || registeredExtension !== extensionId || !supported || disabled
     || getAddress(registered.teeId) !== teeId || getAddress(attestation.teeId) !== teeId
-    || getAddress(attestation.initialTeeId) !== teeId || registered.url !== origin || attestation.url !== origin
+    || getAddress(attestation.initialTeeId) !== zeroAddress || registered.url !== origin || attestation.url !== origin
+    || !sameHex(attestation.platform, simulatedPlatform)
     || !sameHex(attestation.codeHash, info.machineData.codeHash) || !sameHex(attestation.platform, info.machineData.platform)) {
     throw new Error("FCC official-manager readback mismatch");
   }
