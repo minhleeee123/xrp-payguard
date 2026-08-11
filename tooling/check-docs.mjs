@@ -24,6 +24,7 @@ const required = [
   "docs/technology/threat-model.md",
   "docs/technology/verification.md",
   "docs/technology/coston2-v2-promotion-runbook.md",
+  "docs/technology/operations-runbook.md",
   "docs/technology/reuse-inventory.md",
   "docs/technology/repository-layout.md",
   "docs/lessons/veilbid-build-lessons.md",

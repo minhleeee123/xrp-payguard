@@ -78,6 +78,8 @@
   local state machines, and live signature-domain requirements.
 - [`technology/observability.md`](technology/observability.md): aggregate-only,
   bearer-protected relay metrics and the still-open deployed monitoring gate.
+- [`technology/operations-runbook.md`](technology/operations-runbook.md): fixed
+  production alerts, operator access, bounded retention, and incident recovery.
 - [`technology/threat-model.md`](technology/threat-model.md): attacker model,
   mitigations, residual risk, and non-claims.
 - [`technology/verification.md`](technology/verification.md): evidence gates and
