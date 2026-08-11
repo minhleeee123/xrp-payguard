@@ -18,7 +18,7 @@ const entry = (path, chainId = "114") => ({
 });
 
 function manifest() {
-  const coston2 = Array.from({ length: 13 }, (_, index) => entry(`/evidence/coston2/${index}.json`));
+  const coston2 = Array.from({ length: 20 }, (_, index) => entry(`/evidence/coston2/${index}.json`));
   return {
     schemaVersion: 1,
     status: "AVAILABLE",
@@ -27,6 +27,7 @@ function manifest() {
     entries: [
       ...coston2,
       entry("/evidence/simulation/coston2-simulated-policy-lifecycle-2026-08-09.json"),
+      entry("/evidence/simulation/coston2-interactive-demo-deployment-2026-08-10.json"),
       entry("/evidence/simulation/fcc-local-three-machine-2026-08-09.json", null),
     ],
   };
@@ -43,7 +44,7 @@ describe("public web demo recorder", () => {
   });
 
   it("accepts only the exact public-safe reviewed manifest baseline", () => {
-    assert.deepEqual(verifyDemoManifest(manifest()), { entries: 15, chain114: 14, simulations: 2 });
+    assert.deepEqual(verifyDemoManifest(manifest()), { entries: 23, chain114: 22, simulations: 3 });
     assert.throws(() => verifyDemoManifest({ ...manifest(), staticShellOnly: false }), /unsafe/);
     const unsafe = manifest();
     unsafe.entries[0] = { ...unsafe.entries[0], noCredentialRecorded: false };

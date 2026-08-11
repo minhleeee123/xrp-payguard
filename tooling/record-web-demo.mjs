@@ -5,7 +5,7 @@ import { join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 export const DEMO_ORIGIN = "https://xrp-payguard.vercel.app";
-export const DEMO_OUTPUT = "evidence/local/xrp-payguard-hackathon-demo-2026-08-09.mp4";
+export const DEMO_OUTPUT = "evidence/local/xrp-payguard-v2-candidate-demo-2026-08-11.mp4";
 const FPS = 8;
 
 function isRecord(value) {
@@ -34,7 +34,7 @@ export function verifyDemoManifest(value) {
   const chain114 = value.entries.filter((entry) => entry.chainId === "114").length;
   const simulations = value.entries.filter((entry) => entry.path.startsWith("/evidence/simulation/")).length;
   const lifecycle = value.entries.some((entry) => entry.path === "/evidence/simulation/coston2-simulated-policy-lifecycle-2026-08-09.json");
-  if (value.entries.length !== 15 || chain114 !== 14 || simulations !== 2 || !lifecycle) {
+  if (value.entries.length !== 23 || chain114 !== 22 || simulations !== 3 || !lifecycle) {
     throw new Error("production evidence manifest does not match the reviewed demo baseline");
   }
   return { entries: value.entries.length, chain114, simulations };
@@ -195,15 +195,15 @@ export async function recordDemo({ overwrite = false } = {}) {
   let cdp;
   let frameNumber = 0;
   const stages = [
-    { seconds: 6, caption: "XRP PayGuard — confidential authorization policy, public testnet action" },
+    { seconds: 6, caption: "XRP PayGuard V2 live candidate — confidential authorization policy, public testnet action" },
     { seconds: 8, caption: "The payment remains public; targets, caps, schedules, and delegate rules are the protected object" },
     { seconds: 9, caption: "Three guardians explain custody, two-matching-result quorum, and canonical rollback authority" },
     { seconds: 9, caption: "XRPL Payment → FDC proof → Smart Account → PayGuard vault → threshold policy gate" },
     { seconds: 8, caption: "Recurring personal and treasury controls are product models, not invented pilots or traction" },
-    { seconds: 8, caption: "Public-safe evidence exposes only testnet facts and explicit simulation boundaries" },
-    { seconds: 10, caption: "Auditor: 15 reviewed records, 14 on Coston2, 2 simulations; categories overlap" },
-    { seconds: 10, caption: "The on-chain simulated lifecycle records 14 transactions but explicitly proves no hardware TEE or official FCC machine" },
-    { seconds: 6, caption: "Current delivery: production web + Coston2 facts + solution-3 simulation — no release claim" },
+    { seconds: 8, caption: "Public-safe evidence exposes only testnet facts and explicit simulated-versus-hardware boundaries" },
+    { seconds: 10, caption: "Auditor: 23 reviewed records, 22 on Coston2, 3 explicit simulation records; categories overlap" },
+    { seconds: 10, caption: "Wallet-free V2 proof: three registered status-2 machines, custody, ALLOW execution, CAP_EXCEEDED denial, governance, and conservation" },
+    { seconds: 6, caption: "Current delivery: V2 live Coston2 candidate with simulated TEE — hardware release remains unverified" },
   ];
 
   try {
@@ -251,20 +251,21 @@ export async function recordDemo({ overwrite = false } = {}) {
     await cdp.evaluate(`document.querySelector("[data-action=landing-auditor]").click()`);
     await new Promise((resolveWait) => setTimeout(resolveWait, 500));
     const auditor = await cdp.evaluate(`({text:document.body.innerText,storage:localStorage.length+sessionStorage.length,overflow:document.documentElement.scrollWidth>document.documentElement.clientWidth})`);
-    if (!auditor.text.includes("15 reviewed artifacts") || !auditor.text.includes("14 Coston2 artifacts")
-      || !auditor.text.includes("2 local simulation artifacts") || auditor.storage !== 0 || auditor.overflow) {
+    if (!auditor.text.includes("23 reviewed artifacts") || !auditor.text.includes("22 Coston2 artifacts")
+      || !auditor.text.includes("3 local simulation artifacts") || auditor.storage !== 0 || auditor.overflow) {
       throw new Error("production Auditor did not match the reviewed demo baseline");
     }
     await hold(stages[6].seconds);
-    await cdp.send("Page.navigate", { url: `${DEMO_ORIGIN}/evidence/simulation/coston2-simulated-policy-lifecycle-2026-08-09.json` });
+    await cdp.send("Page.navigate", { url: `${DEMO_ORIGIN}/#app/demo` });
     await new Promise((resolveWait) => setTimeout(resolveWait, 800));
-    const lifecycleText = await cdp.evaluate("document.body.innerText");
-    if (!lifecycleText.includes("SIMULATED_TEE_ONCHAIN") || !lifecycleText.includes('"hardwareTeeVerified": false')
-      || !lifecycleText.includes('"registeredMachinesVerified": false')) {
-      throw new Error("public lifecycle evidence lost its explicit simulation boundary");
+    const lifecycle = await cdp.evaluate(`({text:document.body.innerText,storage:localStorage.length+sessionStorage.length,overflow:document.documentElement.scrollWidth>document.documentElement.clientWidth,legacyOpen:Boolean(document.querySelector(".legacy-demo-archive")?.open)})`);
+    if (!lifecycle.text.includes("V2 LIVE CANDIDATE VERIFIED") || !lifecycle.text.includes("CAP_EXCEEDED")
+      || !lifecycle.text.includes("13 public checkpoints") || !lifecycle.text.includes("hardware attestation and verified release remain open")
+      || lifecycle.storage !== 0 || lifecycle.overflow || lifecycle.legacyOpen) {
+      throw new Error("production V2 lifecycle did not match the reviewed candidate boundary");
     }
     await hold(3);
-    await cdp.evaluate("window.scrollTo({top:document.documentElement.scrollHeight,behavior:'smooth'})");
+    await scrollTo(".demo-detail-grid");
     await hold(stages[7].seconds - 3);
     await cdp.send("Page.navigate", { url: `${DEMO_ORIGIN}/#landing` });
     await new Promise((resolveWait) => setTimeout(resolveWait, 800));
