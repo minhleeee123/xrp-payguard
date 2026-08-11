@@ -373,7 +373,7 @@ The current validated baseline reports:
   gated web-live cases remain skipped in the ordinary unit run, while the full
   interactive Coston2 lifecycle gate passed separately;
 - all workspace TypeScript typechecks and all Go packages passing;
-- 53 Forge tests passing, including V2 official-manager/adversarial coverage,
+- 56 Forge tests passing, including guarded V2 simulated/hardware-profile and official-manager/adversarial coverage,
   256 fuzz runs, and a 128-run / 8,192-call
   conservation invariant with zero reverts;
 - a successful production web build;
