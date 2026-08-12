@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { mkdir, rename, unlink, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 import { PayGuardActionRouterAbi, PayGuardPolicyRegistryV2Abi, PayGuardVaultAbi } from "../packages/bindings/src/index.js";
@@ -184,22 +184,26 @@ async function run(options: MultiOwnerCLI): Promise<void> {
     return;
   }
 
-  const configured = loadSourceAccount();
-  const client = createPublicClient({ chain: { ...chain, rpcUrls: { default: { http: [configured.rpc] } } }, transport: http(configured.rpc, { timeout: 15_000, retryCount: 2 }) });
-  if (await client.getChainId() !== 114) throw new Error("RPC is not Coston2");
-  const sourceWallet = createWalletClient({ account: configured.account, chain: { ...chain, rpcUrls: { default: { http: [configured.rpc] } } }, transport: http(configured.rpc, { timeout: 15_000, retryCount: 2 }) });
-  const ownerKey = `0x${randomBytes(32).toString("hex")}` as Hex;
-  const owner = privateKeyToAccount(ownerKey);
-  await persistRecovery(ownerKey, owner.address);
-
+  let stage = "configuration preflight";
   try {
-    const gasFunding = parseEther("0.5");
-    const tokenFunding = 1_000_000n;
-    const [sourceGas, sourceToken] = await Promise.all([
+    const configured = loadSourceAccount();
+    const client = createPublicClient({ chain: { ...chain, rpcUrls: { default: { http: [configured.rpc] } } }, transport: http(configured.rpc, { timeout: 15_000, retryCount: 2 }) });
+    if (await client.getChainId() !== 114) throw new Error("wrong chain");
+    const sourceWallet = createWalletClient({ account: configured.account, chain: { ...chain, rpcUrls: { default: { http: [configured.rpc] } } }, transport: http(configured.rpc, { timeout: 15_000, retryCount: 2 }) });
+    const owner = await loadOrCreateEphemeralOwner();
+
+    stage = "independent owner funding";
+    const gasFundingTarget = parseEther("2");
+    const tokenFundingTarget = 1_000_000n;
+    const [sourceGas, sourceToken, ownerGasBefore, ownerTokenBefore] = await Promise.all([
       client.getBalance({ address: configured.account.address }),
       client.readContract({ address: ftestXrp, abi: erc20Abi, functionName: "balanceOf", args: [configured.account.address] }),
+      client.getBalance({ address: owner.address }),
+      client.readContract({ address: ftestXrp, abi: erc20Abi, functionName: "balanceOf", args: [owner.address] }),
     ]);
-    if (sourceGas < gasFunding + parseEther("0.2") || sourceToken < tokenFunding) throw new Error("source wallet testnet funding buffer is insufficient");
+    const gasFunding = ownerGasBefore < gasFundingTarget ? gasFundingTarget - ownerGasBefore : parseEther("0.01");
+    const tokenFunding = ownerTokenBefore < tokenFundingTarget ? tokenFundingTarget - ownerTokenBefore : 1n;
+    if (sourceGas < gasFunding + parseEther("0.2") || sourceToken < tokenFunding) throw new Error("funding buffer unavailable");
     const gasFundingHash = await sourceWallet.sendTransaction({ account: configured.account, chain: sourceWallet.chain, to: owner.address, value: gasFunding });
     const gasFundingReceipt = await client.waitForTransactionReceipt({ hash: gasFundingHash, confirmations: 2, timeout: 180_000 });
     if (gasFundingReceipt.status !== "success") throw new Error("owner gas funding reverted");
@@ -208,8 +212,9 @@ async function run(options: MultiOwnerCLI): Promise<void> {
       client.getBalance({ address: owner.address }),
       client.readContract({ address: ftestXrp, abi: erc20Abi, functionName: "balanceOf", args: [owner.address] }),
     ]);
-    if (ownerGas === 0n || ownerToken !== tokenFunding) throw new Error("independent owner funding postcondition failed");
+    if (ownerGas < gasFundingTarget || ownerToken < tokenFundingTarget) throw new Error("funding postcondition failed");
 
+    stage = "three-machine custody and policy registration";
     const custodyOptions = parseLiveCustodyCLI(["freeze", "--write-live-private-policy", "--broadcast", "--relay", options.relayOrigin]);
     const context = await executeLiveCustody({ ...custodyOptions, ownerAccount: owner, policyProfile: "lifecycle", writeEvidence: false });
     if (!context?.freeze || context.binding.owner !== owner.address || context.account.address !== owner.address
@@ -217,18 +222,23 @@ async function run(options: MultiOwnerCLI): Promise<void> {
     const { sourceCommit, registry, vault, router, binding } = context;
     const ownerWallet = createWalletClient({ account: owner, chain: { ...chain, rpcUrls: { default: { http: [configured.rpc] } } }, transport: http(configured.rpc, { timeout: 15_000, retryCount: 2 }) });
 
+    stage = "non-owner governance rejection";
     await expectSimulationRevert(() => client.simulateContract({ account: configured.account.address, address: registry, abi: PayGuardPolicyRegistryV2Abi, functionName: "stopPolicy", args: [binding.policyCommitment] }));
+    stage = "independent owner vault funding";
     const depositAmount = 500_000n;
     await writeContract(client, ownerWallet, owner, ftestXrp, erc20Abi, "approve", [vault, depositAmount]);
     await writeContract(client, ownerWallet, owner, vault, PayGuardVaultAbi, "deposit", [ftestXrp, depositAmount, owner.address]);
     const accountingBefore = accountingOf(await client.readContract({ address: vault, abi: PayGuardVaultAbi, functionName: "accounting", args: [owner.address, ftestXrp] }));
     if (accountingBefore.available !== depositAmount) throw new Error("independent owner vault deposit failed");
 
+    stage = "independent owner request creation";
     const firstBlock = await client.getBlock({ blockTag: "latest" });
     const request = buildRequest(binding, owner.address, registry, vault, router, 1, genesisSpendCheckpoint(binding.policyCommitment), balanceCheckpoint(accountingBefore, 1n), firstBlock.timestamp);
     const created = await writeContract(client, ownerWallet, owner, router, PayGuardActionRouterAbi, "createRequest", [request]);
+    stage = "wrong evaluation authorization rejection";
     await expectRelayAuthorizationRejection(options.relayOrigin, request.requestId, owner.address, configured.account, false);
     await expectRelayAuthorizationRejection(options.relayOrigin, request.requestId, configured.account.address, configured.account, true);
+    stage = "independent owner threshold evaluation";
     const allowed = await requestRelayEvaluation(options.relayOrigin, request.requestId, owner);
     if (allowed.decision !== "ALLOW" || allowed.routerStatus !== 2 || !allowed.transactions.dispatch || allowed.transactions.submit.length < 2) {
       throw new Error("independent owner threshold ALLOW failed");
@@ -236,11 +246,13 @@ async function run(options: MultiOwnerCLI): Promise<void> {
     const repeated = await requestRelayEvaluation(options.relayOrigin, request.requestId, owner);
     if (repeated.transactions.dispatch !== allowed.transactions.dispatch
       || repeated.transactions.submit.join(",") !== allowed.transactions.submit.join(",")) throw new Error("duplicate evaluation was not coalesced");
+    stage = "independent owner execution";
     const executed = await writeContract(client, ownerWallet, owner, router, PayGuardActionRouterAbi, "execute", [request.requestId]);
     const accountingAfterExecution = accountingOf(await client.readContract({ address: vault, abi: PayGuardVaultAbi, functionName: "accounting", args: [owner.address, ftestXrp] }));
     if (accountingAfterExecution.available !== accountingBefore.available - request.amount
       || accountingAfterExecution.spent !== accountingBefore.spent + request.amount) throw new Error("independent owner execution conservation failed");
 
+    stage = "owner governance and stopped-policy negatives";
     const stopped = await writeContract(client, ownerWallet, owner, registry, PayGuardPolicyRegistryV2Abi, "stopPolicy", [binding.policyCommitment]);
     const spend = await client.readContract({ address: router, abi: PayGuardActionRouterAbi, functionName: "spendState", args: [binding.policyCommitment] });
     const stoppedBlock = await client.getBlock({ blockTag: "latest" });
@@ -251,6 +263,7 @@ async function run(options: MultiOwnerCLI): Promise<void> {
     const revoked = await writeContract(client, ownerWallet, owner, registry, PayGuardPolicyRegistryV2Abi, "revokePolicy", [binding.policyCommitment]);
     await expectSimulationRevert(() => client.simulateContract({ account: owner.address, address: registry, abi: PayGuardPolicyRegistryV2Abi, functionName: "resumePolicy", args: [binding.policyCommitment] }));
 
+    stage = "test-fund cleanup";
     const withdrawAmount = accountingAfterExecution.available;
     const withdrawn = await writeContract(client, ownerWallet, owner, vault, PayGuardVaultAbi, "withdraw", [ftestXrp, withdrawAmount, owner.address]);
     const accountingAfterWithdrawal = accountingOf(await client.readContract({ address: vault, abi: PayGuardVaultAbi, functionName: "accounting", args: [owner.address, ftestXrp] }));
@@ -259,6 +272,7 @@ async function run(options: MultiOwnerCLI): Promise<void> {
     const gasReturned = await returnNativeGas(client, ownerWallet, owner, configured.account.address);
     if (await client.readContract({ address: ftestXrp, abi: erc20Abi, functionName: "balanceOf", args: [owner.address] }) !== 0n) throw new Error("test token cleanup failed");
 
+    stage = "public-safe evidence write";
     const evidence = buildMultiOwnerEvidence({
       sourceCommit,
       relayOrigin: options.relayOrigin,
@@ -287,7 +301,8 @@ async function run(options: MultiOwnerCLI): Promise<void> {
       privateMaterialRecorded: false,
     }, null, 2));
   } catch (error) {
-    throw new Error(`${error instanceof Error ? error.message : "multi-owner lifecycle failed"}; ephemeral recovery remains at ${recoveryPath}`);
+    void error;
+    throw new Error(`multi-owner lifecycle failed closed at ${stage}; ephemeral recovery remains at ${recoveryPath}`);
   }
 }
 
@@ -309,6 +324,24 @@ function loadSourceAccount(): { account: PrivateKeyAccount; rpc: string } {
 async function persistRecovery(key: Hex, address: Address): Promise<void> {
   await mkdir(recoveryDirectory, { recursive: true });
   await writeFile(recoveryPath, `# Temporary Coston2 multi-owner recovery only. Never commit.\nPAYGUARD_EPHEMERAL_OWNER_ADDRESS=${address}\nPAYGUARD_EPHEMERAL_OWNER_PRIVATE_KEY=${key}\n`, { encoding: "utf8", mode: 0o600, flag: "wx" });
+}
+
+async function loadOrCreateEphemeralOwner(): Promise<PrivateKeyAccount> {
+  try {
+    const body = await readFile(recoveryPath, "utf8");
+    const addressMatch = body.match(/^PAYGUARD_EPHEMERAL_OWNER_ADDRESS=(0x[0-9a-fA-F]{40})$/m);
+    const keyMatch = body.match(/^PAYGUARD_EPHEMERAL_OWNER_PRIVATE_KEY=(0x[0-9a-fA-F]{64})$/m);
+    if (!addressMatch || !keyMatch || !isAddress(addressMatch[1])) throw new Error("recovery file is malformed");
+    const account = privateKeyToAccount(keyMatch[1] as Hex);
+    if (account.address !== getAddress(addressMatch[1])) throw new Error("recovery owner mismatch");
+    return account;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw new Error("ephemeral recovery file is unavailable");
+  }
+  const key = `0x${randomBytes(32).toString("hex")}` as Hex;
+  const account = privateKeyToAccount(key);
+  await persistRecovery(key, account.address);
+  return account;
 }
 
 async function writeContract(
