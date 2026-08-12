@@ -28,7 +28,7 @@ Forbidden evidence:
 | E — Threshold execution | two distinct exact results authorize one atomic action | LIVE SIMULATED V2 PASS — TWO DISTINCT ATTESTATIONS AUTHORIZE ALLOW/EXECUTE; TWO DENIALS MOVE NO FUNDS / HARDWARE RELEASE OPEN |
 | F — Vault conservation | deposits/reservations/spend/refund and adversarial invariants | LOCAL PASS / VAULT DEPLOYED / LIVE FAssets REQUEST/PAYOUT OBSERVED / CANONICAL SETTLEMENT + DEFAULT RECOVERY OPEN |
 | G — XRP-native funding | XRPL payment, FDC proof, Smart Account deposit | PASS — live PayGuard-owned Coston2 evidence in [`evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json`](../../evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json) covers validated XRPL Testnet payment, FDC request/finalized round/proof commitment, on-chain `verifyXRPPayment`, `executeDirectMintingWithData`, and verified PayGuardVault accounting. The credential-free [`coston2-funding-resume-audit-2026-08-09.json`](../../evidence/coston2/coston2-funding-resume-audit-2026-08-09.json) reconstructs that checkpoint and re-verifies its proof/runtime bindings. The separate [`xrpl-fdc-trigger-pending-2026-08-09.json`](../../evidence/coston2/xrpl-fdc-trigger-pending-2026-08-09.json) binds a second validated XRPL payment and finalized proof to atomic replay consumption and one canonical router `Pending` request. Canonical private FDC evaluation passes locally, but that exact live trigger was not sent through the separately verified simulated FCC lifecycle; delayed resubmission, end-to-end FDC→FCC execution, and release gates remain open. |
-| H — Product release | full roles, recovery, accessibility, live deployment | INTERACTIVE VERCEL DAPP + LIVE RAILWAY SIMULATED-FCC V2 LIFECYCLE + INDEPENDENT AUTHENTICATED AGGREGATE MONITORING + V1 REPLACEMENT/EXECUTOR RECOVERY + PUBLIC-SAFE REPOSITORY EVIDENCE + LANDING + BROWSER SMOKE / HARDWARE, V2 OUTAGE MATRIX, CANONICAL V2 REDEMPTION, USER VALIDATION, AND RELEASE MANIFEST OPEN |
+| H — Product release | full roles, recovery, accessibility, live deployment | INTERACTIVE VERCEL DAPP + SELF-SERVICE OWNER UI + LIVE RAILWAY SIMULATED-FCC V2 MULTI-OWNER LIFECYCLE + INDEPENDENT AUTHENTICATED AGGREGATE MONITORING + V1 REPLACEMENT/EXECUTOR RECOVERY + PUBLIC-SAFE REPOSITORY EVIDENCE + LANDING + BROWSER SMOKE / HARDWARE, V2 OUTAGE MATRIX, CANONICAL V2 REDEMPTION, USER VALIDATION, AND RELEASE MANIFEST OPEN |
 | I — User validation | interviews, usability, and design-partner pilot | NOT STARTED — INTERVIEWS/USABILITY ARE A PRE-SUBMISSION VALIDATION TARGET; PILOTS AND RELEASE ACCEPTANCE REMAIN POST-HACKATHON |
 
 Gate timing is explicit: owner account/form/video/submission actions happen
@@ -219,6 +219,21 @@ Its repository-only result is
 [`public-evidence-deployment-audit-2026-08-11.json`](../../evidence/web/public-evidence-deployment-audit-2026-08-11.json).
 This proves public-artifact integrity and includes the sanitized hosted-relay
 lifecycle record; it does not turn either simulated route into hardware.
+
+On 2026-08-12 the hosted V2 relay passed a fresh-wallet multi-owner lifecycle
+at finalized block `33955626`. The existing Coston2 source funded independent
+owner `0x370e3087837130F13c7Edae1dda0b163A9E8208B`; that wallet authorized three
+encrypted custody writes, verified three machine receipts, registered policy
+commitment `0x9ab488ec5d97a37e22c76a67ac822528e94e0279383bcb356b2babcfd7bb9cb8`,
+funded its vault, obtained two matching relay-submitted `ALLOW` results,
+executed, and completed stop/resume/revoke plus cleanup. Non-owner governance,
+wrong evaluation owner/signer, stopped-policy request creation, revoked-policy
+resume, and client-supplied decisions failed closed; a newly signed duplicate
+evaluation coalesced without new submissions. Remaining FTestXRP and C2FLR were
+returned and the mode-`0600` recovery file was removed. The public-safe result
+is [`fcc-multi-owner-lifecycle.json`](../../evidence/coston2/fcc-multi-owner-lifecycle.json);
+it contains no key, policy, ciphertext, authorization, signature, or credential
+and does not promote the `SIMULATED_TEE` candidate to a hardware release.
 
 On 2026-08-10 the isolated interactive namespace passed a 133.29-second gate
 against the public Vercel actor APIs and separate Coston2 contracts. The test

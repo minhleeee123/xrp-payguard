@@ -211,7 +211,7 @@ production-target contracts:
 | Demo vault | [`0xF8e3A4516f63b09c2D3e02E5F1e7188308AA13F4`](https://coston2-explorer.flare.network/address/0xF8e3A4516f63b09c2D3e02E5F1e7188308AA13F4) |
 | Demo router | [`0x01c91b3E11D85068A6898876e270bdFA2Fab0c09`](https://coston2-explorer.flare.network/address/0x01c91b3E11D85068A6898876e270bdFA2Fab0c09) |
 
-### Current deployed judge and operator test paths
+### Current judge and self-service test paths
 
 The judge-safe path needs no wallet: open **Demo lifecycle** and inspect the
 primary V2 proof with three status-2 machines, ALLOW execution, `CAP_EXCEEDED`
@@ -219,24 +219,23 @@ denial, conservation, and thirteen linked Coston2 checkpoints. The live
 relay/machine readiness card remains visible beside it. Never enter a real
 operational policy or use mainnet value.
 
-The write path is intentionally restricted to the currently configured V2
-operator wallet. That operator can connect on chain ID `114`, select the hosted
-V2 domain in **Policy Studio**, validate an in-memory test policy, collect three
-live FCC receipts, register it, then use **Demo lifecycle** to create a request,
-ask the relay to evaluate it, execute an ALLOW, observe a `CAP_EXCEEDED` DENY,
-and exercise stop/resume/revoke. Every write requires the injected wallet; the
-relay evaluation request contains `{}` and a request-specific owner signature,
-never a browser-supplied decision. Refresh discards the policy, ciphertexts,
-authorizations, signatures, and this-tab transaction log.
+The self-service write path accepts any injected wallet connected to chain ID
+`114`. That wallet becomes the owner of its own newly computed policy,
+authorizes all three custody copies, verifies three live FCC receipts, registers
+the policy, funds its vault, creates requests, and signs request-specific FCC
+evaluation authorizations. Every owner write still requires the injected
+wallet; the relay evaluation request contains `{}` and an exact owner
+authorization, never a browser-supplied decision. The relay remains a bounded
+gas-paying dispatcher and gains no policy ownership or governance right.
+Refresh discards the policy, ciphertexts, authorizations, signatures, and
+this-tab transaction log.
 
-The current local source adds the next self-service path: any connected Coston2
-wallet can become the owner of its own newly computed policy, authorize all
-three custody copies, register it, fund its vault, create requests, and sign
-request-specific FCC evaluation authorizations. The relay executor remains a
-bounded gas-paying dispatcher and gains no policy ownership or governance
-right. This is local implementation, not a production claim; the hosted relay
-and web app remain the operator-only deployment described above until the
-requested batch deployment and fresh verification are completed.
+An independent-owner Coston2 run verified that separation on 2026-08-12: a
+new wallet funded by the existing testnet source collected three custody
+receipts, registered and governed its own V2 policy, passed threshold execution,
+and returned remaining test funds. Wrong-owner, wrong-signer, non-owner
+governance, stopped-policy, and revoked-policy operations all failed closed.
+This remains a simulated testnet candidate, not a hardware or release claim.
 
 The deployment verification uses a dedicated ephemeral-owner runner. It writes
 the temporary wallet key only to ignored mode-`0600`
@@ -259,19 +258,19 @@ Suggested five-minute walkthrough:
    public transfer and settlement.
 2. Press **Open app** with Enter and inspect the explicit provider-availability
    states. The shell never turns an unavailable dependency into mock success.
-3. Follow **First-time test path** on Overview. The lifecycle and request read
-   need no wallet; the official faucet link supplies C2FLR and FTestXRP for the
-   optional injected-wallet path.
+3. Open **Policy Studio**. The lifecycle and public request reads need no
+   wallet; the official faucet link supplies C2FLR and FTestXRP for an optional
+   self-service injected-wallet path.
 4. In **Vaults**, connect an injected Coston2 wallet, inspect finalized balances,
    then use the two-step FTestXRP transaction preview without exposing a key.
 5. In **Requests**, load the prefilled canonical request; compare its router
    status, Payee projection, Auditor boundary, and guarded expiry action.
 6. Open **Demo lifecycle** and inspect the primary wallet-free V2 proof and its
    thirteen explorer-linked checkpoints, then the hosted readiness card for the
-   Railway relay and registered A/B/D machines. The configured operator may
-   rerun custody/request/evaluation/governance from the UI; everyone else stays
-   read-only. The historical isolated V1 actor run remains collapsed, separately
-   labelled, and is never reassigned to the active V2 artifact.
+   Railway relay and registered A/B/D machines. Any funded Coston2 wallet may
+   create, register, fund, request against, and govern its own policy. The
+   historical isolated V1 actor run remains collapsed, separately labelled,
+   and is never reassigned to the active V2 artifact.
 
 The deployed artifact is a public-safe static Vite bundle with an interactive
 injected-wallet Coston2 client, evidence mirror, and an explicit HTTPS connection
@@ -301,6 +300,7 @@ Public evidence is allowlisted, sanitized, and testnet-only. Start with
 | [`fcc-live-threshold-lifecycle.json`](evidence/coston2/fcc-live-threshold-lifecycle.json) | Three-machine live simulated evaluation, two-of-three ALLOW execution, cap denial, conservation, and policy lifecycle |
 | [`fcc-live-replacement-lifecycle.json`](evidence/coston2/fcc-live-replacement-lifecycle.json) | C outage, fresh D registration, new A/B/D custody and threshold lifecycle, measured full executor pause/resume, and no frozen-identity swap |
 | [`fcc-hosted-relay-lifecycle.json`](evidence/coston2/fcc-hosted-relay-lifecycle.json) | Hosted relay health, authenticated ciphertext ingress, request-ID-only quorum evaluation, ALLOW execution, cap denial, governance, and conservation |
+| [`fcc-multi-owner-lifecycle.json`](evidence/coston2/fcc-multi-owner-lifecycle.json) | Fresh independently funded wallet, three custody receipts, owner registration/evaluation/governance, threshold execution, authorization negatives, conservation, and test-fund return |
 | [`production-monitoring.json`](evidence/coston2/production-monitoring.json) | Independent Railway monitor deployment, 5-dependency aggregate readiness, operator authentication, bounded retention, fixed alerts, and credential-free runtime/evidence checks |
 | [`fcc-local-three-machine-2026-08-09.json`](evidence/simulation/fcc-local-three-machine-2026-08-09.json) | Disposable local three-machine identity, ingress, hardening, restart, and cleanup smoke |
 | [`coston2-simulated-policy-lifecycle-2026-08-09.json`](evidence/simulation/coston2-simulated-policy-lifecycle-2026-08-09.json) | Real Coston2 contract lifecycle with explicitly simulated policy signers |

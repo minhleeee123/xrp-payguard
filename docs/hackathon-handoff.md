@@ -24,7 +24,7 @@ The hackathon build uses solution 3:
   simulated actors on Vercel; and
 - an interactive Vercel dApp plus reviewed static evidence mirror; and
 - one authenticated Railway relay connected to registered A/B/D machines for
-  the active V2 operator lifecycle.
+  the active V2 self-service owner lifecycle.
 
 Three stable Railway origins, authenticated indexer access, registered status-2
 `SIMULATED_TEE` machines, signed `PING_V1`, all-three custody, two-of-three
@@ -60,9 +60,9 @@ hosted index by design.
 
 ### Suggested walkthrough
 
-This walkthrough describes the currently deployed operator-only build. The
-local source now contains a self-service owner flow, but it must not be shown as
-hosted behavior until the relay and web app are deployed and re-verified.
+This walkthrough describes the hosted self-service owner build. It remains a
+simulated Coston2 candidate and must not be described as hardware-backed or as
+a verified release.
 
 1. Open `/#landing` and explain: private policy is the target boundary; amount,
    recipient, timing, and settlement remain public.
@@ -71,14 +71,14 @@ hosted behavior until the relay and web app are deployed and re-verified.
    two-matching-result ALLOW execution, `CAP_EXCEEDED` DENY, governance,
    conservation, and thirteen Coston2 checkpoints.
 3. Follow any public checkpoint to Coston2 Explorer. Then inspect the live
-   Railway readiness card and explicit `SIMULATED_TEE`/operator-only labels.
-4. If the configured operator is demonstrating, connect that testnet wallet,
-   prepare a hosted V2 policy in **Policy Studio**, collect three receipts,
-   register it, create a request, and ask the relay for quorum evaluation.
+   Railway readiness card and explicit `SIMULATED_TEE` label.
+4. Connect any funded Coston2 test wallet, prepare its own V2 policy in
+   **Policy Studio**, collect three receipts, register it, create a request,
+   and ask the relay for quorum evaluation.
 5. Point out that the evaluation body is empty and owner-authenticated; the
    browser cannot supply `ALLOW` or override canonical chain history.
-6. Close with the permanent boundary: V2 simulated candidate, operator-only
-   writes, no hardware attestation and no verified release. The V1 sandbox is
+6. Close with the permanent boundary: V2 simulated candidate, self-service
+   owner writes, no hardware attestation and no verified release. The V1 sandbox is
    collapsed historical evidence and its actor APIs are intentionally absent.
 
 ## Validation actually run
@@ -215,7 +215,7 @@ policy evaluation, or canonical on-chain Web2 consumer.
 | Web2Json | Local source-commitment allowlist, exact jq/tuple-ABI/MIC/response binding, source-asserted freshness, replay, and fail-closed verifier tests | No production source, live proof, source-truth guarantee, private evaluation, or on-chain consumer |
 | FCC foundation | Sender/extension binding, status-2 registered simulated machines, and exact live `PING_V1` TEE/proxy signatures pass | No hardware attestation or verified release |
 | FCC policy path | V2 official-manager binding, A/B/D stable origins, authenticated indexer, all-three live simulated custody, hosted request-ID-only two-of-three ALLOW/DENY, conservation, and owner lifecycle pass; V1 separately records replacement/executor recovery | `SIMULATED_TEE`, remaining V2 dependency outages, and no verified release |
-| Web | Interactive Vercel dApp, hosted Railway FCC V2 controls, refreshed desktop navigation, and a 24-asset reviewed evidence mirror including production-monitor evidence | Operator-only simulated V2 candidate; historical actor APIs are not in the current static artifact; hardware release remains unavailable |
+| Web | Interactive Vercel dApp, hosted Railway FCC V2 controls, refreshed desktop navigation, self-service policy ownership, and a reviewed evidence mirror including production-monitor and independent-owner lifecycle evidence | Simulated V2 candidate; historical actor APIs are not in the current static artifact; hardware release remains unavailable |
 | Monitoring | Independent Railway monitor, fixed 5-dependency probes, origin-bound public aggregate health, bearer-protected operator routes, bounded retention, fixed alerts, and sanitized evidence pass | Testnet candidate availability only; not an outage drill, SLA, audit, hardware proof, or release promotion |
 | Release | Release validators and fail-closed checks pass | No verified release manifest exists |
 | SDK | Compile-tested XRPL-wallet and Flare-dApp preview examples plus integration guide | Package remains private; no live writer or release domain is exposed |

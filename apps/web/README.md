@@ -168,6 +168,13 @@ CORS still fail closed on any wrong or unavailable origin.
 The connected public account/vault reader and hosted simulated-FCC V2 candidate
 are real Coston2 features, but the UI is not evidence of a complete PayGuard
 release or hardware FCC authorization.
+
+Policy Studio uses the connected Coston2 account as the exact policy owner.
+That owner authorizes all three custody copies, registers and governs the
+policy, then signs request-specific evaluation authorizations in Requests. The
+hosted relay executor can sponsor bounded dispatch/submission gas but cannot
+own, stop, revoke, rewrite, or decide the user's policy. A separate fresh-wallet
+live runner verifies this separation and its negative authorization cases.
 Deploy the built static artifact with the Vercel CLI from the
 repository root:
 

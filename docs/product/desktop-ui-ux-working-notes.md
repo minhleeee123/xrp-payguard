@@ -331,7 +331,7 @@ status and other public facts appear only after a fresh finalized lookup.
 
 ## 12. Self-service policy ownership
 
-Status: `IMPLEMENTED LOCALLY · NOT YET DEPLOYED`
+Status: `IMPLEMENTED · LIVE CANDIDATE VERIFIED ON COSTON2`
 
 Policy Studio no longer treats the hosted relay executor as the policy owner.
 The connected Coston2 wallet is frozen into the commitment, signs one exact
@@ -348,6 +348,13 @@ revoked policy cannot create another request. The relay executor may sponsor
 bounded dispatch/result-submission gas but cannot own, govern, or decide a
 policy. Browser refresh still discards private workflow state by design; public
 request IDs remain independently reloadable.
+
+The 2026-08-12 verification used a fresh independently funded wallet and
+completed three-receipt custody, registration, request evaluation/execution,
+stop/resume/revoke, authorization negatives, conservation, and cleanup. It is
+still `SIMULATED_TEE` testnet evidence, not hardware attestation or release
+promotion.
+
 Terminal denied, expired, and cancelled Payee states must not use an `Expected
 payment` heading; the executed example remains unavailable in Payee until its
 exact settlement receipt is also verified.

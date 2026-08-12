@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "suite": "payguard-coston2-hosted-multi-owner-lifecycle",
+  "status": "verified-hosted-live-simulated-fcc-multi-owner-lifecycle",
+  "registryVersion": "V2",
+  "deploymentProfile": "COSTON2_SIMULATED_V2",
+  "recordedAt": "2026-08-12T06:34:16.873Z",
+  "network": {
+    "name": "flare-coston2",
+    "chainId": 114,
+    "observedBlock": "33955626"
+  },
+  "publicIdentifiers": {
+    "verificationSourceCommit": "85e8fa972c6a9a9e0aed4a85b3e21e646a34b619",
+    "relayOrigin": "https://payguard-live-relay-production.up.railway.app",
+    "fundingSource": "0xDC1cc527423C882156a632C250528D1922d18Fc7",
+    "independentPolicyOwner": "0x370e3087837130F13c7Edae1dda0b163A9E8208B",
+    "policyCommitment": "0x9ab488ec5d97a37e22c76a67ac822528e94e0279383bcb356b2babcfd7bb9cb8",
+    "fundingTransactions": {
+      "gas": "0xf206604b7ef83dd1969a55697809e09e7c618f0fe79dd0e735ee536f38dac52a",
+      "token": "0xaa04f0a6f168a0844448d4b856fd314bc621d16d2e058b0bf31988b3478ab495"
+    },
+    "custodyFreezeTransaction": "0x15568b277437f33d9bd13db7e414f86cf2df2d68864475c2eaf1efe4ce15aff4",
+    "allow": {
+      "requestId": "0x6aa6f1ca8537ae008cf2b2e6584c9b3dca0658b3d8976eec8ad19a7e6a65f44f",
+      "instructionId": "0xcb6447face030d959029691b7bdc10a5b3cc3a850b118bf4c5b1029e922e3fa6",
+      "create": "0x93c69669a178d978948146edd95aab053c3504d03eb652d67a4029f886289979",
+      "dispatch": "0xd8531da631706873db780a95f35f3772d8dfd4f8445f05b52bc7bbca1fd917c9",
+      "submit": [
+        "0xf2b100969f034e6e0d6aa372c0abfc9c329f3d126587bae48d1a551355d1eb58",
+        "0x96d39ddfa524b989761b15a52f7db29c01ed12bcb1186b8a00bb18120234fd7c"
+      ],
+      "execute": "0x07a923394c120f2e75a0196b8f2b6a8d33695e3a426eb2c15269591db8ca44e0"
+    },
+    "policyLifecycleTransactions": {
+      "stop": "0xfc957510c9a593e20e84ed5d3300c5cd097cba4f5ef0bf19101d0485b540f3ab",
+      "resume": "0x625824608c46aa954abca22857dab392d11fc34acb5f6df68c160a55c41d2ded",
+      "revoke": "0x06b3b00d36511fbc6d5e57778bd517118cb975b838263c3e43fd6b986737b889"
+    },
+    "cleanupTransactions": {
+      "withdraw": "0xe035baa0a33d3a198a2f3ef6140cce04369b6e577d20210e6d51a176f9fd521b",
+      "tokenReturn": "0x6b401564a06541be62659fdc4aaf237bf2c99a9e666955621e5e4f967622b9ec",
+      "gasReturn": "0x169bf2cffb240d3eb1cfa4191de2a4c27e59b60ff9563b32bdec015d95dd0c27"
+    },
+    "accounting": {
+      "before": {
+        "deposited": "500000",
+        "available": "500000",
+        "reserved": "0",
+        "spent": "0",
+        "withdrawn": "0",
+        "refunded": "0"
+      },
+      "afterExecution": {
+        "deposited": "500000",
+        "available": "400000",
+        "reserved": "0",
+        "spent": "100000",
+        "withdrawn": "0",
+        "refunded": "0"
+      },
+      "afterWithdrawal": {
+        "deposited": "500000",
+        "available": "0",
+        "reserved": "0",
+        "spent": "100000",
+        "withdrawn": "400000",
+        "refunded": "0"
+      }
+    }
+  },
+  "assertions": {
+    "sourceFundedIndependentOwner": true,
+    "independentOwnerAuthorizedThreeCiphertexts": true,
+    "threeRegisteredMachineReceiptsVerified": true,
+    "independentOwnerRegisteredPolicy": true,
+    "registryStoredIndependentOwner": true,
+    "nonOwnerGovernanceRejected": true,
+    "wrongEvaluationOwnerRejected": true,
+    "wrongEvaluationSignerRejected": true,
+    "exactOwnerEvaluationAccepted": true,
+    "duplicateEvaluationCoalesced": true,
+    "twoMatchingAllowSubmittedByRelay": true,
+    "allowExecutionVerified": true,
+    "stoppedPolicyRequestRejected": true,
+    "revokedPolicyResumeRejected": true,
+    "ownerStopResumeRevokeVerified": true,
+    "vaultConservationVerified": true,
+    "testFundsReturned": true,
+    "clientDecisionAccepted": false,
+    "hardwareAttestationVerified": false,
+    "simulatedTee": true,
+    "v2LiveCandidateVerified": true,
+    "v2ReleaseVerified": false,
+    "verifiedPayGuardRelease": false,
+    "noPrivateKeyRecorded": true,
+    "noCredentialRecorded": true,
+    "noPolicyRecorded": true,
+    "noCiphertextRecorded": true,
+    "noSignatureRecorded": true,
+    "testnetOnly": true
+  },
+  "blockers": [
+    "HARDWARE_ATTESTATION_NOT_VERIFIED",
+    "VERIFIED_RELEASE_NOT_PROMOTED"
+  ],
+  "notes": [
+    "A fresh Coston2 wallet was generated for this run and funded by the existing testnet source account.",
+    "The independent wallet, not the relay executor, authorized custody, registered the policy, authorized evaluation, executed, and governed the policy.",
+    "Wrong-owner and wrong-signer evaluation requests, non-owner governance, stopped-policy request creation, and revoked-policy resume all failed closed.",
+    "The relay coalesced a newly signed retry for the same request without new dispatch or result-submission transactions.",
+    "Remaining test token and gas were returned; private keys, policies, ciphertexts, authorizations, and signatures are excluded.",
+    "This is Coston2 SIMULATED_TEE evidence, not hardware attestation, a verified release, or mainnet readiness."
+  ]
+}

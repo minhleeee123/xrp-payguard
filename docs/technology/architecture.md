@@ -299,14 +299,13 @@ or history. The relay reconstructs the canonical request, policy, vault, and
 executed history from Coston2, dispatches that public state to the three frozen
 machines, verifies both FCC envelope and inner result signatures, and submits
 two matching results. RPC, Explorer reconstruction, proxy, signature, binding,
-or quorum drift fails closed. The currently deployed V2 candidate route remains
-operator-only because its hosted relay build authorizes evaluation against the
-dispatcher owner. The local multi-owner upgrade instead validates the
-request-specific signature against the exact on-chain policy owner; the
+or quorum drift fails closed. The hosted V2 route validates the
+request-specific signature against the exact on-chain policy owner. The
 dispatcher owner remains only a bounded relay executor that sponsors FCC
-dispatch/submission gas. It cannot register ownership, govern a user's policy,
-or supply a decision. This distinction becomes a hosted claim only after the
-updated relay and web build are deployed and re-verified.
+dispatch/submission gas; it cannot register ownership, govern a user's policy,
+or supply a decision. A fresh independently funded owner verified this
+separation through registration, evaluation, execution, stop/resume/revoke,
+and negative authorization cases on 2026-08-12.
 
 The V1 registry/vault/router addresses remain explicit Railway rollback
 metadata and were not modified during promotion. The earlier isolated demo
