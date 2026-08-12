@@ -2,13 +2,13 @@
   "schemaVersion": 1,
   "suite": "payguard-vercel-public-evidence-deployment-audit",
   "status": "public-evidence-deployment-audit-pass",
-  "recordedAt": "2026-08-12T06:42:43.664Z",
-  "sourceCommit": "8b6a59558464bb8d5bd4831265a68e736478a2ae",
+  "recordedAt": "2026-08-12T08:34:55.183Z",
+  "sourceCommit": "9f9d2dd98dd60034d5204ac4599276d91fb434b4",
   "platform": {
     "name": "vercel",
     "origin": "https://xrp-payguard.vercel.app",
     "indexPath": "/evidence/index.json",
-    "indexSha256": "7e24662850cf25f5c14c7d504ee13e737829a9876c964f178dcd2dc329db7b05",
+    "indexSha256": "eb95af36831c838a77c826be053f95cf46850fbf1388f75443e32445e6ced0f0",
     "indexBytes": 10489
   },
   "corpus": {
@@ -242,8 +242,8 @@
         "suite": "payguard-coston2-hosted-multi-owner-lifecycle",
         "status": "verified-hosted-live-simulated-fcc-multi-owner-lifecycle",
         "chainId": "114",
-        "sha256": "f1bde89e96784c087f06a9203a4880a72ea2452fb75facff8e86c7fd5052b677",
-        "bytes": 5018,
+        "sha256": "09531fa1b0e2cb05d083012b8af4aaf8605378b17b0c449fb90d6034bd0ddb07",
+        "bytes": 8141,
         "httpStatus": 200,
         "contentType": "application/json; charset=utf-8",
         "exactSourceBytesVerified": true,

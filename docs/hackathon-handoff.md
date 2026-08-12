@@ -1,8 +1,8 @@
 # XRP PayGuard hackathon handoff
 
 > The current production web artifact is pinned to source commit
-> `119c97e7bd9a8017637df03c7ef52e56a80b40cf` and Vercel deployment
-> `dpl_FHVtUjtspTedoAFWZ6kySFfbY5hK`. Its self-service V2 FCC UI,
+> `9f9d2dd98dd60034d5204ac4599276d91fb434b4` and Vercel deployment
+> `dpl_BHmQqZCnueC7GJ4FgvghNZUq3oYZ`. Its delegated V2 FCC UI,
 > production bytes, relay readiness, and 25-entry evidence corpus were checked
 > on 2026-08-12.
 > The older V1 interactive lifecycle remains explicitly historical and is not
@@ -43,15 +43,17 @@ path may be presented as hardware-backed confidentiality or mainnet production.
 - Evidence index: <https://xrp-payguard.vercel.app/evidence/index.json>
 - Demo video: local validated MP4 exists under ignored `evidence/local/`; public
   upload remains owner-only and no public video URL is claimed.
-- Vercel deployment ID: `dpl_FHVtUjtspTedoAFWZ6kySFfbY5hK`
-- Deployed source commit: `119c97e7bd9a8017637df03c7ef52e56a80b40cf`
+- Vercel deployment ID: `dpl_BHmQqZCnueC7GJ4FgvghNZUq3oYZ`
+- Deployed source commit: `9f9d2dd98dd60034d5204ac4599276d91fb434b4`
 - Railway relay: <https://payguard-live-relay-production.up.railway.app>
+- Railway relay deployment ID: `7dda5c0b-8a79-43b7-834f-b1d88c5c6e0f`
 - Railway monitor: <https://payguard-monitor-production.up.railway.app>
 
 The deployment was built and uploaded through Vercel CLI. It serves the static
 Vite application and a 25-entry reviewed evidence index. The live FCC
 configuration comes from the separate Railway relay; its evaluation route
-rejects any non-empty/client-decision body. Historical serverless demo actor
+rejects any non-empty/client-decision body and accepts only the exact on-chain
+requester's short-lived signature. Historical serverless demo actor
 routes are not part of this static artifact and therefore fail closed.
 
 A repository-only audit independently fetched the current production index and
