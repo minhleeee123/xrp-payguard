@@ -9,8 +9,9 @@ foundation dispatch now has a local typed sender/handler and shared Solidity/Go
 binding vector. Its sender deployment, extension registration, explicit binding,
 owner permissions, and EVM key-type configuration are verified on Coston2.
 Stable A/B/D origins, authenticated indexer access, registered simulated
-machines, signed `PING_V1`, private custody/evaluation, C→D replacement, and
-executor-pause recovery are now evidenced separately. The hosted V2 simulated
+machines, signed `PING_V1`, private custody/evaluation, C→D replacement, the
+on-chain pause of stale identity C, and executor-pause recovery are now evidenced
+separately. The hosted V2 simulated
 candidate is deployed; hardware-backed machines, sealed identity recovery, and
 a verified release remain open.
 
@@ -22,9 +23,12 @@ The repository targets Node `24.19.0`, pnpm `10.33.0`, Go `1.25.12`, Foundry
 Node, pnpm, Go, or Forge is absent or does not match. The FCC scaffold's Go
 directive is `1.25.1`; the selected patch release satisfies that directive.
 
-The official FCC scaffold was inspected read-only at commit
-`ffb6c4ca7c160c49be59e00fe537e24d2477b000`. PayGuard has not copied its
-deployment, extension ID, machine identity, key, or evidence.
+The official FCC scaffold operational pin was refreshed from the original
+review commit `ffb6c4ca7c160c49be59e00fe537e24d2477b000` to current `main` commit
+`e3f587949069780084e2ced8a53c9419ed05c250` on 2026-08-12. The manager source
+file, dependency versions, and all registration-tool digests used by PayGuard
+are unchanged. PayGuard has not copied its deployment, extension ID, machine
+identity, key, or evidence.
 
 The local `PayGuardFoundationSender` follows the official registry instruction
 shape but constructs its own `PAYGUARD` / `PING_V1` request. The request binds

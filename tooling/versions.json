@@ -11,7 +11,7 @@
   "vitest": "4.1.10",
   "fccScaffold": {
     "repository": "https://github.com/flare-foundation/fce-extension-scaffold",
-    "commit": "ffb6c4ca7c160c49be59e00fe537e24d2477b000",
+    "commit": "e3f587949069780084e2ced8a53c9419ed05c250",
     "go": "1.25.1",
     "teeNode": "v0.0.24",
     "teeProxy": "v0.0.18"

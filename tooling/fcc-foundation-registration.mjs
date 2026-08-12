@@ -4,7 +4,8 @@ import { getAddress, parseAbi, zeroAddress } from "viem";
 export const COSTON2_CHAIN_ID = 114;
 export const COSTON2_RPC_URL = "https://coston2-api.flare.network/ext/C/rpc";
 export const FCC_SCAFFOLD_REPOSITORY = "https://github.com/flare-foundation/fce-extension-scaffold";
-export const FCC_SCAFFOLD_COMMIT = "ffb6c4ca7c160c49be59e00fe537e24d2477b000";
+export const FCC_SCAFFOLD_COMMIT = "e3f587949069780084e2ced8a53c9419ed05c250";
+export const FCC_LEGACY_SCAFFOLD_COMMIT = "ffb6c4ca7c160c49be59e00fe537e24d2477b000";
 export const FCC_DEPLOYMENTS_PATH = "config/coston2/deployed-addresses.json";
 export const FCC_DEPLOYMENTS_SHA256 = "c158350ea5a9bbba8c6485a680252b8f401bc2e25ea10830101eb6d0b40b022e";
 export const FCC_DEPLOYMENTS_URL =
@@ -151,9 +152,13 @@ export function validateFoundationRegistrationState(value, { requireComplete = f
     throw new Error("foundation registration must target the pinned Coston2 network");
   }
   const officialSource = record(state.officialSource, "official FCC source");
+  const acceptedSourceCommits = new Set([FCC_SCAFFOLD_COMMIT, FCC_LEGACY_SCAFFOLD_COMMIT]);
+  const expectedSourceUrl = acceptedSourceCommits.has(officialSource.commit)
+    ? `https://raw.githubusercontent.com/flare-foundation/fce-extension-scaffold/${officialSource.commit}/${FCC_DEPLOYMENTS_PATH}`
+    : undefined;
   if (
-    officialSource.repository !== FCC_SCAFFOLD_REPOSITORY || officialSource.commit !== FCC_SCAFFOLD_COMMIT
-      || officialSource.path !== FCC_DEPLOYMENTS_PATH || officialSource.url !== FCC_DEPLOYMENTS_URL
+    officialSource.repository !== FCC_SCAFFOLD_REPOSITORY || !acceptedSourceCommits.has(officialSource.commit)
+      || officialSource.path !== FCC_DEPLOYMENTS_PATH || officialSource.url !== expectedSourceUrl
       || officialSource.sha256 !== FCC_DEPLOYMENTS_SHA256
   ) throw new Error("official FCC source pin mismatch");
   const manager = address(officialSource.manager, "FlareTeeManager");

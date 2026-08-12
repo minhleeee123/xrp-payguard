@@ -10,6 +10,7 @@ import {
   evaluateFoundationRegistration,
   FCC_DEPLOYMENTS_PATH,
   FCC_DEPLOYMENTS_URL,
+  FCC_LEGACY_SCAFFOLD_COMMIT,
   FCC_SCAFFOLD_COMMIT,
   FCC_SCAFFOLD_REPOSITORY,
   FCC_TEE_MANAGER,
@@ -170,6 +171,17 @@ describe("foundation registration verifier", () => {
     const reserved = completeState();
     reserved.registration.extensionId = "65535";
     assert.throws(() => validateFoundationRegistrationState(reserved), /reserved/);
+  });
+
+  it("preserves validation of the exact historical foundation evidence pin", () => {
+    const state = completeState();
+    state.officialSource.commit = FCC_LEGACY_SCAFFOLD_COMMIT;
+    state.officialSource.url = `https://raw.githubusercontent.com/flare-foundation/fce-extension-scaffold/${FCC_LEGACY_SCAFFOLD_COMMIT}/${FCC_DEPLOYMENTS_PATH}`;
+    assert.equal(validateFoundationRegistrationState(state, { requireComplete: true }).state, state);
+
+    state.officialSource.commit = "a".repeat(40);
+    state.officialSource.url = state.officialSource.url.replace(FCC_LEGACY_SCAFFOLD_COMMIT, state.officialSource.commit);
+    assert.throws(() => validateFoundationRegistrationState(state), /source pin mismatch/);
   });
 
   it("builds public-safe evidence without upgrading the live-result claim", () => {

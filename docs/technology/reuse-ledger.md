@@ -4,8 +4,9 @@ Status: current adaptation record. Deployment facts come only from PayGuard's
 separate sanitized Coston2 evidence, never from the referenced scaffold or
 VeilBid.
 
-The official Flare FCE scaffold was inspected read-only at commit
-`ffb6c4ca7c160c49be59e00fe537e24d2477b000`.
+The official Flare FCE scaffold was initially inspected read-only at commit
+`ffb6c4ca7c160c49be59e00fe537e24d2477b000`; its operational pin was refreshed
+to current-main commit `e3f587949069780084e2ced8a53c9419ed05c250` on 2026-08-12.
 
 Adapted patterns:
 

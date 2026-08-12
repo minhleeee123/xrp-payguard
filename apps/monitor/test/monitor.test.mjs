@@ -20,7 +20,10 @@ function healthyFetch() {
       machineCount: 3, simulatedTee: true, hardwareTeeVerified: false, verifiedPayGuardRelease: false,
     });
     if (url === targets.rpc && options.method === "POST") return response({ jsonrpc: "2.0", id: 1, result: "0x72" });
-    if (url.endsWith("/info")) return response({ teeInfo: { chainId: 114 }, machineData: { extensionId: "0x101f5" } });
+    if (url.endsWith("/info")) return response({
+      teeInfo: { chainId: 114, teeTimestamp: Math.floor(Date.parse("2026-08-11T13:00:00.000Z") / 1_000) },
+      machineData: { extensionId: "0x101f5" },
+    });
     if (url.endsWith("/private/health")) return response({ status: "ready" });
     return response({}, 404);
   };
@@ -61,6 +64,26 @@ describe("production monitor", () => {
     assert.equal(value.publicHealth().status, "ready");
     assert.equal(value.operatorStatus().historySamples, 2);
     assert.deepEqual(value.incidents().incidents.slice(-2).map((item) => item.state), ["resolved", "resolved"]);
+  });
+
+  it("fails closed when a machine availability timestamp is stale or too far in the future", async () => {
+    const original = healthyFetch();
+    const staleFetch = async (url, options) => {
+      if (url === `${targets.machines[0]}/info`) return response({
+        teeInfo: { chainId: 114, teeTimestamp: Math.floor(Date.parse("2026-08-11T06:59:59.000Z") / 1_000) },
+        machineData: { extensionId: "0x101f5" },
+      });
+      if (url === `${targets.machines[1]}/info`) return response({
+        teeInfo: { chainId: 114, teeTimestamp: Math.floor(Date.parse("2026-08-11T13:02:02.000Z") / 1_000) },
+        machineData: { extensionId: "0x101f5" },
+      });
+      return original(url, options);
+    };
+    const value = monitor(staleFetch);
+    await value.sample();
+    assert.equal(value.operatorStatus().dependencies.fccReadyCount, 1);
+    assert.equal(value.publicHealth().status, "critical");
+    assert.deepEqual(value.incidents().incidents.map((item) => item.kind), ["fcc-quorum-unavailable"]);
   });
 });
 

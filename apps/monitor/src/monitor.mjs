@@ -1,5 +1,7 @@
 const PROFILE = "COSTON2_SIMULATED_V2";
 const MAX_INCIDENTS = 128;
+const MAX_MACHINE_INFO_AGE_MS = 6 * 60 * 60 * 1_000;
+const MAX_MACHINE_CLOCK_SKEW_MS = 2 * 60 * 1_000;
 const DEPENDENCIES = ["relay", "rpc", "fcc-a", "fcc-b", "fcc-d"];
 
 export class ProductionMonitor {
@@ -23,12 +25,13 @@ export class ProductionMonitor {
   }
 
   async sample() {
+    const sampleTime = this.#now();
     const [relay, rpc, ...machines] = await Promise.all([
       this.#probeRelay(),
       this.#probeRpc(),
-      ...this.#targets.machines.map((origin) => this.#probeMachine(origin)),
+      ...this.#targets.machines.map((origin) => this.#probeMachine(origin, sampleTime)),
     ]);
-    const at = new Date(this.#now()).toISOString();
+    const at = new Date(sampleTime).toISOString();
     const machineReady = machines.filter(Boolean).length;
     const snapshot = Object.freeze({ at, relay, rpc, machineReady });
     this.#history.push(snapshot);
@@ -141,13 +144,18 @@ export class ProductionMonitor {
     }
   }
 
-  async #probeMachine(origin) {
+  async #probeMachine(origin, sampleTime) {
     try {
       const [info, health] = await Promise.all([
         json(this.#fetch, `${origin}/info`),
         json(this.#fetch, `${origin}/private/health`),
       ]);
-      return info.teeInfo?.chainId === 114 && typeof info.machineData?.extensionId === "string"
+      const teeTimestamp = info.teeInfo?.teeTimestamp;
+      const teeTime = Number.isSafeInteger(teeTimestamp) ? teeTimestamp * 1_000 : Number.NaN;
+      const fresh = Number.isSafeInteger(teeTimestamp) && teeTimestamp > 0
+        && teeTime <= sampleTime + MAX_MACHINE_CLOCK_SKEW_MS
+        && sampleTime - teeTime < MAX_MACHINE_INFO_AGE_MS;
+      return info.teeInfo?.chainId === 114 && fresh && typeof info.machineData?.extensionId === "string"
         && BigInt(info.machineData.extensionId) === 66037n && health.status === "ready";
     } catch {
       return false;

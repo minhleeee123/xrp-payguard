@@ -2,10 +2,30 @@ import { describe, expect, it, vi } from "vitest";
 import type { Address, Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import type { LiveEvaluationResponse } from "../src/live-types.js";
-import { Coston2LiveRelayRuntime, authorizeEvaluation, liveEvaluationAuthorizationDigest, parseExecutedRequestIds } from "../src/live-runtime.js";
+import {
+  Coston2LiveRelayRuntime,
+  assertFreshLiveMachineInfo,
+  authorizeEvaluation,
+  liveEvaluationAuthorizationDigest,
+  parseExecutedRequestIds,
+} from "../src/live-runtime.js";
 
 const hash = (byte: string) => `0x${byte.repeat(64 / byte.length)}` as Hex;
 const address = (byte: string) => `0x${byte.repeat(40 / byte.length)}` as Address;
+
+describe("live FCC machine availability", () => {
+  const now = 2_000_000_000;
+
+  it("accepts machine info strictly newer than six hours", () => {
+    expect(() => assertFreshLiveMachineInfo(now - (6 * 60 * 60) + 1, now)).not.toThrow();
+  });
+
+  it("fails closed for missing, stale, or implausibly future machine info", () => {
+    expect(() => assertFreshLiveMachineInfo(undefined, now)).toThrow(/timestamp is invalid/);
+    expect(() => assertFreshLiveMachineInfo(now - (6 * 60 * 60), now)).toThrow(/stale/);
+    expect(() => assertFreshLiveMachineInfo(now + (2 * 60) + 1, now)).toThrow(/clock window/);
+  });
+});
 
 describe("live FCC relay authorization domain", () => {
   it("matches the browser request-specific authorization fixture", () => {

@@ -7,7 +7,7 @@ import {
   FLARE_CONTRACT_REGISTRY,
   parseDependencyCLI,
 } from "./coston2-dependency-resolution.mjs";
-import { FCC_TEE_MANAGER } from "./fcc-foundation-registration.mjs";
+import { FCC_SCAFFOLD_COMMIT, FCC_TEE_MANAGER } from "./fcc-foundation-registration.mjs";
 
 const address = (digit) => `0x${digit.repeat(40)}`;
 const code = (byteCount) => `0x${"aa".repeat(byteCount)}`;
@@ -54,7 +54,7 @@ describe("Coston2 dependency observation", () => {
       fccManager: {
         address: FCC_TEE_MANAGER,
         sourceRepository: "https://github.com/flare-foundation/fce-extension-scaffold",
-        sourceCommit: "ffb6c4ca7c160c49be59e00fe537e24d2477b000",
+        sourceCommit: FCC_SCAFFOLD_COMMIT,
         sourceSha256: "c158350ea5a9bbba8c6485a680252b8f401bc2e25ea10830101eb6d0b40b022e",
       },
     };

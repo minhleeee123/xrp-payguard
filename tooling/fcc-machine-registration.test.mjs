@@ -12,6 +12,7 @@ import {
   verifyOfficialScaffold,
 } from "./fcc-machine-registration.mjs";
 import { PAYGUARD_EXTENSION_ID, PAYGUARD_EXTENSION_OWNER } from "./fcc-code-version.mjs";
+import { FCC_SCAFFOLD_COMMIT } from "./fcc-foundation-registration.mjs";
 
 const admission = {
   teeId: "0x1111111111111111111111111111111111111111",
@@ -141,7 +142,7 @@ test("machine evidence is public-only and preserves live blockers", () => {
 
 test("scaffold verification fails closed on a source digest mismatch", async () => {
   const executor = async (_file, args) => {
-    if (args[0] === "rev-parse") return { stdout: "ffb6c4ca7c160c49be59e00fe537e24d2477b000\n" };
+    if (args[0] === "rev-parse") return { stdout: `${FCC_SCAFFOLD_COMMIT}\n` };
     if (args[0] === "status") return { stdout: "" };
     return { stdout: "https://github.com/flare-foundation/fce-extension-scaffold.git\n" };
   };

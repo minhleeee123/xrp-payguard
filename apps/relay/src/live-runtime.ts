@@ -88,6 +88,8 @@ const PROXY_RESULT_PREFIX = stringToHex("PROXY_ACTION_RESULT", { size: 32 });
 const BALANCE_DOMAIN = keccak256(stringToHex("PAYGUARD_BALANCE_CHECKPOINT_V1"));
 const RELAY_AUTH_PREFIX = padHex(stringToHex("PAYGUARD_RELAY_AUTH_V1"), { size: 32, dir: "right" });
 const MAX_UINT64 = (1n << 64n) - 1n;
+export const MAX_LIVE_MACHINE_INFO_AGE_SECONDS = 6 * 60 * 60;
+export const MAX_LIVE_MACHINE_CLOCK_SKEW_SECONDS = 2 * 60;
 const REASONS: readonly PublicReasonClass[] = [
   "OK", "POLICY_DENIED", "MALFORMED", "WRONG_DOMAIN", "STALE_INPUT",
   "DEPENDENCY_UNAVAILABLE", "EXPIRED", "STOPPED", "INSUFFICIENT_BALANCE",
@@ -136,6 +138,17 @@ interface EvaluationEnvelope {
   digest: Hex;
   signer: Address;
   signature: Hex;
+}
+
+export function assertFreshLiveMachineInfo(teeTimestamp: unknown, nowSeconds = Math.floor(Date.now() / 1_000)): void {
+  if (!Number.isSafeInteger(teeTimestamp) || Number(teeTimestamp) <= 0 || !Number.isSafeInteger(nowSeconds)) {
+    throw new Error("machine availability timestamp is invalid");
+  }
+  const timestamp = Number(teeTimestamp);
+  if (timestamp > nowSeconds + MAX_LIVE_MACHINE_CLOCK_SKEW_SECONDS
+    || nowSeconds - timestamp >= MAX_LIVE_MACHINE_INFO_AGE_SECONDS) {
+    throw new Error("machine availability is stale or outside the accepted clock window");
+  }
 }
 
 export class Coston2LiveRelayRuntime implements LiveRelayRuntime {
@@ -283,11 +296,12 @@ export class Coston2LiveRelayRuntime implements LiveRelayRuntime {
       boundedJson(this.fetcher, `${origin}/info`, 128 * 1024),
       boundedJson(this.fetcher, `${origin}/private/health`, 32 * 1024),
     ]);
-    const info = rawInfo as { teeInfo?: { chainId?: number; publicKey?: TeePublicKeyV1 }; machineData?: { extensionId?: Hex; codeHash?: Hex; platform?: Hex; publicKey?: TeePublicKeyV1 } };
+    const info = rawInfo as { teeInfo?: { chainId?: number; teeTimestamp?: number; publicKey?: TeePublicKeyV1 }; machineData?: { extensionId?: Hex; codeHash?: Hex; platform?: Hex; publicKey?: TeePublicKeyV1 } };
     const health = rawHealth as { status?: string; machineId?: Hex; keyFingerprint?: Hex; signer?: Address };
     if (info.teeInfo?.chainId !== 114 || !info.teeInfo.publicKey || !info.machineData?.publicKey
       || !sameHex(info.teeInfo.publicKey.x, info.machineData.publicKey.x) || !sameHex(info.teeInfo.publicKey.y, info.machineData.publicKey.y)
       || BigInt(info.machineData.extensionId ?? 0) !== EXTENSION_ID) throw new Error("machine info is outside the live domain");
+    assertFreshLiveMachineInfo(info.teeInfo.teeTimestamp);
     const descriptor = teeMachineDescriptorV1(info.teeInfo.publicKey);
     const teeId = getAddress(descriptor.signer);
     if (health.status !== "ready" || !sameHex(health.machineId, descriptor.machineId)

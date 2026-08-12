@@ -19,14 +19,19 @@ Transactions and the runtime hash are recorded in
 
 ## Official manager resolution
 
-The tooling fetches `config/coston2/deployed-addresses.json` from the official
-`flare-foundation/fce-extension-scaffold` repository at immutable commit
-`ffb6c4ca7c160c49be59e00fe537e24d2477b000`. It requires SHA-256
+Current tooling fetches `config/coston2/deployed-addresses.json` from the
+official `flare-foundation/fce-extension-scaffold` repository at immutable
+current-main commit `e3f587949069780084e2ced8a53c9419ed05c250`. It requires SHA-256
 `c158350ea5a9bbba8c6485a680252b8f401bc2e25ea10830101eb6d0b40b022e`,
 exactly one `FlareTeeManager` entry, and the expected address
 `0x1a9C4A0f9D76c0b1D91d22E24E573a9b377618aE`. The live preflight additionally
 requires code at that address and successful official registry-interface reads.
 An address copied from prose cannot pass these checks by itself.
+
+The original 2026-08-08 registration evidence remains bound to its historical
+pin `ffb6c4ca7c160c49be59e00fe537e24d2477b000`; validation accepts that exact
+legacy pin because its manager file has the same pinned digest. New operational
+runs use only the current pin above.
 
 ## Safety and resume boundary
 

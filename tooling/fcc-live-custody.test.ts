@@ -3,10 +3,18 @@ import test from "node:test";
 
 import { getAddress, type Hex } from "viem";
 
-import { buildSanitizedCustodyEvidence, parseLiveCustodyCLI } from "./fcc-live-custody.js";
+import { assertFreshCustodyMachineInfo, buildSanitizedCustodyEvidence, parseLiveCustodyCLI } from "./fcc-live-custody.js";
 
 const hash = (character: string): Hex => `0x${character.repeat(64)}` as Hex;
 const address = (character: string) => getAddress(`0x${character.repeat(40)}`);
+
+test("live custody accepts only a fresh machine availability check", () => {
+  const now = 2_000_000_000;
+  assert.doesNotThrow(() => assertFreshCustodyMachineInfo(now - (6 * 60 * 60) + 1, now));
+  assert.throws(() => assertFreshCustodyMachineInfo(now - (6 * 60 * 60), now), /stale/);
+  assert.throws(() => assertFreshCustodyMachineInfo(now + 121, now), /clock window/);
+  assert.throws(() => assertFreshCustodyMachineInfo(undefined, now), /timestamp is invalid/);
+});
 
 test("live custody CLI requires an explicit private write acknowledgement", () => {
   assert.equal(parseLiveCustodyCLI(["plan"]).mode, "plan");

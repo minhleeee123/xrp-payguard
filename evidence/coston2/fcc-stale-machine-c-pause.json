@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "suite": "payguard-coston2-stale-machine-pause",
+  "status": "verified",
+  "recordedAt": "2026-08-12T16:53:50.761Z",
+  "network": {
+    "name": "flare-coston2",
+    "chainId": 114,
+    "observedBlock": "33975365"
+  },
+  "publicIdentifiers": {
+    "manager": "0x1a9C4A0f9D76c0b1D91d22E24E573a9b377618aE",
+    "extensionId": "66037",
+    "teeId": "0xed19Ff73952E4A4783f739194940c0b6823Ae213",
+    "transactionHash": "0x17060aea777147d6977613afab80aed811ed89ff98092f71b8a9a42c8e444fd6",
+    "transactionBlock": "33975362",
+    "resultingStatus": 4,
+    "activeTeeIds": [
+      "0x1C911D007f8203484eD4099bC11849d7e9691044",
+      "0xff49A99535b8c52345D3c0b76bCf60194De7C29b",
+      "0xd871bc2044a75e8cc2CF06aCdeaDC4CBbEef349A"
+    ],
+    "activeUrls": [
+      "https://payguard-fcc-a-production.up.railway.app",
+      "https://payguard-fcc-b-production.up.railway.app",
+      "https://payguard-fcc-d-production.up.railway.app"
+    ]
+  },
+  "assertions": {
+    "coston2Verified": true,
+    "managerRuntimeVerified": true,
+    "signerVerified": true,
+    "staleMachineOwnerVerified": true,
+    "staleMachineExtensionVerified": true,
+    "staleMachineProductionVerified": true,
+    "staleMachineIdentityVerified": true,
+    "staleMachineUrlVerified": true,
+    "exactPrePauseSetVerified": true,
+    "retainedMachinesProductionVerified": true,
+    "staleMachineNoLongerProduction": true,
+    "exactRetainedSetVerified": true,
+    "noPrivateKeyRecorded": true,
+    "testnetOnly": true
+  }
+}

@@ -83,8 +83,16 @@ export interface LiveCustodyOptions extends CLIOptions {
 }
 
 interface InfoResponse {
-  teeInfo: { chainId: number; publicKey: TeePublicKeyV1 };
+  teeInfo: { chainId: number; teeTimestamp: number; publicKey: TeePublicKeyV1 };
   machineData: { extensionId: Hex; codeHash: Hex; platform: Hex; publicKey: TeePublicKeyV1 };
+}
+
+export function assertFreshCustodyMachineInfo(teeTimestamp: unknown, nowSeconds = Math.floor(Date.now() / 1_000)): void {
+  if (!Number.isSafeInteger(teeTimestamp) || Number(teeTimestamp) <= 0 || !Number.isSafeInteger(nowSeconds)) {
+    throw new Error("FCC machine availability timestamp is invalid");
+  }
+  const age = nowSeconds - Number(teeTimestamp);
+  if (age < -120 || age >= 6 * 60 * 60) throw new Error("FCC machine availability is stale or outside the accepted clock window");
 }
 
 interface HealthResponse {
@@ -383,6 +391,7 @@ async function machineFor(origin: string, client: ReturnType<typeof createPublic
   const info = rawInfo as InfoResponse;
   const health = rawHealth as HealthResponse;
   if (info?.teeInfo?.chainId !== 114 || !info.machineData || !info.teeInfo.publicKey) throw new Error("FCC /info is outside Coston2");
+  assertFreshCustodyMachineInfo(info.teeInfo.teeTimestamp);
   if (!sameHex(info.teeInfo.publicKey.x, info.machineData.publicKey.x) || !sameHex(info.teeInfo.publicKey.y, info.machineData.publicKey.y)) {
     throw new Error("FCC public-key views disagree");
   }

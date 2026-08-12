@@ -45,7 +45,7 @@
     "candidate:user-validation:verify": "node tooling/user-validation.mjs verify",
     "monitor:plan": "node tooling/production-monitoring.mjs plan",
     "monitor:deploy": "node tooling/production-monitoring.mjs deploy",
-    "monitor:test": "node --test tooling/production-monitoring.test.mjs",
+    "monitor:test": "pnpm --filter @xrp-payguard/monitor test && node --test tooling/production-monitoring.test.mjs",
     "deploy:coston2:plan": "node tooling/coston2-deploy.mjs plan",
     "deploy:coston2:test": "node --test tooling/coston2-deploy.test.mjs",
     "deploy:coston2": "node tooling/coston2-deploy.mjs deploy --broadcast",
@@ -95,6 +95,10 @@
     "fcc:machine:register": "node tooling/fcc-machine-registration.mjs register --broadcast",
     "fcc:machine:verify": "node tooling/fcc-machine-registration.mjs verify",
     "fcc:machine:registration:test": "node --test tooling/fcc-machine-registration.test.mjs",
+    "fcc:machine:pause-stale:plan": "node tooling/fcc-stale-machine-pause.mjs plan",
+    "fcc:machine:pause-stale": "node tooling/fcc-stale-machine-pause.mjs pause --broadcast --confirm-stale-machine-c",
+    "fcc:machine:pause-stale:verify": "node tooling/fcc-stale-machine-pause.mjs verify",
+    "fcc:machine:pause-stale:test": "node --test tooling/fcc-stale-machine-pause.test.mjs",
     "fcc:result:test": "node --test tooling/fcc-foundation-result.test.mjs",
     "fcc:ping:plan": "node tooling/fcc-foundation-ping.mjs plan",
     "fcc:ping:send": "node tooling/fcc-foundation-ping.mjs send --broadcast",
@@ -117,6 +121,6 @@
     "fcc:multi-owner:run": "tsx tooling/fcc-multi-owner-lifecycle.ts run --broadcast --write-live-private-policy --relay https://payguard-live-relay-production.up.railway.app",
     "fcc:multi-owner:test": "tsx --test tooling/fcc-multi-owner-lifecycle.test.ts",
     "fcc:replacement:run": "tsx tooling/fcc-live-lifecycle.ts run --broadcast --write-live-private-policy --replacement",
-    "check": "pnpm toolchain:check && pnpm docs:check && pnpm secret:scan && pnpm privacy:scan && pnpm evidence:check && pnpm web:evidence:test && pnpm web:deployment-audit:test && pnpm demo:record:test && pnpm web:test && pnpm monitor:test && pnpm release:check && pnpm release:test && pnpm candidate:check && pnpm deploy:coston2:test && pnpm deploy:coston2:v2:test && pnpm coston2:dependencies:test && pnpm coston2:endpoints:test && pnpm coston2:direct-mint:test && pnpm coston2:funding-resume:test && pnpm coston2:simulated-lifecycle:test && pnpm coston2:interactive-demo:test && pnpm coston2:fdc-trigger:test && pnpm coston2:fdc-live:test && pnpm fcc:container:test && pnpm fcc:railway:test && pnpm fcc:foundation:test && pnpm fcc:machine:preflight:test && pnpm fcc:version:test && pnpm fcc:machine:registration:test && pnpm fcc:result:test && pnpm fcc:ping:test && pnpm fcc:custody:test && pnpm fcc:dispatcher:test && pnpm fcc:lifecycle:test && pnpm fcc:multi-owner:test && pnpm bindings:check"
+    "check": "pnpm toolchain:check && pnpm docs:check && pnpm secret:scan && pnpm privacy:scan && pnpm evidence:check && pnpm web:evidence:test && pnpm web:deployment-audit:test && pnpm demo:record:test && pnpm web:test && pnpm monitor:test && pnpm release:check && pnpm release:test && pnpm candidate:check && pnpm deploy:coston2:test && pnpm deploy:coston2:v2:test && pnpm coston2:dependencies:test && pnpm coston2:endpoints:test && pnpm coston2:direct-mint:test && pnpm coston2:funding-resume:test && pnpm coston2:simulated-lifecycle:test && pnpm coston2:interactive-demo:test && pnpm coston2:fdc-trigger:test && pnpm coston2:fdc-live:test && pnpm fcc:container:test && pnpm fcc:railway:test && pnpm fcc:foundation:test && pnpm fcc:machine:preflight:test && pnpm fcc:version:test && pnpm fcc:machine:registration:test && pnpm fcc:machine:pause-stale:test && pnpm fcc:result:test && pnpm fcc:ping:test && pnpm fcc:custody:test && pnpm fcc:dispatcher:test && pnpm fcc:lifecycle:test && pnpm fcc:multi-owner:test && pnpm bindings:check"
   }
 }

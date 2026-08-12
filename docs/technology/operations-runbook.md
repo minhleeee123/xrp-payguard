@@ -23,8 +23,8 @@ to the production PayGuard origin. The reviewed deployment observation is
 | --- | --- | --- | --- |
 | `relay-unavailable` | critical | The active V2 relay did not pass its exact health/profile boundary | Stop operator writes; verify Railway deployment and Coston2 RPC before retrying |
 | `rpc-unavailable` | critical | Chain ID/readiness probe failed | Keep evaluation/execution unavailable; check official Coston2 RPC and do not substitute cached state |
-| `fcc-quorum-unavailable` | critical | Fewer than two registered origins respond | Do not evaluate or execute; preserve the frozen machine set and follow supported replacement for new policies |
-| `fcc-custody-set-degraded` | warning | Two of three machines respond | Existing result quorum may remain possible, but do not activate a new policy without all-three custody |
+| `fcc-quorum-unavailable` | critical | Fewer than two registered status-2 origins return ready health and a machine timestamp newer than six hours | Do not evaluate or execute; preserve the frozen machine set and follow supported replacement for new policies |
+| `fcc-custody-set-degraded` | warning | Only two of three registered status-2 origins return ready health and a machine timestamp newer than six hours | Existing result quorum may remain possible, but do not activate a new policy without all-three custody |
 
 ## Response procedure
 
@@ -36,6 +36,10 @@ to the production PayGuard origin. The reviewed deployment observation is
    dependency checks recover.
 4. For one FCC failure, preserve existing frozen identities. A replacement may
    serve only a newly frozen policy after normal registration/attestation.
+   If a restart created a new identity, register that identity, require status
+   `2` and a fresh availability check, then pause the stale identity with the
+   official manager `pause(address)` flow. Never restore or silently reuse the
+   old `teeId`.
 5. For two or three FCC failures, no result threshold exists. Deny/unavailable
    is correct; never restore or inject an unsupported TEE identity.
 6. Record only start/recovery time, fixed alert kind, public transaction/block
@@ -43,6 +47,11 @@ to the production PayGuard origin. The reviewed deployment observation is
 7. After recovery, rerun config/health, public evidence, privacy, and relevant
    live-gate verification. Close the incident only when canonical state and
    service health agree.
+
+The relay, custody runner, and monitor all fail closed when `teeTimestamp` is
+missing, at least six hours old, or more than two minutes in the future. The
+two-minute future allowance handles small container clock skew; it does not
+extend the six-hour freshness limit.
 
 ## Retention and access
 
