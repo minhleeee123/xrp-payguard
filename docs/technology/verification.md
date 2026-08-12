@@ -253,6 +253,13 @@ metadata-only index all passed. The repository-only result is
 [`public-evidence-deployment-audit-2026-08-12.json`](../../evidence/web/public-evidence-deployment-audit-2026-08-12.json);
 it is not recursively published and does not upgrade any release claim.
 
+The 2026-08-13 refresh added the public-safe stale-machine-C pause record and
+redeployed the streamlined UI plus fresh A/B/D hosted lifecycle evidence from
+source `62f8a9717dc5adedab1302772521707dcb4f18a4`. The production audit matched
+all 26 bodies byte-for-byte: 25 chain-114 records and three overlapping,
+explicitly bounded simulation records. The current repository-only result is
+`evidence/web/public-evidence-deployment-audit-2026-08-13.json`.
+
 On 2026-08-10 the isolated interactive namespace passed a 133.29-second gate
 against the public Vercel actor APIs and separate Coston2 contracts. The test
 verified three actor custody receipts, policy registration, two matching

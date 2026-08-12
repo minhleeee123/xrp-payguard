@@ -21,7 +21,7 @@ const assertions = {
 };
 
 function localEntries() {
-  const coston2 = Array.from({ length: 22 }, (_, index) => ({
+  const coston2 = Array.from({ length: 23 }, (_, index) => ({
     path: `evidence/coston2/${index}.json`,
     data: { suite: `coston2-${index}`, status: "pass", chainId: 114, testnetOnly: true, noPrivateKeyRecorded: true },
   }));
@@ -99,7 +99,7 @@ describe("public web deployment evidence audit", () => {
   it("verifies every deployed JSON body byte-for-byte against reviewed sources", async () => {
     const entries = localEntries();
     const observation = await auditDeployedPublicEvidence({ localEntries: entries, fetcher: fetcherFor(entries) });
-    assert.deepEqual(observation.counts, { total: 25, chain114: 24, simulation: 3 });
+    assert.deepEqual(observation.counts, { total: 26, chain114: 25, simulation: 3 });
     assert.equal(observation.entries.every((entry) => entry.httpStatus === 200
       && entry.exactSourceBytesVerified && entry.publicFieldScanVerified), true);
     assert.equal(observation.entries.filter((entry) => entry.explicitSimulationBoundaryVerified).length, 3);
@@ -110,7 +110,7 @@ describe("public web deployment evidence audit", () => {
     );
     assert.equal(evidence.status, "public-evidence-deployment-audit-pass");
     assert.equal(evidence.assertions.noPayGuardReleaseClaimed, true);
-    assert.equal(evidence.corpus.entries.length, 25);
+    assert.equal(evidence.corpus.entries.length, 26);
     assert.equal(evidence.blockers.includes("HOSTED_POLICY_RELAY_NOT_CONNECTED"), false);
   });
 

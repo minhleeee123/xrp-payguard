@@ -1,10 +1,10 @@
 # XRP PayGuard hackathon handoff
 
 > The current production web artifact is pinned to source commit
-> `9f9d2dd98dd60034d5204ac4599276d91fb434b4` and Vercel deployment
-> `dpl_BHmQqZCnueC7GJ4FgvghNZUq3oYZ`. Its delegated V2 FCC UI,
-> production bytes, relay readiness, and 25-entry evidence corpus were checked
-> on 2026-08-12.
+> `62f8a9717dc5adedab1302772521707dcb4f18a4` and Vercel deployment
+> `dpl_EUQheMMg5snBo5ht7CWAHWPgEYth`. Its delegated V2 FCC UI,
+> production bytes, relay freshness gate, and 26-entry evidence corpus were
+> checked on 2026-08-13.
 > The older V1 interactive lifecycle remains explicitly historical and is not
 > silently reassigned to the active V2 deployment. The full workspace, Go,
 > Forge, security, privacy, evidence, release, build, production-corpus audit,
@@ -43,21 +43,22 @@ path may be presented as hardware-backed confidentiality or mainnet production.
 - Evidence index: <https://xrp-payguard.vercel.app/evidence/index.json>
 - Demo video: local validated MP4 exists under ignored `evidence/local/`; public
   upload remains owner-only and no public video URL is claimed.
-- Vercel deployment ID: `dpl_BHmQqZCnueC7GJ4FgvghNZUq3oYZ`
-- Deployed source commit: `9f9d2dd98dd60034d5204ac4599276d91fb434b4`
+- Vercel deployment ID: `dpl_EUQheMMg5snBo5ht7CWAHWPgEYth`
+- Deployed source commit: `62f8a9717dc5adedab1302772521707dcb4f18a4`
 - Railway relay: <https://payguard-live-relay-production.up.railway.app>
-- Railway relay deployment ID: `7dda5c0b-8a79-43b7-834f-b1d88c5c6e0f`
+- Railway relay deployment ID: `e30aa889-01dc-4f44-84e8-aa026c5114b3`
 - Railway monitor: <https://payguard-monitor-production.up.railway.app>
+- Railway monitor deployment ID: `89ff04bb-3bbb-4248-acc0-1f2254c66c81`
 
 The deployment was built and uploaded through Vercel CLI. It serves the static
-Vite application and a 25-entry reviewed evidence index. The live FCC
+Vite application and a 26-entry reviewed evidence index. The live FCC
 configuration comes from the separate Railway relay; its evaluation route
 rejects any non-empty/client-decision body and accepts only the exact on-chain
 requester's short-lived signature. Historical serverless demo actor
 routes are not part of this static artifact and therefore fail closed.
 
 A repository-only audit independently fetched the current production index and
-all 25 listed JSON assets, required HTTP 200 plus JSON content types,
+all 26 listed JSON assets, required HTTP 200 plus JSON content types,
 reran the forbidden-field and explicit-simulation checks, and matched every body
 byte-for-byte to its reviewed local source. Its own record is excluded from the
 hosted index by design.
@@ -176,8 +177,8 @@ public RPC:
   review/upload.
 
 A fresh HTTPS read of deployment
-`dpl_FHVtUjtspTedoAFWZ6kySFfbY5hK` returned 200 for the application and
-25-entry evidence index. The public-corpus audit matched every hosted evidence
+`dpl_EUQheMMg5snBo5ht7CWAHWPgEYth` returned 200 for the application and
+26-entry evidence index. The public-corpus audit matched every hosted evidence
 body byte-for-byte to its reviewed local source. A fresh production Chrome
 read also observed `production monitor healthy` and the aggregate `5
 dependencies · 0 active alerts` row with no browser credential. The prior full
