@@ -16,10 +16,10 @@ const root = resolve(import.meta.dirname, "..");
 export const PUBLIC_WEB_ORIGIN = "https://xrp-payguard.vercel.app";
 export const PUBLIC_WEB_DEPLOYMENT_AUDIT_PATH = resolve(
   root,
-  "evidence/web/public-evidence-deployment-audit-2026-08-11.json",
+  "evidence/web/public-evidence-deployment-audit-2026-08-12.json",
 );
 const MAX_JSON_BYTES = 256 * 1024;
-const REVIEWED_CORPUS_COUNTS = Object.freeze({ total: 24, chain114: 23, simulation: 3 });
+const REVIEWED_CORPUS_COUNTS = Object.freeze({ total: 25, chain114: 24, simulation: 3 });
 
 function isRecord(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -122,7 +122,7 @@ export async function auditDeployedPublicEvidence({
   if (auditedEntries.length !== REVIEWED_CORPUS_COUNTS.total
     || chain114Count !== REVIEWED_CORPUS_COUNTS.chain114
     || simulationCount !== REVIEWED_CORPUS_COUNTS.simulation) {
-    throw new Error("deployed evidence corpus does not match the reviewed 24/23/3 baseline");
+    throw new Error("deployed evidence corpus does not match the reviewed 25/24/3 baseline");
   }
   return {
     origin,
