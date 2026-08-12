@@ -258,7 +258,7 @@ redeployed the streamlined UI plus fresh A/B/D hosted lifecycle evidence from
 source `62f8a9717dc5adedab1302772521707dcb4f18a4`. The production audit matched
 all 26 bodies byte-for-byte: 25 chain-114 records and three overlapping,
 explicitly bounded simulation records. The current repository-only result is
-`evidence/web/public-evidence-deployment-audit-2026-08-13.json`.
+[`public-evidence-deployment-audit-2026-08-13.json`](../../evidence/web/public-evidence-deployment-audit-2026-08-13.json).
 
 On 2026-08-10 the isolated interactive namespace passed a 133.29-second gate
 against the public Vercel actor APIs and separate Coston2 contracts. The test

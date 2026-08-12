@@ -193,7 +193,7 @@ only `apps/web/dist`; wallet signing stays in the injected wallet. It calls the
 pinned public Railway relay, while its executor key, FCC machines, and indexer
 credentials remain external/server-side. A verified PayGuard release remains
 unavailable. The latest production-corpus integrity record is
-`evidence/web/public-evidence-deployment-audit-2026-08-13.json`,
+[`public-evidence-deployment-audit-2026-08-13.json`](../../evidence/web/public-evidence-deployment-audit-2026-08-13.json),
 which matched all 26 hosted assets to the reviewed corpus. The deployed static
 artifact was built from source `62f8a9717dc5adedab1302772521707dcb4f18a4`
 and is Vercel deployment `dpl_EUQheMMg5snBo5ht7CWAHWPgEYth`.
