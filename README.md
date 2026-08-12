@@ -195,7 +195,7 @@ hashes, wiring, and the exact source commit used for each deployment.
 | FCC machine B | [`0xff49A99535b8c52345D3c0b76bCf60194De7C29b`](https://coston2-systems-explorer.flare.network/tee/objects) · <https://payguard-fcc-b-production.up.railway.app> · manager status `2` |
 | Retired FCC machine C | [`0xed19Ff73952E4A4783f739194940c0b6823Ae213`](https://coston2-systems-explorer.flare.network/tee/objects) · endpoint deliberately unavailable during replacement drill; never swapped into an old policy |
 | FCC machine D | [`0xd871bc2044a75e8cc2CF06aCdeaDC4CBbEef349A`](https://coston2-systems-explorer.flare.network/tee/objects) · <https://payguard-fcc-d-production.up.railway.app> · manager status `2` |
-| Hosted FCC relay | <https://payguard-live-relay-production.up.railway.app> · `COSTON2_SIMULATED_V2` · authenticated owner ingress/evaluation · V1 Railway rollback retained |
+| Hosted FCC relay | <https://payguard-live-relay-production.up.railway.app> · `COSTON2_SIMULATED_V2` · authenticated owner ingress and exact-requester evaluation · V1 Railway rollback retained |
 | Live FCC PING | [`0x1c1201a26bd0c7e296a4f7c527823540c65b188979e467104a6f366b1ad59408`](https://coston2-explorer.flare.network/tx/0x1c1201a26bd0c7e296a4f7c527823540c65b188979e467104a6f366b1ad59408) · signed result and both TEE/proxy signers verified |
 | V2 live policy freeze | [`0x683c2c3dfdbe9c201428b9a50c6b08df1340dda102f9c9c47c07dd3b620c1bfb`](https://coston2-explorer.flare.network/tx/0x683c2c3dfdbe9c201428b9a50c6b08df1340dda102f9c9c47c07dd3b620c1bfb) · three custody receipts frozen after official-manager rechecks |
 | V2 live threshold ALLOW | Request `0xc414…3658` · [execute](https://coston2-explorer.flare.network/tx/0x110302617ac630812eb052f53de04c139891c4468ba1fc4ba76d82ac1786db45) · two matching results submitted |
@@ -232,12 +232,13 @@ ownership or governance right.
 Refresh discards the policy, ciphertexts, authorizations, signatures, and
 this-tab transaction log.
 
-An independent-owner Coston2 run verified that separation on 2026-08-12: a
-new wallet funded by the existing testnet source collected three custody
-receipts, registered and governed its own V2 policy, passed threshold execution,
-and returned remaining test funds. Wrong-owner, wrong-signer, non-owner
-governance, stopped-policy, and revoked-policy operations all failed closed.
-This remains a simulated testnet candidate, not a hardware or release claim.
+A two-wallet Coston2 run verified that separation on 2026-08-12: independent A
+registered/funded/governed its V2 policy and independent B created, authorized,
+executed, and received `0.1 FTestXRP` without an A request signature.
+`REQUESTER_DENIED`, `TARGET_DENIED`, `CAP_EXCEEDED`, owner-as-requester,
+wrong-signer, requester governance, stopped-policy, and revoked-policy cases
+failed closed. All remaining test funds were returned. This remains a simulated
+testnet candidate, not a hardware or release claim.
 
 The deployment verification uses dedicated ephemeral owner and requester
 wallets. It writes their temporary keys only to ignored mode-`0600`

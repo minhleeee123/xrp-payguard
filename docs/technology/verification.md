@@ -223,17 +223,23 @@ Its repository-only result is
 This proves public-artifact integrity and includes the sanitized hosted-relay
 lifecycle record; it does not turn either simulated route into hardware.
 
-On 2026-08-12 the hosted V2 relay passed a fresh-wallet multi-owner lifecycle
-at finalized block `33955626`. The existing Coston2 source funded independent
-owner `0x370e3087837130F13c7Edae1dda0b163A9E8208B`; that wallet authorized three
+On 2026-08-12 the hosted V2 relay passed a fresh-wallet delegated lifecycle at
+finalized block `33959050`. The existing Coston2 source funded independent
+owner `0x97FA4e2bBD4a00D5243197a250E5F3613a87B469` and requester/payee
+`0x9D491F3E06BDf4d6E81267908c198e1E3EE303de`. The owner authorized three
 encrypted custody writes, verified three machine receipts, registered policy
-commitment `0x9ab488ec5d97a37e22c76a67ac822528e94e0279383bcb356b2babcfd7bb9cb8`,
-funded its vault, obtained two matching relay-submitted `ALLOW` results,
-executed, and completed stop/resume/revoke plus cleanup. Non-owner governance,
-wrong evaluation owner/signer, stopped-policy request creation, revoked-policy
-resume, and client-supplied decisions failed closed; a newly signed duplicate
-evaluation coalesced without new submissions. Remaining FTestXRP and C2FLR were
-returned and the mode-`0600` recovery file was removed. The public-safe result
+commitment `0xe1bbd600410029bda8ffc6689e385ef1827353c8c1efe648493847a03114d681`,
+and funded its vault. The distinct requester then created request
+`0x9733f65a17f0895e14cbba1bb1d92cc36f9d27bb14be24c2c38e0f6e6b10a4a1`,
+authorized FCC evaluation, received two matching relay-submitted `ALLOW`
+results, executed, and received `0.1 FTestXRP`; no owner signature entered that
+request path. `REQUESTER_DENIED`, `TARGET_DENIED`, and `CAP_EXCEEDED` each
+reached a two-result on-chain denial without moving accounting. Requester
+governance, policy-owner substitution for requester authorization, wrong signer,
+stopped-policy request creation, revoked-policy resume, and client-supplied
+decisions failed closed; a newly signed duplicate evaluation coalesced without
+new submissions. The owner completed stop/resume/revoke, remaining FTestXRP and
+C2FLR were returned, and the mode-`0600` recovery file was removed. The public-safe result
 is [`fcc-multi-owner-lifecycle.json`](../../evidence/coston2/fcc-multi-owner-lifecycle.json);
 it contains no key, policy, ciphertext, authorization, signature, or credential
 and does not promote the `SIMULATED_TEE` candidate to a hardware release.

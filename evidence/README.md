@@ -66,11 +66,13 @@ no policy, ciphertext, authorization, signature, credential, or key and does
 not prove hardware attestation, V2, mainnet readiness, or a verified release.
 
 `coston2/fcc-multi-owner-lifecycle.json` records the hosted Coston2 V2
-self-service path with a fresh wallet funded by the existing testnet source. It
-covers three custody receipts, owner registration/evaluation/execution and
-governance, wrong-owner/wrong-signer/non-owner/stopped/revoked negatives,
-duplicate evaluation coalescing, conservation, and return of remaining test
-funds. It excludes keys, policies, ciphertexts, authorizations, signatures, and
+self-service delegated path with fresh owner and requester wallets funded by
+the existing testnet source. It covers three custody receipts, owner
+registration/funding/governance, requester-created ALLOW execution and receipt,
+`REQUESTER_DENIED`, `TARGET_DENIED`, `CAP_EXCEEDED`, owner-as-requester,
+wrong-signer/non-owner/stopped/revoked negatives, duplicate evaluation
+coalescing, conservation, and return of all remaining test funds. It excludes
+keys, policies, ciphertexts, authorizations, signatures, and
 credentials, and remains `SIMULATED_TEE` testnet evidence rather than hardware,
 mainnet, or verified-release proof.
 
