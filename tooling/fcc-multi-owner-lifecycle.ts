@@ -34,6 +34,8 @@ const recoveryDirectory = resolve(root, ".local/multi-owner-live");
 const recoveryPath = resolve(recoveryDirectory, ".env.local");
 const defaultRelay = "https://payguard-live-relay-production.up.railway.app";
 const ftestXrp = getAddress("0x0b6A3645c240605887a5532109323A3E12273dc7");
+const registryV2 = getAddress("0xbB89d68Efd3994CD688816c175343511bA5c0E88");
+const vaultV2 = getAddress("0xe8f5b30F9adCea6b8532bFbD65f804E771520214");
 const chain = {
   id: 114,
   name: "Flare Coston2",
@@ -46,6 +48,7 @@ export interface MultiOwnerCLI {
   broadcast: boolean;
   writeLivePrivatePolicy: boolean;
   relayOrigin: string;
+  cleanupPolicy?: Hex;
 }
 
 interface WriteResult { transaction: Hash; blockNumber: bigint }
@@ -53,7 +56,13 @@ interface WriteResult { transaction: Hash; blockNumber: bigint }
 export function parseMultiOwnerCLI(argv: readonly string[]): MultiOwnerCLI {
   const [mode, ...tokens] = argv;
   if (mode === "plan" && tokens.length === 0) return { plan: true, broadcast: false, writeLivePrivatePolicy: false, relayOrigin: defaultRelay };
-  if (mode !== "run") throw new Error("mode must be plan or run");
+  if (mode === "cleanup") {
+    if (tokens.length !== 2 || tokens[0] !== "--policy" || !/^0x[0-9a-fA-F]{64}$/.test(tokens[1] ?? "")) {
+      throw new Error("cleanup requires --policy and one exact bytes32 commitment");
+    }
+    return { plan: false, broadcast: true, writeLivePrivatePolicy: false, relayOrigin: defaultRelay, cleanupPolicy: tokens[1]!.toLowerCase() as Hex };
+  }
+  if (mode !== "run") throw new Error("mode must be plan, run, or cleanup");
   let broadcast = false;
   let writeLivePrivatePolicy = false;
   let relayOrigin: string | undefined;
@@ -203,6 +212,10 @@ async function run(options: MultiOwnerCLI): Promise<void> {
     }, null, 2));
     return;
   }
+  if (options.cleanupPolicy) {
+    await cleanupFailedRun(options.cleanupPolicy);
+    return;
+  }
 
   let stage = "configuration preflight";
   try {
@@ -299,16 +312,19 @@ async function run(options: MultiOwnerCLI): Promise<void> {
     const denialBlock = await client.getBlock({ blockTag: "latest" });
     const occurrence = Number(spend[1]) + 1;
     const checkpoint = balanceCheckpoint(accountingAfterExecution, BigInt(occurrence));
+    stage = "unauthorized requester denial";
     const unauthorizedRequester = buildRequest(binding, configured.account.address, registry, vault, router, occurrence, spend[0], checkpoint, denialBlock.timestamp, { target: requester.address });
     const createdRequesterDeny = await writeContract(client, sourceWallet, configured.account, router, PayGuardActionRouterAbi, "createRequest", [unauthorizedRequester]);
     const requesterDeny = await requestRelayEvaluation(options.relayOrigin, unauthorizedRequester.requestId, configured.account);
     if (requesterDeny.decision !== "DENY" || requesterDeny.publicReasonClass !== "REQUESTER_DENIED" || requesterDeny.routerStatus !== 3) throw new Error("unauthorized requester did not fail closed");
 
+    stage = "unauthorized target denial";
     const wrongTarget = buildRequest(binding, requester.address, registry, vault, router, occurrence, spend[0], checkpoint, denialBlock.timestamp, { target: configured.account.address });
     const createdTargetDeny = await writeContract(client, requesterWallet, requester, router, PayGuardActionRouterAbi, "createRequest", [wrongTarget]);
     const targetDeny = await requestRelayEvaluation(options.relayOrigin, wrongTarget.requestId, requester);
     if (targetDeny.decision !== "DENY" || targetDeny.publicReasonClass !== "TARGET_DENIED" || targetDeny.routerStatus !== 3) throw new Error("unauthorized target did not fail closed");
 
+    stage = "cap exceeded denial";
     const capExcess = buildRequest(binding, requester.address, registry, vault, router, occurrence, spend[0], checkpoint, denialBlock.timestamp, { target: requester.address });
     const createdCapDeny = await writeContract(client, requesterWallet, requester, router, PayGuardActionRouterAbi, "createRequest", [capExcess]);
     const capDeny = await requestRelayEvaluation(options.relayOrigin, capExcess.requestId, requester);
@@ -387,6 +403,43 @@ async function run(options: MultiOwnerCLI): Promise<void> {
     void error;
     throw new Error(`multi-owner lifecycle failed closed at ${stage}; ephemeral recovery remains at ${recoveryPath}`);
   }
+}
+
+async function cleanupFailedRun(policyCommitment: Hex): Promise<void> {
+  // Refuse to manufacture new accounts for cleanup: the retained mode-0600
+  // recovery file is the explicit proof that a failed run is recoverable.
+  await readFile(recoveryPath, "utf8");
+  const configured = loadSourceAccount();
+  const { owner, requester } = await loadOrCreateEphemeralAccounts();
+  const liveChain = { ...chain, rpcUrls: { default: { http: [configured.rpc] } } };
+  const client = createPublicClient({ chain: liveChain, transport: http(configured.rpc, { timeout: 15_000, retryCount: 2 }) });
+  const ownerWallet = createWalletClient({ account: owner, chain: liveChain, transport: http(configured.rpc, { timeout: 15_000, retryCount: 2 }) });
+  const requesterWallet = createWalletClient({ account: requester, chain: liveChain, transport: http(configured.rpc, { timeout: 15_000, retryCount: 2 }) });
+  const [binding, status] = await client.readContract({ address: registryV2, abi: PayGuardPolicyRegistryV2Abi, functionName: "getPolicy", args: [policyCommitment] });
+  if (getAddress(binding.owner) !== owner.address || Number(status) === 0) throw new Error("cleanup policy is not owned by the retained owner");
+  if (Number(status) !== 3) {
+    await writeContract(client, ownerWallet, owner, registryV2, PayGuardPolicyRegistryV2Abi, "revokePolicy", [policyCommitment]);
+  }
+  const accounting = accountingOf(await client.readContract({ address: vaultV2, abi: PayGuardVaultAbi, functionName: "accounting", args: [owner.address, ftestXrp] }));
+  if (accounting.reserved !== 0n) throw new Error("cleanup cannot withdraw reserved funds");
+  if (accounting.available > 0n) {
+    await writeContract(client, ownerWallet, owner, vaultV2, PayGuardVaultAbi, "withdraw", [ftestXrp, accounting.available, owner.address]);
+  }
+  const ownerToken = await client.readContract({ address: ftestXrp, abi: erc20Abi, functionName: "balanceOf", args: [owner.address] });
+  if (ownerToken > 0n) await writeContract(client, ownerWallet, owner, ftestXrp, erc20Abi, "transfer", [configured.account.address, ownerToken]);
+  const requesterToken = await client.readContract({ address: ftestXrp, abi: erc20Abi, functionName: "balanceOf", args: [requester.address] });
+  if (requesterToken > 0n) await writeContract(client, requesterWallet, requester, ftestXrp, erc20Abi, "transfer", [configured.account.address, requesterToken]);
+  const ownerGas = await returnNativeGas(client, ownerWallet, owner, configured.account.address);
+  const requesterGas = await returnNativeGas(client, requesterWallet, requester, configured.account.address);
+  await unlink(recoveryPath);
+  console.log(JSON.stringify({
+    status: "failed-run-cleaned",
+    policyCommitment,
+    ownerGasReturnBlock: ownerGas.blockNumber.toString(),
+    requesterGasReturnBlock: requesterGas.blockNumber.toString(),
+    recoveryFileRemoved: true,
+    privateMaterialRecorded: false,
+  }, null, 2));
 }
 
 function loadSourceAccount(): { account: PrivateKeyAccount; rpc: string } {

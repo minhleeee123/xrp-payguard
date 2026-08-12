@@ -11,6 +11,8 @@ test("multi-owner runner requires explicit live-private and broadcast acknowledg
   assert.equal(parseMultiOwnerCLI(["plan"]).plan, true);
   assert.throws(() => parseMultiOwnerCLI(["run", "--broadcast", "--relay", "https://relay.example.test"]), /write-live-private-policy/);
   assert.equal(parseMultiOwnerCLI(["run", "--broadcast", "--write-live-private-policy", "--relay", "https://relay.example.test"]).relayOrigin, "https://relay.example.test");
+  assert.equal(parseMultiOwnerCLI(["cleanup", "--policy", hash("ab")]).cleanupPolicy, hash("ab"));
+  assert.throws(() => parseMultiOwnerCLI(["cleanup"]), /exact bytes32/);
 });
 
 test("multi-owner runner builds public-safe evidence for a distinct policy owner", () => {

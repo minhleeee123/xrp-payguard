@@ -278,30 +278,40 @@ async function run(options: HostedLifecycleCLI): Promise<void> {
 }
 
 export async function requestRelayEvaluation(relayOrigin: string, requestId: Hex, account: { address: Address; signMessage(input: { message: { raw: Hex } }): Promise<Hex> }): Promise<RelayResult> {
-  const issuedAt = BigInt(Math.floor(Date.now() / 1_000));
-  const expiry = issuedAt + 240n;
-  const authorization = await account.signMessage({ message: { raw: liveEvaluationAuthorizationDigest({ requestId, requester: account.address, issuedAt, expiry }) } });
-  const value = await boundedJson(`${relayOrigin}/v1/requests/${requestId}/evaluate`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      accept: "application/json",
-      "x-payguard-requester": account.address,
-      "x-payguard-issued-at": issuedAt.toString(),
-      "x-payguard-expiry": expiry.toString(),
-      "x-payguard-authorization": authorization,
-    },
-    body: "{}",
-  }, 512 * 1024, 210_000);
+  let value: Record<string, unknown> | undefined;
+  let failure: unknown;
+  for (let attempt = 0; attempt < 2 && !value; attempt += 1) {
+    const issuedAt = BigInt(Math.floor(Date.now() / 1_000));
+    const expiry = issuedAt + 240n;
+    const authorization = await account.signMessage({ message: { raw: liveEvaluationAuthorizationDigest({ requestId, requester: account.address, issuedAt, expiry }) } });
+    try {
+      value = await boundedJson(`${relayOrigin}/v1/requests/${requestId}/evaluate`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          accept: "application/json",
+          "x-payguard-requester": account.address,
+          "x-payguard-issued-at": issuedAt.toString(),
+          "x-payguard-expiry": expiry.toString(),
+          "x-payguard-authorization": authorization,
+        },
+        body: "{}",
+      }, 512 * 1024, 210_000);
+    } catch (error) {
+      failure = error;
+    }
+  }
+  if (!value) throw failure instanceof Error ? failure : new Error("hosted relay evaluation unavailable");
   const transactions = object(value.transactions, "relay transactions");
   const assertions = object(value.assertions, "relay assertions");
   const submit = array(transactions.submit, "relay submissions").map((item) => hash(item, "relay submission"));
-  if ((value.status !== "threshold-submitted" && value.status !== "already-finalized")
+  const alreadyFinalized = value.status === "already-finalized";
+  if ((value.status !== "threshold-submitted" && !alreadyFinalized)
     || hash(value.requestId, "relay request ID") !== requestId.toLowerCase()
     || ![2, 3, 4].includes(Number(value.routerStatus)) || (value.decision !== "ALLOW" && value.decision !== "DENY")
     || typeof value.publicReasonClass !== "string" || assertions.requestReadFromCoston2 !== true
     || assertions.clientDecisionAccepted !== false || assertions.threeRegisteredMachinesChecked !== true
-    || assertions.outerSignaturesVerified !== true || assertions.innerSignaturesVerified !== true
+    || (!alreadyFinalized && (assertions.outerSignaturesVerified !== true || assertions.innerSignaturesVerified !== true))
     || assertions.twoMatchingResultsSubmitted !== true || assertions.simulatedTee !== true
     || assertions.hardwareTeeVerified !== false || assertions.verifiedPayGuardRelease !== false) {
     throw new Error("hosted relay result assertions failed");
