@@ -2,17 +2,19 @@
 
 Vite laptop-first Coston2 dApp with a full editorial landing page at `#landing`, plus
 Policy Studio, Vaults, Requests, a strict solution-3 Demo lifecycle,
-Payee, wallet-free Auditor, and Team/roles surfaces. Its visual language follows the
+Payee, and wallet-free Auditor surfaces. Its visual language follows the
 repository-level [`DESIGN.md`](../../DESIGN.md). Policy Studio uses a gated
 `Template → Rules → Review → Activate` flow and computes a domain-bound
 commitment from an in-memory draft only. It derives the owner from the connected
 wallet, resolves the configured contract domain, uses human-readable UTC
 controls, and separates disclosure review from activation. All four sections
 remain visible in one vertical document; a sticky step bar follows scrolling and
-jumps to any section without bypassing locked actions. The production app can
+jumps to any section without bypassing locked actions. The local candidate can
 select the hosted V2 Coston2 candidate, independently encrypt to registered A/B/D
 machines, collect verified receipts through the Railway relay, and register the
-commitment. It does not use browser storage or provide an authorization result.
+commitment for the connected wallet as policy owner. The owner—not the relay
+executor—signs custody and request-specific evaluation authorizations. It does
+not use browser storage or provide an authorization result.
 
 The injected-wallet boundary now connects or adds Flare Coston2 without ever
 receiving a private key. For an authorized public account it pins all reads to
@@ -39,9 +41,8 @@ never upgrades the local FCC simulation into a live release claim.
 Overview is removed because the Landing already owns onboarding and every
 remaining fact has a dedicated task. Legacy `#app/overview` routes redirect to
 Demo lifecycle. The sidebar groups `Policy Studio → Vaults → Requests` as the
-main flow, `Demo lifecycle → Payee → Auditor` as verification, and Team/roles
-as administration. Team has no invite control while no standalone role registry
-is deployed.
+main flow and `Demo lifecycle → Payee → Auditor` as verification. The former
+Team/roles route redirects to Auditor because no editable role registry exists.
 
 Desktop application views use refresh-safe hashes such as `#app/requests` and
 participate in browser Back/Forward navigation. Landing section hashes remain
@@ -94,9 +95,12 @@ Requests & schedules accepts an exact bytes32 request ID and reads the canonical
 router tuple at one finalized Coston2 block without requiring a wallet. It
 verifies reviewed runtime hashes, router wiring, the full contract domain, the
 cross-language request hash, status/decision consistency, occurrence window,
-threshold fields, and expiry before publishing any fact. The reviewed
-XRPL/FDC-triggered request is prefilled and visibly labelled as a public example,
-not connected-wallet activity. A user-entered ID is relabelled as user-supplied.
+threshold fields, and expiry before publishing any fact. A shared selector on
+Requests, Payee, and Auditor contains only four previously created V2 test IDs
+plus `Enter request ID`. Selecting a test ID copies it into the editable bytes32
+field below; selecting `Enter request ID` clears that field for manual input.
+Loading either kind still performs a fresh finalized lookup, and a compact note
+separately explains that the four offered IDs come from earlier test runs.
 Canonical on-chain status and time-derived readiness are displayed separately:
 for example, `PENDING` plus `EXPIRED` means the time window passed while the
 request still awaits an on-chain expiry transition. The Payee view uses the same
@@ -104,14 +108,19 @@ separation and never describes that state as an expected future payment;
 executed settlement remains unavailable until its exact transaction receipt is
 also proven.
 
-The Requests writer exposes only the router's existing public transitions:
+For a policy activated in the current tab, Requests first lets the connected
+policy owner create a public request and sign a request-specific FCC evaluation
+authorization. The relay reconstructs public state, obtains two matching
+machine results, and submits them through its bounded executor; the browser
+cannot send a decision or `ALLOW`. The same surface then exposes the router's
+public transitions:
 execute a chain-derived `ALLOWED` request before its approved expiry, expire a
 `PENDING`/`ALLOWED` request after its request expiry, or cancel as the exact
 requester/policy owner. The policy owner is read from the bound registry policy,
 not supplied by the browser. Each action uses a separate preview, preflight
 simulation, injected-wallet signature, exact router-event verification, and
-finalized terminal-state check. There is no create/submit-evaluation control and
-no browser-supplied decision or `ALLOW` field.
+finalized terminal-state check. A stopped or revoked policy cannot create
+another request; only a stopped policy can be resumed by its exact owner.
 Auditor request lookup uses the same wallet-free finalized router read and labels
 it only as canonical request-state verification. Full auditor evidence remains
 schema-checked against the request/evaluation digest, frozen machine set,
@@ -121,13 +130,12 @@ wire, and a Pending request is never upgraded into FCC evidence.
 Payee receipts bind the public target, asset, amount, expected timing, request
 hash, settlement transaction, and resulting checkpoint; missing or drifting
 receipts remain unavailable.
-Team roles are schema-checked and hashed as public assignments; the permission
-projection covers public controls only and always returns `canAuthorize: false`.
-When no standalone role registry is deployed, Team instead shows only the
-registry-bound policy owner plus the exact request creator and payee as
-"observed request actors". These rows are not editable grants and make no team
-permission claim. The copy follows the current lookup context and does not call
-a user-entered request the reviewed example.
+The standalone Team & roles page is removed because the active product has no
+editable role registry or team-management controls. Auditor instead shows a
+compact `Actors & permissions` card for the loaded request: registry-bound
+policy owner, exact requester, and public payee. These rows are observations,
+not editable grants, and make no team permission claim. The legacy `#app/team`
+route redirects to Auditor rather than leaving a dead link.
 Policy Studio custody progress accepts only the schema-checked three-machine
 receipt bundle: each digest/signature must match the frozen binding and the
 shared submission nonce/time window. The configured hosted relay supplies this

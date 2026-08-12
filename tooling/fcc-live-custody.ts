@@ -42,6 +42,7 @@ import {
   zeroAddress,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
+import type { PrivateKeyAccount } from "viem/accounts";
 
 const execFileAsync = promisify(execFile);
 const root = resolve(import.meta.dirname, "..");
@@ -75,6 +76,8 @@ export interface CLIOptions {
 
 export interface LiveCustodyOptions extends CLIOptions {
   policyProfile?: "custody" | "lifecycle";
+  ownerAccount?: PrivateKeyAccount;
+  writeEvidence?: boolean;
 }
 
 interface InfoResponse {
@@ -436,12 +439,12 @@ function loadAccountAndDomain() {
   return { account, registry: getAddress(registry!), vault: getAddress(vault!), router: getAddress(router!), rpc };
 }
 
-async function loadRelayDomain(relayOrigin: string, owner: Address) {
+async function loadRelayDomain(relayOrigin: string) {
   const value = await boundedJson(`${relayOrigin}/v1/config`) as Record<string, unknown>;
   const contracts = value.contracts as Record<string, unknown> | undefined;
   if (value.mode !== "LIVE_SIMULATED_TEE_C2" || value.chainId !== 114
     || value.registryVersion !== "V2" || value.deploymentProfile !== "COSTON2_SIMULATED_V2"
-    || !contracts || getAddress(String(value.operator)) !== owner
+    || !contracts || !isAddress(String(value.operator))
     || !isAddress(String(contracts.registry)) || !isAddress(String(contracts.vault)) || !isAddress(String(contracts.router))) {
     throw new Error("relay V2 domain is invalid");
   }
@@ -562,9 +565,10 @@ export async function executeLiveCustody(options: LiveCustodyOptions) {
   const sourceCommit = await cleanSourceCommit();
   const configured = loadAccountAndDomain();
   const relayDomain = options.relayOrigin
-    ? await loadRelayDomain(options.relayOrigin, configured.account.address)
+    ? await loadRelayDomain(options.relayOrigin)
     : { registry: configured.registry, vault: configured.vault, router: configured.router };
-  const { account, rpc } = configured;
+  const account = options.ownerAccount ?? configured.account;
+  const { rpc } = configured;
   const { registry, vault, router } = relayDomain;
   const client = createPublicClient({ transport: http(rpc, { timeout: 15_000, retryCount: 2 }) });
   if (await client.getChainId() !== 114) throw new Error("RPC is not Coston2");
@@ -636,7 +640,7 @@ export async function executeLiveCustody(options: LiveCustodyOptions) {
     receiptDigests,
     ...(freeze ?? {}),
   });
-  await writeEvidence(evidence);
+  if (options.writeEvidence !== false) await writeEvidence(evidence);
   console.log(JSON.stringify({
     status: evidence.status,
     observedBlock: finalObservedBlock.toString(),
@@ -646,7 +650,7 @@ export async function executeLiveCustody(options: LiveCustodyOptions) {
     receiptCount: receipts.length,
     onchainPolicyFreezeVerified: Boolean(freeze),
     ...(freeze ? { policyFreezeTransaction: freeze.policyFreezeTransaction } : {}),
-    evidencePath,
+    ...(options.writeEvidence === false ? {} : { evidencePath }),
     privateMaterialRecorded: false,
   }));
   return { sourceCommit, account, registry, vault, router, rpc, client, machines, policy, binding, receipts, freeze };

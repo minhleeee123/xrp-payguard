@@ -211,7 +211,7 @@ production-target contracts:
 | Demo vault | [`0xF8e3A4516f63b09c2D3e02E5F1e7188308AA13F4`](https://coston2-explorer.flare.network/address/0xF8e3A4516f63b09c2D3e02E5F1e7188308AA13F4) |
 | Demo router | [`0x01c91b3E11D85068A6898876e270bdFA2Fab0c09`](https://coston2-explorer.flare.network/address/0x01c91b3E11D85068A6898876e270bdFA2Fab0c09) |
 
-### Judge and operator test paths
+### Current deployed judge and operator test paths
 
 The judge-safe path needs no wallet: open **Demo lifecycle** and inspect the
 primary V2 proof with three status-2 machines, ALLOW execution, `CAP_EXCEEDED`
@@ -228,6 +228,24 @@ and exercise stop/resume/revoke. Every write requires the injected wallet; the
 relay evaluation request contains `{}` and a request-specific owner signature,
 never a browser-supplied decision. Refresh discards the policy, ciphertexts,
 authorizations, signatures, and this-tab transaction log.
+
+The current local source adds the next self-service path: any connected Coston2
+wallet can become the owner of its own newly computed policy, authorize all
+three custody copies, register it, fund its vault, create requests, and sign
+request-specific FCC evaluation authorizations. The relay executor remains a
+bounded gas-paying dispatcher and gains no policy ownership or governance
+right. This is local implementation, not a production claim; the hosted relay
+and web app remain the operator-only deployment described above until the
+requested batch deployment and fresh verification are completed.
+
+The deployment verification uses a dedicated ephemeral-owner runner. It writes
+the temporary wallet key only to ignored mode-`0600`
+`.local/multi-owner-live/.env.local`, funds that wallet with Coston2 gas and
+FTestXRP, exercises custody/registration/evaluation/execution/governance plus
+wrong-owner and replay negatives, returns remaining test funds, removes the
+recovery file, and records public-safe evidence only. Preview the exact writes
+with `pnpm fcc:multi-owner:plan`; the broadcast command remains explicitly
+acknowledged and testnet-only.
 
 ## Live application and judge walkthrough
 

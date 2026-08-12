@@ -145,7 +145,7 @@ export class Coston2LiveRelayRuntime implements LiveRelayRuntime {
   private readonly fetcher: typeof fetch;
   private readonly explorerApiUrl: string;
   private configCache?: { expiresAt: number; value: LiveFccConfig };
-  private readonly evaluations = new Map<string, Promise<LiveEvaluationResponse>>();
+  private readonly evaluations = new Map<string, { expiresAt: bigint; operation: Promise<LiveEvaluationResponse> }>();
 
   constructor(private readonly options: RuntimeOptions) {
     if (!options.rpcUrl.startsWith("https://") || !/^0x[0-9a-fA-F]{64}$/.test(options.executorPrivateKey)) {
@@ -205,11 +205,20 @@ export class Coston2LiveRelayRuntime implements LiveRelayRuntime {
   }
 
   evaluate(requestId: Hex, authorization: LiveEvaluationAuthorization): Promise<LiveEvaluationResponse> {
+    const now = BigInt(Math.floor(Date.now() / 1_000));
+    for (const [cachedKey, cached] of this.evaluations) {
+      if (cached.expiresAt < now) this.evaluations.delete(cachedKey);
+    }
     const key = requestId.toLowerCase();
     const existing = this.evaluations.get(key);
-    if (existing) return existing;
-    const operation = this.evaluateOnce(requestId, authorization).finally(() => this.evaluations.delete(key));
-    this.evaluations.set(key, operation);
+    if (existing) return existing.operation;
+    if (this.evaluations.size >= 2_048) this.evaluations.delete(this.evaluations.keys().next().value as string);
+    let operation: Promise<LiveEvaluationResponse>;
+    operation = this.evaluateOnce(requestId, authorization).catch((error: unknown) => {
+      if (this.evaluations.get(key)?.operation === operation) this.evaluations.delete(key);
+      throw error;
+    });
+    this.evaluations.set(key, { expiresAt: authorization.expiry, operation });
     return operation;
   }
 
@@ -320,7 +329,7 @@ export class Coston2LiveRelayRuntime implements LiveRelayRuntime {
     const request = stored.request;
     const policyRead = await this.client.readContract({ address: REGISTRY, abi: PayGuardPolicyRegistryV2Abi, functionName: "getPolicy", args: [request.policyCommitment] });
     const binding = normalizeBinding(policyRead[0]);
-    await authorizeEvaluation(requestId, binding, authorization, this.account.address);
+    await authorizeEvaluation(requestId, binding, authorization);
     if ([2, 3, 4].includes(stored.status)) return finalizedResponse(stored, config);
     if (stored.status !== 1) throw new Error("request is not pending");
     const latest = await this.client.getBlock({ blockTag: "latest" });
@@ -614,18 +623,18 @@ function parseReceipt(value: unknown, binding: PolicyBindingV1, machine: LiveMac
   return { receipt, digest, signer, signature: signed };
 }
 
-async function authorizeEvaluation(
+export async function authorizeEvaluation(
   requestId: Hex,
   binding: PolicyBindingV1,
   authorization: LiveEvaluationAuthorization,
-  operator: Address,
+  now = BigInt(Math.floor(Date.now() / 1_000)),
 ): Promise<void> {
-  const now = BigInt(Math.floor(Date.now() / 1_000));
-  if (getAddress(binding.owner) !== operator || getAddress(authorization.owner) !== operator
+  const owner = getAddress(binding.owner);
+  if (getAddress(authorization.owner) !== owner
     || authorization.issuedAt === 0n || authorization.issuedAt > now + 60n
     || authorization.expiry <= now || authorization.expiry <= authorization.issuedAt
     || authorization.expiry - authorization.issuedAt > 300n) {
-    throw new Error("evaluation authorization is outside the operator domain");
+    throw new Error("evaluation authorization is outside the policy-owner domain");
   }
   const digest = liveEvaluationAuthorizationDigest({
     requestId,
@@ -634,7 +643,7 @@ async function authorizeEvaluation(
     expiry: authorization.expiry,
   });
   const recovered = await recoverMessageAddress({ message: { raw: digest }, signature: signature(authorization.signature, "evaluation authorization") });
-  if (getAddress(recovered) !== operator) throw new Error("evaluation authorization signer is invalid");
+  if (getAddress(recovered) !== owner) throw new Error("evaluation authorization signer is invalid");
 }
 
 async function parseEvaluationResponse(value: unknown, instructionId: Hex, request: ActionRequestV1, machine: LiveMachineConfig): Promise<EvaluationEnvelope> {

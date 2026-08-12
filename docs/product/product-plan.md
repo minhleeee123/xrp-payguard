@@ -47,6 +47,8 @@ seed or EVM private key and never claims to hide the resulting token transfer.
 - Exact public/private preview before encryption.
 - Independent encryption to tender-like fixed machine public keys.
 - All-three machine receipt progress and commitment activation.
+- Self-service ownership: every connected wallet can authorize custody,
+  register its own commitment, fund its vault, and authorize its requests.
 - Explicit replacement version; an active policy never mutates silently.
 
 ### Policy primitives

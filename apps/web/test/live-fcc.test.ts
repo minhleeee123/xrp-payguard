@@ -6,9 +6,11 @@ import {
   evaluateLiveRequest,
   fetchLiveFccConfig,
   liveEvaluationAuthorizationDigest,
+  livePolicyBindingV1,
   type LiveFccConfig,
 } from "../src/live-fcc.js";
 import { PAYGUARD_COSTON2, PAYGUARD_COSTON2_V1, type Eip1193Provider } from "../src/coston2.js";
+import { compileStudioDraft, studioTemplateDraft } from "../src/model.js";
 
 const address = (byte: string) => `0x${byte.repeat(40 / byte.length)}` as Address;
 const hash = (byte: string) => `0x${byte.repeat(64 / byte.length)}` as Hex;
@@ -109,8 +111,27 @@ describe("live FCC browser boundary", () => {
     )).toBe("0x62eccde019645aa462f1b237ddd1a59a7cf856fe36721fa0728fd8004160033d");
   });
 
+  it("binds a live policy to any connected owner rather than the relay executor", () => {
+    const owner = address("99");
+    const draft = {
+      ...studioTemplateDraft("delegated-allowance"),
+      owner,
+      target: owner,
+      registry: PAYGUARD_COSTON2.registry,
+      vault: PAYGUARD_COSTON2.vault,
+      router: PAYGUARD_COSTON2.router,
+      asset: PAYGUARD_COSTON2.asset,
+    };
+    const policy = compileStudioDraft(draft, { privateSalt: hash("ab"), submissionNonce: hash("cd") }).policy;
+    const config = { ...configWire(), deploymentBlock: 33918762n, relayOrigin: "https://relay.example.test" } as LiveFccConfig;
+    const binding = livePolicyBindingV1(policy, config);
+    expect(binding.owner).toBe(owner);
+    expect(binding.owner).not.toBe(config.operator);
+  });
+
   it("sends an empty evaluation body and never supplies ALLOW or DENY", async () => {
     const config = { ...configWire(), deploymentBlock: 33918762n, relayOrigin: "https://relay.example.test" } as LiveFccConfig;
+    const policyOwner = address("99");
     const provider: Eip1193Provider = {
       request: vi.fn(async () => `0x${"11".repeat(65)}`),
     };
@@ -119,7 +140,7 @@ describe("live FCC browser boundary", () => {
       expect(init?.body).toBe("{}");
       expect(String(init?.body)).not.toMatch(/ALLOW|DENY|decision/i);
       const headers = new Headers(init?.headers);
-      expect(headers.get("x-payguard-owner")).toBe(operator);
+      expect(headers.get("x-payguard-owner")).toBe(policyOwner);
       expect(headers.get("x-payguard-authorization")).toMatch(/^0x[0-9a-f]{130}$/i);
       return new Response(JSON.stringify({
         schemaVersion: 1,
@@ -140,7 +161,7 @@ describe("live FCC browser boundary", () => {
         },
       }), { status: 200 });
     });
-    const result = await evaluateLiveRequest(requestId, operator, provider, config, fetcher as typeof fetch, 100n);
+    const result = await evaluateLiveRequest(requestId, policyOwner, provider, config, fetcher as typeof fetch, 100n);
     expect(result).toMatchObject({ decision: "ALLOW", routerStatus: 2, instructionId: hash("55") });
     expect(fetcher).toHaveBeenCalledTimes(1);
   });

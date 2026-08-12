@@ -78,6 +78,8 @@ closed. Owner recovery is time-bounded and cannot race execution.
 | Identity restart assumed stable | Replacement registration; frozen old policy fails closed/recovery |
 | Admin registers an arbitrary FCC signer | V2 checks the immutable release-bound official manager at custody and result time; manifest verification must reject a foreign manager constructor binding |
 | Admin disrupts or resumes one owner's policy | V2 makes per-policy stop/resume/revoke owner-only and limits admin to a global pause for new work |
+| Relay executor claims or governs a user's policy | Custody authorization and receipts bind the exact policy owner; V2 lifecycle calls check stored owner and never infer ownership from dispatcher/executor |
+| Replayed owner evaluation authorization burns sponsored gas | Authorization binds request ID, owner, issue/expiry window; relay applies IP and owner/IP budgets and coalesces the request operation until expiry; on-chain status/nonce remains canonical |
 | Caller substitutes FCC foundation domain | Sender constructs chain/sender/extension/code fields; canonical Go decoder and binding hash reject drift |
 | Sender binds a foreign/reserved extension ID | One-time owner call plus authoritative registry mapping and public-ID bounds |
 | Hosted UI lies | Wallet-free independent reader/CLI and verified release manifest |
@@ -95,6 +97,8 @@ Users still trust:
 - wallet software and user device at signing time;
 - verified PayGuard contract/extension code and deployment governance;
 - public chain liveness and supported testnet infrastructure.
+- availability and bounded gas sponsorship of the hosted relay executor; users
+  do not gain its key or policy-governance authority.
 
 Threshold machines reduce unilateral decision risk but do not make the system
 trustless or immune to common-mode compromise.

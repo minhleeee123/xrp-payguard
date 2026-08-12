@@ -1,6 +1,6 @@
 import type { PublicRequestReadiness, PublicRequestStatus } from "@xrp-payguard/integrations";
 
-export const APP_VIEWS = ["studio", "vaults", "requests", "demo", "payee", "auditor", "team"] as const;
+export const APP_VIEWS = ["studio", "vaults", "requests", "demo", "payee", "auditor"] as const;
 export type View = (typeof APP_VIEWS)[number];
 
 const APP_VIEW_SET = new Set<string>(APP_VIEWS);
@@ -16,6 +16,7 @@ export function parseAppRoute(hash: string): AppRoute {
   if (normalized.startsWith("#app/")) {
     const candidate = normalized.slice(5);
     if (candidate === "overview") return { surface: "app", view: "demo" };
+    if (candidate === "team") return { surface: "app", view: "auditor" };
     if (APP_VIEW_SET.has(candidate)) return { surface: "app", view: candidate as View };
   }
   return { surface: "app", view: "demo" };

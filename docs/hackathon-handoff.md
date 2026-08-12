@@ -60,6 +60,10 @@ hosted index by design.
 
 ### Suggested walkthrough
 
+This walkthrough describes the currently deployed operator-only build. The
+local source now contains a self-service owner flow, but it must not be shown as
+hosted behavior until the relay and web app are deployed and re-verified.
+
 1. Open `/#landing` and explain: private policy is the target boundary; amount,
    recipient, timing, and settlement remain public.
 2. Open **Demo lifecycle** and inspect the primary wallet-free V2 proof: three

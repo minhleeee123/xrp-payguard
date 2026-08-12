@@ -331,6 +331,14 @@ registered machines must sign one identical decision digest for a threshold
 result. The router verifies each signature against the frozen machine/key
 mapping before counting distinct signers.
 
+V2 policy registration is permissionless only at the transaction-submission
+layer: any account may relay the exact binding and all three valid custody
+receipts. Each ingress authorization and receipt remains bound to
+`binding.owner`, so a submitter cannot claim ownership or substitute another
+wallet. The stored owner alone may stop, resume, or revoke that policy. The FCC
+dispatcher executor is operational infrastructure and is never inferred as the
+policy owner.
+
 ## 6. Deterministic policy evaluation
 
 - Checked integer/fixed-point math only.

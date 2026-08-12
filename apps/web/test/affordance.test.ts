@@ -64,7 +64,9 @@ describe("application information density", () => {
   it("prioritizes the three main tasks and removes the Overview surface", () => {
     expect(main).toContain("nav-group nav-group-main");
     expect(main).toContain("nav-group nav-group-proof");
-    expect(main).toContain("nav-group nav-group-admin");
+    expect(main).not.toContain("nav-group nav-group-admin");
+    expect(main).not.toContain('navItem("team"');
+    expect(main).toContain("observedRequestActorsView()");
     expect(main).not.toContain('navItem("overview"');
     expect(main).not.toContain("function overviewView");
   });
@@ -81,6 +83,18 @@ describe("application information density", () => {
     expect(studio).toContain("position: sticky");
     expect(studio).toContain(".studio-all-steps");
     expect(studio).toContain(".studio-action-bar");
+  });
+
+  it("makes activation self-service while keeping relay execution separate", () => {
+    expect(main).toContain("Connect your Coston2 wallet");
+    expect(main).toContain("Collect 3 live FCC receipts");
+    expect(main).toContain("Register your policy on Coston2");
+    expect(main).toContain("Use connected wallet as owner");
+    expect(main).toContain("Authorize FCC evaluation");
+    expect(main).toContain("POLICY STOPPED");
+    expect(main).toContain("POLICY REVOKED");
+    expect(main).not.toContain("Operator wallet required for V2 writes");
+    expect(main).not.toContain('name="owner" value="${esc(account ?? "")}"');
   });
 
   it("puts vault transactions before the compact overview", () => {

@@ -215,6 +215,21 @@ contract PayGuardPolicyRegistryV2Test is TestBase {
         );
     }
 
+    function testAnyAccountMaySubmitOwnerAuthorizedReceiptsButOnlyOwnerGoverns() public {
+        address submitter = vm.addr(_key("independent-policy-submitter"));
+        vm.prank(submitter);
+        registry.registerPolicy(binding, _receipts(binding));
+        assertEq(registry.policyStatus(binding.policyCommitment), 1);
+
+        vm.expectRevert(PayGuardPolicyRegistryV2.NotPolicyOwner.selector);
+        vm.prank(submitter);
+        registry.stopPolicy(binding.policyCommitment);
+
+        vm.prank(owner);
+        registry.stopPolicy(binding.policyCommitment);
+        assertEq(registry.policyStatus(binding.policyCommitment), 2);
+    }
+
     function testWrongOfficialExtensionAndCodeFailRegistration() public {
         manager.setExtensionId(vm.addr(machineKeys[1]), EXTENSION_ID + 1);
         vm.expectRevert();

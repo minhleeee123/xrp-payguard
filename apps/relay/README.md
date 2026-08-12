@@ -33,6 +33,19 @@ That map is only a transient load-control mechanism: it stores no private data,
 is cleared on completion, and is not a replay or correctness authority. After a
 restart the relay safely reconstructs work from public chain checkpoints.
 
+The local hosted-V2 upgrade separates policy ownership from relay execution.
+`POST /v1/requests/:requestId/evaluate` accepts an empty body plus a short-lived,
+request-specific authorization signed by the exact owner stored in the V2
+policy binding. The relay executor may pay the bounded dispatcher/submission gas
+but cannot become the policy owner, stop/revoke a policy, or supply a decision.
+Requests are limited by both socket address and the owner/address pair, so an
+unauthenticated remote caller cannot consume a global owner-only bucket. Reuse of
+the same request operation is memoized only until authorization expiry so a
+browser retry or newly signed duplicate cannot repeatedly trigger sponsored dispatch work; on-chain nonce,
+status, and terminal-state checks remain the replay authority. The currently
+deployed Railway service must be updated before this local multi-owner path can
+be presented as hosted behavior.
+
 The live FCC action-container transport, FDC checkpoint worker, and Coston2
 router client remain integration work until official endpoints and a verified
 PayGuard release manifest exist. Local tests cover threshold, outage, split,

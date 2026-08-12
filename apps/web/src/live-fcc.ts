@@ -169,12 +169,13 @@ export async function fetchLiveFccConfig(
 }
 
 export function livePolicyBindingV1(policy: PolicyV1, config: LiveFccConfig): PolicyBindingV1 {
-  if (policy.chainId !== 114n || getAddress(policy.owner) !== config.operator
+  const owner = getAddress(policy.owner);
+  if (policy.chainId !== 114n
     || getAddress(policy.registry) !== config.contracts.registry
     || getAddress(policy.vault) !== config.contracts.vault
     || getAddress(policy.router) !== config.contracts.router
     || getAddress(policy.asset) !== config.contracts.asset) {
-    throw new Error("LIVE_POLICY_OUTSIDE_OPERATOR_DOMAIN");
+    throw new Error("LIVE_POLICY_OUTSIDE_V2_DOMAIN");
   }
   const policyNonce = BigInt(`0x${policy.submissionNonce.slice(2, 18)}`) || 1n;
   return {
@@ -182,7 +183,7 @@ export function livePolicyBindingV1(policy: PolicyV1, config: LiveFccConfig): Po
     registry: config.contracts.registry,
     vault: config.contracts.vault,
     router: config.contracts.router,
-    owner: config.operator,
+    owner,
     policyId: policy.policyId,
     policyVersion: policy.policyVersion,
     policyCommitment: policyCommitment(policy),
@@ -205,8 +206,8 @@ export async function collectLiveCustody(
   fetcher: typeof fetch = fetch,
   now = BigInt(Math.floor(Date.now() / 1_000)),
 ): Promise<LivePolicySession> {
-  if (getAddress(account) !== config.operator || getAddress(policy.owner) !== config.operator) {
-    throw new Error("LIVE_OPERATOR_WALLET_REQUIRED");
+  if (getAddress(account) !== getAddress(policy.owner)) {
+    throw new Error("LIVE_POLICY_OWNER_WALLET_REQUIRED");
   }
   const binding = livePolicyBindingV1(policy, config);
   const ciphertexts = await Promise.all(config.machines.map((machine) => encryptPrivatePolicyForTeeV1(policy, machine.publicKey))) as [Hex, Hex, Hex];
@@ -282,7 +283,10 @@ export async function registerLivePolicy(
   config: LiveFccConfig,
 ): Promise<LiveTransactionResult> {
   await verifyLiveCustody(session, config);
-  if (getAddress(account) !== config.operator) throw new Error("LIVE_OPERATOR_WALLET_REQUIRED");
+  if (getAddress(account) !== getAddress(session.binding.owner)
+    || getAddress(session.policy.owner) !== getAddress(session.binding.owner)) {
+    throw new Error("LIVE_POLICY_OWNER_WALLET_REQUIRED");
+  }
   const receipts = session.custody.map((envelope) => ({
     machineId: envelope.receipt.machineId,
     keyFingerprint: envelope.receipt.keyFingerprint,
@@ -314,7 +318,8 @@ export async function createLiveRequest(
   provider: Eip1193Provider,
   config: LiveFccConfig,
 ): Promise<LiveRequestResult> {
-  if (amount <= 0n || getAddress(account) !== config.operator || getAddress(session.binding.owner) !== config.operator) {
+  if (amount <= 0n || getAddress(account) !== getAddress(session.binding.owner)
+    || getAddress(session.policy.owner) !== getAddress(session.binding.owner)) {
     throw new Error("LIVE_REQUEST_PREFLIGHT_FAILED");
   }
   const snapshot = await loadCoston2AccountSnapshot(account);
@@ -383,7 +388,6 @@ export async function evaluateLiveRequest(
   fetcher: typeof fetch = fetch,
   now = BigInt(Math.floor(Date.now() / 1_000)),
 ): Promise<LiveEvaluationResult> {
-  if (getAddress(account) !== config.operator) throw new Error("LIVE_OPERATOR_WALLET_REQUIRED");
   const expiry = now + EVALUATION_AUTHORIZATION_SECONDS;
   const digest = liveEvaluationAuthorizationDigest(requestId, account, now, expiry, config.contracts.dispatcher);
   const authorization = await signRawMessage(provider, account, digest);
@@ -431,7 +435,6 @@ export async function governLivePolicy(
   provider: Eip1193Provider,
   config: LiveFccConfig,
 ): Promise<LiveTransactionResult> {
-  if (getAddress(account) !== config.operator) throw new Error("LIVE_OPERATOR_WALLET_REQUIRED");
   const functionName = action === "STOP" ? "stopPolicy" : action === "RESUME" ? "resumePolicy" : "revokePolicy";
   const expected = action === "STOP" ? 2 : action === "RESUME" ? 1 : 3;
   const wallet = createWalletClient({ account, chain: COSTON2_CHAIN, transport: custom(provider) });

@@ -33,8 +33,16 @@ const config: LiveFccConfig = {
 const servers: Array<ReturnType<typeof createLiveRelayServer>> = [];
 afterEach(async () => Promise.all(servers.splice(0).map((server) => new Promise<void>((resolve) => server.close(() => resolve())))));
 
-async function start(runtime: LiveRelayRuntime): Promise<string> {
-  const server = createLiveRelayServer(runtime, { allowedOrigins: ["https://xrp-payguard.vercel.app"], rateLimit: { maxRequests: 2, windowMs: 60_000 }, nowMs: () => 1 });
+async function start(
+  runtime: LiveRelayRuntime,
+  limits: { rateLimit?: { maxRequests: number; windowMs: number }; ownerRateLimit?: { maxRequests: number; windowMs: number } } = {},
+): Promise<string> {
+  const server = createLiveRelayServer(runtime, {
+    allowedOrigins: ["https://xrp-payguard.vercel.app"],
+    rateLimit: limits.rateLimit ?? { maxRequests: 2, windowMs: 60_000 },
+    ...(limits.ownerRateLimit ? { ownerRateLimit: limits.ownerRateLimit } : {}),
+    nowMs: () => 1,
+  });
   servers.push(server);
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   const bound = server.address();
@@ -85,5 +93,24 @@ describe("live FCC relay HTTP boundary", () => {
     });
     await fetch(`${origin}/v1/requests/${hex("8")}/evaluate`, { method: "POST", headers, body: "{}" });
     expect((await fetch(`${origin}/v1/requests/${hex("7")}/evaluate`, { method: "POST", headers, body: "{}" })).status).toBe(429);
+  });
+
+  it("rate limits evaluation per owner and caller-address pair", async () => {
+    const evaluate = vi.fn(async (requestId: Hex) => ({ schemaVersion: 1, mode: LIVE_FCC_MODE, status: "already-finalized", requestId, routerStatus: 3, decision: "DENY", publicReasonClass: "CAP_EXCEEDED", transactions: { submit: [] }, assertions: {} }));
+    const runtime = { config: vi.fn(async () => config), ingress: vi.fn(), evaluate } as unknown as LiveRelayRuntime;
+    const origin = await start(runtime, {
+      rateLimit: { maxRequests: 10, windowMs: 60_000 },
+      ownerRateLimit: { maxRequests: 1, windowMs: 60_000 },
+    });
+    const headers = (owner: Address) => ({
+      "Content-Type": "application/json",
+      "x-payguard-owner": owner,
+      "x-payguard-issued-at": "1",
+      "x-payguard-expiry": "2",
+      "x-payguard-authorization": `0x${"11".repeat(65)}`,
+    });
+    expect((await fetch(`${origin}/v1/requests/${hex("9")}/evaluate`, { method: "POST", headers: headers(address("77")), body: "{}" })).status).toBe(200);
+    expect((await fetch(`${origin}/v1/requests/${hex("8")}/evaluate`, { method: "POST", headers: headers(address("77")), body: "{}" })).status).toBe(429);
+    expect((await fetch(`${origin}/v1/requests/${hex("7")}/evaluate`, { method: "POST", headers: headers(address("88")), body: "{}" })).status).toBe(200);
   });
 });

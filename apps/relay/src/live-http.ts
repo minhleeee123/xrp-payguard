@@ -8,10 +8,12 @@ const MAX_INGRESS_BODY = 192 * 1024;
 const MAX_CONTROL_BODY = 128;
 const DEFAULT_RATE_MAX = 30;
 const DEFAULT_RATE_WINDOW_MS = 60_000;
+const DEFAULT_OWNER_RATE_MAX = 6;
 
 interface LiveHttpOptions {
   allowedOrigins: readonly string[];
   rateLimit?: { maxRequests: number; windowMs: number };
+  ownerRateLimit?: { maxRequests: number; windowMs: number };
   nowMs?: () => number;
 }
 
@@ -20,10 +22,14 @@ interface RateWindow { startedAt: number; count: number }
 export function createLiveRelayServer(runtime: LiveRelayRuntime, options: LiveHttpOptions): Server {
   const allowedOrigins = new Set(options.allowedOrigins.map(normalizeOrigin));
   const rate = options.rateLimit ?? { maxRequests: DEFAULT_RATE_MAX, windowMs: DEFAULT_RATE_WINDOW_MS };
+  const ownerRate = options.ownerRateLimit ?? { maxRequests: DEFAULT_OWNER_RATE_MAX, windowMs: DEFAULT_RATE_WINDOW_MS };
   if (!Number.isSafeInteger(rate.maxRequests) || rate.maxRequests <= 0
-    || !Number.isSafeInteger(rate.windowMs) || rate.windowMs <= 0) throw new Error("live relay rate limit is invalid");
+    || !Number.isSafeInteger(rate.windowMs) || rate.windowMs <= 0
+    || !Number.isSafeInteger(ownerRate.maxRequests) || ownerRate.maxRequests <= 0
+    || !Number.isSafeInteger(ownerRate.windowMs) || ownerRate.windowMs <= 0) throw new Error("live relay rate limit is invalid");
   const nowMs = options.nowMs ?? Date.now;
   const windows = new Map<string, RateWindow>();
+  const ownerWindows = new Map<string, RateWindow>();
 
   return createServer(async (request, response) => {
     const origin = request.headers.origin;
@@ -72,10 +78,12 @@ export function createLiveRelayServer(runtime: LiveRelayRuntime, options: LiveHt
         }
         const requestId = evaluation[1];
         if (!requestId || !REQUEST_ID.test(requestId)) throw new Error("request ID is invalid");
-        return sendJson(response, 200, await runtime.evaluate(
-          requestId.toLowerCase() as Hex,
-          evaluationAuthorization(request),
-        ), cors);
+        const authorization = evaluationAuthorization(request);
+        const ownerWindow = `${request.socket.remoteAddress ?? "unknown"}:${authorization.owner.toLowerCase()}`;
+        if (!consume(ownerWindows, ownerWindow, nowMs(), ownerRate)) {
+          return sendJson(response, 429, { error: "policy owner request rate limit exceeded" }, { ...cors, "retry-after": String(Math.ceil(ownerRate.windowMs / 1_000)) });
+        }
+        return sendJson(response, 200, await runtime.evaluate(requestId.toLowerCase() as Hex, authorization), cors);
       }
       return sendJson(response, 404, { error: "not found" }, cors);
     } catch (error) {

@@ -287,9 +287,74 @@ visible: fail-closed reasons, public/private boundaries, testnet and hardware
 limitations, request state, exact amounts, wallet previews, and disabled-action
 prerequisites.
 
+Desktop navigation remains available during long-page review. The Landing
+header stays pinned while its sections scroll, and the workspace sidebar keeps
+the complete Main flow and Verify navigation visible independently of the
+active page content. The workspace top bar remains pinned as before. The former
+`Team & roles` page is removed because it had no management actions; its useful
+request-bound owner, requester, and payee facts now appear in a compact Auditor
+card. The legacy route redirects to Auditor.
+
+## 11. Reviewed request identifiers
+
+Status: `IMPLEMENTED LOCALLY`
+
+Requests, Payee, Auditor, notifications, and Auditor's observed actors share one
+validated request checkpoint. The former prefilled XRPL/FDC request belongs to
+the retained V1 router and fails with `UnknownRequest` when queried through the
+active V2 reader, so it is not offered by the V2 selector.
+
+The shared selector now offers four public test IDs that were created before
+the current browser session:
+
+- `0x44971c87…79cc1d` — created at block `33941308` and deliberately left
+  `PENDING`; create transaction `0x80d4921a…6c34dd`.
+- `0x6eef6875…7efc2b` — created and then `CANCELLED` at block `33941321`;
+  cancellation transaction `0x28edbafb…c151f`.
+- `0x61dfc0cd…93817` — previously `DENIED` with `CAP_EXCEEDED` in the reviewed
+  hosted-relay lifecycle.
+- `0xc4147a70…83658` — previously threshold-approved and `EXECUTED` in the
+  reviewed hosted-relay lifecycle.
+
+The Pending and Cancelled examples use a new active V2 test policy frozen at
+block `33941301` after three registered A/B/D custody receipts. The local UI
+records no private policy, ciphertext, credential, authorization, signature,
+or key. This remains Coston2 `SIMULATED_TEE` test evidence, not hardware
+attestation or a verified release.
+
+The dropdown contains only the four full IDs plus `Enter request ID`; it does
+not add status, block, transaction, or Explorer metadata to the option list.
+Selecting an offered ID copies it into the always-visible editable field below.
+Selecting `Enter request ID` clears that field and focuses it for manual entry.
+A short note identifies the four values as previously created test IDs, while
+status and other public facts appear only after a fresh finalized lookup.
+
+## 12. Self-service policy ownership
+
+Status: `IMPLEMENTED LOCALLY · NOT YET DEPLOYED`
+
+Policy Studio no longer treats the hosted relay executor as the policy owner.
+The connected Coston2 wallet is frozen into the commitment, signs one exact
+authorization for each A/B/D encrypted copy, verifies all three custody
+receipts, and submits registration. Step 4 now exposes the missing activation
+actions and distinguishes `ACTIVE`, `STOPPED`, and terminal `REVOKED` state.
+Switching wallets requires rebinding, re-reviewing, and recomputing instead of
+silently changing ownership.
+
+Requests shows a compact action card only for a policy activated in the current
+tab. Its owner can create the public request, sign a short-lived evaluation
+authorization, and execute only a threshold-derived `ALLOW`. A stopped or
+revoked policy cannot create another request. The relay executor may sponsor
+bounded dispatch/result-submission gas but cannot own, govern, or decide a
+policy. Browser refresh still discards private workflow state by design; public
+request IDs remain independently reloadable.
+Terminal denied, expired, and cancelled Payee states must not use an `Expected
+payment` heading; the executed example remains unavailable in Payee until its
+exact settlement receipt is also verified.
+
 ## Combined-pass validation
 
-- Desktop visual QA completed at 1440×1000 for Landing and all seven application
+- Desktop visual QA completed at 1440×1000 for Landing and the application
   destinations. The contextual-help count matches the major-card count on every
   rendered surface, and automated geometry checks found no overlap with status,
   refresh, input, or select controls.
@@ -299,7 +364,7 @@ prerequisites.
   visible without a disclosure element.
 - Hover/focus display, click-to-pin, `Escape` dismissal, and accessible tooltip
   relationships were exercised in the browser.
-- Web typecheck and production build pass; 60 web tests pass and 3 environment-
+- Web typecheck and production build pass; 61 web tests pass and 3 environment-
   gated tests remain skipped.
 - Documentation, secret, privacy, public-evidence, and diff-whitespace checks
   pass. The privacy scan confirms no browser persistence.

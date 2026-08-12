@@ -59,6 +59,16 @@ does not pass those live portions.
 - Receipt/signature/domain/machine/code/threshold negatives.
 - V2 official-manager status, extension, code, platform-disable, fingerprint
   substitution, result-time removal, owner-only lifecycle, and global-pause negatives.
+- Third-party submission of three owner-authorized custody receipts, exact-owner
+  lifecycle enforcement, owner-signed evaluation authorization, executor-signer
+  rejection, and independent owner/IP relay rate limits.
+- The hosted multi-owner runner creates a fresh recoverable test wallet, funds
+  it from the configured Coston2 source account, runs owner custody,
+  registration, request, threshold evaluation, execution, stop/resume/revoke,
+  checks wrong-owner/signer, stopped/revoked, non-owner governance and duplicate
+  evaluation negatives, returns remaining test funds, then emits only sanitized
+  public evidence. A retained recovery file means the run is incomplete and
+  must not be claimed as a pass.
 - Request replay, duplicate occurrence, attempt/expiry/grace behavior.
 - Conservation across execute, deny, expire, stop, revoke, withdraw, refund.
 - Reentrancy, malicious token, callback, adapter, and partial failure.

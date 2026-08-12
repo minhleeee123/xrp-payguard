@@ -7,7 +7,9 @@ Local Foundry/Solidity V1 implementation of the public state machine:
 - `PayGuardPolicyRegistryV2` is a local release candidate that removes the
   administrator-owned machine mapping, constructor-freezes an official
   `FlareTeeManager`/extension/code domain, rechecks machine status and platform
-  at receipt and result time, makes policy lifecycle owner-only, and limits
+  at receipt and result time, accepts registration from any submitter only when
+  all three receipts are authorized for the binding's exact owner, makes stop/
+  resume/revoke owner-only, and limits
   governance to a globally scoped pause that can be permanently renounced only
   while unpaused. It is not yet a Coston2 deployment fact.
 - `PayGuardVault` accepts an explicitly supported ERC-20-like public asset and

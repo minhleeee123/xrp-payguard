@@ -6,7 +6,8 @@ import { encodeAbiParameters, encodeEventTopics, erc20Abi, getAddress, keccak256
 import {
   COSTON2_CHAIN_HEX,
   PAYGUARD_COSTON2,
-  REVIEWED_PENDING_REQUEST_ID,
+  REVIEWED_REQUEST_EXAMPLES,
+  REVIEWED_V2_REQUEST_ID,
   RequestTransactionError,
   WalletConnectionError,
   VaultTransactionError,
@@ -145,6 +146,19 @@ function storedRequestFixture(request: ReturnType<typeof requestFixture>) {
 }
 
 describe("Coston2 browser integration", () => {
+  it("pins the hosted lifecycle request examples and keeps every V2 sample distinct", () => {
+    const evidence = JSON.parse(readFileSync(
+      new URL("../../../evidence/coston2/fcc-hosted-relay-lifecycle.json", import.meta.url),
+      "utf8",
+    )) as { registryVersion: string; publicIdentifiers: { allow: { requestId: string }; deny: { requestId: string } } };
+    expect(evidence.registryVersion).toBe("V2");
+    expect(REVIEWED_REQUEST_EXAMPLES).toHaveLength(4);
+    expect(new Set(REVIEWED_REQUEST_EXAMPLES.map((example) => example.id)).size).toBe(4);
+    expect(REVIEWED_REQUEST_EXAMPLES.find((example) => example.expectedStatus === "DENIED")?.id).toBe(evidence.publicIdentifiers.deny.requestId);
+    expect(REVIEWED_REQUEST_EXAMPLES.find((example) => example.expectedStatus === "EXECUTED")?.id).toBe(evidence.publicIdentifiers.allow.requestId);
+    expect(REVIEWED_V2_REQUEST_ID).toBe(REVIEWED_REQUEST_EXAMPLES.find((example) => example.expectedStatus === "PENDING")?.id);
+  });
+
   it.runIf(process.env.PAYGUARD_LIVE_COSTON2 === "1")("passes the credential-free finalized public read boundary", async () => {
     const snapshot = await loadCoston2AccountSnapshot(account);
     expect(snapshot.account).toBe(account);
@@ -152,12 +166,14 @@ describe("Coston2 browser integration", () => {
     expect(snapshot.contracts.runtimeVerified).toBe(true);
   }, 30_000);
 
-  it.runIf(process.env.PAYGUARD_LIVE_COSTON2 === "1")("loads the reviewed canonical Pending request from the finalized router", async () => {
-    const result = await loadCoston2PublicRequest(REVIEWED_PENDING_REQUEST_ID);
-    expect(result.request.status).toBe("PENDING");
-    expect(result.payee.status).toBe("PENDING");
-    expect(result.finalizedBlock).toBeGreaterThan(0n);
-  }, 30_000);
+  it.runIf(process.env.PAYGUARD_LIVE_COSTON2 === "1")("loads all reviewed V2 examples from finalized router state", async () => {
+    for (const example of REVIEWED_REQUEST_EXAMPLES) {
+      const result = await loadCoston2PublicRequest(example.id);
+      expect(result.request.status).toBe(example.expectedStatus);
+      expect(result.payee.status).toBe(example.expectedStatus === "EXECUTED" ? "UNAVAILABLE" : example.expectedStatus);
+      expect(result.finalizedBlock).toBeGreaterThan(0n);
+    }
+  }, 90_000);
 
   it("reads an already-authorized wallet without requesting access", async () => {
     const provider = new ProviderStub();

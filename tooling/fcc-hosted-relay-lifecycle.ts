@@ -48,7 +48,7 @@ export interface HostedLifecycleCLI {
   relayOrigin: string;
 }
 
-interface Accounting {
+export interface Accounting {
   deposited: bigint;
   available: bigint;
   reserved: bigint;
@@ -57,7 +57,7 @@ interface Accounting {
   refunded: bigint;
 }
 
-interface RelayResult {
+export interface RelayResult {
   status: "threshold-submitted" | "already-finalized";
   requestId: Hex;
   routerStatus: 2 | 3 | 4;
@@ -277,7 +277,7 @@ async function run(options: HostedLifecycleCLI): Promise<void> {
   }, null, 2));
 }
 
-async function requestRelayEvaluation(relayOrigin: string, requestId: Hex, account: { address: Address; signMessage(input: { message: { raw: Hex } }): Promise<Hex> }): Promise<RelayResult> {
+export async function requestRelayEvaluation(relayOrigin: string, requestId: Hex, account: { address: Address; signMessage(input: { message: { raw: Hex } }): Promise<Hex> }): Promise<RelayResult> {
   const issuedAt = BigInt(Math.floor(Date.now() / 1_000));
   const expiry = issuedAt + 240n;
   const authorization = await account.signMessage({ message: { raw: liveEvaluationAuthorizationDigest({ requestId, owner: account.address, issuedAt, expiry }) } });
@@ -320,7 +320,7 @@ async function requestRelayEvaluation(relayOrigin: string, requestId: Hex, accou
   };
 }
 
-function buildRequest(
+export function buildRequest(
   binding: { policyId: Hex; policyVersion: number; policyCommitment: Hex }, owner: Address,
   registry: Address, vault: Address, router: Address, occurrence: number,
   spendCheckpoint: Hex, checkpoint: Hex, timestamp: bigint,
@@ -334,14 +334,14 @@ function buildRequest(
   };
 }
 
-function balanceCheckpoint(accounting: Accounting, sequence: bigint): Hex {
+export function balanceCheckpoint(accounting: Accounting, sequence: bigint): Hex {
   return keccak256(encodeAbiParameters([
     { type: "bytes32" }, { type: "uint256" }, { type: "uint256" }, { type: "uint256" },
     { type: "uint256" }, { type: "uint256" }, { type: "uint256" }, { type: "uint256" },
   ], [balanceDomain, accounting.deposited, accounting.available, accounting.reserved, accounting.spent, accounting.withdrawn, accounting.refunded, sequence]));
 }
 
-function accountingOf(value: unknown): Accounting {
+export function accountingOf(value: unknown): Accounting {
   const record = value as Record<string, unknown>;
   const accounting = {
     deposited: BigInt(record.deposited as bigint), available: BigInt(record.available as bigint),
@@ -354,7 +354,7 @@ function accountingOf(value: unknown): Accounting {
   return accounting;
 }
 
-function sameAccounting(left: Accounting, right: Accounting): boolean {
+export function sameAccounting(left: Accounting, right: Accounting): boolean {
   return left.deposited === right.deposited && left.available === right.available && left.reserved === right.reserved
     && left.spent === right.spent && left.withdrawn === right.withdrawn && left.refunded === right.refunded;
 }

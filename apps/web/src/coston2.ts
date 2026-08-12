@@ -164,7 +164,55 @@ export interface VaultReceiptLog {
   topics: [] | [Hex, ...Hex[]];
 }
 
-export const REVIEWED_PENDING_REQUEST_ID = "0x6d86ce129ccdda6ba24770f99dd7dca5e4a77436b20f2477d5bb1abe8f9c240b" as const;
+export interface ReviewedRequestExample {
+  id: Hex;
+  label: string;
+  expectedStatus: "PENDING" | "CANCELLED" | "DENIED" | "EXECUTED";
+  recordedBlock: bigint;
+  referenceTransaction: Hash;
+  description: string;
+}
+
+// These are previously created public Coston2 test requests, not activity from
+// the connected wallet. Every selection is re-read from finalized V2 state.
+// The earlier XRPL/FDC request belongs to the retained V1 rollback router and
+// must not be offered by the active V2 reader.
+export const REVIEWED_REQUEST_EXAMPLES = [
+  {
+    id: "0x44971c87c62da24955575c508ed0430b4b584994a512fb9848d633b6ce79cc1d",
+    label: "Pending · previously created",
+    expectedStatus: "PENDING",
+    recordedBlock: 33941308n,
+    referenceTransaction: "0x80d4921aa25e21a5b12b94acfea71fa51f31eb09387387bf0b37eaeb1c6c34dd",
+    description: "Created in an earlier V2 test run and deliberately left pending. No threshold decision or payment is asserted.",
+  },
+  {
+    id: "0x6eef68755dab92c53144a5f8031cbd2ac96a62be9df672af7263cfa8cf7efc2b",
+    label: "Cancelled · previously cancelled",
+    expectedStatus: "CANCELLED",
+    recordedBlock: 33941321n,
+    referenceTransaction: "0x28edbafb94b4761da2e1fb92adda9714ff407fe00a4482d2df323673901c151f",
+    description: "Created and cancelled in an earlier V2 test run. It cannot be evaluated or executed.",
+  },
+  {
+    id: "0x61dfc0cdc94d074bd63fbde3dfeb7ab72c72025a49d1955892266ad47b093817",
+    label: "Denied · previously denied",
+    expectedStatus: "DENIED",
+    recordedBlock: 33919053n,
+    referenceTransaction: "0x4751422b1d3156e6f72bce5d9973ff12aa3a676c32ab8ef8964d0e18b03fa9bf",
+    description: "Created and denied with CAP_EXCEEDED in the reviewed hosted V2 lifecycle. No payment occurred.",
+  },
+  {
+    id: "0xc4147a7004fcbd31d2832d9e60c82bf86f217dfc4eb9c87ae0cf65ed90783658",
+    label: "Executed · previously executed",
+    expectedStatus: "EXECUTED",
+    recordedBlock: 33919033n,
+    referenceTransaction: "0x110302617ac630812eb052f53de04c139891c4468ba1fc4ba76d82ac1786db45",
+    description: "Created, threshold-approved and executed in the reviewed hosted V2 lifecycle. Payee settlement still requires its exact receipt proof.",
+  },
+] as const satisfies readonly ReviewedRequestExample[];
+
+export const REVIEWED_V2_REQUEST_ID = REVIEWED_REQUEST_EXAMPLES[0].id;
 
 export interface Coston2PublicRequestResult {
   request: PublicRequestReadState;

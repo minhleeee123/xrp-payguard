@@ -9,15 +9,20 @@
 4. Review public asset, maximum escrow exposure, machine/code policy, and fees.
 5. Canonicalize the policy locally, calculate its commitment, and independently
    encrypt it to all three selected FCC machine keys.
-6. Send ciphertext only through authenticated private ingress.
-7. Verify three machine-signed receipts locally before submitting the public
-   commitment/receipts on-chain.
-8. Activate the immutable policy version. Any change creates a new version.
+6. Sign three short-lived owner authorizations, one for each exact encrypted
+   copy, and send ciphertext only through authenticated private ingress.
+7. Verify three machine-signed receipts locally before the connected owner
+   submits the public commitment/receipts on-chain.
+8. Confirm finalized `ACTIVE` registry state. The connected wallet is the
+   canonical owner and is the only account that may stop, resume, or revoke the
+   immutable version. Any change creates a new version.
 
 Failure expectations:
 
 - Wrong, missing, stale, or incompatible machine keys stop before ingress.
 - Any receipt mismatch stops before on-chain commitment.
+- A connected-wallet/binding-owner mismatch requires a fresh commitment; the
+  UI cannot silently transfer ownership of an existing commitment.
 - No browser persistence retains policy plaintext or ciphertext.
 - Refreshing requires the owner to re-enter an uncommitted draft; the app does
   not pretend it recovered private content.
