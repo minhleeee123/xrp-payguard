@@ -105,4 +105,25 @@ describe("application information density", () => {
     expect(styles).toContain(".vault-details-grid");
     expect(styles).not.toContain(".vault-details summary");
   });
+
+  it("presents deposit as one user goal and keeps approval as an internal verified step", () => {
+    expect(main).toContain('data-vault-action="DEPOSIT"');
+    expect(main).toContain("Deposit FTestXRP");
+    expect(main).toContain("planVaultUserAction");
+    expect(main).not.toContain("Prepare exact approval");
+    expect(main).not.toContain("Prepare deposit");
+    expect(main).not.toContain('data-vault-kind="APPROVE"');
+  });
+
+  it("uses human FTestXRP amounts and separates request creation from inspection", () => {
+    expect(main).toContain("Internal base units are converted automatically");
+    expect(main).not.toContain("Maximum per action: 100000");
+    expect(main).toContain('inputmode="decimal"');
+    expect(main).toContain('data-request-mode="CREATE"');
+    expect(main).toContain('data-request-mode="INSPECT"');
+    expect(main).toContain("Owner creates policy");
+    expect(main).toContain("Wallet B or owner");
+    expect(styles).toContain(".payment-flow-guide");
+    expect(styles).toContain(".request-mode-tabs");
+  });
 });

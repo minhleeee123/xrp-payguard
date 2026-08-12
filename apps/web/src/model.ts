@@ -200,13 +200,13 @@ export function validateStudioDraft(draft: StudioDraft): readonly StudioIssue[] 
   decimalField(draft, "maxOccurrences", issues, 32);
 
   if (maxPerAction !== null && maxPerAction === 0n) {
-    issues.push({ field: "maxPerAction", message: "Maximum per action must be greater than zero." });
+    issues.push({ field: "maxPerAction", message: "Maximum per payment must be greater than zero FTestXRP." });
   }
   if (dailyCap !== null && dailyCap === 0n) {
-    issues.push({ field: "dailyCap", message: "Daily cap must be greater than zero." });
+    issues.push({ field: "dailyCap", message: "Maximum per day must be greater than zero FTestXRP." });
   }
   if (maxPerAction !== null && dailyCap !== null && dailyCap < maxPerAction) {
-    issues.push({ field: "dailyCap", message: "Daily cap cannot be lower than the per-action maximum." });
+    issues.push({ field: "dailyCap", message: "Maximum per day cannot be lower than the maximum per payment." });
   }
   if (startAt !== null && endAt !== null && (startAt === 0n || endAt <= startAt)) {
     issues.push({ field: "endAt", message: "End time must be later than a non-zero start time." });
@@ -355,8 +355,8 @@ function fieldLabel(field: keyof StudioDraft): string {
     asset: "Asset",
     target: "Allowed target",
     requester: "Authorized requester",
-    maxPerAction: "Maximum per action",
-    dailyCap: "Daily cap",
+    maxPerAction: "Maximum per payment",
+    dailyCap: "Maximum per day",
     startAt: "Start time",
     endAt: "End time",
     scheduleIntervalSeconds: "Schedule interval",

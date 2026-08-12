@@ -128,6 +128,7 @@ export interface Coston2AccountSnapshot {
 }
 
 export type VaultTransactionKind = "APPROVE" | "DEPOSIT" | "WITHDRAW";
+export type VaultUserAction = "DEPOSIT" | "WITHDRAW";
 export type VaultTransactionFailure =
   | "INPUT_INVALID"
   | "INSUFFICIENT_TOKEN_BALANCE"
@@ -445,6 +446,20 @@ export function validateVaultTransaction(kind: VaultTransactionKind, amount: big
   }
   if (kind === "DEPOSIT" && amount > snapshot.vaultAllowance) throw new VaultTransactionError("ALLOWANCE_REQUIRED");
   if (kind === "WITHDRAW" && amount > snapshot.accounting.available) throw new VaultTransactionError("INSUFFICIENT_VAULT_BALANCE");
+}
+
+export function planVaultUserAction(
+  action: VaultUserAction,
+  amount: bigint,
+  snapshot: Coston2AccountSnapshot,
+): readonly VaultTransactionKind[] {
+  if (amount <= 0n) throw new VaultTransactionError("INPUT_INVALID");
+  if (action === "WITHDRAW") {
+    validateVaultTransaction("WITHDRAW", amount, snapshot);
+    return ["WITHDRAW"];
+  }
+  if (amount > snapshot.tokenBalance) throw new VaultTransactionError("INSUFFICIENT_TOKEN_BALANCE");
+  return snapshot.vaultAllowance < amount ? ["APPROVE", "DEPOSIT"] : ["DEPOSIT"];
 }
 
 export function verifyVaultPostcondition(

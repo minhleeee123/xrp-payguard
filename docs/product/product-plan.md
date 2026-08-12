@@ -65,6 +65,10 @@ seed or EVM private key and never claims to hide the resulting token transfer.
 ### Vault and funding
 
 - Public FTestXRP/FXRP deposits and withdrawals.
+- Human-unit amount entry throughout the UI; base-unit conversion is internal.
+- One deposit intent that transparently sequences an exact approval only when
+  finalized allowance is insufficient, while retaining separate wallet
+  confirmations and receipt/postcondition checks.
 - XRP-native funding through FDC and Smart Accounts.
 - Multiple public budgets/vaults per owner.
 - Exact balance, reserved amount, spent amount, and refund conservation.

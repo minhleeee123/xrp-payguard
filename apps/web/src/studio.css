@@ -110,6 +110,15 @@
 .studio-form input::selection { background: var(--color-signal-lime); color: var(--color-void-black); }
 .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .studio-field small { display: block; margin-top: 5px; color: var(--color-ash); font-size: 11px; line-height: 1.45; }
+.studio-field { position: relative; }
+.field-unit { position: absolute; top: 38px; right: 12px; z-index: 1; color: var(--color-signal-lime); font: 9px var(--font-inter-tight); letter-spacing: .08em; }
+.studio-field:has(.field-unit) input { padding-right: 92px; }
+.policy-role-map { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; margin-bottom: 18px; border: 1px solid var(--color-graphite); background: var(--color-graphite); }
+.policy-role-map > div { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 9px; padding: 12px; background: var(--color-carbon); }
+.policy-role-map span { display: grid; grid-row: 1 / 3; place-items: center; width: 24px; height: 24px; border: 1px solid var(--color-signal-lime); color: var(--color-signal-lime); font: 10px var(--font-jetbrains-mono); }
+.policy-role-map strong, .policy-role-map small { display: block; }
+.policy-role-map strong { color: var(--color-bone); font-size: 11px; }
+.policy-role-map small { color: var(--color-ash); font-size: 9px; line-height: 1.4; }
 .studio-field.field-error { color: var(--color-chalk); }
 .studio-field.field-error input { border-color: var(--color-signal-lime); }
 .field-message { display: block; margin-top: 5px; color: var(--color-signal-lime); font-size: 11px; }

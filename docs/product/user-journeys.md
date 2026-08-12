@@ -30,6 +30,13 @@ Failure expectations:
 
 ## 2. XRPL owner — fund a PayGuard vault
 
+For the direct Coston2 test-token path, the owner enters a human FTestXRP
+amount once and selects **Deposit**. The UI derives the minimum transaction
+plan: deposit directly when allowance is sufficient, or request an exact ERC-20
+approval followed by the deposit. Both receipts and finalized postconditions
+remain independently verified; combining the UI intent never combines the
+on-chain transactions or wallet confirmations.
+
 1. Resolve the owner's PersonalAccount and current nonce from Coston2.
 2. Build an exact Smart Account operation for approval and PayGuard deposit.
 3. Commit the operation hash in an XRPL Testnet `0xFE` payment/mint flow.

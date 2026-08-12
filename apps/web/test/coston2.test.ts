@@ -16,6 +16,7 @@ import {
   loadCoston2PublicRequest,
   notificationStateFromRequest,
   parseFTestXrpAmount,
+  planVaultUserAction,
   parseRequestId,
   readWalletSession,
   validateVaultTransaction,
@@ -330,6 +331,15 @@ describe("Coston2 browser integration", () => {
     expect(() => validateVaultTransaction("DEPOSIT", snapshot.vaultAllowance + 1n, snapshot)).toThrow("ALLOWANCE_REQUIRED");
     expect(() => validateVaultTransaction("WITHDRAW", snapshot.accounting.available + 1n, snapshot)).toThrow("INSUFFICIENT_VAULT_BALANCE");
     expect(() => validateVaultTransaction("DEPOSIT", 1_000_000n, snapshot)).not.toThrow();
+  });
+
+  it("turns one deposit goal into the minimum safe wallet transaction plan", async () => {
+    const snapshot = await loadCoston2AccountSnapshot(account, readClient(), testRuntimeHashes);
+    expect(planVaultUserAction("DEPOSIT", 500_000n, snapshot)).toEqual(["DEPOSIT"]);
+    expect(planVaultUserAction("DEPOSIT", 1_500_000n, snapshot)).toEqual(["APPROVE", "DEPOSIT"]);
+    expect(planVaultUserAction("WITHDRAW", 500_000n, snapshot)).toEqual(["WITHDRAW"]);
+    expect(() => planVaultUserAction("DEPOSIT", snapshot.tokenBalance + 1n, snapshot)).toThrow("INSUFFICIENT_TOKEN_BALANCE");
+    expect(() => planVaultUserAction("WITHDRAW", snapshot.accounting.available + 1n, snapshot)).toThrow("INSUFFICIENT_VAULT_BALANCE");
   });
 
   it("requires exact finalized postconditions for all vault transaction kinds", async () => {
