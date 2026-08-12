@@ -48,7 +48,8 @@ seed or EVM private key and never claims to hide the resulting token transfer.
 - Independent encryption to tender-like fixed machine public keys.
 - All-three machine receipt progress and commitment activation.
 - Self-service ownership: every connected wallet can authorize custody,
-  register its own commitment, fund its vault, and authorize its requests.
+  register its own commitment, fund its vault, and privately designate a
+  requester/payee without signing each later payment request.
 - Explicit replacement version; an active policy never mutates silently.
 
 ### Policy primitives
@@ -71,7 +72,10 @@ seed or EVM private key and never claims to hide the resulting token transfer.
 
 ### Request and execution
 
-- Owner-initiated, scheduled, and FDC-attested request types.
+- Owner-initiated, delegated-requester, scheduled, and FDC-attested request
+  types.
+- Shareable public policy commitment; the authorized requester creates and
+  signs its own request while private requester/payee rules remain in FCC.
 - Canonical request hash and spend checkpoint.
 - FTSO-bound value input when required by policy.
 - Two matching FCC decisions and one atomic execution.

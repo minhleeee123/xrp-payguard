@@ -86,7 +86,7 @@ export interface LiveRelayRuntime {
 }
 
 export interface LiveEvaluationAuthorization {
-  owner: Address;
+  requester: Address;
   issuedAt: bigint;
   expiry: bigint;
   signature: Hex;

@@ -46,6 +46,16 @@ describe("Policy Studio authoring model", () => {
     expect(publicJson).not.toContain(result.policy.asset);
   });
 
+  it("converts human FTestXRP amounts and freezes the delegated requester privately", () => {
+    const requester = "0x00000000000000000000000000000000000000b2";
+    const draft = { ...studioTemplateDraft("delegated-allowance"), requester, maxPerAction: "0.1", dailyCap: "0.25" };
+    const result = compileStudioDraft(draft, entropy);
+    expect(result.policy.maxPerAction).toBe(100_000n);
+    expect(result.policy.dailyCap).toBe(250_000n);
+    expect(result.policy.allowRequesters).toEqual([requester]);
+    expect(JSON.stringify(result.publicEvidence)).not.toContain(requester);
+  });
+
   it("changes the commitment when ephemeral private entropy changes", () => {
     const draft = studioTemplateDraft("personal-recurring");
     const first = compileStudioDraft(draft, entropy);
@@ -69,6 +79,7 @@ describe("Policy Studio authoring model", () => {
     const invalid = {
       ...studioTemplateDraft("personal-recurring"),
       owner: "not-an-address",
+      requester: "not-an-address",
       maxPerAction: "-1",
       dailyCap: "50",
       startAt: "1000",
@@ -78,7 +89,7 @@ describe("Policy Studio authoring model", () => {
     };
     const issues = validateStudioDraft(invalid);
     expect(issues.map((issue) => issue.field)).toEqual(expect.arrayContaining([
-      "owner", "maxPerAction", "endAt", "scheduleGraceSeconds",
+      "owner", "requester", "maxPerAction", "endAt", "scheduleGraceSeconds",
     ]));
     expect(() => compileStudioDraft(invalid, entropy)).toThrow(StudioValidationError);
   });

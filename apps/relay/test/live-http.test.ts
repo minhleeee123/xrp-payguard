@@ -35,12 +35,12 @@ afterEach(async () => Promise.all(servers.splice(0).map((server) => new Promise<
 
 async function start(
   runtime: LiveRelayRuntime,
-  limits: { rateLimit?: { maxRequests: number; windowMs: number }; ownerRateLimit?: { maxRequests: number; windowMs: number } } = {},
+  limits: { rateLimit?: { maxRequests: number; windowMs: number }; requesterRateLimit?: { maxRequests: number; windowMs: number } } = {},
 ): Promise<string> {
   const server = createLiveRelayServer(runtime, {
     allowedOrigins: ["https://xrp-payguard.vercel.app"],
     rateLimit: limits.rateLimit ?? { maxRequests: 2, windowMs: 60_000 },
-    ...(limits.ownerRateLimit ? { ownerRateLimit: limits.ownerRateLimit } : {}),
+    ...(limits.requesterRateLimit ? { requesterRateLimit: limits.requesterRateLimit } : {}),
     nowMs: () => 1,
   });
   servers.push(server);
@@ -81,7 +81,7 @@ describe("live FCC relay HTTP boundary", () => {
     const origin = await start(runtime);
     const headers = {
       "Content-Type": "application/json",
-      "x-payguard-owner": address("77"),
+      "x-payguard-requester": address("77"),
       "x-payguard-issued-at": "1",
       "x-payguard-expiry": "2",
       "x-payguard-authorization": `0x${"11".repeat(65)}`,
@@ -89,22 +89,22 @@ describe("live FCC relay HTTP boundary", () => {
     const first = await fetch(`${origin}/v1/requests/${hex("9")}/evaluate`, { method: "POST", headers, body: "{}" });
     expect(first.status).toBe(200);
     expect(evaluate).toHaveBeenCalledWith(hex("9"), {
-      owner: address("77"), issuedAt: 1n, expiry: 2n, signature: `0x${"11".repeat(65)}`,
+      requester: address("77"), issuedAt: 1n, expiry: 2n, signature: `0x${"11".repeat(65)}`,
     });
     await fetch(`${origin}/v1/requests/${hex("8")}/evaluate`, { method: "POST", headers, body: "{}" });
     expect((await fetch(`${origin}/v1/requests/${hex("7")}/evaluate`, { method: "POST", headers, body: "{}" })).status).toBe(429);
   });
 
-  it("rate limits evaluation per owner and caller-address pair", async () => {
+  it("rate limits evaluation per requester and caller-address pair", async () => {
     const evaluate = vi.fn(async (requestId: Hex) => ({ schemaVersion: 1, mode: LIVE_FCC_MODE, status: "already-finalized", requestId, routerStatus: 3, decision: "DENY", publicReasonClass: "CAP_EXCEEDED", transactions: { submit: [] }, assertions: {} }));
     const runtime = { config: vi.fn(async () => config), ingress: vi.fn(), evaluate } as unknown as LiveRelayRuntime;
     const origin = await start(runtime, {
       rateLimit: { maxRequests: 10, windowMs: 60_000 },
-      ownerRateLimit: { maxRequests: 1, windowMs: 60_000 },
+      requesterRateLimit: { maxRequests: 1, windowMs: 60_000 },
     });
-    const headers = (owner: Address) => ({
+    const headers = (requester: Address) => ({
       "Content-Type": "application/json",
-      "x-payguard-owner": owner,
+      "x-payguard-requester": requester,
       "x-payguard-issued-at": "1",
       "x-payguard-expiry": "2",
       "x-payguard-authorization": `0x${"11".repeat(65)}`,

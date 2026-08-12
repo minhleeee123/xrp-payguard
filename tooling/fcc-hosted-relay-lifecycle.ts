@@ -280,13 +280,13 @@ async function run(options: HostedLifecycleCLI): Promise<void> {
 export async function requestRelayEvaluation(relayOrigin: string, requestId: Hex, account: { address: Address; signMessage(input: { message: { raw: Hex } }): Promise<Hex> }): Promise<RelayResult> {
   const issuedAt = BigInt(Math.floor(Date.now() / 1_000));
   const expiry = issuedAt + 240n;
-  const authorization = await account.signMessage({ message: { raw: liveEvaluationAuthorizationDigest({ requestId, owner: account.address, issuedAt, expiry }) } });
+  const authorization = await account.signMessage({ message: { raw: liveEvaluationAuthorizationDigest({ requestId, requester: account.address, issuedAt, expiry }) } });
   const value = await boundedJson(`${relayOrigin}/v1/requests/${requestId}/evaluate`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
       accept: "application/json",
-      "x-payguard-owner": account.address,
+      "x-payguard-requester": account.address,
       "x-payguard-issued-at": issuedAt.toString(),
       "x-payguard-expiry": expiry.toString(),
       "x-payguard-authorization": authorization,
@@ -321,14 +321,15 @@ export async function requestRelayEvaluation(relayOrigin: string, requestId: Hex
 }
 
 export function buildRequest(
-  binding: { policyId: Hex; policyVersion: number; policyCommitment: Hex }, owner: Address,
+  binding: { policyId: Hex; policyVersion: number; policyCommitment: Hex }, requester: Address,
   registry: Address, vault: Address, router: Address, occurrence: number,
   spendCheckpoint: Hex, checkpoint: Hex, timestamp: bigint,
+  options: { target?: Address; amount?: bigint } = {},
 ): ActionRequestV1 {
   return {
     chainId: CHAIN_ID, registry, vault, router, policyId: binding.policyId, policyVersion: binding.policyVersion,
     policyCommitment: binding.policyCommitment, requestId: randomHex32(), requestNonce: BigInt(randomHex32()), attempt: 1,
-    requester: owner, target: owner, asset: ftestXrp, actionType: ACTION_FTESTXRP_TRANSFER, amount: 100_000n,
+    requester, target: options.target ?? requester, asset: ftestXrp, actionType: ACTION_FTESTXRP_TRANSFER, amount: options.amount ?? 100_000n,
     scheduleSlot: 0n, occurrence, spendCheckpoint, balanceCheckpoint: checkpoint, inputCommitment: ZERO_BYTES32,
     createdAt: timestamp, graceDeadline: timestamp, expiry: timestamp + 1_800n,
   };

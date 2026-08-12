@@ -220,13 +220,15 @@ relay/machine readiness card remains visible beside it. Never enter a real
 operational policy or use mainnet value.
 
 The self-service write path accepts any injected wallet connected to chain ID
-`114`. That wallet becomes the owner of its own newly computed policy,
-authorizes all three custody copies, verifies three live FCC receipts, registers
-the policy, funds its vault, creates requests, and signs request-specific FCC
-evaluation authorizations. Every owner write still requires the injected
-wallet; the relay evaluation request contains `{}` and an exact owner
-authorization, never a browser-supplied decision. The relay remains a bounded
-gas-paying dispatcher and gains no policy ownership or governance right.
+`114`. Wallet A becomes the owner of its newly computed policy, privately
+designates requester/payee B, authorizes all three custody copies, verifies
+three live FCC receipts, registers the policy, and funds its vault. A then
+shares only the public policy commitment. B loads that commitment, creates its
+own request, signs the request-specific FCC evaluation authorization, and may
+execute an `ALLOWED` payment without a new signature from A. The relay request
+contains `{}` and an exact requester authorization, never a browser-supplied
+decision. The relay remains a bounded gas-paying dispatcher and gains no policy
+ownership or governance right.
 Refresh discards the policy, ciphertexts, authorizations, signatures, and
 this-tab transaction log.
 
@@ -237,12 +239,13 @@ and returned remaining test funds. Wrong-owner, wrong-signer, non-owner
 governance, stopped-policy, and revoked-policy operations all failed closed.
 This remains a simulated testnet candidate, not a hardware or release claim.
 
-The deployment verification uses a dedicated ephemeral-owner runner. It writes
-the temporary wallet key only to ignored mode-`0600`
-`.local/multi-owner-live/.env.local`, funds that wallet with Coston2 gas and
-FTestXRP, exercises custody/registration/evaluation/execution/governance plus
-wrong-owner and replay negatives, returns remaining test funds, removes the
-recovery file, and records public-safe evidence only. Preview the exact writes
+The deployment verification uses dedicated ephemeral owner and requester
+wallets. It writes their temporary keys only to ignored mode-`0600`
+`.local/multi-owner-live/.env.local`, funds both with Coston2 gas and the owner
+with FTestXRP, exercises owner custody/registration/funding/governance plus
+requester creation/evaluation/execution and requester/target/cap denial
+negatives, returns all remaining test funds, removes the recovery file, and
+records public-safe evidence only. Preview the exact writes
 with `pnpm fcc:multi-owner:plan`; the broadcast command remains explicitly
 acknowledged and testnet-only.
 

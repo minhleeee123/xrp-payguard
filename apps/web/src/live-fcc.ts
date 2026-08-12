@@ -148,6 +148,12 @@ export interface LiveEvaluationResult {
   transactions: { dispatch?: Hex; submit: Hex[] };
 }
 
+export interface LivePolicyRead {
+  binding: PolicyBindingV1;
+  status: number;
+  finalizedBlock: bigint;
+}
+
 export type LivePolicyAction = "STOP" | "RESUME" | "REVOKE";
 
 export const DEFAULT_LIVE_FCC_RELAY_ORIGIN = "https://payguard-live-relay-production.up.railway.app";
@@ -318,19 +324,32 @@ export async function createLiveRequest(
   provider: Eip1193Provider,
   config: LiveFccConfig,
 ): Promise<LiveRequestResult> {
-  if (amount <= 0n || getAddress(account) !== getAddress(session.binding.owner)
-    || getAddress(session.policy.owner) !== getAddress(session.binding.owner)) {
+  if (getAddress(session.policy.owner) !== getAddress(session.binding.owner)) {
     throw new Error("LIVE_REQUEST_PREFLIGHT_FAILED");
   }
-  const snapshot = await loadCoston2AccountSnapshot(account);
-  if (snapshot.accounting.available < amount || await loadLivePolicyStatus(session.binding.policyCommitment, config) !== 1) {
+  return createDelegatedLiveRequest(session.binding, session.policy.allowTargets[0]!, amount, account, provider, config);
+}
+
+export async function createDelegatedLiveRequest(
+  binding: PolicyBindingV1,
+  target: Address,
+  amount: bigint,
+  requester: Address,
+  provider: Eip1193Provider,
+  config: LiveFccConfig,
+): Promise<LiveRequestResult> {
+  const publicPolicy = await loadLivePolicy(binding.policyCommitment, config);
+  if (amount <= 0n || getAddress(target) === "0x0000000000000000000000000000000000000000"
+    || publicPolicy.status !== 1 || policyBindingDigest(publicPolicy.binding) !== policyBindingDigest(binding)) {
     throw new Error("LIVE_REQUEST_PREFLIGHT_FAILED");
   }
+  const snapshot = await loadCoston2AccountSnapshot(publicPolicy.binding.owner);
+  if (snapshot.accounting.available < amount) throw new Error("LIVE_REQUEST_PREFLIGHT_FAILED");
   const spendRaw = await publicClient.readContract({
     address: config.contracts.router,
     abi: PayGuardActionRouterAbi,
     functionName: "spendState",
-    args: [session.binding.policyCommitment],
+    args: [binding.policyCommitment],
     blockNumber: snapshot.finalizedBlock,
   });
   const spend = spendRecord(spendRaw);
@@ -342,29 +361,29 @@ export async function createLiveRequest(
     registry: config.contracts.registry,
     vault: config.contracts.vault,
     router: config.contracts.router,
-    policyId: session.binding.policyId,
-    policyVersion: session.binding.policyVersion,
-    policyCommitment: session.binding.policyCommitment,
+    policyId: binding.policyId,
+    policyVersion: binding.policyVersion,
+    policyCommitment: binding.policyCommitment,
     requestId: randomBytes32(),
     requestNonce: hexToBigInt(randomBytes32()) || 1n,
     attempt: 1,
-    requester: account,
-    target: session.policy.allowTargets[0]!,
+    requester,
+    target,
     asset: config.contracts.asset,
     actionType: ACTION_FTESTXRP_TRANSFER,
     amount,
     scheduleSlot: 0n,
     occurrence,
-    spendCheckpoint: spend.initialized ? spend.checkpoint : genesisSpendCheckpoint(session.binding.policyCommitment),
+    spendCheckpoint: spend.initialized ? spend.checkpoint : genesisSpendCheckpoint(binding.policyCommitment),
     balanceCheckpoint: liveBalanceCheckpoint(snapshot, BigInt(occurrence)),
     inputCommitment: ZERO_BYTES32,
     createdAt,
     graceDeadline: expiry,
     expiry,
   };
-  const wallet = createWalletClient({ account, chain: COSTON2_CHAIN, transport: custom(provider) });
+  const wallet = createWalletClient({ account: requester, chain: COSTON2_CHAIN, transport: custom(provider) });
   const simulation = await publicClient.simulateContract({
-    account,
+    account: requester,
     address: config.contracts.router,
     abi: PayGuardActionRouterAbi,
     functionName: "createRequest",
@@ -382,15 +401,15 @@ export async function createLiveRequest(
 
 export async function evaluateLiveRequest(
   requestId: Hex,
-  account: Address,
+  requester: Address,
   provider: Eip1193Provider,
   config: LiveFccConfig,
   fetcher: typeof fetch = fetch,
   now = BigInt(Math.floor(Date.now() / 1_000)),
 ): Promise<LiveEvaluationResult> {
   const expiry = now + EVALUATION_AUTHORIZATION_SECONDS;
-  const digest = liveEvaluationAuthorizationDigest(requestId, account, now, expiry, config.contracts.dispatcher);
-  const authorization = await signRawMessage(provider, account, digest);
+  const digest = liveEvaluationAuthorizationDigest(requestId, requester, now, expiry, config.contracts.dispatcher);
+  const authorization = await signRawMessage(provider, requester, digest);
   const response = await fetcher(`${config.relayOrigin}/v1/requests/${requestId}/evaluate`, {
     method: "POST",
     cache: "no-store",
@@ -398,7 +417,7 @@ export async function evaluateLiveRequest(
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",
-      "x-payguard-owner": account,
+      "x-payguard-requester": requester,
       "x-payguard-issued-at": now.toString(),
       "x-payguard-expiry": expiry.toString(),
       "x-payguard-authorization": authorization,
@@ -448,20 +467,37 @@ export async function governLivePolicy(
 }
 
 export async function loadLivePolicyStatus(commitment: Hex, config: LiveFccConfig): Promise<number> {
+  return (await loadLivePolicy(commitment, config)).status;
+}
+
+export async function loadLivePolicy(commitment: Hex, config: LiveFccConfig): Promise<LivePolicyRead> {
   const block = await publicClient.getBlock({ blockTag: "finalized" });
   if (!block.number) throw new Error("LIVE_FINALITY_UNAVAILABLE");
-  return Number(await publicClient.readContract({
+  const value = await publicClient.readContract({
     address: config.contracts.registry,
     abi: PayGuardPolicyRegistryV2Abi,
-    functionName: "policyStatus",
+    functionName: "getPolicy",
     args: [commitment],
     blockNumber: block.number,
-  }));
+  });
+  const binding = normalizeBinding(value[0]);
+  if (binding.chainId !== 114n || binding.registry !== config.contracts.registry
+    || binding.vault !== config.contracts.vault || binding.router !== config.contracts.router
+    || binding.policyCommitment.toLowerCase() !== commitment.toLowerCase()
+    || binding.schema.toLowerCase() !== POLICY_SCHEMA_V1.toLowerCase()
+    || binding.extensionId.toLowerCase() !== config.extensionId.toLowerCase()
+    || binding.codeVersion.toLowerCase() !== config.machines[0].codeHash.toLowerCase()
+    || binding.custodyThreshold !== 3 || binding.resultThreshold !== 2
+    || binding.machineIds.some((item, index) => item.toLowerCase() !== config.machines[index]!.machineId.toLowerCase())
+    || binding.keyFingerprints.some((item, index) => item.toLowerCase() !== config.machines[index]!.keyFingerprint.toLowerCase())) {
+    throw new Error("LIVE_POLICY_OUTSIDE_V2_DOMAIN");
+  }
+  return { binding, status: Number(value[1]), finalizedBlock: block.number };
 }
 
 export function liveEvaluationAuthorizationDigest(
   requestId: Hex,
-  owner: Address,
+  requester: Address,
   issuedAt: bigint,
   expiry: bigint,
   dispatcher: Address,
@@ -469,7 +505,7 @@ export function liveEvaluationAuthorizationDigest(
   return keccak256(encodeAbiParameters([
     { type: "bytes32" }, { type: "uint256" }, { type: "address" }, { type: "bytes32" },
     { type: "address" }, { type: "uint64" }, { type: "uint64" },
-  ], [RELAY_AUTH_PREFIX, 114n, dispatcher, requestId, owner, issuedAt, expiry]));
+  ], [RELAY_AUTH_PREFIX, 114n, dispatcher, requestId, requester, issuedAt, expiry]));
 }
 
 function parseLiveFccConfig(value: unknown, relayOrigin: string): LiveFccConfig {
@@ -679,6 +715,33 @@ function normalizeRequest(value: ActionRequestV1): ActionRequestV1 {
     amount: BigInt(value.amount), scheduleSlot: BigInt(value.scheduleSlot), occurrence: Number(value.occurrence), createdAt: BigInt(value.createdAt),
     graceDeadline: BigInt(value.graceDeadline), expiry: BigInt(value.expiry), registry: getAddress(value.registry), vault: getAddress(value.vault),
     router: getAddress(value.router), requester: getAddress(value.requester), target: getAddress(value.target), asset: getAddress(value.asset),
+  };
+}
+
+function normalizeBinding(value: unknown): PolicyBindingV1 {
+  const binding = value as Record<string, unknown>;
+  const machines = binding.machineIds as readonly unknown[];
+  const fingerprints = binding.keyFingerprints as readonly unknown[];
+  if (!Array.isArray(machines) || machines.length !== 3 || !Array.isArray(fingerprints) || fingerprints.length !== 3) {
+    throw new Error("LIVE_POLICY_BINDING_INVALID");
+  }
+  return {
+    chainId: BigInt(binding.chainId as bigint),
+    registry: getAddress(String(binding.registry)),
+    vault: getAddress(String(binding.vault)),
+    router: getAddress(String(binding.router)),
+    owner: getAddress(String(binding.owner)),
+    policyId: bytes32(binding.policyId, "policy ID"),
+    policyVersion: Number(binding.policyVersion),
+    policyCommitment: bytes32(binding.policyCommitment, "policy commitment"),
+    schema: bytes32(binding.schema, "policy schema"),
+    extensionId: bytes32(binding.extensionId, "extension ID"),
+    codeVersion: bytes32(binding.codeVersion, "code version"),
+    machineIds: machines.map((item) => bytes32(item, "machine ID")) as [Hex, Hex, Hex],
+    keyFingerprints: fingerprints.map((item) => bytes32(item, "key fingerprint")) as [Hex, Hex, Hex],
+    custodyThreshold: Number(binding.custodyThreshold),
+    resultThreshold: Number(binding.resultThreshold),
+    policyNonce: BigInt(binding.policyNonce as bigint),
   };
 }
 

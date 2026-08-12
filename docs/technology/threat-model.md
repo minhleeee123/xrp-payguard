@@ -79,7 +79,7 @@ closed. Owner recovery is time-bounded and cannot race execution.
 | Admin registers an arbitrary FCC signer | V2 checks the immutable release-bound official manager at custody and result time; manifest verification must reject a foreign manager constructor binding |
 | Admin disrupts or resumes one owner's policy | V2 makes per-policy stop/resume/revoke owner-only and limits admin to a global pause for new work |
 | Relay executor claims or governs a user's policy | Custody authorization and receipts bind the exact policy owner; V2 lifecycle calls check stored owner and never infer ownership from dispatcher/executor |
-| Replayed owner evaluation authorization burns sponsored gas | Authorization binds request ID, owner, issue/expiry window; relay applies IP and owner/IP budgets and coalesces the request operation until expiry; on-chain status/nonce remains canonical |
+| Replayed requester evaluation authorization burns sponsored gas | Authorization binds request ID, exact on-chain requester, issue/expiry window; relay applies IP and requester/IP budgets and coalesces only the same request/requester operation until expiry; on-chain status/nonce remains canonical |
 | Caller substitutes FCC foundation domain | Sender constructs chain/sender/extension/code fields; canonical Go decoder and binding hash reject drift |
 | Sender binds a foreign/reserved extension ID | One-time owner call plus authoritative registry mapping and public-ID bounds |
 | Hosted UI lies | Wallet-free independent reader/CLI and verified release manifest |

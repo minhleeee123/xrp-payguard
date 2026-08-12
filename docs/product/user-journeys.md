@@ -5,7 +5,8 @@
 1. Connect an explicit Coston2 wallet or derive the Flare PersonalAccount from
    an XRPL owner address without requesting a seed.
 2. Choose a policy template and see which fields will be public versus private.
-3. Define private target rules, limits, schedule, occurrence bounds, and expiry.
+3. Define the private authorized requester, target rules, limits, schedule,
+   occurrence bounds, and expiry.
 4. Review public asset, maximum escrow exposure, machine/code policy, and fees.
 5. Canonicalize the policy locally, calculate its commitment, and independently
    encrypt it to all three selected FCC machine keys.
@@ -44,21 +45,32 @@ Failure expectations:
   destination drift fails closed.
 - A new browser can resume from public identifiers without a secret.
 
-## 3. Owner or executor — request an action
+## 3. Authorized requester — request and receive a payment
 
-1. Prepare a public request with policy ID, vault, target, asset, amount,
+1. Receive only the public policy commitment from the owner; no private rule is
+   shared.
+2. Connect the exact requester wallet frozen in the private policy and prepare
+   a public request with policy ID, vault, target, asset, amount,
    schedule slot, action type, nonce, attempt, and expiry.
-2. Read the canonical spend checkpoint and, if required, capture a fresh FTSO
+3. Read the canonical spend checkpoint and, if required, capture a fresh FTSO
    value or finalized FDC external trigger.
-3. Freeze the request on-chain or through the exact contract-defined dispatch.
-4. FCC machines independently read/rebuild the same policy and public state.
-5. Machines sign only the exact `ALLOW` or `DENY` result domain.
-6. Anyone may submit two matching valid results. `ALLOW` executes atomically;
-   `DENY` or expiry changes no balance.
+4. Create the request on-chain as the exact requester. The policy owner does not
+   sign or approve this payment.
+5. Sign a short-lived relay authorization bound to this exact request and
+   requester. FCC machines independently rebuild the private policy and
+   canonical public state.
+6. Machines sign only the exact `ALLOW` or `DENY` result domain.
+7. Anyone may submit two matching valid results. After `ALLOW`, the requester
+   can execute the transfer to the public payee; `DENY` or expiry changes no
+   balance.
 
 Failure expectations:
 
 - No requester can provide `ALLOW` or a policy evaluation field.
+- A policy-owner signature cannot replace the exact requester's relay
+  authorization.
+- A requester or payee outside the private allowlists receives a threshold
+  `DENY`; no owner interaction can override it.
 - One unavailable result endpoint is recoverable with the remaining threshold.
 - Split decisions do not execute.
 - A retry changes only attempt/nonce/expiry as allowed; policy and frozen state

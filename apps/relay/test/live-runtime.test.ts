@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Address, Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import type { PolicyBindingV1 } from "@xrp-payguard/protocol";
 import type { LiveEvaluationResponse } from "../src/live-types.js";
 import { Coston2LiveRelayRuntime, authorizeEvaluation, liveEvaluationAuthorizationDigest, parseExecutedRequestIds } from "../src/live-runtime.js";
 
@@ -12,28 +11,27 @@ describe("live FCC relay authorization domain", () => {
   it("matches the browser request-specific authorization fixture", () => {
     expect(liveEvaluationAuthorizationDigest({
       requestId: hash("11"),
-      owner: address("22"),
+      requester: address("22"),
       issuedAt: 100n,
       expiry: 200n,
     })).toBe("0x62eccde019645aa462f1b237ddd1a59a7cf856fe36721fa0728fd8004160033d");
   });
 
-  it("accepts the exact policy owner and rejects the relay executor or another wallet", async () => {
-    const owner = privateKeyToAccount(`0x${"11".repeat(32)}`);
+  it("accepts the exact on-chain requester and rejects the policy owner or relay executor", async () => {
+    const requester = privateKeyToAccount(`0x${"11".repeat(32)}`);
     const executor = privateKeyToAccount(`0x${"22".repeat(32)}`);
     const requestId = hash("33");
     const issuedAt = 100n;
     const expiry = 200n;
-    const digest = liveEvaluationAuthorizationDigest({ requestId, owner: owner.address, issuedAt, expiry });
-    const signature = await owner.signMessage({ message: { raw: digest } });
+    const digest = liveEvaluationAuthorizationDigest({ requestId, requester: requester.address, issuedAt, expiry });
+    const signature = await requester.signMessage({ message: { raw: digest } });
     const executorSignature = await executor.signMessage({ message: { raw: digest } });
-    const binding = { owner: owner.address } as PolicyBindingV1;
-    await expect(authorizeEvaluation(requestId, binding, { owner: owner.address, issuedAt, expiry, signature }, 150n)).resolves.toBeUndefined();
-    await expect(authorizeEvaluation(requestId, binding, { owner: executor.address, issuedAt, expiry, signature }, 150n)).rejects.toThrow(/policy-owner domain/);
-    await expect(authorizeEvaluation(requestId, binding, { owner: owner.address, issuedAt, expiry, signature: executorSignature }, 150n)).rejects.toThrow(/signer is invalid/);
+    await expect(authorizeEvaluation(requestId, requester.address, { requester: requester.address, issuedAt, expiry, signature }, 150n)).resolves.toBeUndefined();
+    await expect(authorizeEvaluation(requestId, requester.address, { requester: executor.address, issuedAt, expiry, signature }, 150n)).rejects.toThrow(/request creator domain/);
+    await expect(authorizeEvaluation(requestId, requester.address, { requester: requester.address, issuedAt, expiry, signature: executorSignature }, 150n)).rejects.toThrow(/signer is invalid/);
   });
 
-  it("coalesces differently signed retries by request ID and releases failed work", async () => {
+  it("coalesces retries only inside the same request and requester domain", async () => {
     const runtime = new Coston2LiveRelayRuntime({
       rpcUrl: "https://rpc.example.test",
       executorPrivateKey: `0x${"44".repeat(32)}`,
@@ -43,7 +41,7 @@ describe("live FCC relay authorization domain", () => {
     Object.defineProperty(runtime, "evaluateOnce", { value: evaluateOnce });
     const now = BigInt(Math.floor(Date.now() / 1_000));
     const authorization = (signatureByte: string) => ({
-      owner: address("66"), issuedAt: now, expiry: now + 60n,
+      requester: address("66"), issuedAt: now, expiry: now + 60n,
       signature: `0x${signatureByte.repeat(130)}` as Hex,
     });
     await expect(runtime.evaluate(hash("55"), authorization("1"))).rejects.toThrow("transient");
@@ -52,6 +50,13 @@ describe("live FCC relay authorization domain", () => {
     expect(coalesced).toBe(first);
     await expect(first).resolves.toBe(response);
     expect(evaluateOnce).toHaveBeenCalledTimes(2);
+
+    const otherRequester = runtime.evaluate(hash("55"), {
+      ...authorization("4"), requester: address("77"),
+    });
+    expect(otherRequester).not.toBe(first);
+    await expect(otherRequester).resolves.toBe(response);
+    expect(evaluateOnce).toHaveBeenCalledTimes(3);
   });
 });
 

@@ -256,11 +256,12 @@ or FCC-evidence claim; executed Payee status additionally requires an exact
 settlement transaction receipt.
 
 The generic router writer can call `execute`, `expire`, or `cancel` only after
-reloading the finalized request and registry policy owner. For a policy
-activated in the current tab, the local V2 workflow additionally lets the exact
-owner create a request and sign a request-specific relay evaluation
-authorization. The relay—not the browser—collects and submits matching FCC
-results. Execute requires an existing threshold-derived Allowed
+reloading the finalized request and registry policy owner. For an active policy,
+the local V2 workflow lets any connected wallet load the public commitment and
+create a request as itself. The exact on-chain requester, which may differ from
+the policy owner, signs the request-specific relay evaluation authorization.
+The relay—not the browser—collects and submits matching FCC results. Execute
+requires an existing threshold-derived Allowed
 state and unexpired approved result; expire requires the canonical request
 expiry to have passed; cancel requires the connected account to equal the
 requester or policy owner. The writer then simulates, signs in the injected
@@ -294,13 +295,14 @@ URLs/status/code/platform, and private endpoints before forwarding a byte. It
 verifies each machine receipt and returns only public receipt metadata.
 
 For evaluation the browser sends an empty JSON body plus a request-specific
-owner authorization. It never sends `ALLOW`, `DENY`, policy rules, spend totals,
+requester authorization. It never sends `ALLOW`, `DENY`, policy rules, spend totals,
 or history. The relay reconstructs the canonical request, policy, vault, and
 executed history from Coston2, dispatches that public state to the three frozen
 machines, verifies both FCC envelope and inner result signatures, and submits
 two matching results. RPC, Explorer reconstruction, proxy, signature, binding,
 or quorum drift fails closed. The hosted V2 route validates the
-request-specific signature against the exact on-chain policy owner. The
+request-specific signature against the exact requester stored in the on-chain
+request. A policy-owner signature cannot substitute for that requester. The
 dispatcher owner remains only a bounded relay executor that sponsors FCC
 dispatch/submission gas; it cannot register ownership, govern a user's policy,
 or supply a decision. A fresh independently funded owner verified this

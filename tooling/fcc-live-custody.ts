@@ -77,6 +77,8 @@ export interface CLIOptions {
 export interface LiveCustodyOptions extends CLIOptions {
   policyProfile?: "custody" | "lifecycle";
   ownerAccount?: PrivateKeyAccount;
+  authorizedRequester?: Address;
+  allowedTarget?: Address;
   writeEvidence?: boolean;
 }
 
@@ -292,6 +294,8 @@ function policyFor(
   vault: Address,
   router: Address,
   profile: "custody" | "lifecycle" = "custody",
+  authorizedRequester: Address = owner,
+  allowedTarget: Address = owner,
 ): PolicyV1 {
   return {
     schemaVersion: 1,
@@ -314,9 +318,9 @@ function policyFor(
     scheduleGraceSeconds: profile === "lifecycle" ? 0n : 3_600n,
     cooldownSeconds: 0n,
     maxOccurrences: 30,
-    allowTargets: [owner],
+    allowTargets: [getAddress(allowedTarget)],
     denyTargets: [],
-    allowRequesters: [owner],
+    allowRequesters: [getAddress(authorizedRequester)],
     allowActionTypes: [ACTION_FTESTXRP_TRANSFER],
     requireFtso: false,
     ftsoFeedId: ZERO_BYTES32,
@@ -577,7 +581,16 @@ export async function executeLiveCustody(options: LiveCustodyOptions) {
     || new Set(machines.map((item) => item.keyFingerprint.toLowerCase())).size !== 3
     || new Set(machines.map((item) => item.codeHash.toLowerCase())).size !== 1) throw new Error("FCC custody set is not compatible and distinct");
   const now = BigInt(Math.floor(Date.now() / 1000));
-  const policy = policyFor(account.address, now, registry, vault, router, options.policyProfile);
+  const policy = policyFor(
+    account.address,
+    now,
+    registry,
+    vault,
+    router,
+    options.policyProfile,
+    options.authorizedRequester,
+    options.allowedTarget,
+  );
   const binding = bindingFor(policy, machines);
   const issuedAt = now;
   const expiry = now + 15n * 60n;

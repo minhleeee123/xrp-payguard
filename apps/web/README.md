@@ -12,9 +12,11 @@ remain visible in one vertical document; a sticky step bar follows scrolling and
 jumps to any section without bypassing locked actions. The local candidate can
 select the hosted V2 Coston2 candidate, independently encrypt to registered A/B/D
 machines, collect verified receipts through the Railway relay, and register the
-commitment for the connected wallet as policy owner. The owner—not the relay
-executor—signs custody and request-specific evaluation authorizations. It does
-not use browser storage or provide an authorization result.
+commitment for the connected wallet as policy owner. The owner signs custody,
+registration, and governance; the exact requester frozen in the private policy
+creates and signs each later request without an owner approval. The relay
+executor signs neither role and the browser never provides an authorization
+result. No browser storage is used.
 
 The injected-wallet boundary now connects or adds Flare Coston2 without ever
 receiving a private key. For an authorized public account it pins all reads to
@@ -108,9 +110,10 @@ separation and never describes that state as an expected future payment;
 executed settlement remains unavailable until its exact transaction receipt is
 also proven.
 
-For a policy activated in the current tab, Requests first lets the connected
-policy owner create a public request and sign a request-specific FCC evaluation
-authorization. The relay reconstructs public state, obtains two matching
+Requests accepts a public policy commitment shared by its owner. Any connected
+wallet can create a public request as itself; only the exact requester then
+signs the request-specific FCC evaluation authorization. The policy owner does
+not approve each payment. The relay reconstructs public state, obtains two matching
 machine results, and submits them through its bounded executor; the browser
 cannot send a decision or `ALLOW`. The same surface then exposes the router's
 public transitions:
@@ -170,11 +173,13 @@ are real Coston2 features, but the UI is not evidence of a complete PayGuard
 release or hardware FCC authorization.
 
 Policy Studio uses the connected Coston2 account as the exact policy owner.
-That owner authorizes all three custody copies, registers and governs the
-policy, then signs request-specific evaluation authorizations in Requests. The
-hosted relay executor can sponsor bounded dispatch/submission gas but cannot
-own, stop, revoke, rewrite, or decide the user's policy. A separate fresh-wallet
-live runner verifies this separation and its negative authorization cases.
+That owner authorizes all three custody copies, registers, funds, and governs
+the policy, while the privately designated requester signs request-specific
+evaluation authorizations in Requests. The public commitment is shareable; the
+private requester/payee allowlists and caps are not. The hosted relay executor
+can sponsor bounded dispatch/submission gas but cannot own, stop, revoke,
+rewrite, or decide the user's policy. A separate owner/requester live runner
+verifies this separation and its negative authorization cases.
 Deploy the built static artifact with the Vercel CLI from the
 repository root:
 

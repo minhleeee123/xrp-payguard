@@ -1,4 +1,4 @@
-import { getAddress, hexToBytes, keccak256, stringToHex, toHex, type Hex } from "viem";
+import { formatUnits, getAddress, hexToBytes, keccak256, parseUnits, stringToHex, toHex, type Hex } from "viem";
 import {
   ACTION_FTESTXRP_TRANSFER,
   CHAIN_ID,
@@ -20,6 +20,7 @@ export interface StudioDraft {
   router: string;
   asset: string;
   target: string;
+  requester: string;
   maxPerAction: string;
   dailyCap: string;
   startAt: string;
@@ -90,6 +91,7 @@ const LOCAL_DOMAIN = {
 const COMMON_DRAFT = {
   owner: "0x00000000000000000000000000000000000000a1",
   target: "0x00000000000000000000000000000000000000c3",
+  requester: "0x00000000000000000000000000000000000000a1",
   ...LOCAL_DOMAIN,
 } as const;
 
@@ -102,8 +104,8 @@ export const STUDIO_TEMPLATES: readonly StudioTemplate[] = [
       templateId: "personal-recurring",
       policyName: "weekly-subscription",
       ...COMMON_DRAFT,
-      maxPerAction: "75",
-      dailyCap: "500",
+      maxPerAction: "0.075",
+      dailyCap: "0.5",
       startAt: "1800000000",
       endAt: "1810000000",
       scheduleIntervalSeconds: "604800",
@@ -114,13 +116,13 @@ export const STUDIO_TEMPLATES: readonly StudioTemplate[] = [
   {
     id: "delegated-allowance",
     name: "Delegated allowance",
-    summary: "An ad-hoc transfer allowance; explicit delegates are added in FCC custody.",
+    summary: "Let one authorized requester claim bounded ad-hoc payments to an allowed target.",
     draft: {
       templateId: "delegated-allowance",
       policyName: "delegated-allowance",
       ...COMMON_DRAFT,
-      maxPerAction: "25",
-      dailyCap: "100",
+      maxPerAction: "0.025",
+      dailyCap: "0.1",
       startAt: "1800000000",
       endAt: "1810000000",
       scheduleIntervalSeconds: "0",
@@ -136,8 +138,8 @@ export const STUDIO_TEMPLATES: readonly StudioTemplate[] = [
       templateId: "treasury-vendor",
       policyName: "vendor-weekly",
       ...COMMON_DRAFT,
-      maxPerAction: "250",
-      dailyCap: "1000",
+      maxPerAction: "0.25",
+      dailyCap: "1",
       startAt: "1800000000",
       endAt: "1820000000",
       scheduleIntervalSeconds: "604800",
@@ -178,8 +180,8 @@ export function validateStudioDraft(draft: StudioDraft): readonly StudioIssue[] 
     issues.push({ field: "policyName", message: "Policy name must contain 3 to 64 characters." });
   }
 
-  const addresses: readonly (keyof Pick<StudioDraft, "owner" | "registry" | "vault" | "router" | "asset" | "target">)[] = [
-    "owner", "registry", "vault", "router", "asset", "target",
+  const addresses: readonly (keyof Pick<StudioDraft, "owner" | "registry" | "vault" | "router" | "asset" | "target" | "requester">)[] = [
+    "owner", "registry", "vault", "router", "asset", "target", "requester",
   ];
   for (const field of addresses) {
     try {
@@ -189,8 +191,8 @@ export function validateStudioDraft(draft: StudioDraft): readonly StudioIssue[] 
     }
   }
 
-  const maxPerAction = decimalField(draft, "maxPerAction", issues);
-  const dailyCap = decimalField(draft, "dailyCap", issues);
+  const maxPerAction = tokenAmountField(draft, "maxPerAction", issues);
+  const dailyCap = tokenAmountField(draft, "dailyCap", issues);
   const startAt = decimalField(draft, "startAt", issues);
   const endAt = decimalField(draft, "endAt", issues);
   const interval = decimalField(draft, "scheduleIntervalSeconds", issues);
@@ -228,6 +230,7 @@ export function compileStudioDraft(draft: StudioDraft, entropy: StudioEntropy): 
 
   const owner = normalizeStudioAddress(draft.owner);
   const target = normalizeStudioAddress(draft.target);
+  const requester = normalizeStudioAddress(draft.requester);
   const policyName = draft.policyName.trim();
   const policy: PolicyV1 = {
     schemaVersion: 1,
@@ -240,9 +243,9 @@ export function compileStudioDraft(draft: StudioDraft, entropy: StudioEntropy): 
     policyVersion: 1,
     asset: normalizeStudioAddress(draft.asset),
     referenceCurrency: toHex(new TextEncoder().encode("USD"), { size: 32 }),
-    maxPerAction: BigInt(draft.maxPerAction),
-    dailyCap: BigInt(draft.dailyCap),
-    rollingCap: BigInt(draft.dailyCap),
+    maxPerAction: parseUnits(draft.maxPerAction, 6),
+    dailyCap: parseUnits(draft.dailyCap, 6),
+    rollingCap: parseUnits(draft.dailyCap, 6),
     rollingWindowSeconds: 86_400n,
     startAt: BigInt(draft.startAt),
     endAt: BigInt(draft.endAt),
@@ -252,7 +255,7 @@ export function compileStudioDraft(draft: StudioDraft, entropy: StudioEntropy): 
     maxOccurrences: Number(BigInt(draft.maxOccurrences)),
     allowTargets: [target],
     denyTargets: [],
-    allowRequesters: [owner],
+    allowRequesters: [requester],
     allowActionTypes: [ACTION_FTESTXRP_TRANSFER],
     requireFtso: false,
     ftsoFeedId: ZERO_BYTES32,
@@ -297,11 +300,11 @@ export function compileStudioDraft(draft: StudioDraft, entropy: StudioEntropy): 
     privateInFcc: [
       { label: "Allowed target rule", value: target },
       { label: "Asset rule", value: policy.asset },
-      { label: "Per-action / daily cap", value: `${policy.maxPerAction} / ${policy.dailyCap} base units` },
+      { label: "Per-action / daily cap", value: `${formatUnits(policy.maxPerAction, 6)} / ${formatUnits(policy.dailyCap, 6)} FTestXRP` },
       { label: "Policy window", value: `${policy.startAt}–${policy.endAt} UTC epoch seconds` },
       { label: "Recurring rule", value: policy.scheduleIntervalSeconds === 0n ? "Ad-hoc" : `Every ${policy.scheduleIntervalSeconds}s · ${policy.scheduleGraceSeconds}s grace` },
       { label: "Occurrence limit", value: policy.maxOccurrences === 0 ? "No policy-specific limit" : String(policy.maxOccurrences) },
-      { label: "Requester rule", value: "Owner only in this template" },
+      { label: "Requester rule", value: requester === owner ? "Policy owner" : requester },
       { label: "Secret material", value: "Random salt and submission nonce (values never displayed)" },
     ],
   };
@@ -325,6 +328,22 @@ function decimalField(draft: StudioDraft, field: keyof StudioDraft, issues: Stud
   return parsed;
 }
 
+function tokenAmountField(draft: StudioDraft, field: "maxPerAction" | "dailyCap", issues: StudioIssue[]): bigint | null {
+  const value = draft[field];
+  if (!/^(?:0|[1-9][0-9]*)(?:\.[0-9]{1,6})?$/.test(value)) {
+    issues.push({ field, message: `${fieldLabel(field)} must be a positive FTestXRP amount with at most 6 decimals.` });
+    return null;
+  }
+  try {
+    const parsed = parseUnits(value, 6);
+    if (parsed >= 1n << 256n) throw new Error("overflow");
+    return parsed;
+  } catch {
+    issues.push({ field, message: `${fieldLabel(field)} exceeds the supported FTestXRP range.` });
+    return null;
+  }
+}
+
 function fieldLabel(field: keyof StudioDraft): string {
   return ({
     templateId: "Template",
@@ -335,6 +354,7 @@ function fieldLabel(field: keyof StudioDraft): string {
     router: "Router",
     asset: "Asset",
     target: "Allowed target",
+    requester: "Authorized requester",
     maxPerAction: "Maximum per action",
     dailyCap: "Daily cap",
     startAt: "Start time",

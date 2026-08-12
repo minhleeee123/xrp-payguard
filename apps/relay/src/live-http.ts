@@ -8,12 +8,12 @@ const MAX_INGRESS_BODY = 192 * 1024;
 const MAX_CONTROL_BODY = 128;
 const DEFAULT_RATE_MAX = 30;
 const DEFAULT_RATE_WINDOW_MS = 60_000;
-const DEFAULT_OWNER_RATE_MAX = 6;
+const DEFAULT_REQUESTER_RATE_MAX = 6;
 
 interface LiveHttpOptions {
   allowedOrigins: readonly string[];
   rateLimit?: { maxRequests: number; windowMs: number };
-  ownerRateLimit?: { maxRequests: number; windowMs: number };
+  requesterRateLimit?: { maxRequests: number; windowMs: number };
   nowMs?: () => number;
 }
 
@@ -22,14 +22,14 @@ interface RateWindow { startedAt: number; count: number }
 export function createLiveRelayServer(runtime: LiveRelayRuntime, options: LiveHttpOptions): Server {
   const allowedOrigins = new Set(options.allowedOrigins.map(normalizeOrigin));
   const rate = options.rateLimit ?? { maxRequests: DEFAULT_RATE_MAX, windowMs: DEFAULT_RATE_WINDOW_MS };
-  const ownerRate = options.ownerRateLimit ?? { maxRequests: DEFAULT_OWNER_RATE_MAX, windowMs: DEFAULT_RATE_WINDOW_MS };
+  const requesterRate = options.requesterRateLimit ?? { maxRequests: DEFAULT_REQUESTER_RATE_MAX, windowMs: DEFAULT_RATE_WINDOW_MS };
   if (!Number.isSafeInteger(rate.maxRequests) || rate.maxRequests <= 0
     || !Number.isSafeInteger(rate.windowMs) || rate.windowMs <= 0
-    || !Number.isSafeInteger(ownerRate.maxRequests) || ownerRate.maxRequests <= 0
-    || !Number.isSafeInteger(ownerRate.windowMs) || ownerRate.windowMs <= 0) throw new Error("live relay rate limit is invalid");
+    || !Number.isSafeInteger(requesterRate.maxRequests) || requesterRate.maxRequests <= 0
+    || !Number.isSafeInteger(requesterRate.windowMs) || requesterRate.windowMs <= 0) throw new Error("live relay rate limit is invalid");
   const nowMs = options.nowMs ?? Date.now;
   const windows = new Map<string, RateWindow>();
-  const ownerWindows = new Map<string, RateWindow>();
+  const requesterWindows = new Map<string, RateWindow>();
 
   return createServer(async (request, response) => {
     const origin = request.headers.origin;
@@ -79,9 +79,9 @@ export function createLiveRelayServer(runtime: LiveRelayRuntime, options: LiveHt
         const requestId = evaluation[1];
         if (!requestId || !REQUEST_ID.test(requestId)) throw new Error("request ID is invalid");
         const authorization = evaluationAuthorization(request);
-        const ownerWindow = `${request.socket.remoteAddress ?? "unknown"}:${authorization.owner.toLowerCase()}`;
-        if (!consume(ownerWindows, ownerWindow, nowMs(), ownerRate)) {
-          return sendJson(response, 429, { error: "policy owner request rate limit exceeded" }, { ...cors, "retry-after": String(Math.ceil(ownerRate.windowMs / 1_000)) });
+        const requesterWindow = `${request.socket.remoteAddress ?? "unknown"}:${authorization.requester.toLowerCase()}`;
+        if (!consume(requesterWindows, requesterWindow, nowMs(), requesterRate)) {
+          return sendJson(response, 429, { error: "requester rate limit exceeded" }, { ...cors, "retry-after": String(Math.ceil(requesterRate.windowMs / 1_000)) });
         }
         return sendJson(response, 200, await runtime.evaluate(requestId.toLowerCase() as Hex, authorization), cors);
       }
@@ -106,24 +106,24 @@ function corsHeaders(origin: string): Record<string, string> {
   return {
     "access-control-allow-origin": origin,
     "access-control-allow-methods": "GET,POST,OPTIONS",
-    "access-control-allow-headers": "content-type,accept,x-payguard-owner,x-payguard-issued-at,x-payguard-expiry,x-payguard-authorization",
+    "access-control-allow-headers": "content-type,accept,x-payguard-requester,x-payguard-issued-at,x-payguard-expiry,x-payguard-authorization",
     "access-control-max-age": "600",
     vary: "Origin",
   };
 }
 
 function evaluationAuthorization(request: IncomingMessage): LiveEvaluationAuthorization {
-  const owner = request.headers["x-payguard-owner"];
+  const requester = request.headers["x-payguard-requester"];
   const issuedAt = request.headers["x-payguard-issued-at"];
   const expiry = request.headers["x-payguard-expiry"];
   const signature = request.headers["x-payguard-authorization"];
-  if (typeof owner !== "string" || !isAddress(owner)
+  if (typeof requester !== "string" || !isAddress(requester)
     || typeof issuedAt !== "string" || !/^(0|[1-9][0-9]*)$/.test(issuedAt)
     || typeof expiry !== "string" || !/^(0|[1-9][0-9]*)$/.test(expiry)
     || typeof signature !== "string" || !/^0x[0-9a-fA-F]{130}$/.test(signature)) {
     throw new Error("evaluation authorization is invalid");
   }
-  return { owner: getAddress(owner), issuedAt: BigInt(issuedAt), expiry: BigInt(expiry), signature: signature as Hex };
+  return { requester: getAddress(requester), issuedAt: BigInt(issuedAt), expiry: BigInt(expiry), signature: signature as Hex };
 }
 
 function requireJson(request: IncomingMessage): void {

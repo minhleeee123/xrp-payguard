@@ -74,10 +74,11 @@ a verified release.
    conservation, and thirteen Coston2 checkpoints.
 3. Follow any public checkpoint to Coston2 Explorer. Then inspect the live
    Railway readiness card and explicit `SIMULATED_TEE` label.
-4. Connect any funded Coston2 test wallet, prepare its own V2 policy in
-   **Policy Studio**, collect three receipts, register it, create a request,
-   and ask the relay for quorum evaluation.
-5. Point out that the evaluation body is empty and owner-authenticated; the
+4. Connect wallet A, prepare its V2 policy in **Policy Studio**, designate
+   wallet B as requester/payee, collect three receipts, register and fund it,
+   then share only the public commitment. Connect B in **Requests** to create,
+   evaluate, and receive the payment without another A signature.
+5. Point out that the evaluation body is empty and requester-authenticated; the
    browser cannot supply `ALLOW` or override canonical chain history.
 6. Close with the permanent boundary: V2 simulated candidate, self-service
    owner writes, no hardware attestation and no verified release. The V1 sandbox is

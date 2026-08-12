@@ -60,15 +60,18 @@ does not pass those live portions.
 - V2 official-manager status, extension, code, platform-disable, fingerprint
   substitution, result-time removal, owner-only lifecycle, and global-pause negatives.
 - Third-party submission of three owner-authorized custody receipts, exact-owner
-  lifecycle enforcement, owner-signed evaluation authorization, executor-signer
-  rejection, and independent owner/IP relay rate limits.
-- The hosted multi-owner runner creates a fresh recoverable test wallet, funds
-  it from the configured Coston2 source account, runs owner custody,
-  registration, request, threshold evaluation, execution, stop/resume/revoke,
-  checks wrong-owner/signer, stopped/revoked, non-owner governance and duplicate
-  evaluation negatives, returns remaining test funds, then emits only sanitized
-  public evidence. A retained recovery file means the run is incomplete and
-  must not be claimed as a pass.
+  lifecycle enforcement, exact-requester evaluation authorization,
+  owner/executor signer rejection, and independent requester/IP relay rate
+  limits.
+- The hosted multi-role runner creates fresh recoverable owner and requester
+  wallets, funds them from the configured Coston2 source account, runs owner
+  custody/registration/vault funding, then has the distinct requester create,
+  authorize, execute, and receive a payment without an owner request signature.
+  It also checks requester/target/cap denials, owner-as-requester and wrong-signer
+  rejection, stopped/revoked state, requester governance rejection and duplicate
+  evaluation coalescing. It returns all remaining test funds and emits only
+  sanitized public evidence. A retained recovery file means the run is
+  incomplete and must not be claimed as a pass.
 - Request replay, duplicate occurrence, attempt/expiry/grace behavior.
 - Conservation across execute, deny, expire, stop, revoke, withdraw, refund.
 - Reentrancy, malicious token, callback, adapter, and partial failure.

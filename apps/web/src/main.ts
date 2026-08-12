@@ -16,7 +16,7 @@ import {
   type PublicRequestReadState,
   type PublicRequestSnapshotV1,
 } from "@xrp-payguard/integrations";
-import { formatEther, formatUnits, type Address } from "viem";
+import { formatEther, formatUnits, getAddress, type Address, type Hex } from "viem";
 import {
   STUDIO_TEMPLATES,
   StudioValidationError,
@@ -55,16 +55,18 @@ import {
 import type { DemoDomainConfig } from "@xrp-payguard/demo";
 import {
   collectLiveCustody,
-  createLiveRequest,
+  createDelegatedLiveRequest,
   evaluateLiveRequest,
   executeLiveRequest,
   fetchLiveFccConfig,
   governLivePolicy,
+  loadLivePolicy,
   loadLivePolicyStatus,
   registerLivePolicy,
   type LiveEvaluationResult,
   type LiveFccConfig,
   type LivePolicyAction,
+  type LivePolicyRead,
   type LivePolicySession,
   type LiveRequestResult,
   type LiveTransactionResult,
@@ -184,6 +186,10 @@ let liveFccExecution: LiveTransactionResult | null = null;
 let liveFccBusy = "";
 let liveFccNotice = "Checking the hosted relay and three registered Coston2 machines.";
 let liveFccRequestAmountInput = "0.1";
+let delegatedPolicyInput = "";
+let delegatedTargetInput = "";
+let delegatedPolicyRead: LivePolicyRead | null = null;
+let delegatedPolicyNotice = "Paste an active policy commitment shared by its owner.";
 let liveFccTransactions: { label: string; hash: `0x${string}`; blockNumber?: bigint }[] = [];
 const walletProvider = injectedProvider();
 let walletState: WalletUiState = { status: "DISCONNECTED" };
@@ -271,7 +277,7 @@ function headerBalances(): string {
 function sidebarUserRow(): string {
   const account = connectedAccount();
   const label = walletState.status === "WRONG_CHAIN" ? "Switch to Coston2" : account ? short(account) : "Wallet not connected";
-  return `<div class="user-row"><div class="avatar">${account ? account.slice(2, 4).toUpperCase() : "—"}</div><div><strong>${account ? "Owner view" : "No active owner"}</strong><small>${esc(label)}</small></div></div>`;
+  return `<div class="user-row"><div class="avatar">${account ? account.slice(2, 4).toUpperCase() : "—"}</div><div><strong>${account ? "Connected wallet" : "No active wallet"}</strong><small>${esc(label)}</small></div></div>`;
 }
 
 function token(value: bigint): string {
@@ -343,7 +349,7 @@ function studioRulesStep(): string {
   const recurring = studioDraft.scheduleIntervalSeconds !== "0";
   const locked = !studioTemplateChosen;
   const domainLabel = liveFccConfigState.status === "READY" ? "Configured Coston2 V2 domain" : "Configured public Coston2 domain";
-  return `<form class="panel studio-form studio-step-panel" id="studio-form" novalidate><div class="form-header"><div><div class="eyebrow">STEP 02</div><h2>Define the private rule</h2><p>Focus on payment intent; owner and contract domain are resolved for you.</p></div><span class="state-tag ${locked ? "gray-tag" : "green-tag"}">${locked ? "LOCKED · CHOOSE TEMPLATE" : "IN MEMORY"}</span></div><fieldset class="studio-step-fields" ${locked ? "disabled" : ""}>${studioIssues.length > 0 ? `<div class="validation-summary" role="alert"><strong>Fix ${studioIssues.length} field${studioIssues.length === 1 ? "" : "s"}</strong><span>${esc(studioIssues[0]?.message ?? "Policy draft is invalid.")}</span></div>` : ""}<input type="hidden" name="owner" value="${esc(draftOwner)}" /><input type="hidden" name="registry" value="${esc(studioDraft.registry)}" /><input type="hidden" name="vault" value="${esc(studioDraft.vault)}" /><input type="hidden" name="router" value="${esc(studioDraft.router)}" /><input type="hidden" name="asset" value="${esc(studioDraft.asset)}" />${studioField("policyName", "Policy name", "A local label used to derive the canonical policy ID.", "text")}<div class="two-col">${studioField("target", "Allowed target", "Private policy rule; public only when requested.", "text")}<div class="derived-field"><span>Policy owner</span><strong>${draftOwner ? esc(short(draftOwner)) : "Not bound yet"}</strong><small>${ownerMatches ? "Matches the connected Coston2 wallet." : account ? "This draft must be rebound before review." : "Connect a wallet before this rule can be reviewed."}</small>${account && !ownerMatches ? '<button class="text-button" type="button" data-action="rebind-studio-owner">Use connected wallet ↗</button>' : account ? "" : '<button class="text-button" type="button" data-action="connect">Connect wallet ↗</button>'}</div></div><div class="two-col">${studioField("maxPerAction", "Maximum per action", "Private cap; an actual requested amount remains public.", "numeric")}${studioField("dailyCap", "Daily cap", "Private policy limit.", "numeric")}</div><div class="schedule-choice"><span>Schedule</span><div><label><input type="radio" name="scheduleMode" value="adhoc" ${recurring ? "" : "checked"} />Ad-hoc</label><label><input type="radio" name="scheduleMode" value="recurring" ${recurring ? "checked" : ""} />Recurring</label></div></div><div class="two-col">${studioDateField("startAt", "Starts at (UTC)")}${studioDateField("endAt", "Ends at (UTC)")}</div>${recurring ? `<div class="two-col">${studioField("scheduleIntervalSeconds", "Interval in seconds", "How often a scheduled occurrence may happen.", "numeric")}${studioField("scheduleGraceSeconds", "Grace in seconds", "Must be shorter than the interval.", "numeric")}</div>` : '<input type="hidden" name="scheduleIntervalSeconds" value="0" /><input type="hidden" name="scheduleGraceSeconds" value="0" />'}<details class="domain-details more-options"><summary>More options <span>occurrence limit</span></summary><div>${studioField("maxOccurrences", "Occurrence limit", "0 means no policy-specific limit.", "numeric")}</div></details><div class="derived-domain"><div><span>Resolved domain</span><strong>${domainLabel}</strong></div><small>Registry ${esc(short(studioDraft.registry))} · Vault ${esc(short(studioDraft.vault))} · Router ${esc(short(studioDraft.router))} · FTestXRP ${esc(short(studioDraft.asset))}</small></div><div class="private-row"><span class="lock-icon">▣</span><div><strong>Confidential draft only</strong><small>Target, caps, schedule, salt, and nonce stay in this tab until encrypted submission to registered FCC ingress.</small></div><span class="state-tag gray-tag">IN MEMORY</span></div><div class="studio-action-bar"><button class="outline-button" type="button" data-studio-step="1">Back to template</button><span id="studio-notice">${esc(studioNotice)}</span><button class="primary-button" type="submit" ${ownerMatches && !locked ? "" : "disabled"}>Continue to review</button></div></fieldset></form>`;
+  return `<form class="panel studio-form studio-step-panel" id="studio-form" novalidate><div class="form-header"><div><div class="eyebrow">STEP 02</div><h2>Define the private rule</h2><p>Focus on payment intent; owner and contract domain are resolved for you.</p></div><span class="state-tag ${locked ? "gray-tag" : "green-tag"}">${locked ? "LOCKED · CHOOSE TEMPLATE" : "IN MEMORY"}</span></div><fieldset class="studio-step-fields" ${locked ? "disabled" : ""}>${studioIssues.length > 0 ? `<div class="validation-summary" role="alert"><strong>Fix ${studioIssues.length} field${studioIssues.length === 1 ? "" : "s"}</strong><span>${esc(studioIssues[0]?.message ?? "Policy draft is invalid.")}</span></div>` : ""}<input type="hidden" name="owner" value="${esc(draftOwner)}" /><input type="hidden" name="registry" value="${esc(studioDraft.registry)}" /><input type="hidden" name="vault" value="${esc(studioDraft.vault)}" /><input type="hidden" name="router" value="${esc(studioDraft.router)}" /><input type="hidden" name="asset" value="${esc(studioDraft.asset)}" />${studioField("policyName", "Policy name", "A local label used to derive the canonical policy ID.", "text")}<div class="two-col">${studioField("target", "Allowed payee", "The only public transfer target this policy may authorize.", "text")}${studioField("requester", "Authorized requester", "This wallet may request payment without the owner signing each request.", "text")}</div><div class="derived-field"><span>Policy owner</span><strong>${draftOwner ? esc(short(draftOwner)) : "Not bound yet"}</strong><small>${ownerMatches ? "Matches the connected Coston2 wallet." : account ? "This draft must be rebound before review." : "Connect a wallet before this rule can be reviewed."}</small>${account && !ownerMatches ? '<button class="text-button" type="button" data-action="rebind-studio-owner">Use connected wallet ↗</button>' : account ? "" : '<button class="text-button" type="button" data-action="connect">Connect wallet ↗</button>'}</div><div class="two-col">${studioField("maxPerAction", "Maximum per action (FTestXRP)", "Enter a token amount such as 0.1, not base units.", "numeric")}${studioField("dailyCap", "Daily cap (FTestXRP)", "Total private limit with up to 6 decimals.", "numeric")}</div><div class="schedule-choice"><span>Schedule</span><div><label><input type="radio" name="scheduleMode" value="adhoc" ${recurring ? "" : "checked"} />Ad-hoc</label><label><input type="radio" name="scheduleMode" value="recurring" ${recurring ? "checked" : ""} />Recurring</label></div></div><div class="two-col">${studioDateField("startAt", "Starts at (UTC)")}${studioDateField("endAt", "Ends at (UTC)")}</div>${recurring ? `<div class="two-col">${studioField("scheduleIntervalSeconds", "Interval in seconds", "How often a scheduled occurrence may happen.", "numeric")}${studioField("scheduleGraceSeconds", "Grace in seconds", "Must be shorter than the interval.", "numeric")}</div>` : '<input type="hidden" name="scheduleIntervalSeconds" value="0" /><input type="hidden" name="scheduleGraceSeconds" value="0" />'}<details class="domain-details more-options"><summary>More options <span>occurrence limit</span></summary><div>${studioField("maxOccurrences", "Occurrence limit", "0 means no policy-specific limit.", "numeric")}</div></details><div class="derived-domain"><div><span>Resolved domain</span><strong>${domainLabel}</strong></div><small>Registry ${esc(short(studioDraft.registry))} · Vault ${esc(short(studioDraft.vault))} · Router ${esc(short(studioDraft.router))} · FTestXRP ${esc(short(studioDraft.asset))}</small></div><div class="private-row"><span class="lock-icon">▣</span><div><strong>Confidential draft only</strong><small>Payee, requester, caps, schedule, salt, and nonce stay in this tab until encrypted submission to registered FCC ingress.</small></div><span class="state-tag gray-tag">IN MEMORY</span></div><div class="studio-action-bar"><button class="outline-button" type="button" data-studio-step="1">Back to template</button><span id="studio-notice">${esc(studioNotice)}</span><button class="primary-button" type="submit" ${ownerMatches && !locked ? "" : "disabled"}>Continue to review</button></div></fieldset></form>`;
 }
 
 function studioDateField(field: "startAt" | "endAt", labelText: string): string {
@@ -354,7 +360,7 @@ function studioDateField(field: "startAt" | "endAt", labelText: string): string 
 function studioReviewStep(): string {
   const recurring = studioDraft.scheduleIntervalSeconds !== "0";
   const schedule = recurring ? `every ${durationHint(studioDraft.scheduleIntervalSeconds) ?? `${studioDraft.scheduleIntervalSeconds} seconds`}` : "on an ad-hoc basis";
-  return `<section class="studio-review-layout"><div class="panel studio-step-panel"><div class="form-header"><div><div class="eyebrow">STEP 03</div><h2>Review before computing</h2><p>No receipt or activation is created by this local computation.</p></div><span class="state-tag ${studioRulesReviewed ? "green-tag" : "gray-tag"}">${studioRulesReviewed ? "RULES READY" : "LOCKED · VALIDATE RULES"}</span></div><p class="policy-sentence">Allow <strong>${esc(short(studioDraft.owner))}</strong> to request up to <strong>${esc(studioDraft.maxPerAction)} FTestXRP</strong> for <strong>${esc(short(studioDraft.target))}</strong>, ${esc(schedule)}, within a daily cap of <strong>${esc(studioDraft.dailyCap)} FTestXRP</strong>.</p><div class="disclosure-grid"><article><span class="visibility-dot public"></span><h3>Public</h3><p>Commitment, owner, contract domain, and every actual request's amount, recipient, timing, nonce, and transaction graph.</p></article><article><span class="visibility-dot private"></span><h3>Private in FCC</h3><p>Target relationship, caps, schedule logic, occurrence bound, salt, nonce, and intermediate evaluation details.</p></article></div><div class="public-warning"><strong>PayGuard is not private money.</strong><span>Ordinary amount, recipient, timing, and transaction graph remain public.</span></div><details class="domain-details technical-details"><summary>Technical details <span>exact domain and hashes</span></summary>${studioPreview()}</details><div class="studio-action-bar"><button class="outline-button" type="button" data-studio-step="2">Back to rules</button><span>${esc(studioNotice)}</span><button class="primary-button" type="button" data-action="studio-compute" ${studioRulesReviewed ? "" : "disabled"}>Compute policy commitment</button></div></div></section>`;
+  return `<section class="studio-review-layout"><div class="panel studio-step-panel"><div class="form-header"><div><div class="eyebrow">STEP 03</div><h2>Review before computing</h2><p>No receipt or activation is created by this local computation.</p></div><span class="state-tag ${studioRulesReviewed ? "green-tag" : "gray-tag"}">${studioRulesReviewed ? "RULES READY" : "LOCKED · VALIDATE RULES"}</span></div><p class="policy-sentence">Allow requester <strong>${esc(short(studioDraft.requester))}</strong> to request up to <strong>${esc(studioDraft.maxPerAction)} FTestXRP</strong> from owner <strong>${esc(short(studioDraft.owner))}</strong> to payee <strong>${esc(short(studioDraft.target))}</strong>, ${esc(schedule)}, within a daily cap of <strong>${esc(studioDraft.dailyCap)} FTestXRP</strong>.</p><div class="disclosure-grid"><article><span class="visibility-dot public"></span><h3>Public</h3><p>Commitment, owner, contract domain, and every actual request's requester, amount, recipient, timing, nonce, and transaction graph.</p></article><article><span class="visibility-dot private"></span><h3>Private in FCC</h3><p>Requester/payee allowlists, caps, schedule logic, occurrence bound, salt, nonce, and intermediate evaluation details.</p></article></div><div class="public-warning"><strong>PayGuard is not private money.</strong><span>Ordinary amount, recipient, timing, and transaction graph remain public.</span></div><details class="domain-details technical-details"><summary>Technical details <span>exact domain and hashes</span></summary>${studioPreview()}</details><div class="studio-action-bar"><button class="outline-button" type="button" data-studio-step="2">Back to rules</button><span>${esc(studioNotice)}</span><button class="primary-button" type="button" data-action="studio-compute" ${studioRulesReviewed ? "" : "disabled"}>Compute policy commitment</button></div></div></section>`;
 }
 
 function studioActivateStep(): string {
@@ -437,7 +443,8 @@ function studioCustodyPanel(): string {
   const ownerLabel = account && ownerMatches ? `OWNER · ${short(account)}` : account ? "OWNER MISMATCH" : "WALLET REQUIRED";
   const registeredState = liveFccPolicyStatus === 1 ? "ACTIVE" : liveFccPolicyStatus === 2 ? "STOPPED" : liveFccPolicyStatus === 3 ? "REVOKED" : "REGISTERED";
   const policyActive = Boolean(liveFccPolicyRegistration && liveFccPolicyStatus === 1);
-  return `<section class="panel receipt-card activation-action-card"><div class="eyebrow">COMPLETE ACTIVATION</div><h3>Your policy on Coston2</h3><span class="state-tag ${ownerMatches ? "green-tag" : "gray-tag"}">${esc(ownerLabel)}</span><span class="state-tag gray-tag">SIMULATED TEE · TESTNET</span><p class="panel-copy">Your wallet authorizes three independent encrypted copies. After all receipts verify, the same wallet registers the policy and becomes its on-chain owner.</p><div class="activation-steps"><div class="${ownerMatches ? "complete" : "current"}"><span>${ownerMatches ? "✓" : "1"}</span><strong>Owner wallet</strong><small>${ownerMatches ? "Connected wallet matches the policy owner" : "Connect or bind your wallet"}</small></div><div class="${liveFccSession ? "complete" : ownerMatches ? "current" : ""}"><span>${liveFccSession ? "✓" : "2"}</span><strong>Three custody receipts</strong><small>${liveFccSession ? "A/B/D receipts verified in memory" : "Sign one exact authorization per machine"}</small></div><div class="${liveFccPolicyRegistration ? "complete" : liveFccSession ? "current" : ""}"><span>${liveFccPolicyRegistration ? "✓" : "3"}</span><strong>On-chain registration</strong><small>${liveFccPolicyRegistration ? `${registeredState} · finalized block ${liveFccPolicyRegistration.blockNumber}` : "Confirm the registry transaction in your wallet"}</small></div></div>${liveFccSession ? rows : ""}<div class="activation-block"><span class="status-dot ${policyActive ? "green" : "amber"}"></span><div><strong>${liveFccPolicyRegistration ? `Policy ${registeredState} on Coston2` : liveFccSession ? "3 / 3 receipts ready · registration required" : "Policy not active yet"}</strong><small>${liveFccPolicyRegistration ? "Only this policy owner can stop, resume, or revoke it." : "Private policy, ciphertexts, authorizations, and receipts are discarded on refresh."}</small></div></div>${action}<small class="panel-copy">${esc(liveFccNotice)}</small></section>`;
+  const invite = liveFccPolicyRegistration && liveFccSession ? `<div class="request-created-summary policy-invite"><span>Share with the authorized requester</span><input class="policy-share-value" value="${esc(liveFccSession.binding.policyCommitment)}" readonly aria-label="Public policy commitment" /><small>This commitment is public. The requester pastes it in Requests; no private rule is shared.</small><div class="vault-actions"><button class="outline-button" type="button" data-action="copy-policy-commitment">Copy commitment</button><button class="primary-button" type="button" data-action="open-delegated-policy">Open delegated request →</button></div></div>` : "";
+  return `<section class="panel receipt-card activation-action-card"><div class="eyebrow">COMPLETE ACTIVATION</div><h3>Your policy on Coston2</h3><span class="state-tag ${ownerMatches ? "green-tag" : "gray-tag"}">${esc(ownerLabel)}</span><span class="state-tag gray-tag">SIMULATED TEE · TESTNET</span><p class="panel-copy">Your wallet authorizes three independent encrypted copies. After all receipts verify, the same wallet registers the policy and becomes its on-chain owner.</p><div class="activation-steps"><div class="${ownerMatches ? "complete" : "current"}"><span>${ownerMatches ? "✓" : "1"}</span><strong>Owner wallet</strong><small>${ownerMatches ? "Connected wallet matches the policy owner" : "Connect or bind your wallet"}</small></div><div class="${liveFccSession ? "complete" : ownerMatches ? "current" : ""}"><span>${liveFccSession ? "✓" : "2"}</span><strong>Three custody receipts</strong><small>${liveFccSession ? "A/B/D receipts verified in memory" : "Sign one exact authorization per machine"}</small></div><div class="${liveFccPolicyRegistration ? "complete" : liveFccSession ? "current" : ""}"><span>${liveFccPolicyRegistration ? "✓" : "3"}</span><strong>On-chain registration</strong><small>${liveFccPolicyRegistration ? `${registeredState} · finalized block ${liveFccPolicyRegistration.blockNumber}` : "Confirm the registry transaction in your wallet"}</small></div></div>${liveFccSession ? rows : ""}<div class="activation-block"><span class="status-dot ${policyActive ? "green" : "amber"}"></span><div><strong>${liveFccPolicyRegistration ? `Policy ${registeredState} on Coston2` : liveFccSession ? "3 / 3 receipts ready · registration required" : "Policy not active yet"}</strong><small>${liveFccPolicyRegistration ? "Only this policy owner can stop, resume, or revoke it." : "Private policy, ciphertexts, authorizations, and receipts are discarded on refresh."}</small></div></div>${invite}${action}<small class="panel-copy">${esc(liveFccNotice)}</small></section>`;
 }
 
 function custodyUnavailableReason(reason: string): string {
@@ -550,25 +557,25 @@ function requestsView(): string {
 }
 
 function livePolicyRequestPanel(): string {
-  if (!liveFccSession || !liveFccPolicyRegistration) return "";
   const account = connectedAccount();
-  const ownerConnected = account?.toLowerCase() === liveFccSession.binding.owner.toLowerCase();
-  const policyActive = liveFccPolicyStatus === 1;
-  const snapshot = liveSnapshot();
   const request = liveFccRequest?.request;
-  const requestStatus = liveFccExecution ? "EXECUTED" : liveFccEvaluation?.routerStatus === 3 ? "DENIED" : liveFccEvaluation?.routerStatus === 2 ? "ALLOWED" : request ? "PENDING" : policyActive ? "READY" : liveFccPolicyStatus === 2 ? "POLICY STOPPED" : "POLICY REVOKED";
-  const action = !ownerConnected
-    ? `<button class="primary-button" type="button" data-action="connect">Connect policy owner wallet</button>`
-    : !policyActive
-      ? `<div class="unavailable-box"><span class="status-dot amber"></span><div><strong>${liveFccPolicyStatus === 2 ? "Policy is stopped" : "Policy is revoked"}</strong><small>${request ? `Request ${esc(short(request.requestId))} cannot advance while this policy is inactive.` : liveFccPolicyStatus === 2 ? "Resume it in Policy Studio before creating another request." : "Revocation is terminal; create and activate a new policy version."}</small></div></div><button class="outline-button" type="button" data-view="studio">Open Policy Studio</button>`
-    : !request
-      ? `<label class="demo-amount-label">Public request amount<input id="live-fcc-request-amount" value="${esc(liveFccRequestAmountInput)}" inputmode="decimal" autocomplete="off" /></label><button class="primary-button" type="button" data-action="create-live-request" ${liveFccBusy || !snapshot || snapshot.accounting.available <= 0n ? "disabled" : ""}>${liveFccBusy === "REQUEST" ? "Waiting for finality…" : "Create request"}</button>`
+  const requesterConnected = Boolean(account && request && account.toLowerCase() === request.requester.toLowerCase());
+  const loaded = delegatedPolicyRead;
+  const policyStatus = loaded?.status === 1 ? "ACTIVE" : loaded?.status === 2 ? "STOPPED" : loaded?.status === 3 ? "REVOKED" : "NOT LOADED";
+  const requestStatus = liveFccExecution ? "EXECUTED" : liveFccEvaluation?.routerStatus === 3 ? "DENIED" : liveFccEvaluation?.routerStatus === 2 ? "ALLOWED" : request ? "PENDING" : loaded?.status === 1 ? "READY" : policyStatus;
+  const policyValue = delegatedPolicyInput || liveFccSession?.binding.policyCommitment || "";
+  const targetValue = delegatedTargetInput || (account ?? "");
+  const builder = !request ? `<div class="request-example-picker delegated-request-fields"><label>Policy commitment<input id="delegated-policy-commitment" value="${esc(policyValue)}" autocomplete="off" spellcheck="false" placeholder="0x…" /></label><label>Payee address<input id="delegated-target" value="${esc(targetValue)}" autocomplete="off" spellcheck="false" placeholder="0x…" /></label><label>Amount in FTestXRP<input id="live-fcc-request-amount" value="${esc(liveFccRequestAmountInput)}" inputmode="decimal" autocomplete="off" /></label></div><div class="vault-actions"><button class="outline-button" type="button" data-action="load-delegated-policy" ${liveFccBusy ? "disabled" : ""}>${liveFccBusy === "LOAD_POLICY" ? "Reading finalized registry…" : "Load active policy"}</button>${loaded?.status === 1 && account ? `<button class="primary-button" type="button" data-action="create-live-request" ${liveFccBusy ? "disabled" : ""}>${liveFccBusy === "REQUEST" ? "Waiting for finality…" : "Request payment"}</button>` : !account ? '<button class="primary-button" type="button" data-action="connect">Connect requester wallet</button>' : ""}</div><small>${esc(delegatedPolicyNotice)}</small>` : "";
+  const action = !request ? builder
+    : !requesterConnected
+      ? `<div class="unavailable-box"><span class="status-dot amber"></span><div><strong>Exact requester wallet required</strong><small>Connect ${esc(short(request.requester))}. The policy owner does not sign this request.</small></div></div>`
       : !liveFccEvaluation
         ? `<div class="request-created-summary"><span>Request ID</span><strong class="mono-value">${esc(request.requestId)}</strong></div><button class="primary-button" type="button" data-action="evaluate-live-request" ${liveFccBusy ? "disabled" : ""}>${liveFccBusy === "EVALUATE" ? "A/B/D evaluating…" : "Authorize FCC evaluation"}</button>`
         : liveFccEvaluation.decision === "ALLOW" && liveFccEvaluation.routerStatus === 2 && !liveFccExecution
-          ? `<div class="request-created-summary"><span>Threshold result</span><strong>ALLOW · ${token(request.amount)} FTestXRP</strong></div><button class="primary-button" type="button" data-action="execute-live-request" ${liveFccBusy ? "disabled" : ""}>${liveFccBusy === "EXECUTE" ? "Waiting for finality…" : "Execute authorized transfer"}</button>`
+          ? `<div class="request-created-summary"><span>Threshold result</span><strong>ALLOW · ${token(request.amount)} FTestXRP</strong></div><button class="primary-button" type="button" data-action="execute-live-request" ${liveFccBusy ? "disabled" : ""}>${liveFccBusy === "EXECUTE" ? "Waiting for finality…" : "Receive authorized payment"}</button>`
           : `<div class="request-created-summary"><span>Final result</span><strong>${esc(requestStatus)}${liveFccEvaluation ? ` · ${esc(liveFccEvaluation.publicReasonClass)}` : ""}</strong></div><button class="outline-button" type="button" data-action="reset-live-request">Prepare another request</button>`;
-  return `<section class="panel live-policy-request-panel"><div class="panel-heading"><div><div class="eyebrow">YOUR POLICY</div><h2>Create and authorize a payment request</h2></div><span class="state-tag ${requestStatus === "READY" || requestStatus === "ALLOWED" || requestStatus === "EXECUTED" ? "green-tag" : requestStatus.startsWith("POLICY") ? "amber-tag" : "gray-tag"}">${esc(requestStatus)}</span></div><p class="panel-copy">The request publishes its target, amount, and timing. Your private caps and schedule remain inside the three FCC machines.</p><div class="live-policy-request-meta"><span>Policy <strong>${esc(short(liveFccSession.binding.policyCommitment))}</strong></span><span>Owner <strong>${esc(short(liveFccSession.binding.owner))}</strong></span><span>Vault available <strong>${snapshot ? `${token(snapshot.accounting.available)} FTestXRP` : "Refresh required"}</strong></span></div><div class="live-policy-request-action">${action}</div><small class="panel-copy">${esc(liveFccNotice)}</small></section>`;
+  const facts = request ? `<div class="live-policy-request-meta"><span>Policy <strong>${esc(short(request.policyCommitment))}</strong></span><span>Owner <strong>${esc(short(loaded?.binding.owner ?? liveFccSession?.binding.owner ?? "—"))}</strong></span><span>Requester <strong>${esc(short(request.requester))}</strong></span><span>Payee <strong>${esc(short(request.target))}</strong></span></div>` : loaded ? `<div class="live-policy-request-meta"><span>Policy <strong>${esc(short(loaded.binding.policyCommitment))}</strong></span><span>Owner <strong>${esc(short(loaded.binding.owner))}</strong></span><span>Status <strong>${policyStatus}</strong></span></div>` : "";
+  return `<section class="panel live-policy-request-panel"><div class="panel-heading"><div><div class="eyebrow">DELEGATED PAYMENT</div><h2>Request payment from a policy</h2></div><span class="state-tag ${requestStatus === "READY" || requestStatus === "ALLOWED" || requestStatus === "EXECUTED" ? "green-tag" : requestStatus === "STOPPED" || requestStatus === "REVOKED" ? "amber-tag" : "gray-tag"}">${esc(requestStatus)}</span></div><p class="panel-copy">The authorized requester creates and signs this request. The policy owner does not approve each payment; private FCC rules decide it.</p>${facts}<div class="live-policy-request-action">${action}</div><small class="panel-copy">${esc(liveFccNotice)}</small></section>`;
 }
 
 function requestLookup(): string {
@@ -876,6 +883,12 @@ function wireEvents(): void {
   app.querySelector<HTMLInputElement>("#interactive-fund-amount")?.addEventListener("input", (event) => { interactiveFundInput = (event.currentTarget as HTMLInputElement).value; });
   app.querySelector<HTMLInputElement>("#interactive-request-amount")?.addEventListener("input", (event) => { interactiveRequestAmountInput = (event.currentTarget as HTMLInputElement).value; });
   app.querySelector<HTMLInputElement>("#live-fcc-request-amount")?.addEventListener("input", (event) => { liveFccRequestAmountInput = (event.currentTarget as HTMLInputElement).value; });
+  app.querySelector<HTMLInputElement>("#delegated-policy-commitment")?.addEventListener("input", (event) => {
+    delegatedPolicyInput = (event.currentTarget as HTMLInputElement).value.trim();
+    delegatedPolicyRead = null;
+    delegatedPolicyNotice = "Load the edited commitment from the finalized V2 registry.";
+  });
+  app.querySelector<HTMLInputElement>("#delegated-target")?.addEventListener("input", (event) => { delegatedTargetInput = (event.currentTarget as HTMLInputElement).value.trim(); });
   const form = app.querySelector<HTMLFormElement>("#studio-form");
   form?.addEventListener("submit", (event) => { event.preventDefault(); advanceStudioRules(form); });
   form?.addEventListener("input", () => {
@@ -1004,6 +1017,9 @@ function handleAction(action: string): void {
   if (action === "rebind-studio-owner") { rebindStudioOwner(); return; }
   if (action === "collect-live-custody") { void submitLiveFccCustody(); return; }
   if (action === "register-live-policy") { void submitLiveFccPolicyRegistration(); return; }
+  if (action === "open-delegated-policy") { openDelegatedPolicy(); return; }
+  if (action === "copy-policy-commitment") { void copyPolicyCommitment(); return; }
+  if (action === "load-delegated-policy") { void loadDelegatedPolicyForRequest(); return; }
   if (action === "create-live-request") { void submitLiveFccRequest(); return; }
   if (action === "evaluate-live-request") { void submitLiveFccEvaluation(); return; }
   if (action === "execute-live-request") { void submitLiveFccExecution(); return; }
@@ -1394,6 +1410,13 @@ function walletChanged(): void {
   requestTransactionState = { status: "IDLE" };
   interactiveAccountSnapshot = null;
   interactiveTransactions = [];
+  studioDraft = studioTemplateDraft("delegated-allowance");
+  studioEntropy = createStudioEntropy();
+  studioCompilation = null;
+  studioTemplateChosen = false;
+  studioRulesReviewed = false;
+  studioIssues = [];
+  studioNotice = "Wallet changed. The previous wallet's private policy draft was discarded from this tab.";
   resetInteractivePolicySession("Wallet changed. Prepare a fresh owner-bound simulation policy.");
   liveFccTransactions = [];
   resetLiveFccPolicySession("Wallet changed. Prepare a fresh policy bound to the newly connected owner.");
@@ -1430,7 +1453,8 @@ function liveFccContext(): { account: Address; config: LiveFccConfig; provider: 
 function rebindStudioOwner(): void {
   const account = connectedAccount();
   if (!account) { void connectWallet(); return; }
-  studioDraft = { ...studioDraft, owner: account };
+  const requesterFollowedOwner = studioDraft.requester.toLowerCase() === studioDraft.owner.toLowerCase();
+  studioDraft = { ...studioDraft, owner: account, ...(requesterFollowedOwner ? { requester: account } : {}) };
   studioEntropy = createStudioEntropy();
   studioCompilation = null;
   studioRulesReviewed = false;
@@ -1453,12 +1477,13 @@ function prepareLiveFccDraft(): void {
       policyName: `live-fcc-${now}`,
       owner: account,
       target: account,
+      requester: account,
       registry: config.contracts.registry,
       vault: config.contracts.vault,
       router: config.contracts.router,
       asset: config.contracts.asset,
-      maxPerAction: "100000",
-      dailyCap: "150000",
+      maxPerAction: "0.1",
+      dailyCap: "0.15",
       startAt: (now - 60n).toString(),
       endAt: (now + 86_400n).toString(),
       scheduleIntervalSeconds: "0",
@@ -1521,6 +1546,10 @@ async function submitLiveFccPolicyRegistration(): Promise<void> {
     const { account, config, provider } = liveFccContext();
     liveFccPolicyRegistration = await registerLivePolicy(liveFccSession, account, provider, config);
     liveFccPolicyStatus = 1;
+    delegatedPolicyInput = liveFccSession.binding.policyCommitment;
+    delegatedTargetInput = liveFccSession.policy.allowTargets[0] ?? "";
+    delegatedPolicyRead = await loadLivePolicy(liveFccSession.binding.policyCommitment, config);
+    delegatedPolicyNotice = "Active policy loaded. Share the public commitment with its authorized requester.";
     addLiveFccTransaction("Register live FCC policy", liveFccPolicyRegistration);
     liveFccNotice = "Live V2 policy is active on Coston2 with all three registered custody receipts.";
     await refreshCoston2State();
@@ -1535,24 +1564,72 @@ async function submitLiveFccPolicyRegistration(): Promise<void> {
 }
 
 async function submitLiveFccRequest(): Promise<void> {
-  if (!liveFccSession || !liveFccPolicyRegistration) return;
+  if (!delegatedPolicyRead || delegatedPolicyRead.status !== 1) return;
   liveFccBusy = "REQUEST";
-  liveFccNotice = "Confirm the public amount and target. This transaction contains no policy plaintext or decision.";
+  liveFccNotice = "Confirm the requester, public amount and payee. The policy owner does not sign this transaction.";
   render();
   try {
     const { account, config, provider } = liveFccContext();
     const amount = parseFTestXrpAmount(liveFccRequestAmountInput);
-    liveFccRequest = await createLiveRequest(liveFccSession, amount, account, provider, config);
-    addLiveFccTransaction(`Create live request ${short(liveFccRequest.request.requestId)}`, liveFccRequest);
+    const target = getAddress(delegatedTargetInput || account);
+    liveFccRequest = await createDelegatedLiveRequest(delegatedPolicyRead.binding, target, amount, account, provider, config);
+    addLiveFccTransaction(`Requester creates ${short(liveFccRequest.request.requestId)}`, liveFccRequest);
     requestInput = liveFccRequest.request.requestId;
     requestExampleSelection = "custom";
     liveFccEvaluation = null;
     liveFccExecution = null;
-    liveFccNotice = "The request is Pending at finality. No funds are reserved until two matching machine results arrive.";
+    liveFccNotice = "The delegated request is Pending at finality. The owner did not sign; no funds reserve until two machine results match.";
     await refreshPublicRequest(false);
   } catch {
     liveFccRequest = null;
     liveFccNotice = "Live request creation failed closed. No pending action or authorization is asserted.";
+  } finally {
+    liveFccBusy = "";
+    render();
+  }
+}
+
+function openDelegatedPolicy(): void {
+  if (!liveFccSession) return;
+  delegatedPolicyInput = liveFccSession.binding.policyCommitment;
+  delegatedTargetInput = liveFccSession.policy.allowTargets[0] ?? "";
+  delegatedPolicyNotice = "Owner-prepared policy loaded. Switch to the authorized requester wallet before creating the request.";
+  navigateToView("requests");
+}
+
+async function copyPolicyCommitment(): Promise<void> {
+  if (!liveFccSession || !navigator.clipboard) {
+    showAppNotice("Clipboard is unavailable. Select the public commitment field and copy it manually.");
+    render();
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(liveFccSession.binding.policyCommitment);
+    showAppNotice("Public policy commitment copied. Share only this value—not the private policy.");
+  } catch {
+    showAppNotice("Copy was blocked. Select the public commitment field and copy it manually.");
+  }
+  render();
+}
+
+async function loadDelegatedPolicyForRequest(): Promise<void> {
+  if (liveFccConfigState.status !== "READY" || !/^0x[0-9a-fA-F]{64}$/.test(delegatedPolicyInput)) {
+    delegatedPolicyRead = null;
+    delegatedPolicyNotice = "Enter one exact 32-byte policy commitment.";
+    render();
+    return;
+  }
+  liveFccBusy = "LOAD_POLICY";
+  delegatedPolicyNotice = "Reading the finalized V2 registry and exact machine domain.";
+  render();
+  try {
+    delegatedPolicyRead = await loadLivePolicy(delegatedPolicyInput as Hex, liveFccConfigState.config);
+    delegatedPolicyNotice = delegatedPolicyRead.status === 1
+      ? `Active policy owned by ${short(delegatedPolicyRead.binding.owner)}. The requester may now create a public request.`
+      : `Policy is ${delegatedPolicyRead.status === 2 ? "stopped" : delegatedPolicyRead.status === 3 ? "revoked" : "unavailable"}; no request may be created.`;
+  } catch {
+    delegatedPolicyRead = null;
+    delegatedPolicyNotice = "Policy lookup failed closed or the commitment is outside the hosted V2 domain.";
   } finally {
     liveFccBusy = "";
     render();
@@ -1566,6 +1643,7 @@ async function submitLiveFccEvaluation(): Promise<void> {
   render();
   try {
     const { account, config, provider } = liveFccContext();
+    if (account.toLowerCase() !== liveFccRequest.request.requester.toLowerCase()) throw new Error("REQUESTER_REQUIRED");
     liveFccEvaluation = await evaluateLiveRequest(liveFccRequest.request.requestId, account, provider, config);
     if (liveFccEvaluation.transactions.dispatch) addLiveFccTransaction("Dispatch public state to A/B/D", { hash: liveFccEvaluation.transactions.dispatch });
     liveFccEvaluation.transactions.submit.forEach((hash, index) => addLiveFccTransaction(`Submit matching FCC result ${index + 1}`, { hash }));
@@ -1655,12 +1733,13 @@ function prepareInteractiveDraft(): void {
       policyName: `interactive-demo-${now}`,
       owner: account,
       target: account,
+      requester: account,
       registry: config.registry,
       vault: config.vault,
       router: config.router,
       asset: config.asset,
-      maxPerAction: "100000",
-      dailyCap: "150000",
+      maxPerAction: "0.1",
+      dailyCap: "0.15",
       startAt: (now - 60n).toString(),
       endAt: (now + 86_400n).toString(),
       scheduleIntervalSeconds: "0",
@@ -1930,7 +2009,7 @@ function selectTemplate(value: string): void {
   if (!STUDIO_TEMPLATES.some((template) => template.id === value)) return;
   const account = connectedAccount();
   const domain = liveFccConfigState.status === "READY" ? liveFccConfigState.config.contracts : PAYGUARD_COSTON2;
-  studioDraft = { ...studioTemplateDraft(value as StudioTemplateId), owner: account ?? "", registry: domain.registry, vault: domain.vault, router: domain.router, asset: domain.asset };
+  studioDraft = { ...studioTemplateDraft(value as StudioTemplateId), owner: account ?? "", requester: account ?? "", registry: domain.registry, vault: domain.vault, router: domain.router, asset: domain.asset };
   studioEntropy = createStudioEntropy();
   studioCompilation = null;
   studioTemplateChosen = true;
@@ -1954,6 +2033,7 @@ function readStudioDraft(form: HTMLFormElement): StudioDraft {
     router: value("router"),
     asset: value("asset"),
     target: value("target"),
+    requester: value("requester"),
     maxPerAction: value("maxPerAction"),
     dailyCap: value("dailyCap"),
     startAt: dateTimeInputToUnix(value("startAt")),

@@ -131,7 +131,7 @@ describe("live FCC browser boundary", () => {
 
   it("sends an empty evaluation body and never supplies ALLOW or DENY", async () => {
     const config = { ...configWire(), deploymentBlock: 33918762n, relayOrigin: "https://relay.example.test" } as LiveFccConfig;
-    const policyOwner = address("99");
+    const requester = address("99");
     const provider: Eip1193Provider = {
       request: vi.fn(async () => `0x${"11".repeat(65)}`),
     };
@@ -140,7 +140,7 @@ describe("live FCC browser boundary", () => {
       expect(init?.body).toBe("{}");
       expect(String(init?.body)).not.toMatch(/ALLOW|DENY|decision/i);
       const headers = new Headers(init?.headers);
-      expect(headers.get("x-payguard-owner")).toBe(policyOwner);
+      expect(headers.get("x-payguard-requester")).toBe(requester);
       expect(headers.get("x-payguard-authorization")).toMatch(/^0x[0-9a-f]{130}$/i);
       return new Response(JSON.stringify({
         schemaVersion: 1,
@@ -161,7 +161,7 @@ describe("live FCC browser boundary", () => {
         },
       }), { status: 200 });
     });
-    const result = await evaluateLiveRequest(requestId, policyOwner, provider, config, fetcher as typeof fetch, 100n);
+    const result = await evaluateLiveRequest(requestId, requester, provider, config, fetcher as typeof fetch, 100n);
     expect(result).toMatchObject({ decision: "ALLOW", routerStatus: 2, instructionId: hash("55") });
     expect(fetcher).toHaveBeenCalledTimes(1);
   });

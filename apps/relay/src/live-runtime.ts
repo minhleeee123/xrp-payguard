@@ -209,7 +209,10 @@ export class Coston2LiveRelayRuntime implements LiveRelayRuntime {
     for (const [cachedKey, cached] of this.evaluations) {
       if (cached.expiresAt < now) this.evaluations.delete(cachedKey);
     }
-    const key = requestId.toLowerCase();
+    // Keep an invalid claimed requester from temporarily coalescing with the
+    // exact request creator. Valid retries from the same requester still share
+    // one sponsored evaluation operation.
+    const key = `${requestId.toLowerCase()}:${authorization.requester.toLowerCase()}`;
     const existing = this.evaluations.get(key);
     if (existing) return existing.operation;
     if (this.evaluations.size >= 2_048) this.evaluations.delete(this.evaluations.keys().next().value as string);
@@ -329,7 +332,7 @@ export class Coston2LiveRelayRuntime implements LiveRelayRuntime {
     const request = stored.request;
     const policyRead = await this.client.readContract({ address: REGISTRY, abi: PayGuardPolicyRegistryV2Abi, functionName: "getPolicy", args: [request.policyCommitment] });
     const binding = normalizeBinding(policyRead[0]);
-    await authorizeEvaluation(requestId, binding, authorization);
+    await authorizeEvaluation(requestId, request.requester, authorization);
     if ([2, 3, 4].includes(stored.status)) return finalizedResponse(stored, config);
     if (stored.status !== 1) throw new Error("request is not pending");
     const latest = await this.client.getBlock({ blockTag: "latest" });
@@ -625,25 +628,25 @@ function parseReceipt(value: unknown, binding: PolicyBindingV1, machine: LiveMac
 
 export async function authorizeEvaluation(
   requestId: Hex,
-  binding: PolicyBindingV1,
+  requesterAddress: Address,
   authorization: LiveEvaluationAuthorization,
   now = BigInt(Math.floor(Date.now() / 1_000)),
 ): Promise<void> {
-  const owner = getAddress(binding.owner);
-  if (getAddress(authorization.owner) !== owner
+  const requester = getAddress(requesterAddress);
+  if (getAddress(authorization.requester) !== requester
     || authorization.issuedAt === 0n || authorization.issuedAt > now + 60n
     || authorization.expiry <= now || authorization.expiry <= authorization.issuedAt
     || authorization.expiry - authorization.issuedAt > 300n) {
-    throw new Error("evaluation authorization is outside the policy-owner domain");
+    throw new Error("evaluation authorization is outside the request creator domain");
   }
   const digest = liveEvaluationAuthorizationDigest({
     requestId,
-    owner: authorization.owner,
+    requester: authorization.requester,
     issuedAt: authorization.issuedAt,
     expiry: authorization.expiry,
   });
   const recovered = await recoverMessageAddress({ message: { raw: digest }, signature: signature(authorization.signature, "evaluation authorization") });
-  if (getAddress(recovered) !== owner) throw new Error("evaluation authorization signer is invalid");
+  if (getAddress(recovered) !== requester) throw new Error("evaluation authorization signer is invalid");
 }
 
 async function parseEvaluationResponse(value: unknown, instructionId: Hex, request: ActionRequestV1, machine: LiveMachineConfig): Promise<EvaluationEnvelope> {
@@ -774,12 +777,12 @@ export const liveDomain = { REGISTRY, VAULT, ROUTER, DISPATCHER, MANAGER, ASSET,
 
 export function liveEvaluationAuthorizationDigest(input: {
   requestId: Hex;
-  owner: Address;
+  requester: Address;
   issuedAt: bigint;
   expiry: bigint;
 }): Hex {
   return keccak256(encodeAbiParameters([
     { type: "bytes32" }, { type: "uint256" }, { type: "address" }, { type: "bytes32" },
     { type: "address" }, { type: "uint64" }, { type: "uint64" },
-  ], [RELAY_AUTH_PREFIX, CHAIN_ID, DISPATCHER, input.requestId, input.owner, input.issuedAt, input.expiry]));
+  ], [RELAY_AUTH_PREFIX, CHAIN_ID, DISPATCHER, input.requestId, input.requester, input.issuedAt, input.expiry]));
 }
