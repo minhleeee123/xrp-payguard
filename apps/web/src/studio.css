@@ -43,6 +43,21 @@
 .compact-choice label:has(input:checked) { background: var(--color-onyx); color: var(--color-signal-lime); }
 .compact-choice input { width: 12px; height: 12px; margin: 0; padding: 0; accent-color: var(--color-signal-lime); box-shadow: none; }
 .compact-choice input:hover, .compact-choice input:focus-visible { border-color: var(--color-signal-lime); box-shadow: none; }
+.studio-form .compact-choice input,
+.studio-form .schedule-choice input {
+  display: inline-block;
+  width: 14px;
+  min-width: 14px;
+  height: 14px;
+  min-height: 0;
+  flex: 0 0 14px;
+  margin: 0;
+  border: 1px solid var(--color-fog);
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  accent-color: var(--color-signal-lime);
+}
 .studio-requester-control > small { display: block; margin-top: 7px; color: var(--color-ash); font-size: 10px; }
 .studio-requester-control > .studio-field { margin: 11px 0 0; }
 .more-options > div { padding-top: 5px; }
@@ -205,9 +220,40 @@
 .privacy-note strong { color: var(--color-bone); }
 .privacy-note p { margin-top: 3px; font-size: 10px; }
 
+.studio-rules-form .form-header { margin-bottom: 0; }
+.studio-rules-header-state { display: flex; align-items: flex-end; flex-direction: column; gap: 8px; }
+.studio-rules-header-state .state-tag { margin-left: 0; }
+.studio-owner-summary { display: flex; align-items: center; gap: 7px; color: var(--color-ash); }
+.studio-owner-summary b { font-size: 9px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; }
+.studio-owner-summary strong { color: var(--color-bone); font: 10px var(--font-jetbrains-mono); }
+.studio-rule-group { border-bottom: 1px solid var(--color-graphite); padding: 18px 0; }
+.studio-rule-group-label { margin-bottom: 12px; color: var(--color-signal-lime); font: 600 9px/1 var(--font-inter-tight); letter-spacing: .15em; }
+.studio-rule-identity { display: grid; grid-template-columns: minmax(220px, .8fr) minmax(320px, 1.3fr); gap: 14px; }
+.studio-rule-group .studio-field,
+.studio-limit-grid .studio-field,
+.studio-date-grid .studio-field,
+.studio-recurring-grid .studio-field { margin-bottom: 0; }
+.owner-binding-inline { display: flex; align-items: center; gap: 10px; margin-top: 12px; border-left: 2px solid var(--color-fog); padding: 8px 10px; background: var(--color-carbon); }
+.owner-binding-inline .status-dot { margin-top: 0; }
+.owner-binding-inline strong, .owner-binding-inline small { display: block; }
+.owner-binding-inline strong { color: var(--color-bone); font-size: 11px; }
+.owner-binding-inline small { margin-top: 2px; color: var(--color-ash); font-size: 10px; }
+.owner-binding-inline .text-button { margin-left: auto; }
+.studio-rule-authorization .studio-requester-control { display: grid; grid-template-columns: 145px minmax(0, 1fr); align-items: center; gap: 10px 16px; margin: 0; border: 0; padding: 0; background: transparent; }
+.studio-rule-authorization .studio-requester-control > span { margin: 0; }
+.studio-rule-authorization .studio-requester-control > .studio-field { grid-column: 1 / -1; margin: 2px 0 0; }
+.studio-limit-grid { margin-bottom: 16px; }
+.studio-schedule-row { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: end; gap: 14px; }
+.studio-schedule-row .schedule-choice { margin: 0; }
+.studio-date-grid { min-width: 0; }
+.studio-recurring-grid { margin-top: 14px; }
+.studio-rule-limits .more-options { margin: 16px 0 0; }
+.studio-rules-form .studio-action-bar { margin-top: 18px; }
+
 @media (max-width: 1100px) {
   .template-grid { grid-template-columns: 1fr; }
   .studio-activate-layout { grid-template-columns: 1fr; }
+  .studio-rule-identity, .studio-schedule-row { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 760px) {
@@ -221,4 +267,52 @@
   .studio-action-bar > span { margin-right: 0; }
   .disclosure-grid, .schedule-choice > div { grid-template-columns: 1fr; }
   .activation-steps { grid-template-columns: 1fr; }
+  .studio-rules-header-state { align-items: flex-start; }
+  .studio-rule-authorization .studio-requester-control { grid-template-columns: 1fr; }
+  .studio-rule-authorization .studio-requester-control > .studio-field { grid-column: auto; }
+}
+
+@media (min-width: 761px) {
+  .studio-progress-meta { padding: 11px 16px; font-size: 12px; }
+  .studio-progress-meta strong { font-size: 13px; }
+  .studio-step { min-height: 56px; padding: 13px 16px; font-size: 12px; }
+  .studio-step span { font-size: 13px; }
+  .studio-step-panel, .studio-form { padding: 32px; }
+  .form-header h2 { font-size: 34px; }
+  .studio-owner-summary b { font-size: 10px; }
+  .studio-owner-summary strong { font-size: 12px; }
+  .studio-rule-group-label { font-size: 10px; }
+  .owner-binding-inline strong { font-size: 13px; }
+  .owner-binding-inline small { font-size: 12px; }
+  .template-card { min-height: 124px; padding: 18px 18px 45px; }
+  .template-card strong { font-size: 22px; }
+  .template-card span { font-size: 12px; }
+  .template-card .template-choice-state { right: 18px; bottom: 14px; left: 18px; font-size: 10px; }
+  .studio-form label, .schedule-choice > span, .studio-requester-control > span { font-size: 14px; }
+  .studio-form input { min-height: 48px; padding: 12px 14px; font-size: 15px; }
+  .required-label, .field-unit { font-size: 10px; }
+  .derived-field span { font-size: 14px; }
+  .derived-field strong { font-size: 13px; }
+  .derived-field small { font-size: 12px; }
+  .schedule-choice > div { display: inline-grid; grid-template-columns: auto auto; width: auto; }
+  .schedule-choice label { min-width: 104px; min-height: 38px; padding: 7px 10px; font-size: 12px; }
+  .compact-choice label, .compact-choice-fixed { min-height: 36px; padding: 7px 10px; font-size: 11px; }
+  .compact-choice-fixed small { font-size: 9px; }
+  .policy-sentence { font-size: 26px; }
+  .disclosure-grid h3 { font-size: 23px; }
+  .disclosure-grid p { font-size: 14px; }
+  .public-warning strong, .public-warning span { font-size: 13px; }
+  .domain-details summary { font-size: 14px; }
+  .domain-details summary span { font-size: 11px; }
+  .studio-action-bar > span { font-size: 12px; }
+  .private-row strong { font-size: 14px; }
+  .activation-steps strong { font-size: 14px; }
+  .activation-steps small { font-size: 12px; }
+  .receipt-row strong, .activation-block strong { font-size: 13px; }
+  .receipt-row small, .activation-block small { font-size: 12px; }
+  .machine-index { width: 29px; height: 29px; font-size: 11px; }
+  .commitment-value { font-size: 13px; }
+  .preview-group summary { font-size: 13px; }
+  .preview-group dt { font-size: 10px; }
+  .preview-group dd { font-size: 11px; }
 }

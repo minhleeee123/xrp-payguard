@@ -9,7 +9,7 @@ const studio = readFileSync(new URL("../src/studio.css", import.meta.url), "utf8
 describe("desktop interaction affordance", () => {
   it("marks template cards as explicit selectable controls", () => {
     expect(main).toContain('class="template-choice-state"');
-    expect(main).toContain("SELECT TEMPLATE →");
+    expect(main).toContain("SELECT →");
     expect(main).toContain("✓ SELECTED");
     expect(studio).toContain(".template-card .template-choice-state");
   });
@@ -62,6 +62,25 @@ describe("application information density", () => {
     expect(main).not.toContain('class="team-note"');
   });
 
+  it("presents Demo lifecycle as a concise result with optional evidence depth", () => {
+    expect(main).toContain("Verified Coston2 run");
+    expect(main).toContain('class="lifecycle-flow"');
+    expect(main).toContain("3 machines");
+    expect(main).toContain("3 receipts");
+    expect(main).toContain("2 results");
+    expect(main).toContain('class="panel evidence-disclosure"');
+    expect(main).toContain('class="panel evidence-disclosure" data-no-card-help open');
+    expect(main).toContain("Historical V1 archive");
+    expect(main).toContain('class="legacy-demo-header"');
+    expect(main).toContain('class="legacy-evidence-details"');
+    expect(main).not.toContain("V2 LIVE CANDIDATE VERIFIED");
+    expect(main).not.toContain("One complete hosted lifecycle");
+    expect(main).toContain('activeView === "demo"');
+    expect(styles).toContain(".lifecycle-overview");
+    expect(styles).toContain(".lifecycle-flow");
+    expect(styles).toContain(".evidence-disclosure");
+  });
+
   it("prioritizes the three main tasks and removes the Overview surface", () => {
     expect(main).toContain("nav-group nav-group-main");
     expect(main).toContain("nav-group nav-group-proof");
@@ -75,7 +94,7 @@ describe("application information density", () => {
   it("renders Policy Studio as four visible, gated sections with sticky navigation", () => {
     for (const label of ["Template", "Rules", "Review", "Activate"]) expect(main).toContain(`[${label === "Template" ? "1" : label === "Rules" ? "2" : label === "Review" ? "3" : "4"}, \"${label}\"]`);
     expect(main).toContain('type="datetime-local"');
-    expect(main).toContain("Compute policy commitment");
+    expect(main).toContain("Compute commitment");
     expect(main).toContain("interactiveStudioPanel()}${interactiveDemoView()");
     for (const step of [1, 2, 3, 4]) expect(main).toContain(`id="studio-section-${step}"`);
     expect(main).toContain("wireStudioSectionTracking");
@@ -114,10 +133,13 @@ describe("application information density", () => {
     expect(main).not.toContain("Prepare exact approval");
     expect(main).not.toContain("Prepare deposit");
     expect(main).not.toContain('data-vault-kind="APPROVE"');
+    expect(main).not.toContain("REVIEW OPERATION");
+    expect(main).not.toContain('data-action="submit-vault-intent"');
+    expect(main).toContain("void submitVaultTransaction();");
   });
 
   it("uses human FTestXRP amounts and separates request creation from inspection", () => {
-    expect(main).toContain("Internal base units are converted automatically");
+    expect(main).toContain('inputmode="decimal"');
     expect(main).not.toContain("Maximum per action: 100000");
     expect(main).toContain('inputmode="decimal"');
     expect(main).toContain('data-request-mode="CREATE"');
@@ -151,11 +173,11 @@ describe("application information density", () => {
   });
 
   it("keeps requester authorization compact with owner, payee, and an optional wallet", () => {
-    expect(main).toContain("Who can request payment?");
+    expect(main).toContain("Who can request?");
     expect(main).toContain("Owner <small>Always</small>");
     expect(main).toContain('name="payeeCanRequest"');
     expect(main).toContain('type="checkbox" name="requesterMode" value="delegate"');
-    expect(main).toContain("Additional requester address");
+    expect(main).toContain("Additional requester");
     expect(main).toContain('payeeCanRequest: data.get("payeeCanRequest") === "on"');
     expect(main).toContain('requesterMode === "delegate" ? value("requester") : ""');
     expect(main).not.toContain('<input type="hidden" name="requester"');
@@ -164,5 +186,31 @@ describe("application information density", () => {
     expect(main).toContain('studioRequesterMode = input.checked ? "delegate" : "owner"');
     expect(main).not.toContain("Requester wallet (can ask for payment)");
     expect(studio).toContain(".compact-choice");
+    expect(main).toContain('class="studio-rule-group studio-rule-payment"');
+    expect(main).toContain('class="studio-rule-group studio-rule-authorization"');
+    expect(main).toContain('class="studio-rule-group studio-rule-limits"');
+    expect(main).toContain('class="studio-rules-header-state"');
+    expect(main).not.toContain('class="derived-field"');
+    expect(main).not.toContain('class="private-row"');
+    expect(studio).toContain(".studio-schedule-row");
+  });
+
+  it("uses a low-copy, large-type desktop task interface", () => {
+    for (const intro of [
+      'pageIntro("POLICY STUDIO", "Create a payment policy", "")',
+      'pageIntro("VAULTS", "Fund your payment policy", "")',
+      'pageIntro("REQUESTS", "Request or inspect a payment", "")',
+      'pageIntro("VERIFY", "Coston2 lifecycle", "")',
+      'pageIntro("PAYEE", "Payment status", "")',
+      'pageIntro("AUDITOR", "Verify public evidence", "")',
+    ]) expect(main).toContain(intro);
+    expect(main).not.toContain("These four public test IDs were created before this browser session");
+    expect(main).not.toContain("WHAT REMAINS PRIVATE");
+    expect(main).toContain('class="auditor-more"');
+    expect(main).toContain('class="sr-only"');
+    expect(styles).toContain("@media (min-width: 761px)");
+    expect(styles).toContain(".page-intro h1 { font-size: 48px; }");
+    expect(styles).toContain(".nav-item { min-height: 49px;");
+    expect(studio).toContain(".studio-form input { min-height: 48px;");
   });
 });

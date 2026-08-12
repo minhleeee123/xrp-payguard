@@ -13,6 +13,9 @@
   completion steps.
 - [`demo-video.md`](demo-video.md): reproducible public-safe production capture,
   local artifact metadata, privacy boundary, and owner-only upload step.
+- [`manual-video-recording-guide.md`](manual-video-recording-guide.md): manual
+  two-wallet screen-recording shot list and privacy-safe capture checklist;
+  narration is intentionally deferred until the footage exists.
 - [`new-work-ledger.md`](new-work-ledger.md): retrospective, commit-linked
   classification of reference-only, third-party, adapted, and new PayGuard work.
 - [`product/product-plan.md`](product/product-plan.md): complete product vision,

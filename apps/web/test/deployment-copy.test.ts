@@ -5,7 +5,8 @@ describe("V2 deployment copy boundary", () => {
   it("uses V2 for every active live surface and confines V1 to protocol, rollback, or legacy sandbox copy", () => {
     const main = readFileSync(new URL("../src/main.ts", import.meta.url), "utf8");
     const landing = readFileSync(new URL("../src/landing.ts", import.meta.url), "utf8");
-    const combined = `${landing}\n${main}`;
+    const model = readFileSync(new URL("../src/model.ts", import.meta.url), "utf8");
+    const combined = `${landing}\n${main}\n${model}`;
     expect(combined).toContain("V2 LIVE CANDIDATE");
     expect(combined).toContain("LIVE FCC · COSTON2 V2");
     expect(combined).toContain("LEGACY V1 SANDBOX");
