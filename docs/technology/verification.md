@@ -235,6 +235,15 @@ is [`fcc-multi-owner-lifecycle.json`](../../evidence/coston2/fcc-multi-owner-lif
 it contains no key, policy, ciphertext, authorization, signature, or credential
 and does not promote the `SIMULATED_TEE` candidate to a hardware release.
 
+The 2026-08-12 production-corpus audit then fetched the new Vercel deployment
+and matched its metadata index plus all 25 bodies byte-for-byte to reviewed
+local sources: 24 entries are chain-114 records and three entries are explicitly
+bounded simulation records, with overlapping categories. HTTP status, JSON
+content type, recursive public-field safety, simulation boundaries, and the
+metadata-only index all passed. The repository-only result is
+[`public-evidence-deployment-audit-2026-08-12.json`](../../evidence/web/public-evidence-deployment-audit-2026-08-12.json);
+it is not recursively published and does not upgrade any release claim.
+
 On 2026-08-10 the isolated interactive namespace passed a 133.29-second gate
 against the public Vercel actor APIs and separate Coston2 contracts. The test
 verified three actor custody receipts, policy registration, two matching

@@ -307,7 +307,8 @@ Public evidence is allowlisted, sanitized, and testnet-only. Start with
 | [`coston2-interactive-demo-deployment-2026-08-10.json`](evidence/simulation/coston2-interactive-demo-deployment-2026-08-10.json) | Separate demo contracts, three public actor descriptors, registrations, wiring, and mandatory false production assertions |
 | [`vercel-interactive-demo-2026-08-10.json`](evidence/web/vercel-interactive-demo-2026-08-10.json) | Production-origin API, full automated Coston2 ALLOW/DENY/governance lifecycle, and laptop browser smoke |
 | [`vercel-preview-2026-08-09.json`](evidence/web/vercel-preview-2026-08-09.json) | Reviewed Vercel artifact, browser, keyboard, responsive, evidence, and Lighthouse audit |
-| [`public-evidence-deployment-audit-2026-08-11.json`](evidence/web/public-evidence-deployment-audit-2026-08-11.json) | Current production origin and all 23 hosted evidence bodies matched byte-for-byte to reviewed local sources |
+| [`public-evidence-deployment-audit-2026-08-11.json`](evidence/web/public-evidence-deployment-audit-2026-08-11.json) | Historical production origin and all 23 then-hosted evidence bodies matched byte-for-byte to reviewed local sources |
+| [`public-evidence-deployment-audit-2026-08-12.json`](evidence/web/public-evidence-deployment-audit-2026-08-12.json) | Current production origin and all 25 hosted evidence bodies matched byte-for-byte to reviewed local sources |
 
 Evidence may contain only public addresses, hashes, blocks, transaction IDs,
 result commitments, timings, amounts already public by protocol design, and
@@ -391,12 +392,13 @@ conditions are in the
 
 The current validated baseline reports:
 
-- 216 workspace tests: bindings 2, protocol 50, relay 19, demo protocol 7,
-  integrations 83, demo API 4, web 47, and SDK examples 4; three explicitly
-  gated web-live cases remain skipped in the ordinary unit run, while the full
-  interactive Coston2 lifecycle gate passed separately;
+- 238 workspace tests: monitor 3, bindings 2, protocol 50, relay 22, demo
+  protocol 7, integrations 83, demo API 4, web 63, and SDK examples 4; three
+  explicitly gated web-live cases remain skipped in the ordinary unit run,
+  while the live-enabled web run passes 65 tests and the independent-owner
+  Coston2 lifecycle passed separately;
 - all workspace TypeScript typechecks and all Go packages passing;
-- 56 Forge tests passing, including guarded V2 simulated/hardware-profile and official-manager/adversarial coverage,
+- 57 Forge tests passing, including guarded V2 simulated/hardware-profile and official-manager/adversarial coverage,
   256 fuzz runs, and a 128-run / 8,192-call
   conservation invariant with zero reverts;
 - a successful production web build;

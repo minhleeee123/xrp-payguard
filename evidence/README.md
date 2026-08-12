@@ -87,6 +87,13 @@ remains repository-only and is not embedded in its own deployment, avoiding a
 recursive artifact whose deployment identifier would always be one release
 stale.
 
+`web/public-evidence-deployment-audit-2026-08-12.json` is the repository-only
+audit of the current production alias. It fetched the metadata index and all 25
+listed bodies, required HTTP 200/JSON, reran recursive public-safety and
+simulation-boundary checks, and matched every byte to the reviewed local
+source. It is deliberately excluded from the hosted corpus to avoid recursive
+deployment claims and does not promote the simulated candidate to a release.
+
 `simulation/fcc-local-three-machine-2026-08-09.json` records the disposable
 credential-free three-machine Docker smoke selected for the hackathon demo. It
 contains only source/image identifiers and assertion booleans; it explicitly

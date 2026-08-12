@@ -371,8 +371,9 @@ exact settlement receipt is also verified.
   visible without a disclosure element.
 - Hover/focus display, click-to-pin, `Escape` dismissal, and accessible tooltip
   relationships were exercised in the browser.
-- Web typecheck and production build pass; 61 web tests pass and 3 environment-
-  gated tests remain skipped.
+- Web typecheck and production build pass; 63 ordinary web tests pass with 3
+  environment-gated tests skipped. Enabling live Coston2 reads passes 65 tests
+  with only the retired interactive-actor lifecycle skipped.
 - Documentation, secret, privacy, public-evidence, and diff-whitespace checks
   pass. The privacy scan confirms no browser persistence.
 - The complete repository gate is not runnable in this container because pinned

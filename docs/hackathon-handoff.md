@@ -1,13 +1,15 @@
 # XRP PayGuard hackathon handoff
 
 > The current production web artifact is pinned to source commit
-> `290d17c4d9588783c0c680026cf62fcfdde228c8` and Vercel deployment
-> `dpl_Ew9MVPjkQGTxvF9zBaysReGtW7Wr`. Its V2-first FCC UI, production bytes,
-> relay readiness, and 24-entry evidence corpus were checked on 2026-08-11.
+> `119c97e7bd9a8017637df03c7ef52e56a80b40cf` and Vercel deployment
+> `dpl_FHVtUjtspTedoAFWZ6kySFfbY5hK`. Its self-service V2 FCC UI,
+> production bytes, relay readiness, and 25-entry evidence corpus were checked
+> on 2026-08-12.
 > The older V1 interactive lifecycle remains explicitly historical and is not
 > silently reassigned to the active V2 deployment. The full workspace, Go,
 > Forge, security, privacy, evidence, release, build, production-corpus audit,
-> and browser-recorder baseline was rerun on 2026-08-11. This remains a
+> live Coston2 reads, and browser-recorder baseline was rerun on 2026-08-12.
+> This remains a
 > Coston2 `SIMULATED_TEE` candidate handoff, not a hardware-attested verified
 > PayGuard release.
 
@@ -41,19 +43,19 @@ path may be presented as hardware-backed confidentiality or mainnet production.
 - Evidence index: <https://xrp-payguard.vercel.app/evidence/index.json>
 - Demo video: local validated MP4 exists under ignored `evidence/local/`; public
   upload remains owner-only and no public video URL is claimed.
-- Vercel deployment ID: `dpl_Ew9MVPjkQGTxvF9zBaysReGtW7Wr`
-- Deployed source commit: `290d17c4d9588783c0c680026cf62fcfdde228c8`
+- Vercel deployment ID: `dpl_FHVtUjtspTedoAFWZ6kySFfbY5hK`
+- Deployed source commit: `119c97e7bd9a8017637df03c7ef52e56a80b40cf`
 - Railway relay: <https://payguard-live-relay-production.up.railway.app>
 - Railway monitor: <https://payguard-monitor-production.up.railway.app>
 
 The deployment was built and uploaded through Vercel CLI. It serves the static
-Vite application and a 24-entry reviewed evidence index. The live FCC
+Vite application and a 25-entry reviewed evidence index. The live FCC
 configuration comes from the separate Railway relay; its evaluation route
 rejects any non-empty/client-decision body. Historical serverless demo actor
 routes are not part of this static artifact and therefore fail closed.
 
 A repository-only audit independently fetched the current production index and
-all 24 listed JSON assets, required HTTP 200 plus JSON content types,
+all 25 listed JSON assets, required HTTP 200 plus JSON content types,
 reran the forbidden-field and explicit-simulation checks, and matched every body
 byte-for-byte to its reviewed local source. Its own record is excluded from the
 hosted index by design.
@@ -98,22 +100,23 @@ Observed results on the current baseline:
 
 - The toolchain gate resolved Node `24.19.0`, pnpm `10.33.0`, Go `1.25.12`,
   Foundry `1.7.1`, and Solidity `0.8.25` requirements.
-- 216 workspace package tests passed: bindings 2, protocol 50, relay 19,
-  demo protocol 7, integrations 83, demo API 4, web 47, and SDK examples 4.
-  Three web-live cases are gated out of the ordinary unit run; the full
-  production-origin Coston2 lifecycle gate passed separately. The top-level gate also passed
+- 238 workspace package tests passed: monitor 3, bindings 2, protocol 50,
+  relay 22, demo protocol 7, integrations 83, demo API 4, web 63, and SDK
+  examples 4. Three web-live cases are gated out of the ordinary unit run;
+  the live-enabled web run passed 65 tests with only the legacy interactive
+  actor case skipped. The top-level gate also passed
   the separate public-web evidence, four deployment-corpus auditor tests,
   three demo-recorder tests, and deployment/release/FCC tooling suites.
 - All workspace TypeScript typechecks and all Go packages passed.
-- Forge passed 56 tests, including ten V2 official-manager/adversarial cases,
+- Forge passed 57 tests, including eleven V2 official-manager/adversarial cases,
   256 fuzz runs, and a 128-run/8192-call conservation invariant with zero
   reverts.
-- The final documentation review secret scan inspected 477 current files and
-  271 revisions with zero history findings. Privacy scan inspected 58
+- The final documentation review secret scan inspected 498 current files and
+  291 revisions with zero history findings. Privacy scan inspected 62
   browser/relay/FCC source and build files and found no browser persistence API.
-  The evidence gate accepted 20 sanitized testnet-only repository records. The
-  hosted 24-entry subset is separately byte-audited and includes the reviewed
-  Railway FCC evidence, including the connected hosted relay lifecycle.
+  The evidence gate accepted 22 sanitized testnet-only Coston2 records. The
+  hosted 25-entry corpus is separately byte-audited and includes the reviewed
+  Railway FCC evidence plus the independent-owner lifecycle.
 - The release check returned `planned` because no verified PayGuard Coston2
   release manifest exists; this is the expected fail-closed outcome.
 
@@ -165,13 +168,13 @@ public RPC:
 - The fixed-origin V2 demo recorder produced a 74-second, 592-frame, 1440×900 H.264
   MP4 with a silent AAC track and burned captions. `ffprobe` verified the media,
   and the current SHA-256 is
-  `ad21d8e65a7c19fc7d997188ea49f59ece2de76d792664447d541d59f1bc574e`.
+  `5f3c36f65b16d702362751787db78f904d047bfc1f1e7466b93c37856dbbad4a`.
   It excludes Policy Studio/private inputs and remains ignored until owner
   review/upload.
 
 A fresh HTTPS read of deployment
-`dpl_Ew9MVPjkQGTxvF9zBaysReGtW7Wr` returned 200 for the application and
-24-entry evidence index. The public-corpus audit matched every hosted evidence
+`dpl_FHVtUjtspTedoAFWZ6kySFfbY5hK` returned 200 for the application and
+25-entry evidence index. The public-corpus audit matched every hosted evidence
 body byte-for-byte to its reviewed local source. A fresh production Chrome
 read also observed `production monitor healthy` and the aggregate `5
 dependencies · 0 active alerts` row with no browser credential. The prior full
