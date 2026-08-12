@@ -4,17 +4,17 @@
   "status": "verified-hosted-live-simulated-fcc-lifecycle",
   "registryVersion": "V2",
   "deploymentProfile": "COSTON2_SIMULATED_V2",
-  "recordedAt": "2026-08-11T11:54:37.733Z",
+  "recordedAt": "2026-08-12T17:08:23.509Z",
   "network": {
     "name": "flare-coston2",
     "chainId": 114,
-    "observedBlock": "33919084"
+    "observedBlock": "33975786"
   },
   "publicIdentifiers": {
-    "verificationSourceCommit": "83cba0109fd60ed2e5a272089e804965e6ed001d",
+    "verificationSourceCommit": "bddd5abc64b7eb662cd089caa54a9642c21edc8d",
     "relayOrigin": "https://payguard-live-relay-production.up.railway.app",
-    "policyCommitment": "0xc44f4701c011880a20158b1edf852ee3d92aa298280ae949f57633dbb6b0655c",
-    "custodyFreezeTransaction": "0x683c2c3dfdbe9c201428b9a50c6b08df1340dda102f9c9c47c07dd3b620c1bfb",
+    "policyCommitment": "0xbc22d53bd9e9f47c163128c6b0dfca13f913833bd8acfeb6018d219d35eb9f5f",
+    "custodyFreezeTransaction": "0xb995dd35412af74e18c2674e3bbcdf047644a382840270e0257e3920f228c993",
     "machines": [
       {
         "teeId": "0x1C911D007f8203484eD4099bC11849d7e9691044",
@@ -36,54 +36,54 @@
       }
     ],
     "allow": {
-      "requestId": "0xc4147a7004fcbd31d2832d9e60c82bf86f217dfc4eb9c87ae0cf65ed90783658",
-      "instructionId": "0xb1b656520ee1658afbb482b59dce5b373756e0afbc9277306a1bb000eec158d3",
-      "create": "0xfc97f5f4ef268eed72dd58b3065cc40247daa405cfaac9faa373f6709ba500f8",
-      "dispatch": "0x20427512479246a182bb6a02c0754042b6e52037963457037dc02c684b2c5d81",
+      "requestId": "0x16273aab0102394706c627fd833ca235e352b164679efcde74efeb15c24aa907",
+      "instructionId": "0x5189015a7b672e3145a00e12d32b0175d6d2575caa7deb145398feb4ec31c399",
+      "create": "0x1836dd5d12e1f5cf9f3a427197fd5a3ea5b2b223b230a33af6502cfa4b86f701",
+      "dispatch": "0x43b7067c6950d3dcf052d0cf74f51c1a6c475cd4bd2bd8798a472a3b92b5b1f5",
       "submit": [
-        "0xdb70ab245c9a30c5a2813e000e57701b906d3ad451fbfc348334dae899943f38",
-        "0x12325d68d067f933455f41812ae29c49859cc9678c00ae2219862ae39a587311"
+        "0x54e14bdce452b46f2f67ed9ebbf9aeac1f9bd2a19f10f25d5ed249928dc51706",
+        "0x4a5fa6700127badee90d184c8f1e7e23bc2b0f7513cb1a4803cb0dbc7dbfa971"
       ],
-      "execute": "0x110302617ac630812eb052f53de04c139891c4468ba1fc4ba76d82ac1786db45"
+      "execute": "0x7a6361089680cd43e55d7da012ad7b14f3921c3f7a53be37e9f0a26e4f111e26"
     },
     "deny": {
-      "requestId": "0x61dfc0cdc94d074bd63fbde3dfeb7ab72c72025a49d1955892266ad47b093817",
-      "instructionId": "0xde681624253b16872f15b2bb609763d6b01a2e0cecac85fd6acfb32ffdd8c57d",
+      "requestId": "0x43b3edbe3ab3b2353f7df3a406bb23416c2051e4cd8e03552e3213a5249b8e6b",
+      "instructionId": "0x1c1dae0c837b355734ca6aba1a5878de09788de22168cd0978253f4fccb811e2",
       "reason": "CAP_EXCEEDED",
-      "create": "0x4751422b1d3156e6f72bce5d9973ff12aa3a676c32ab8ef8964d0e18b03fa9bf",
-      "dispatch": "0xa5c819c226f05842d761b6276cb8d2e63d0f42ae5770b8c7b267efe5bfc03609",
+      "create": "0x4a4e02379b397e4a602e158a0ea4a9d17674601dec9c6fb8b3f1135248f78a06",
+      "dispatch": "0x2fa3483fc033ef074fa0933e14f4566e4602ee1c907e392ae520ee508440afcd",
       "submit": [
-        "0xfd4aa6312c79a7c410410c1059016a6fb3a992baf34f64edd04c5e0c66b4f2b6",
-        "0xa00136236f13e23b1015c03c88d4280fd3b92f338a3b28a562efb8ed05d52a44"
+        "0x6340eda3fcf27354974e02bbebbb10da882a10a2c7c56f10b59c8b14e8d95e29",
+        "0x015e9b9d33e9777e1b3af95e209c6eac2325161cd6a76b62d61b84695224a3b2"
       ]
     },
     "policyLifecycleTransactions": {
-      "stop": "0x3e0db20ae9b6e450c82c8b5dfd4d0bb82b96dc0327a0f76cae6e8316fdac9080",
-      "resume": "0x2b15a194d0f9108c53a8a41f91d0d1ea80593de4374559cf6ee4d7cc1bcf9967",
-      "revoke": "0x07561ca2e27c38bea3ade12cb7e9201701e16fda718803bac14edc0e0b52cd97"
+      "stop": "0xce74e8e9ec50b0f41c801c67a9fb167cd095522930d1a496114b6fc2168d3523",
+      "resume": "0x8fb1505f18b01e500aadb87b964e5a3e8292d55aebb8a78bf92f7876f3da2d5b",
+      "revoke": "0x84c4a75b0c056e493dea2ebe54430f85e26dee74bbae16a491c402e3e9889681"
     },
     "accounting": {
       "before": {
         "deposited": "500000",
-        "available": "500000",
+        "available": "400000",
         "reserved": "0",
-        "spent": "0",
+        "spent": "100000",
         "withdrawn": "0",
         "refunded": "0"
       },
       "afterAllow": {
         "deposited": "500000",
-        "available": "400000",
+        "available": "300000",
         "reserved": "0",
-        "spent": "100000",
+        "spent": "200000",
         "withdrawn": "0",
         "refunded": "0"
       },
       "afterDeny": {
         "deposited": "500000",
-        "available": "400000",
+        "available": "300000",
         "reserved": "0",
-        "spent": "100000",
+        "spent": "200000",
         "withdrawn": "0",
         "refunded": "0"
       }
