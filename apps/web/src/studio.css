@@ -32,6 +32,19 @@
 .schedule-choice label:has(input:checked) { border-color: var(--color-signal-lime); color: var(--color-signal-lime); }
 .schedule-choice input { width: 14px; height: 14px; margin: 0; border: 1px solid var(--color-fog); padding: 0; accent-color: var(--color-signal-lime); box-shadow: none; }
 .schedule-choice input:hover, .schedule-choice input:focus-visible { border-color: var(--color-signal-lime); box-shadow: none; }
+.studio-requester-control { margin-bottom: 17px; border: 1px solid var(--color-graphite); padding: 12px; background: var(--color-carbon); }
+.studio-requester-control > span { display: block; margin-bottom: 8px; color: var(--color-bone); font-size: 12px; font-weight: 600; }
+.compact-choice { display: inline-grid; grid-template-columns: repeat(3, auto); gap: 1px; border: 1px solid var(--color-slate); background: var(--color-slate); }
+.compact-choice label, .compact-choice-fixed { display: flex; min-height: 34px; align-items: center; gap: 7px; margin: 0; padding: 7px 11px; background: var(--color-void-black); color: var(--color-ash); font-size: 10px; }
+.compact-choice label { cursor: pointer; }
+.compact-choice-fixed { color: var(--color-signal-lime); }
+.compact-choice-fixed b { font-size: 11px; }
+.compact-choice-fixed small { color: var(--color-ash); font-size: 8px; text-transform: uppercase; }
+.compact-choice label:has(input:checked) { background: var(--color-onyx); color: var(--color-signal-lime); }
+.compact-choice input { width: 12px; height: 12px; margin: 0; padding: 0; accent-color: var(--color-signal-lime); box-shadow: none; }
+.compact-choice input:hover, .compact-choice input:focus-visible { border-color: var(--color-signal-lime); box-shadow: none; }
+.studio-requester-control > small { display: block; margin-top: 7px; color: var(--color-ash); font-size: 10px; }
+.studio-requester-control > .studio-field { margin: 11px 0 0; }
 .more-options > div { padding-top: 5px; }
 .derived-domain { margin: 0 0 19px; border: 1px solid var(--color-graphite); padding: 12px 14px; background: var(--color-carbon); }
 .derived-domain div { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -112,6 +125,7 @@
 .studio-field small { display: block; margin-top: 5px; color: var(--color-ash); font-size: 11px; line-height: 1.45; }
 .studio-field { position: relative; }
 .field-unit { position: absolute; top: 38px; right: 12px; z-index: 1; color: var(--color-signal-lime); font: 9px var(--font-inter-tight); letter-spacing: .08em; }
+.required-label { margin-left: 7px; color: var(--color-signal-lime); font: 8px var(--font-inter-tight); letter-spacing: .1em; }
 .studio-field:has(.field-unit) input { padding-right: 92px; }
 .policy-role-map { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; margin-bottom: 18px; border: 1px solid var(--color-graphite); background: var(--color-graphite); }
 .policy-role-map > div { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 9px; padding: 12px; background: var(--color-carbon); }
@@ -173,6 +187,11 @@
 .interactive-studio-card > .primary-button { width: 100%; margin-top: 14px; }
 .demo-receipt-row .state-tag { margin-left: auto; }
 .receipt-row { display: flex; align-items: center; gap: 9px; border-top: 1px solid var(--color-graphite); padding: 11px 0; }
+.progress-receipt { transition: background .16s ease, box-shadow .16s ease; }
+.progress-receipt.active { box-shadow: inset 3px 0 0 var(--color-signal-lime); padding-left: 10px; background: var(--color-carbon); }
+.progress-receipt.complete .machine-index { border-color: var(--color-signal-lime); color: var(--color-signal-lime); }
+.progress-receipt.error { box-shadow: inset 3px 0 0 var(--color-fog); padding-left: 10px; }
+.progress-receipt .state-tag { margin-left: auto; }
 .machine-index { display: grid; place-items: center; width: 25px; height: 25px; border: 1px solid var(--color-slate); border-radius: 0; background: transparent; color: var(--color-ash); font: 9px var(--font-jetbrains-mono); }
 .receipt-row strong, .receipt-row small, .activation-block strong, .activation-block small { display: block; }
 .receipt-row strong { color: var(--color-bone); font-size: 10px; }

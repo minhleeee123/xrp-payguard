@@ -115,6 +115,7 @@ export async function collectDemoCustody(
   config: DemoDomainConfig,
   fetcher: typeof fetch = fetch,
   now: bigint = BigInt(Math.floor(Date.now() / 1000)),
+  onProgress?: (progress: { index: 1 | 2 | 3; status: "AWAITING_SIGNATURE" | "RECEIPT_VERIFIED"; digest?: Hex }) => void | Promise<void>,
 ): Promise<DemoPolicySession> {
   if (getAddress(policy.owner) !== getAddress(account)) throw new Error("DEMO_OWNER_MISMATCH");
   const binding = demoPolicyBindingV1(policy, config);
@@ -125,6 +126,7 @@ export async function collectDemoCustody(
   for (let index = 0; index < 3; index += 1) {
     const actor = config.actors[index]!;
     const ciphertext = ciphertexts[index]!;
+    await onProgress?.({ index: actor.actor, status: "AWAITING_SIGNATURE" });
     const digest = policyIngressAuthorizationDigest({
       binding,
       submissionNonce: policy.submissionNonce,
@@ -145,7 +147,11 @@ export async function collectDemoCustody(
     const text = await boundedResponse(response);
     if (!response.ok) throw new Error("DEMO_CUSTODY_UNAVAILABLE");
     authorizations.push(authorization);
-    custody.push(parseDemoCustodyEnvelope(JSON.parse(text)));
+    const envelope = parseDemoCustodyEnvelope(JSON.parse(text));
+    const signer = await recoverMessageAddress({ message: { raw: policyReceiptAttestationDigest(envelope.receipt) }, signature: envelope.signature });
+    if (getAddress(signer) !== getAddress(actor.signer)) throw new Error("DEMO_CUSTODY_INVALID");
+    custody.push(envelope);
+    await onProgress?.({ index: actor.actor, status: "RECEIPT_VERIFIED", digest: envelope.digest });
   }
   const session = {
     policy,

@@ -22,6 +22,7 @@ import {
   StudioValidationError,
   compileStudioDraft,
   createStudioEntropy,
+  defaultStudioPolicyWindow,
   studioTemplateDraft,
   validateStudioDraft,
   type PreviewItem,
@@ -125,11 +126,13 @@ type Coston2UiState =
   | { status: "UNAVAILABLE"; message: string };
 type VaultTransactionUiState =
   | { status: "IDLE" }
-  | { status: "SUBMITTING"; action: VaultUserAction; phase: VaultTransactionKind; amount: bigint }
+  | { status: "SUBMITTING"; action: VaultUserAction; phase: VaultTransactionKind; amount: bigint; steps: readonly VaultTransactionKind[]; transactions: readonly VaultTransactionSummary[] }
   | { status: "SUCCESS"; action: VaultUserAction; amount: bigint; transactions: readonly VaultTransactionSummary[] }
-  | { status: "ERROR"; message: string; transactions?: readonly VaultTransactionSummary[] };
+  | { status: "ERROR"; message: string; action?: VaultUserAction; amount?: bigint; steps?: readonly VaultTransactionKind[]; transactions?: readonly VaultTransactionSummary[] };
 type VaultTransactionSummary = { kind: VaultTransactionKind; hash: `0x${string}`; blockNumber: bigint };
 type RequestsMode = "CREATE" | "INSPECT";
+type CustodyProgressStatus = "WAITING" | "ACTIVE" | "COMPLETE" | "ERROR";
+type CustodyProgressStep = { index: 1 | 2 | 3; label: string; status: CustodyProgressStatus; digest?: `0x${string}` };
 type RequestTransactionUiState =
   | { status: "IDLE" }
   | { status: "SUBMITTING"; kind: RequestTransactionKind }
@@ -143,7 +146,8 @@ const initialRoute = parseAppRoute(window.location.hash);
 
 let activeView: View = initialRoute.surface === "app" ? initialRoute.view : "demo";
 let studioNotice = "No policy data has left this browser tab.";
-let studioDraft = studioTemplateDraft("personal-recurring");
+let studioDraft = freshStudioDraft("personal-recurring");
+let studioRequesterMode: "owner" | "delegate" = "owner";
 let studioStep: StudioStep = 1;
 let studioTemplateChosen = false;
 let studioRulesReviewed = false;
@@ -175,6 +179,7 @@ let interactiveThreshold: DemoThresholdResult | null = null;
 let interactiveThresholdTransactions: DemoTransactionResult[] = [];
 let interactiveExecution: DemoTransactionResult | null = null;
 let interactiveBusy = "";
+let interactiveCustodyProgress: CustodyProgressStep[] | null = null;
 let interactiveNotice = "Connect a disposable Coston2 wallet, then prepare a simulation-only policy domain.";
 let interactiveFundInput = "1";
 let interactiveRequestAmountInput = "0.1";
@@ -187,6 +192,7 @@ let liveFccRequest: LiveRequestResult | null = null;
 let liveFccEvaluation: LiveEvaluationResult | null = null;
 let liveFccExecution: LiveTransactionResult | null = null;
 let liveFccBusy = "";
+let liveCustodyProgress: CustodyProgressStep[] | null = null;
 let liveFccNotice = "Checking the hosted relay and three registered Coston2 machines.";
 let liveFccRequestAmountInput = "0.1";
 let delegatedPolicyInput = "";
@@ -288,6 +294,26 @@ function token(value: bigint): string {
   return displayUnits(formatUnits(value, 6), 6);
 }
 
+function freshStudioDraft(
+  templateId: StudioTemplateId,
+  owner = "",
+  domain: Pick<StudioDraft, "registry" | "vault" | "router" | "asset"> = PAYGUARD_COSTON2,
+): StudioDraft {
+  return {
+    ...studioTemplateDraft(templateId),
+    ...defaultStudioPolicyWindow(),
+    owner,
+    target: "",
+    requester: "",
+    maxPerAction: "",
+    dailyCap: "",
+    registry: domain.registry,
+    vault: domain.vault,
+    router: domain.router,
+    asset: domain.asset,
+  };
+}
+
 function utc(value: bigint): string {
   if (value <= 0n || value > BigInt(Number.MAX_SAFE_INTEGER)) return "—";
   const date = new Date(Number(value) * 1000);
@@ -323,21 +349,8 @@ function pageIntro(eyebrow: string, title: string, copy: string): string {
   return `<div class="page-intro"><div><div class="eyebrow">${eyebrow}</div><h1>${title}</h1><p>${copy}</p></div></div>`;
 }
 
-function paymentFlowGuide(current: "POLICY" | "VAULT" | "REQUEST"): string {
-  const items: readonly [string, string, string, View][] = [
-    ["01", "Owner creates policy", "Wallet A", "studio"],
-    ["02", "Owner funds vault", "Wallet A", "vaults"],
-    ["03", "Share commitment", "A → requester", "studio"],
-    ["04", "Request payment", "Wallet B or owner", "requests"],
-    ["05", "Payee receives", "After FCC allows", "requests"],
-  ];
-  const activeIndexes = current === "POLICY" ? new Set([0, 2]) : current === "VAULT" ? new Set([1]) : new Set([3, 4]);
-  return `<nav class="payment-flow-guide" aria-label="PayGuard payment flow">${items.map(([number, label, role, view], index) => `<button class="payment-flow-step ${activeIndexes.has(index) ? "active" : ""}" type="button" data-view="${view}" ${activeIndexes.has(index) ? 'aria-current="step"' : ""}><span>${number}</span><strong>${label}</strong><small>${role}</small></button>`).join("")}</nav>`;
-}
-
 function studioView(): string {
   return `${pageIntro("PRIVATE POLICY STUDIO", "Create a payment policy", "Build one private rule through four visible sections. The sticky step bar jumps between them while actions remain gated in order.")}
-    ${paymentFlowGuide("POLICY")}
     ${studioStepper()}
     <div class="studio-all-steps">
       <div class="studio-section" id="studio-section-1" data-studio-section="1">${studioTemplateStep()}</div>
@@ -359,6 +372,16 @@ function studioTemplateStep(): string {
   return `<section class="panel studio-step-panel"><div class="form-header"><div><div class="eyebrow">STEP 01</div><h2>Choose a starting policy</h2><p>Select one template explicitly. This creates fresh in-memory entropy.</p></div><span class="version-chip">POLICY_SCHEMA_V1</span></div><div class="template-grid" aria-label="Policy templates">${STUDIO_TEMPLATES.map((template) => { const selected = studioTemplateChosen && studioDraft.templateId === template.id; return `<button class="template-card ${selected ? "selected" : ""}" type="button" data-template="${template.id}" aria-pressed="${selected}"><strong>${esc(template.name)}</strong><span>${esc(template.summary)}</span><span class="template-choice-state" aria-hidden="true">${selected ? "✓ SELECTED" : "SELECT TEMPLATE →"}</span></button>`; }).join("")}</div><div class="studio-action-bar"><span>${esc(studioNotice)}</span><button class="primary-button" type="button" data-studio-step="2" ${studioTemplateChosen ? "" : "disabled"}>Continue to rules</button></div></section>`;
 }
 
+function studioRequesterControl(): string {
+  const ownerOnly = studioRequesterMode === "owner";
+  return `<div class="studio-requester-control"><span>Who can request payment?</span><div class="compact-choice" role="group" aria-label="Who can request payment"><span class="compact-choice-fixed"><b>✓</b> Owner <small>Always</small></span><label><input type="checkbox" name="payeeCanRequest" ${studioDraft.payeeCanRequest ? "checked" : ""} />Payee</label><label><input type="checkbox" name="requesterMode" value="delegate" ${ownerOnly ? "" : "checked"} />Another wallet</label></div>${ownerOnly ? "<small>Owner is always authorized. Payee access can be turned off.</small>" : studioField("requester", "Additional requester address", "This wallet is added without removing owner or enabled payee access.", "text")}</div>`;
+}
+
+function studioRequesterSummary(): string {
+  const roles = ["owner", ...(studioDraft.payeeCanRequest ? ["payee"] : []), ...(studioDraft.requester ? [short(studioDraft.requester)] : [])];
+  return roles.join(", ");
+}
+
 function studioRulesStep(): string {
   const account = connectedAccount();
   const draftOwner = studioDraft.owner;
@@ -366,7 +389,7 @@ function studioRulesStep(): string {
   const recurring = studioDraft.scheduleIntervalSeconds !== "0";
   const locked = !studioTemplateChosen;
   const domainLabel = liveFccConfigState.status === "READY" ? "Configured Coston2 V2 domain" : "Configured public Coston2 domain";
-  return `<form class="panel studio-form studio-step-panel" id="studio-form" novalidate><div class="form-header"><div><div class="eyebrow">STEP 02</div><h2>Define the private rule</h2><p>Focus on payment intent; owner and contract domain are resolved for you.</p></div><span class="state-tag ${locked ? "gray-tag" : "green-tag"}">${locked ? "LOCKED · CHOOSE TEMPLATE" : "IN MEMORY"}</span></div><fieldset class="studio-step-fields" ${locked ? "disabled" : ""}>${studioIssues.length > 0 ? `<div class="validation-summary" role="alert"><strong>Fix ${studioIssues.length} field${studioIssues.length === 1 ? "" : "s"}</strong><span>${esc(studioIssues[0]?.message ?? "Policy draft is invalid.")}</span></div>` : ""}<div class="policy-role-map"><div><span>A</span><strong>Policy owner</strong><small>Creates, funds and controls the policy</small></div><div><span>B</span><strong>Authorized requester</strong><small>May request without a new owner signature</small></div><div><span>→</span><strong>Payee</strong><small>Receives only after FCC allows</small></div></div><input type="hidden" name="owner" value="${esc(draftOwner)}" /><input type="hidden" name="registry" value="${esc(studioDraft.registry)}" /><input type="hidden" name="vault" value="${esc(studioDraft.vault)}" /><input type="hidden" name="router" value="${esc(studioDraft.router)}" /><input type="hidden" name="asset" value="${esc(studioDraft.asset)}" />${studioField("policyName", "Policy name", "A local label used to derive the canonical policy ID.", "text")}<div class="two-col">${studioField("target", "Payee address (receives funds)", "The only public transfer target this policy may authorize.", "text")}${studioField("requester", "Requester wallet (can ask for payment)", "The owner may also request; this adds another authorized requester wallet.", "text")}</div><div class="derived-field"><span>Policy owner (creates and funds)</span><strong>${draftOwner ? esc(short(draftOwner)) : "Not bound yet"}</strong><small>${ownerMatches ? "Matches the connected Coston2 wallet. This owner may also create requests." : account ? "This draft must be rebound before review." : "Connect a wallet before this rule can be reviewed."}</small>${account && !ownerMatches ? '<button class="text-button" type="button" data-action="rebind-studio-owner">Use connected wallet ↗</button>' : account ? "" : '<button class="text-button" type="button" data-action="connect">Connect wallet ↗</button>'}</div><div class="two-col">${studioField("maxPerAction", "Maximum per payment", "Enter the amount in FTestXRP, for example 0.1. Internal base units are converted automatically.", "decimal")}${studioField("dailyCap", "Maximum per day", "Enter the total daily amount in FTestXRP with up to 6 decimals.", "decimal")}</div><div class="schedule-choice"><span>Schedule</span><div><label><input type="radio" name="scheduleMode" value="adhoc" ${recurring ? "" : "checked"} />Ad-hoc</label><label><input type="radio" name="scheduleMode" value="recurring" ${recurring ? "checked" : ""} />Recurring</label></div></div><div class="two-col">${studioDateField("startAt", "Starts at (UTC)")}${studioDateField("endAt", "Ends at (UTC)")}</div>${recurring ? `<div class="two-col">${studioField("scheduleIntervalSeconds", "Interval in seconds", "How often a scheduled occurrence may happen.", "numeric")}${studioField("scheduleGraceSeconds", "Grace in seconds", "Must be shorter than the interval.", "numeric")}</div>` : '<input type="hidden" name="scheduleIntervalSeconds" value="0" /><input type="hidden" name="scheduleGraceSeconds" value="0" />'}<details class="domain-details more-options"><summary>More options <span>occurrence limit</span></summary><div>${studioField("maxOccurrences", "Occurrence limit", "0 means no policy-specific limit.", "numeric")}</div></details><div class="derived-domain"><div><span>Resolved domain</span><strong>${domainLabel}</strong></div><small>Registry ${esc(short(studioDraft.registry))} · Vault ${esc(short(studioDraft.vault))} · Router ${esc(short(studioDraft.router))} · FTestXRP ${esc(short(studioDraft.asset))}</small></div><div class="private-row"><span class="lock-icon">▣</span><div><strong>Confidential draft only</strong><small>Payee, requester, caps, schedule, salt, and nonce stay in this tab until encrypted submission to registered FCC ingress.</small></div><span class="state-tag gray-tag">IN MEMORY</span></div><div class="studio-action-bar"><button class="outline-button" type="button" data-studio-step="1">Back to template</button><span id="studio-notice">${esc(studioNotice)}</span><button class="primary-button" type="submit" ${ownerMatches && !locked ? "" : "disabled"}>Continue to review</button></div></fieldset></form>`;
+  return `<form class="panel studio-form studio-step-panel" id="studio-form" novalidate><div class="form-header"><div><div class="eyebrow">STEP 02</div><h2>Define the private rule</h2><p>Focus on payment intent; owner and contract domain are resolved for you.</p></div><span class="state-tag ${locked ? "gray-tag" : "green-tag"}">${locked ? "LOCKED · CHOOSE TEMPLATE" : "IN MEMORY"}</span></div><fieldset class="studio-step-fields" ${locked ? "disabled" : ""}>${studioIssues.length > 0 ? `<div class="validation-summary" role="alert"><strong>Fix ${studioIssues.length} field${studioIssues.length === 1 ? "" : "s"}</strong><span>${esc(studioIssues[0]?.message ?? "Policy draft is invalid.")}</span></div>` : ""}<div class="policy-role-map"><div><span>A</span><strong>Policy owner</strong><small>Creates, funds and controls the policy</small></div><div><span>B</span><strong>Authorized requester</strong><small>May request without a new owner signature</small></div><div><span>→</span><strong>Payee</strong><small>Receives only after FCC allows</small></div></div><input type="hidden" name="owner" value="${esc(draftOwner)}" /><input type="hidden" name="registry" value="${esc(studioDraft.registry)}" /><input type="hidden" name="vault" value="${esc(studioDraft.vault)}" /><input type="hidden" name="router" value="${esc(studioDraft.router)}" /><input type="hidden" name="asset" value="${esc(studioDraft.asset)}" />${studioField("policyName", "Policy name", "A local label used to derive the canonical policy ID.", "text")}${studioField("target", "Payee address (receives funds)", "The only public transfer target this policy may authorize.", "text")}${studioRequesterControl()}<div class="derived-field"><span>Policy owner (creates and funds)</span><strong>${draftOwner ? esc(short(draftOwner)) : "Not bound yet"}</strong><small>${ownerMatches ? "Matches the connected Coston2 wallet. This owner may also create requests." : account ? "This draft must be rebound before review." : "Connect a wallet before this rule can be reviewed."}</small>${account && !ownerMatches ? '<button class="text-button" type="button" data-action="rebind-studio-owner">Use connected wallet ↗</button>' : account ? "" : '<button class="text-button" type="button" data-action="connect">Connect wallet ↗</button>'}</div><div class="two-col">${studioField("maxPerAction", "Maximum per payment", "Enter the amount in FTestXRP, for example 0.1. Internal base units are converted automatically.", "decimal")}${studioField("dailyCap", "Maximum per day", "Enter the total daily amount in FTestXRP with up to 6 decimals.", "decimal")}</div><div class="schedule-choice"><span>Schedule</span><div><label><input type="radio" name="scheduleMode" value="adhoc" ${recurring ? "" : "checked"} />Ad-hoc</label><label><input type="radio" name="scheduleMode" value="recurring" ${recurring ? "checked" : ""} />Recurring</label></div></div><div class="two-col">${studioDateField("startAt", "Starts at (UTC)")}${studioDateField("endAt", "Ends at (UTC)")}</div>${recurring ? `<div class="two-col">${studioField("scheduleIntervalSeconds", "Interval in seconds", "How often a scheduled occurrence may happen.", "numeric")}${studioField("scheduleGraceSeconds", "Grace in seconds", "Must be shorter than the interval.", "numeric")}</div>` : '<input type="hidden" name="scheduleIntervalSeconds" value="0" /><input type="hidden" name="scheduleGraceSeconds" value="0" />'}<details class="domain-details more-options"><summary>More options <span>occurrence limit</span></summary><div>${studioField("maxOccurrences", "Occurrence limit", "0 means no policy-specific limit.", "numeric")}</div></details><div class="derived-domain"><div><span>Resolved domain</span><strong>${domainLabel}</strong></div><small>Registry ${esc(short(studioDraft.registry))} · Vault ${esc(short(studioDraft.vault))} · Router ${esc(short(studioDraft.router))} · FTestXRP ${esc(short(studioDraft.asset))}</small></div><div class="private-row"><span class="lock-icon">▣</span><div><strong>Confidential draft only</strong><small>Payee, requester, caps, schedule, salt, and nonce stay in this tab until encrypted submission to registered FCC ingress.</small></div><span class="state-tag gray-tag">IN MEMORY</span></div><div class="studio-action-bar"><button class="outline-button" type="button" data-studio-step="1">Back to template</button><span id="studio-notice">${esc(studioNotice)}</span><button class="primary-button" type="submit" ${ownerMatches && !locked ? "" : "disabled"}>Continue to review</button></div></fieldset></form>`;
 }
 
 function studioDateField(field: "startAt" | "endAt", labelText: string): string {
@@ -374,10 +397,22 @@ function studioDateField(field: "startAt" | "endAt", labelText: string): string 
   return `<label class="studio-field ${issue ? "field-error" : ""}">${labelText}<input type="datetime-local" name="${field}" value="${esc(unixToDateTimeInput(studioDraft[field]))}" step="60" aria-invalid="${Boolean(issue)}" />${issue ? `<span class="field-message">${esc(issue.message)}</span>` : "<small>Displayed as a human-readable UTC date and time.</small>"}</label>`;
 }
 
+function custodyProgressRows(steps: readonly CustodyProgressStep[], simulated = false): string {
+  return steps.map((step) => {
+    const statusLabel = step.status === "COMPLETE" ? "✓ VERIFIED" : step.status === "ACTIVE" ? "SIGN NOW" : step.status === "ERROR" ? "RETRY" : "WAITING";
+    const detail = step.status === "COMPLETE" && step.digest
+      ? `${simulated ? "Simulation" : "Machine"} receipt · ${esc(short(step.digest))}`
+      : step.status === "ACTIVE" ? "Confirm this exact authorization in your wallet"
+        : step.status === "ERROR" ? "This step did not complete; verified earlier steps remain shown"
+          : "Waits for the previous signature";
+    return `<div class="receipt-row progress-receipt ${step.status.toLowerCase()}"><span class="machine-index">0${step.index}</span><div><strong>${esc(step.label)}</strong><small>${detail}</small></div><span class="state-tag ${step.status === "COMPLETE" ? "green-tag" : step.status === "ERROR" ? "amber-tag" : "gray-tag"}">${statusLabel}</span></div>`;
+  }).join("");
+}
+
 function studioReviewStep(): string {
   const recurring = studioDraft.scheduleIntervalSeconds !== "0";
   const schedule = recurring ? `every ${durationHint(studioDraft.scheduleIntervalSeconds) ?? `${studioDraft.scheduleIntervalSeconds} seconds`}` : "on an ad-hoc basis";
-  return `<section class="studio-review-layout"><div class="panel studio-step-panel"><div class="form-header"><div><div class="eyebrow">STEP 03</div><h2>Review before computing</h2><p>No receipt or activation is created by this local computation.</p></div><span class="state-tag ${studioRulesReviewed ? "green-tag" : "gray-tag"}">${studioRulesReviewed ? "RULES READY" : "LOCKED · VALIDATE RULES"}</span></div><p class="policy-sentence">Allow requester <strong>${esc(short(studioDraft.requester))}</strong> to request up to <strong>${esc(studioDraft.maxPerAction)} FTestXRP</strong> from owner <strong>${esc(short(studioDraft.owner))}</strong> to payee <strong>${esc(short(studioDraft.target))}</strong>, ${esc(schedule)}, within a daily cap of <strong>${esc(studioDraft.dailyCap)} FTestXRP</strong>.</p><div class="disclosure-grid"><article><span class="visibility-dot public"></span><h3>Public</h3><p>Commitment, owner, contract domain, and every actual request's requester, amount, recipient, timing, nonce, and transaction graph.</p></article><article><span class="visibility-dot private"></span><h3>Private in FCC</h3><p>Requester/payee allowlists, caps, schedule logic, occurrence bound, salt, nonce, and intermediate evaluation details.</p></article></div><div class="public-warning"><strong>PayGuard is not private money.</strong><span>Ordinary amount, recipient, timing, and transaction graph remain public.</span></div><details class="domain-details technical-details"><summary>Technical details <span>exact domain and hashes</span></summary>${studioPreview()}</details><div class="studio-action-bar"><button class="outline-button" type="button" data-studio-step="2">Back to rules</button><span>${esc(studioNotice)}</span><button class="primary-button" type="button" data-action="studio-compute" ${studioRulesReviewed ? "" : "disabled"}>Compute policy commitment</button></div></div></section>`;
+  return `<section class="studio-review-layout"><div class="panel studio-step-panel"><div class="form-header"><div><div class="eyebrow">STEP 03</div><h2>Review before computing</h2><p>No receipt or activation is created by this local computation.</p></div><span class="state-tag ${studioRulesReviewed ? "green-tag" : "gray-tag"}">${studioRulesReviewed ? "RULES READY" : "LOCKED · VALIDATE RULES"}</span></div><p class="policy-sentence">Allow <strong>${esc(studioRequesterSummary())}</strong> to request up to <strong>${esc(studioDraft.maxPerAction)} FTestXRP</strong> from owner <strong>${esc(short(studioDraft.owner))}</strong> to payee <strong>${esc(short(studioDraft.target))}</strong>, ${esc(schedule)}, within a daily cap of <strong>${esc(studioDraft.dailyCap)} FTestXRP</strong>.</p><div class="disclosure-grid"><article><span class="visibility-dot public"></span><h3>Public</h3><p>Commitment, owner, contract domain, and every actual request's requester, amount, recipient, timing, nonce, and transaction graph.</p></article><article><span class="visibility-dot private"></span><h3>Private in FCC</h3><p>Requester/payee allowlists, caps, schedule logic, occurrence bound, salt, nonce, and intermediate evaluation details.</p></article></div><div class="public-warning"><strong>PayGuard is not private money.</strong><span>Ordinary amount, recipient, timing, and transaction graph remain public.</span></div><details class="domain-details technical-details"><summary>Technical details <span>exact domain and hashes</span></summary>${studioPreview()}</details><div class="studio-action-bar"><button class="outline-button" type="button" data-studio-step="2">Back to rules</button><span>${esc(studioNotice)}</span><button class="primary-button" type="button" data-action="studio-compute" ${studioRulesReviewed ? "" : "disabled"}>Compute policy commitment</button></div></div></section>`;
 }
 
 function studioActivateStep(): string {
@@ -414,6 +449,8 @@ function interactiveStudioPanel(): string {
     && account && interactiveStudioCompilation.policy.owner.toLowerCase() === account.toLowerCase();
   const rows = interactiveSession
     ? interactiveSession.custody.map((envelope) => `<div class="receipt-row demo-receipt-row"><span class="machine-index">0${envelope.actor}</span><div><strong>${esc(short(envelope.receipt.machineId))}</strong><small>Signed simulation receipt · ${esc(short(envelope.digest))}</small></div><span class="state-tag gray-tag">SIMULATED</span></div>`).join("")
+    : interactiveCustodyProgress
+      ? custodyProgressRows(interactiveCustodyProgress, true)
     : config.actors.map((actor) => `<div class="receipt-row demo-receipt-row"><span class="machine-index">0${actor.actor}</span><div><strong>${esc(short(actor.machineId))}</strong><small>Distinct serverless actor · not a TEE</small></div><span class="state-tag gray-tag">READY</span></div>`).join("");
   const action = !account
     ? `<button class="outline-button" type="button" data-action="connect">Connect Coston2 wallet</button>`
@@ -441,6 +478,8 @@ function studioCustodyPanel(): string {
   const ownerMatches = Boolean(account && studioCompilation.policy.owner.toLowerCase() === account.toLowerCase());
   const rows = liveFccSession
     ? liveFccSession.custody.map((receipt, index) => `<div class="receipt-row"><span class="machine-index">0${index + 1}</span><div><strong>${esc(short(receipt.receipt.machineId))}</strong><small>Registered machine receipt · ${esc(short(receipt.digest))}</small></div><span class="state-tag green-tag">SIGNED</span></div>`).join("")
+    : liveCustodyProgress
+      ? custodyProgressRows(liveCustodyProgress)
     : config.machines.map((machine) => `<div class="receipt-row"><span class="machine-index">0${machine.index}</span><div><strong>${esc(short(machine.teeId))}</strong><small>Status 2 · ${esc(short(machine.codeHash))}</small></div><span class="state-tag green-tag">MANAGER STATUS 2</span></div>`).join("");
   const action = !account
     ? `<button class="primary-button" type="button" data-action="connect">Connect your Coston2 wallet</button>`
@@ -460,8 +499,10 @@ function studioCustodyPanel(): string {
   const ownerLabel = account && ownerMatches ? `OWNER · ${short(account)}` : account ? "OWNER MISMATCH" : "WALLET REQUIRED";
   const registeredState = liveFccPolicyStatus === 1 ? "ACTIVE" : liveFccPolicyStatus === 2 ? "STOPPED" : liveFccPolicyStatus === 3 ? "REVOKED" : "REGISTERED";
   const policyActive = Boolean(liveFccPolicyRegistration && liveFccPolicyStatus === 1);
+  const custodyCompleted = liveFccSession ? 3 : liveCustodyProgress?.filter((step) => step.status === "COMPLETE").length ?? 0;
+  const custodyStepCopy = liveFccSession ? "A/B/D receipts verified in memory" : `${custodyCompleted}/3 receipts verified · sign one exact authorization per machine`;
   const invite = liveFccPolicyRegistration && liveFccSession ? `<div class="request-created-summary policy-invite"><span>Share with the authorized requester</span><input class="policy-share-value" value="${esc(liveFccSession.binding.policyCommitment)}" readonly aria-label="Public policy commitment" /><small>This commitment is public. The requester pastes it in Requests; no private rule is shared.</small><div class="vault-actions"><button class="outline-button" type="button" data-action="copy-policy-commitment">Copy commitment</button><button class="primary-button" type="button" data-action="open-delegated-policy">Open delegated request →</button></div></div>` : "";
-  return `<section class="panel receipt-card activation-action-card"><div class="eyebrow">COMPLETE ACTIVATION</div><h3>Your policy on Coston2</h3><span class="state-tag ${ownerMatches ? "green-tag" : "gray-tag"}">${esc(ownerLabel)}</span><span class="state-tag gray-tag">SIMULATED TEE · TESTNET</span><p class="panel-copy">Your wallet authorizes three independent encrypted copies. After all receipts verify, the same wallet registers the policy and becomes its on-chain owner.</p><div class="activation-steps"><div class="${ownerMatches ? "complete" : "current"}"><span>${ownerMatches ? "✓" : "1"}</span><strong>Owner wallet</strong><small>${ownerMatches ? "Connected wallet matches the policy owner" : "Connect or bind your wallet"}</small></div><div class="${liveFccSession ? "complete" : ownerMatches ? "current" : ""}"><span>${liveFccSession ? "✓" : "2"}</span><strong>Three custody receipts</strong><small>${liveFccSession ? "A/B/D receipts verified in memory" : "Sign one exact authorization per machine"}</small></div><div class="${liveFccPolicyRegistration ? "complete" : liveFccSession ? "current" : ""}"><span>${liveFccPolicyRegistration ? "✓" : "3"}</span><strong>On-chain registration</strong><small>${liveFccPolicyRegistration ? `${registeredState} · finalized block ${liveFccPolicyRegistration.blockNumber}` : "Confirm the registry transaction in your wallet"}</small></div></div>${liveFccSession ? rows : ""}<div class="activation-block"><span class="status-dot ${policyActive ? "green" : "amber"}"></span><div><strong>${liveFccPolicyRegistration ? `Policy ${registeredState} on Coston2` : liveFccSession ? "3 / 3 receipts ready · registration required" : "Policy not active yet"}</strong><small>${liveFccPolicyRegistration ? "Only this policy owner can stop, resume, or revoke it." : "Private policy, ciphertexts, authorizations, and receipts are discarded on refresh."}</small></div></div>${invite}${action}<small class="panel-copy">${esc(liveFccNotice)}</small></section>`;
+  return `<section class="panel receipt-card activation-action-card"><div class="eyebrow">COMPLETE ACTIVATION</div><h3>Your policy on Coston2</h3><span class="state-tag ${ownerMatches ? "green-tag" : "gray-tag"}">${esc(ownerLabel)}</span><span class="state-tag gray-tag">SIMULATED TEE · TESTNET</span><p class="panel-copy">Your wallet authorizes three independent encrypted copies. After all receipts verify, the same wallet registers the policy and becomes its on-chain owner.</p><div class="activation-steps"><div class="${ownerMatches ? "complete" : "current"}"><span>${ownerMatches ? "✓" : "1"}</span><strong>Owner wallet</strong><small>${ownerMatches ? "Connected wallet matches the policy owner" : "Connect or bind your wallet"}</small></div><div class="${liveFccSession ? "complete" : ownerMatches ? "current" : ""}"><span>${liveFccSession ? "✓" : "2"}</span><strong>Three custody receipts</strong><small>${custodyStepCopy}</small></div><div class="${liveFccPolicyRegistration ? "complete" : liveFccSession ? "current" : ""}"><span>${liveFccPolicyRegistration ? "✓" : "3"}</span><strong>On-chain registration</strong><small>${liveFccPolicyRegistration ? `${registeredState} · finalized block ${liveFccPolicyRegistration.blockNumber}` : "Confirm the registry transaction in your wallet"}</small></div></div>${liveFccSession || liveCustodyProgress ? rows : ""}<div class="activation-block"><span class="status-dot ${policyActive ? "green" : "amber"}"></span><div><strong>${liveFccPolicyRegistration ? `Policy ${registeredState} on Coston2` : liveFccSession ? "3 / 3 receipts ready · registration required" : "Policy not active yet"}</strong><small>${liveFccPolicyRegistration ? "Only this policy owner can stop, resume, or revoke it." : "Private policy, ciphertexts, authorizations, and receipts are discarded on refresh."}</small></div></div>${invite}${action}<small class="panel-copy">${esc(liveFccNotice)}</small></section>`;
 }
 
 function custodyUnavailableReason(reason: string): string {
@@ -473,13 +514,17 @@ function custodyUnavailableReason(reason: string): string {
   } as Record<string, string>)[reason] ?? "Custody receipts unavailable";
 }
 
-function studioField(field: Exclude<keyof StudioDraft, "templateId">, labelText: string, hint: string, inputMode: "text" | "numeric" | "decimal"): string {
+type StudioTextField = Exclude<keyof StudioDraft, "templateId" | "payeeCanRequest">;
+
+function studioField(field: StudioTextField, labelText: string, hint: string, inputMode: "text" | "numeric" | "decimal"): string {
   const issue = studioIssues.find((candidate) => candidate.field === field);
   const hintId = `studio-hint-${field}`;
-  return `<label class="studio-field ${issue ? "field-error" : ""}">${esc(labelText)}${inputMode === "decimal" ? '<span class="field-unit">FTestXRP</span>' : ""}<input name="${field}" value="${esc(studioDraft[field])}" ${inputMode === "numeric" ? 'inputmode="numeric"' : inputMode === "decimal" ? 'inputmode="decimal"' : 'spellcheck="false"'} autocomplete="off" aria-invalid="${Boolean(issue)}" aria-describedby="${hintId}" />${issue ? `<span class="field-message" id="${hintId}">${esc(issue.message)}</span>` : `<small id="${hintId}" data-studio-hint="${field}" data-base-hint="${esc(hint)}">${esc(studioHumanHint(field, studioDraft[field], hint))}</small>`}</label>`;
+  const decisionField = field === "target" || field === "requester" || field === "maxPerAction" || field === "dailyCap";
+  const placeholder = field === "target" || field === "requester" ? "0x…" : field === "maxPerAction" ? "e.g. 0.1" : field === "dailyCap" ? "e.g. 0.5" : "";
+  return `<label class="studio-field ${issue ? "field-error" : ""}">${esc(labelText)}${decisionField ? '<span class="required-label">REQUIRED</span>' : ""}${inputMode === "decimal" ? '<span class="field-unit">FTestXRP</span>' : ""}<input name="${field}" value="${esc(studioDraft[field])}" ${inputMode === "numeric" ? 'inputmode="numeric"' : inputMode === "decimal" ? 'inputmode="decimal"' : 'spellcheck="false"'} ${placeholder ? `placeholder="${placeholder}"` : ""} ${decisionField ? "required" : ""} autocomplete="off" aria-invalid="${Boolean(issue)}" aria-describedby="${hintId}" />${issue ? `<span class="field-message" id="${hintId}">${esc(issue.message)}</span>` : `<small id="${hintId}" data-studio-hint="${field}" data-base-hint="${esc(hint)}">${esc(studioHumanHint(field, studioDraft[field], hint))}</small>`}</label>`;
 }
 
-function studioHumanHint(field: Exclude<keyof StudioDraft, "templateId">, value: string, baseHint: string): string {
+function studioHumanHint(field: StudioTextField, value: string, baseHint: string): string {
   if (field === "startAt" || field === "endAt") {
     const human = unixTimeHint(value);
     return human ? `${baseHint} ${human}.` : `${baseHint} Enter an unsigned Unix timestamp.`;
@@ -493,7 +538,7 @@ function studioHumanHint(field: Exclude<keyof StudioDraft, "templateId">, value:
 
 function updateStudioHumanHints(form: HTMLFormElement): void {
   form.querySelectorAll<HTMLElement>("[data-studio-hint]").forEach((element) => {
-    const field = element.dataset.studioHint as Exclude<keyof StudioDraft, "templateId">;
+    const field = element.dataset.studioHint as StudioTextField;
     const input = form.elements.namedItem(field);
     if (!(input instanceof HTMLInputElement)) return;
     element.textContent = studioHumanHint(field, input.value.trim(), element.dataset.baseHint ?? "");
@@ -533,7 +578,6 @@ function vaultsView(): string {
   const live = liveSnapshot();
   const account = connectedAccount();
   return `${pageIntro("PUBLIC ASSET VAULTS", "Fund your payment policy", "Enter a normal FTestXRP amount. PayGuard handles any required token approval as part of the deposit flow.")}
-    ${paymentFlowGuide("VAULT")}
     ${vaultTransactionPanel(live, account)}
     <section class="vault-card vault-overview panel"><div class="vault-card-top"><div class="token-symbol" aria-hidden="true">X</div><div><div class="eyebrow">VAULT OVERVIEW</div><h2>FTestXRP</h2><span class="muted">${account ? esc(short(account)) : "Public asset · Coston2"}</span></div><span class="state-tag ${live ? "green-tag" : "amber-tag"}">${live ? "LIVE" : account ? "READ BLOCKED" : "CONNECT"}</span><button class="icon-button vault-refresh" type="button" data-action="${account ? "refresh" : "connect"}" aria-label="${account ? "Refresh finalized vault state" : "Connect Coston2 wallet"}">↻</button></div><div class="vault-summary-grid"><div><span>Available</span><strong>${live ? token(live.accounting.available) : "—"}</strong><small>FTestXRP</small></div><div><span>Wallet balance</span><strong>${live ? token(live.tokenBalance) : "—"}</strong><small>FTestXRP</small></div><div><span>Vault allowance</span><strong>${live ? token(live.vaultAllowance) : "—"}</strong><small>FTestXRP</small></div></div><div class="vault-account-details"><div class="vault-details-grid"><div><span>Finalized block</span><strong>${live?.finalizedBlock ?? "—"}</strong></div><div><span>Deposited</span><strong>${live ? `${token(live.accounting.deposited)} FTestXRP` : "—"}</strong></div><div><span>Reserved</span><strong>${live ? `${token(live.accounting.reserved)} FTestXRP` : "—"}</strong></div><div><span>Spent</span><strong>${live ? `${token(live.accounting.spent)} FTestXRP` : "—"}</strong></div><div><span>Withdrawn</span><strong>${live ? `${token(live.accounting.withdrawn)} FTestXRP` : "—"}</strong></div><div><span>Conservation</span><strong>${live ? "Verified" : "Unavailable"}</strong></div><div><span>Contract runtime</span><strong>${live ? "Verified" : "Unavailable"}</strong></div><div><span>Prepared operation</span><strong>${vaultIntent?.action ?? "None"}</strong></div></div><div class="vault-detail-actions">${live ? `<a class="text-button inline-link" href="${explorerAddress(PAYGUARD_COSTON2.vault)}" target="_blank" rel="noreferrer">Open vault explorer ↗</a>` : `<a class="text-button inline-link" href="${COSTON2_FAUCET}" target="_blank" rel="noreferrer">Get test tokens ↗</a>`}</div></div></section>`;
 }
@@ -554,7 +598,26 @@ function vaultTransactionPanel(live: Coston2AccountSnapshot | null, account: Add
   const review = vaultIntent
     ? `<div class="transaction-review"><div class="eyebrow">REVIEW OPERATION</div><h3>${vaultIntent.action === "DEPOSIT" ? "Deposit" : "Withdraw"} · ${token(vaultIntent.amount)} FTestXRP</h3><p>${intentCopy}</p><dl><div><dt>Wallet prompts</dt><dd>${vaultIntent.steps.length} · ${vaultIntent.steps.map((step) => step === "APPROVE" ? "exact approval" : step.toLowerCase()).join(" → ")}</dd></div><div><dt>Network</dt><dd>Coston2 · chain 114</dd></div><div><dt>Account</dt><dd>${account ? esc(account) : "—"}</dd></div><div><dt>Success gate</dt><dd>Receipt + exact event + finalized postcondition for every step</dd></div></dl><div class="transaction-warning">Testnet only. No funds move until you confirm the wallet prompt${vaultIntent.steps.length > 1 ? "s" : ""}.</div><div class="vault-actions"><button class="outline-button" type="button" data-action="cancel-vault-intent" ${busy ? "disabled" : ""}>Cancel</button><button class="primary-button" type="button" data-action="submit-vault-intent" ${busy ? "disabled" : ""}>${busy ? `Finalizing ${vaultTransactionState.status === "SUBMITTING" ? vaultTransactionState.phase.toLowerCase() : "operation"}…` : `Continue · ${vaultIntent.steps.length} wallet confirmation${vaultIntent.steps.length === 1 ? "" : "s"}`}</button></div></div>`
     : "";
-  return `<section class="panel vault-transaction-panel"><div class="panel-heading"><div><div class="eyebrow">VAULT ACTION</div><h2>Deposit or withdraw FTestXRP</h2></div><span class="state-tag ${live ? "green-tag" : "amber-tag"}">${live ? "COSTON2 LIVE" : "READ REQUIRED"}</span></div><p class="panel-copy">Enter the amount you see in your wallet, for example <strong>0.1</strong>. PayGuard performs base-unit conversion internally.</p><label class="transaction-amount">Amount<input id="vault-amount" value="${esc(vaultAmountInput)}" inputmode="decimal" autocomplete="off" placeholder="0.1" ${!live || busy ? "disabled" : ""} /><span class="input-unit">FTestXRP</span><small>${live ? `Wallet ${token(live.tokenBalance)} · vault available ${token(live.accounting.available)}` : "Connect and pass finalized checks first."}</small></label><div class="transaction-actions"><button class="primary-button" type="button" data-vault-action="DEPOSIT" ${!live || busy ? "disabled" : ""}>Deposit FTestXRP</button><button class="outline-button" type="button" data-vault-action="WITHDRAW" ${!live || busy ? "disabled" : ""}>Withdraw FTestXRP</button></div>${review}${result}</section>`;
+  return `<section class="panel vault-transaction-panel"><div class="panel-heading"><div><div class="eyebrow">VAULT ACTION</div><h2>Deposit or withdraw FTestXRP</h2></div><span class="state-tag ${live ? "green-tag" : "amber-tag"}">${live ? "COSTON2 LIVE" : "READ REQUIRED"}</span></div><p class="panel-copy">Enter the amount you see in your wallet, for example <strong>0.1</strong>. PayGuard performs base-unit conversion internally.</p><label class="transaction-amount">Amount<input id="vault-amount" value="${esc(vaultAmountInput)}" inputmode="decimal" autocomplete="off" placeholder="0.1" ${!live || busy ? "disabled" : ""} /><span class="input-unit">FTestXRP</span><small>${live ? `Wallet ${token(live.tokenBalance)} · vault available ${token(live.accounting.available)}` : "Connect and pass finalized checks first."}</small></label><div class="transaction-actions"><button class="primary-button" type="button" data-vault-action="DEPOSIT" ${!live || busy ? "disabled" : ""}>Deposit FTestXRP</button><button class="outline-button" type="button" data-vault-action="WITHDRAW" ${!live || busy ? "disabled" : ""}>Withdraw FTestXRP</button></div>${vaultTransactionProgress()}${review}${result}</section>`;
+}
+
+function vaultTransactionProgress(): string {
+  const state = vaultTransactionState;
+  const steps = vaultIntent?.steps
+    ?? (state.status === "SUBMITTING" ? state.steps : state.status === "SUCCESS" ? state.transactions.map((item) => item.kind) : state.status === "ERROR" ? state.steps : undefined);
+  if (!steps?.length) return "";
+  const transactions = state.status === "SUBMITTING" || state.status === "SUCCESS" || state.status === "ERROR" ? state.transactions ?? [] : [];
+  const active = state.status === "SUBMITTING" ? state.phase : null;
+  const firstIncomplete = steps.find((step) => !transactions.some((transaction) => transaction.kind === step));
+  const rows = steps.map((step, index) => {
+    const complete = transactions.some((transaction) => transaction.kind === step);
+    const failed = state.status === "ERROR" && !complete && step === firstIncomplete;
+    const current = !complete && !failed && step === active;
+    const label = step === "APPROVE" ? "Approve exact allowance" : step === "DEPOSIT" ? "Deposit into vault" : "Withdraw from vault";
+    const status = complete ? "✓ COMPLETE" : failed ? "RETRY" : current ? "CONFIRM NOW" : "WAITING";
+    return `<div class="wallet-progress-step ${complete ? "complete" : failed ? "error" : current ? "active" : ""}"><span>${complete ? "✓" : index + 1}</span><div><strong>${label}</strong><small>${complete ? "Receipt, event and finalized state verified" : failed ? "This step did not complete" : current ? "Check your wallet prompt" : "Starts after the previous step"}</small></div><em>${status}</em></div>`;
+  }).join("");
+  return `<div class="wallet-progress" role="status"><div class="eyebrow">WALLET PROGRESS</div>${rows}</div>`;
 }
 
 function requestsView(): string {
@@ -572,7 +635,6 @@ function requestsView(): string {
   const modes = `<div class="request-mode-tabs" role="tablist" aria-label="Request tasks"><button type="button" role="tab" data-request-mode="CREATE" aria-selected="${requestsMode === "CREATE"}" class="${requestsMode === "CREATE" ? "active" : ""}"><span>01</span><strong>Request payment</strong><small>Create, evaluate and receive</small></button><button type="button" role="tab" data-request-mode="INSPECT" aria-selected="${requestsMode === "INSPECT"}" class="${requestsMode === "INSPECT" ? "active" : ""}"><span>02</span><strong>Inspect request</strong><small>Read an existing public ID</small></button></div>`;
   const inspector = `${requestLookup()}<section class="panel table-panel"><div class="panel-heading"><div><div class="eyebrow">ACTION REQUEST</div><h2>${snapshot ? "Public request state" : requestLoading ? "Reading finalized state…" : "No verified request loaded"}</h2></div><div class="table-tools"><button class="icon-button" type="button" data-action="load-request" aria-label="Refresh request">↻</button></div></div><div class="request-table"><div class="table-head"><span>REQUEST</span><span>PUBLIC ACTION</span><span>CHECKPOINT</span><span>ON-CHAIN STATE</span><span></span></div><div class="table-row"><span>${requestCell}</span><span>${actionCell}</span><span>${checkpointCell}</span><span><span class="state-tag ${snapshot?.status === "ALLOWED" || snapshot?.status === "EXECUTED" ? "green-tag" : snapshot ? "gray-tag" : "amber-tag"}">${esc(snapshot?.status ?? "UNAVAILABLE")}</span><small>${snapshot ? `Timing: ${esc(readiness)}` : "No timing fact"}</small></span><span></span></div></div>${publicState}<div class="table-footer"><span>Showing public finalized state only</span><span class="muted">${requestFinalizedBlock ? `Coston2 block ${requestFinalizedBlock}` : esc(unavailableReason)} · no browser cache</span></div></section>${requestTransactionPanel(snapshot)}`;
   return `${pageIntro("POLICY PAYMENTS", "Request or inspect a payment", "Use Request payment for the live wallet flow. Use Inspect request only when you already have a public request ID.")}
-    ${paymentFlowGuide("REQUEST")}
     ${modes}
     <div role="tabpanel">${requestsMode === "CREATE" ? livePolicyRequestPanel() : inspector}</div>`;
 }
@@ -931,6 +993,15 @@ function wireEvents(): void {
       resetLiveFccPolicySession("Draft changed. Recompute before collecting new live machine receipts.");
     }
   });
+  form?.querySelectorAll<HTMLInputElement>('input[name="requesterMode"]').forEach((input) => input.addEventListener("change", () => {
+    studioRequesterMode = input.checked ? "delegate" : "owner";
+    const nextDraft = readStudioDraft(form);
+    studioDraft = { ...nextDraft, requester: "" };
+    studioRulesReviewed = false;
+    studioCompilation = null;
+    studioIssues = studioIssues.filter((issue) => issue.field !== "requester");
+    render();
+  }));
   form?.querySelectorAll<HTMLInputElement>('input[name="scheduleMode"]').forEach((input) => input.addEventListener("change", () => {
     if (input.value === "recurring" && studioDraft.scheduleIntervalSeconds === "0") {
       studioDraft = { ...studioDraft, scheduleIntervalSeconds: "604800", scheduleGraceSeconds: "86400" };
@@ -1166,9 +1237,13 @@ function restoreLandingAnchor(anchor: string): void {
   window.requestAnimationFrame(() => document.getElementById(anchor)?.scrollIntoView({ block: "start", behavior: "auto" }));
 }
 
-function showAppNotice(message: string, duration = 7_000): void {
+function showAppNotice(message: string, duration: number | null = 7_000): void {
   if (appNoticeTimer !== undefined) window.clearTimeout(appNoticeTimer);
   appNotice = message;
+  if (duration === null) {
+    appNoticeTimer = undefined;
+    return;
+  }
   appNoticeTimer = window.setTimeout(() => {
     appNotice = "";
     appNoticeTimer = undefined;
@@ -1335,17 +1410,20 @@ async function submitVaultTransaction(): Promise<void> {
   const completed: VaultTransactionSummary[] = [];
   try {
     let latest = coston2State.snapshot;
-    for (const phase of intent.steps) {
-      vaultTransactionState = { status: "SUBMITTING", action: intent.action, phase, amount: intent.amount };
+    for (const [index, phase] of intent.steps.entries()) {
+      vaultTransactionState = { status: "SUBMITTING", action: intent.action, phase, amount: intent.amount, steps: intent.steps, transactions: [...completed] };
       showAppNotice(phase === "APPROVE"
         ? "Step 1 of 2: confirm the exact FTestXRP allowance in your wallet."
-        : `Confirm the ${phase.toLowerCase()} transaction, then wait for finalized verification.`, 12_000);
+        : `Step ${index + 1} of ${intent.steps.length}: confirm the ${phase.toLowerCase()} transaction.`, null);
       render();
       const result = await executeVaultTransaction(phase, intent.amount, account, walletProvider);
       if (connectedAccount()?.toLowerCase() !== account.toLowerCase()) throw new VaultTransactionError("POSTCONDITION_FAILED");
       completed.push({ kind: result.kind, hash: result.hash, blockNumber: result.blockNumber });
       latest = result.after;
       coston2State = { status: "READY", snapshot: latest };
+      vaultTransactionState = { status: "SUBMITTING", action: intent.action, phase, amount: intent.amount, steps: intent.steps, transactions: [...completed] };
+      showAppNotice(`Step ${index + 1}/${intent.steps.length} verified${index + 1 < intent.steps.length ? " · continue with the next wallet prompt." : "."}`, null);
+      render();
     }
     vaultIntent = null;
     vaultTransactionState = { status: "SUCCESS", action: intent.action, amount: intent.amount, transactions: completed };
@@ -1358,7 +1436,7 @@ async function submitVaultTransaction(): Promise<void> {
     const partial = completed.length > 0
       ? `${message} ${completed.length === 1 && completed[0]?.kind === "APPROVE" ? "The approval finalized, but no deposit is being asserted." : "Completed transaction links are shown below."}`
       : message;
-    vaultTransactionState = { status: "ERROR", message: partial, ...(completed.length ? { transactions: completed } : {}) };
+    vaultTransactionState = { status: "ERROR", message: partial, action: intent.action, amount: intent.amount, steps: intent.steps, ...(completed.length ? { transactions: completed } : {}) };
     showAppNotice(partial, 10_000);
     if (walletState.status === "CONNECTED") void refreshCoston2State();
   }
@@ -1447,7 +1525,8 @@ function walletChanged(): void {
   requestTransactionState = { status: "IDLE" };
   interactiveAccountSnapshot = null;
   interactiveTransactions = [];
-  studioDraft = studioTemplateDraft("delegated-allowance");
+  studioDraft = freshStudioDraft("delegated-allowance");
+  studioRequesterMode = "owner";
   studioEntropy = createStudioEntropy();
   studioCompilation = null;
   studioTemplateChosen = false;
@@ -1490,8 +1569,7 @@ function liveFccContext(): { account: Address; config: LiveFccConfig; provider: 
 function rebindStudioOwner(): void {
   const account = connectedAccount();
   if (!account) { void connectWallet(); return; }
-  const requesterFollowedOwner = studioDraft.requester.toLowerCase() === studioDraft.owner.toLowerCase();
-  studioDraft = { ...studioDraft, owner: account, ...(requesterFollowedOwner ? { requester: account } : {}) };
+  studioDraft = { ...studioDraft, owner: account, ...(studioRequesterMode === "owner" ? { requester: "" } : {}) };
   studioEntropy = createStudioEntropy();
   studioCompilation = null;
   studioRulesReviewed = false;
@@ -1514,7 +1592,7 @@ function prepareLiveFccDraft(): void {
       policyName: `live-fcc-${now}`,
       owner: account,
       target: account,
-      requester: account,
+      requester: "",
       registry: config.contracts.registry,
       vault: config.contracts.vault,
       router: config.contracts.router,
@@ -1527,6 +1605,7 @@ function prepareLiveFccDraft(): void {
       scheduleGraceSeconds: "0",
       maxOccurrences: "10",
     };
+    studioRequesterMode = "owner";
     studioCompilation = null;
     studioTemplateChosen = true;
     studioRulesReviewed = false;
@@ -1543,6 +1622,7 @@ function prepareLiveFccDraft(): void {
 
 function resetLiveFccPolicySession(notice: string): void {
   liveFccSession = null;
+  liveCustodyProgress = null;
   liveFccPolicyRegistration = null;
   liveFccPolicyStatus = null;
   liveFccRequest = null;
@@ -1555,19 +1635,34 @@ async function submitLiveFccCustody(): Promise<void> {
   if (!studioCompilation) return;
   liveFccBusy = "CUSTODY";
   liveFccNotice = "Confirm three owner authorizations. Each binds one independent ciphertext to A, B, or D.";
-  render();
   try {
     const { account, config, provider } = liveFccContext();
-    liveFccSession = await collectLiveCustody(studioCompilation.policy, account, provider, config);
+    liveCustodyProgress = config.machines.map((machine) => ({ index: machine.index, label: `Machine ${machine.index} · ${short(machine.teeId)}`, status: "WAITING" }));
+    showAppNotice("Custody started · waiting for signature 1 of 3.", null);
+    render();
+    liveFccSession = await collectLiveCustody(studioCompilation.policy, account, provider, config, fetch, BigInt(Math.floor(Date.now() / 1_000)), (progress) => {
+      liveCustodyProgress = liveCustodyProgress?.map((step) => step.index === progress.index
+        ? { ...step, status: progress.status === "RECEIPT_VERIFIED" ? "COMPLETE" : "ACTIVE", ...(progress.digest ? { digest: progress.digest } : {}) }
+        : step) ?? null;
+      const complete = liveCustodyProgress?.filter((step) => step.status === "COMPLETE").length ?? 0;
+      liveFccNotice = progress.status === "RECEIPT_VERIFIED"
+        ? `Signature ${progress.index}/3 verified. ${complete < 3 ? "Continue with the next wallet prompt." : "All custody receipts are ready."}`
+        : `Signature ${progress.index}/3 is waiting for wallet confirmation.`;
+      showAppNotice(liveFccNotice, null);
+      render();
+    });
     liveFccPolicyRegistration = null;
     liveFccPolicyStatus = null;
     liveFccRequest = null;
     liveFccEvaluation = null;
     liveFccExecution = null;
     liveFccNotice = "Three distinct registered-machine receipts matched one policy binding. Ciphertexts remain memory-only.";
+    showAppNotice("3/3 custody signatures verified. You can now register the policy.", 7_000);
   } catch {
     liveFccSession = null;
+    liveCustodyProgress = liveCustodyProgress?.map((step) => step.status === "ACTIVE" ? { ...step, status: "ERROR" } : step) ?? null;
     liveFccNotice = "Live custody failed closed. No policy was registered and no receipt quorum is asserted.";
+    showAppNotice("Custody stopped. Completed signatures remain marked; retry custody when ready.", 12_000);
   } finally {
     liveFccBusy = "";
     render();
@@ -1578,6 +1673,7 @@ async function submitLiveFccPolicyRegistration(): Promise<void> {
   if (!liveFccSession) return;
   liveFccBusy = "REGISTER";
   liveFccNotice = "Confirm the exact V2 policy binding and three machine receipts, then wait for finalized readback.";
+  showAppNotice("Final activation step · confirm policy registration in your wallet.", null);
   render();
   try {
     const { account, config, provider } = liveFccContext();
@@ -1589,11 +1685,13 @@ async function submitLiveFccPolicyRegistration(): Promise<void> {
     delegatedPolicyNotice = "Active policy loaded. Share the public commitment with its authorized requester.";
     addLiveFccTransaction("Register live FCC policy", liveFccPolicyRegistration);
     liveFccNotice = "Live V2 policy is active on Coston2 with all three registered custody receipts.";
+    showAppNotice("Policy registration finalized. Activation is complete.", 7_000);
     await refreshCoston2State();
   } catch {
     liveFccPolicyRegistration = null;
     liveFccPolicyStatus = null;
     liveFccNotice = "Live policy registration was rejected or failed finalized verification. No activation is asserted.";
+    showAppNotice("Registration did not complete. The three verified custody receipts remain visible in this tab.", 12_000);
   } finally {
     liveFccBusy = "";
     render();
@@ -1795,6 +1893,7 @@ function prepareInteractiveDraft(): void {
 function resetInteractivePolicySession(notice: string): void {
   interactiveStudioCompilation = null;
   interactiveSession = null;
+  interactiveCustodyProgress = null;
   interactivePolicyRegistration = null;
   interactiveRequest = null;
   interactiveThreshold = null;
@@ -1807,19 +1906,34 @@ async function submitInteractiveCustody(): Promise<void> {
   if (!interactiveStudioCompilation) return;
   interactiveBusy = "CUSTODY";
   interactiveNotice = "Confirm three owner signatures. Each binds one ciphertext to one simulated actor.";
-  render();
   try {
     const { account, config, provider } = interactiveContext();
-    interactiveSession = await collectDemoCustody(interactiveStudioCompilation.policy, account, provider, config);
+    interactiveCustodyProgress = config.actors.map((actor) => ({ index: actor.actor, label: `Demo actor ${actor.actor}`, status: "WAITING" }));
+    showAppNotice("Demo custody started · waiting for signature 1 of 3.", null);
+    render();
+    interactiveSession = await collectDemoCustody(interactiveStudioCompilation.policy, account, provider, config, fetch, BigInt(Math.floor(Date.now() / 1_000)), (progress) => {
+      interactiveCustodyProgress = interactiveCustodyProgress?.map((step) => step.index === progress.index
+        ? { ...step, status: progress.status === "RECEIPT_VERIFIED" ? "COMPLETE" : "ACTIVE", ...(progress.digest ? { digest: progress.digest } : {}) }
+        : step) ?? null;
+      const complete = interactiveCustodyProgress?.filter((step) => step.status === "COMPLETE").length ?? 0;
+      interactiveNotice = progress.status === "RECEIPT_VERIFIED"
+        ? `Demo signature ${progress.index}/3 verified. ${complete < 3 ? "Continue with the next wallet prompt." : "All receipts are ready."}`
+        : `Demo signature ${progress.index}/3 is waiting for wallet confirmation.`;
+      showAppNotice(interactiveNotice, null);
+      render();
+    });
     interactivePolicyRegistration = null;
     interactiveRequest = null;
     interactiveThreshold = null;
     interactiveThresholdTransactions = [];
     interactiveExecution = null;
     interactiveNotice = "Three distinct simulation receipts matched the same policy binding. No production custody is claimed.";
+    showAppNotice("3/3 demo custody signatures verified.", 7_000);
   } catch {
     interactiveSession = null;
+    interactiveCustodyProgress = interactiveCustodyProgress?.map((step) => step.status === "ACTIVE" ? { ...step, status: "ERROR" } : step) ?? null;
     interactiveNotice = "Receipt collection failed closed. No policy was registered and no actor result is asserted.";
+    showAppNotice("Demo custody stopped. Verified steps remain visible; retry when ready.", 12_000);
   } finally {
     interactiveBusy = "";
     render();
@@ -1830,16 +1944,19 @@ async function submitInteractivePolicyRegistration(): Promise<void> {
   if (!interactiveSession) return;
   interactiveBusy = "REGISTER";
   interactiveNotice = "Confirm the exact simulation-only registry transaction, then wait for finalized readback.";
+  showAppNotice("Final demo activation step · confirm registration in your wallet.", null);
   render();
   try {
     const { account, config, provider } = interactiveContext();
     interactivePolicyRegistration = await registerDemoPolicy(interactiveSession, account, provider, config);
     addInteractiveTransaction("Register demo policy", interactivePolicyRegistration);
     interactiveNotice = "Demo policy binding and all three signed receipts are active in the separate Coston2 registry.";
+    showAppNotice("Demo policy registration finalized.", 7_000);
     await refreshInteractiveAccount(false);
   } catch {
     interactivePolicyRegistration = null;
     interactiveNotice = "Policy registration was rejected or could not be verified at finality. No activation is asserted.";
+    showAppNotice("Demo registration did not complete. Verified custody steps remain visible.", 12_000);
   } finally {
     interactiveBusy = "";
     render();
@@ -2055,7 +2172,8 @@ function selectTemplate(value: string): void {
   if (!STUDIO_TEMPLATES.some((template) => template.id === value)) return;
   const account = connectedAccount();
   const domain = liveFccConfigState.status === "READY" ? liveFccConfigState.config.contracts : PAYGUARD_COSTON2;
-  studioDraft = { ...studioTemplateDraft(value as StudioTemplateId), owner: account ?? "", requester: account ?? "", registry: domain.registry, vault: domain.vault, router: domain.router, asset: domain.asset };
+  studioDraft = freshStudioDraft(value as StudioTemplateId, account ?? "", domain);
+  studioRequesterMode = "owner";
   studioEntropy = createStudioEntropy();
   studioCompilation = null;
   studioTemplateChosen = true;
@@ -2068,7 +2186,8 @@ function selectTemplate(value: string): void {
 
 function readStudioDraft(form: HTMLFormElement): StudioDraft {
   const data = new FormData(form);
-  const value = (field: Exclude<keyof StudioDraft, "templateId">): string => String(data.get(field) ?? "").trim();
+  const value = (field: StudioTextField): string => String(data.get(field) ?? "").trim();
+  const requesterMode = String(data.get("requesterMode") ?? "owner");
   const scheduleMode = String(data.get("scheduleMode") ?? (studioDraft.scheduleIntervalSeconds === "0" ? "adhoc" : "recurring"));
   return {
     templateId: studioDraft.templateId,
@@ -2079,7 +2198,8 @@ function readStudioDraft(form: HTMLFormElement): StudioDraft {
     router: value("router"),
     asset: value("asset"),
     target: value("target"),
-    requester: value("requester"),
+    payeeCanRequest: data.get("payeeCanRequest") === "on",
+    requester: requesterMode === "delegate" ? value("requester") : "",
     maxPerAction: value("maxPerAction"),
     dailyCap: value("dailyCap"),
     startAt: dateTimeInputToUnix(value("startAt")),

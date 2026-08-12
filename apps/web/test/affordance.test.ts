@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const main = readFileSync(new URL("../src/main.ts", import.meta.url), "utf8");
+const liveFcc = readFileSync(new URL("../src/live-fcc.ts", import.meta.url), "utf8");
 const styles = readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
 const studio = readFileSync(new URL("../src/studio.css", import.meta.url), "utf8");
 
@@ -121,9 +122,47 @@ describe("application information density", () => {
     expect(main).toContain('inputmode="decimal"');
     expect(main).toContain('data-request-mode="CREATE"');
     expect(main).toContain('data-request-mode="INSPECT"');
-    expect(main).toContain("Owner creates policy");
-    expect(main).toContain("Wallet B or owner");
-    expect(styles).toContain(".payment-flow-guide");
+    expect(main).not.toContain("Owner creates policy");
+    expect(styles).not.toContain(".payment-flow-guide");
     expect(styles).toContain(".request-mode-tabs");
+  });
+
+  it("keeps one visible progress trail across multi-signature wallet flows", () => {
+    expect(main).toContain("WALLET PROGRESS");
+    expect(main).toContain("custodyProgressRows");
+    expect(main).toContain("Signature ${progress.index}/3 verified");
+    expect(main).toContain('showAppNotice(liveFccNotice, null)');
+    expect(main).toContain("Completed signatures remain marked");
+    expect(styles).toContain(".wallet-progress-step.complete");
+    expect(studio).toContain(".progress-receipt.complete");
+    expect(liveFcc).toContain('status: "AWAITING_SIGNATURE" | "RECEIPT_VERIFIED"');
+    expect(liveFcc).toContain("await onProgress?.");
+  });
+
+  it("requires explicit payment decisions while defaulting only the seven-day window", () => {
+    expect(main).toContain("defaultStudioPolicyWindow()");
+    expect(main).toContain('target: ""');
+    expect(main).toContain('requester: ""');
+    expect(main).toContain('maxPerAction: ""');
+    expect(main).toContain('dailyCap: ""');
+    expect(main).not.toContain('requester: account ?? ""');
+    expect(main).toContain('<span class="required-label">REQUIRED</span>');
+    expect(studio).toContain(".required-label");
+  });
+
+  it("keeps requester authorization compact with owner, payee, and an optional wallet", () => {
+    expect(main).toContain("Who can request payment?");
+    expect(main).toContain("Owner <small>Always</small>");
+    expect(main).toContain('name="payeeCanRequest"');
+    expect(main).toContain('type="checkbox" name="requesterMode" value="delegate"');
+    expect(main).toContain("Additional requester address");
+    expect(main).toContain('payeeCanRequest: data.get("payeeCanRequest") === "on"');
+    expect(main).toContain('requesterMode === "delegate" ? value("requester") : ""');
+    expect(main).not.toContain('<input type="hidden" name="requester"');
+    expect(main).toContain('let studioRequesterMode: "owner" | "delegate" = "owner"');
+    expect(main).toContain('const ownerOnly = studioRequesterMode === "owner"');
+    expect(main).toContain('studioRequesterMode = input.checked ? "delegate" : "owner"');
+    expect(main).not.toContain("Requester wallet (can ask for payment)");
+    expect(studio).toContain(".compact-choice");
   });
 });

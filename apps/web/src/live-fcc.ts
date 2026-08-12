@@ -129,6 +129,13 @@ export interface LivePolicySession {
   custody: readonly [LiveCustodyEnvelope, LiveCustodyEnvelope, LiveCustodyEnvelope];
 }
 
+export interface LiveCustodyProgress {
+  index: 1 | 2 | 3;
+  machineId: Hex;
+  status: "AWAITING_SIGNATURE" | "RECEIPT_VERIFIED";
+  digest?: Hex;
+}
+
 export interface LiveTransactionResult {
   hash: Hash;
   blockNumber: bigint;
@@ -211,6 +218,7 @@ export async function collectLiveCustody(
   config: LiveFccConfig,
   fetcher: typeof fetch = fetch,
   now = BigInt(Math.floor(Date.now() / 1_000)),
+  onProgress?: (progress: LiveCustodyProgress) => void | Promise<void>,
 ): Promise<LivePolicySession> {
   if (getAddress(account) !== getAddress(policy.owner)) {
     throw new Error("LIVE_POLICY_OWNER_WALLET_REQUIRED");
@@ -222,6 +230,7 @@ export async function collectLiveCustody(
   for (let index = 0; index < 3; index += 1) {
     const machine = config.machines[index]!;
     const ciphertext = ciphertexts[index]!;
+    await onProgress?.({ index: machine.index, machineId: machine.machineId, status: "AWAITING_SIGNATURE" });
     const authorizationDigest = policyIngressAuthorizationDigest({
       binding,
       submissionNonce: policy.submissionNonce,
@@ -248,7 +257,11 @@ export async function collectLiveCustody(
     });
     const text = await boundedResponse(response);
     if (!response.ok) throw new Error("LIVE_CUSTODY_UNAVAILABLE");
-    custody.push(parseLiveReceipt(JSON.parse(text), binding, policy.submissionNonce, now, expiry, machine));
+    const envelope = parseLiveReceipt(JSON.parse(text), binding, policy.submissionNonce, now, expiry, machine);
+    const recovered = await recoverMessageAddress({ message: { raw: policyReceiptAttestationDigest(envelope.receipt) }, signature: envelope.signature });
+    if (getAddress(recovered) !== machine.signer) throw new Error("LIVE_CUSTODY_INVALID");
+    custody.push(envelope);
+    await onProgress?.({ index: machine.index, machineId: machine.machineId, status: "RECEIPT_VERIFIED", digest: envelope.digest });
   }
   const session: LivePolicySession = {
     policy,

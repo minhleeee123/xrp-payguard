@@ -5,6 +5,7 @@ import {
   StudioValidationError,
   compileStudioDraft,
   createStudioEntropy,
+  defaultStudioPolicyWindow,
   normalizeStudioAddress,
   studioTemplateDraft,
   validateStudioDraft,
@@ -27,6 +28,14 @@ describe("Policy Studio authoring model", () => {
     first.policyName = "changed";
     expect(studioTemplateDraft("personal-recurring").policyName).toBe("weekly-subscription");
     expect(studioTemplateDraft("delegated-allowance").scheduleIntervalSeconds).toBe("0");
+  });
+
+  it("defaults the authoring window to exactly seven days", () => {
+    expect(defaultStudioPolicyWindow(1_800_000_000n)).toEqual({
+      startAt: "1800000000",
+      endAt: "1800604800",
+    });
+    expect(() => defaultStudioPolicyWindow(0n)).toThrow("Policy start time must be positive");
   });
 
   it("compiles an exact domain-bound commitment with a separated data map", () => {
@@ -52,8 +61,17 @@ describe("Policy Studio authoring model", () => {
     const result = compileStudioDraft(draft, entropy);
     expect(result.policy.maxPerAction).toBe(100_000n);
     expect(result.policy.dailyCap).toBe(250_000n);
-    expect(result.policy.allowRequesters).toEqual([requester]);
+    expect(result.policy.allowRequesters).toEqual([normalizeStudioAddress(draft.target), normalizeStudioAddress(requester)]);
     expect(JSON.stringify(result.publicEvidence)).not.toContain(requester);
+  });
+
+  it("always permits the owner, enables the payee by default, and adds an optional requester", () => {
+    const draft = studioTemplateDraft("delegated-allowance");
+    expect(compileStudioDraft(draft, entropy).policy.allowRequesters).toEqual([normalizeStudioAddress(draft.target)]);
+    expect(compileStudioDraft({ ...draft, payeeCanRequest: false }, entropy).policy.allowRequesters).toEqual([]);
+
+    const requester = "0x00000000000000000000000000000000000000b2";
+    expect(compileStudioDraft({ ...draft, payeeCanRequest: false, requester }, entropy).policy.allowRequesters).toEqual([normalizeStudioAddress(requester)]);
   });
 
   it("changes the commitment when ephemeral private entropy changes", () => {

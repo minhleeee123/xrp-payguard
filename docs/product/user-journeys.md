@@ -18,6 +18,24 @@
    canonical owner and is the only account that may stop, resume, or revoke the
    immutable version. Any change creates a new version.
 
+The UI keeps one in-context activation progress trail. Each machine receipt is
+marked complete only after its exact response and signature verify. One
+bottom-right status message follows the current wallet prompt and remains until
+the multi-step action completes or fails; it does not accumulate duplicate
+toasts. A failed step preserves already verified progress in the current tab.
+
+Templates do not pre-authorize another wallet or prefill the payee,
+per-payment maximum, or daily maximum. Payee and amount limits require explicit
+owner input. The authoring window starts at the current time and defaults to an
+end time exactly seven days later; both timestamps remain editable before
+review.
+
+Requester authorization is presented as a compact permission row. The policy
+owner is always authorized. The payee is authorized by default but the owner
+may turn that permission off before review. Selecting `Another wallet` reveals
+one optional additional-requester address without removing the owner or enabled
+payee; no requester may decide `ALLOW` or manage the vault.
+
 Failure expectations:
 
 - Wrong, missing, stale, or incompatible machine keys stop before ingress.
@@ -36,6 +54,9 @@ plan: deposit directly when allowance is sufficient, or request an exact ERC-20
 approval followed by the deposit. Both receipts and finalized postconditions
 remain independently verified; combining the UI intent never combines the
 on-chain transactions or wallet confirmations.
+The deposit card marks exact approval and deposit independently as their
+receipts reach finalized verified state, while one persistent status message
+tracks the current wallet prompt.
 
 1. Resolve the owner's PersonalAccount and current nonce from Coston2.
 2. Build an exact Smart Account operation for approval and PayGuard deposit.

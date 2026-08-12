@@ -20,6 +20,7 @@ export interface StudioDraft {
   router: string;
   asset: string;
   target: string;
+  payeeCanRequest: boolean;
   requester: string;
   maxPerAction: string;
   dailyCap: string;
@@ -91,7 +92,8 @@ const LOCAL_DOMAIN = {
 const COMMON_DRAFT = {
   owner: "0x00000000000000000000000000000000000000a1",
   target: "0x00000000000000000000000000000000000000c3",
-  requester: "0x00000000000000000000000000000000000000a1",
+  payeeCanRequest: true,
+  requester: "",
   ...LOCAL_DOMAIN,
 } as const;
 
@@ -151,11 +153,17 @@ export const STUDIO_TEMPLATES: readonly StudioTemplate[] = [
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 const DECIMAL = /^(0|[1-9][0-9]*)$/;
+export const DEFAULT_STUDIO_POLICY_DURATION_SECONDS = 7n * 24n * 60n * 60n;
 
 export function studioTemplateDraft(templateId: StudioTemplateId): StudioDraft {
   const template = STUDIO_TEMPLATES.find((candidate) => candidate.id === templateId);
   if (!template) throw new Error("Unknown policy template");
   return { ...template.draft };
+}
+
+export function defaultStudioPolicyWindow(startAt = BigInt(Math.floor(Date.now() / 1_000))): Pick<StudioDraft, "startAt" | "endAt"> {
+  if (startAt <= 0n) throw new Error("Policy start time must be positive");
+  return { startAt: startAt.toString(), endAt: (startAt + DEFAULT_STUDIO_POLICY_DURATION_SECONDS).toString() };
 }
 
 export function createStudioEntropy(fill?: (bytes: Uint8Array<ArrayBuffer>) => void): StudioEntropy {
@@ -180,14 +188,21 @@ export function validateStudioDraft(draft: StudioDraft): readonly StudioIssue[] 
     issues.push({ field: "policyName", message: "Policy name must contain 3 to 64 characters." });
   }
 
-  const addresses: readonly (keyof Pick<StudioDraft, "owner" | "registry" | "vault" | "router" | "asset" | "target" | "requester">)[] = [
-    "owner", "registry", "vault", "router", "asset", "target", "requester",
+  const addresses: readonly (keyof Pick<StudioDraft, "owner" | "registry" | "vault" | "router" | "asset" | "target">)[] = [
+    "owner", "registry", "vault", "router", "asset", "target",
   ];
   for (const field of addresses) {
     try {
       if (normalizeStudioAddress(draft[field]).toLowerCase() === ZERO_ADDRESS) throw new Error("zero address");
     } catch {
       issues.push({ field, message: `${fieldLabel(field)} must be a non-zero EVM address.` });
+    }
+  }
+  if (draft.requester.trim()) {
+    try {
+      if (normalizeStudioAddress(draft.requester).toLowerCase() === ZERO_ADDRESS) throw new Error("zero address");
+    } catch {
+      issues.push({ field: "requester", message: "Additional requester must be a non-zero EVM address." });
     }
   }
 
@@ -230,7 +245,12 @@ export function compileStudioDraft(draft: StudioDraft, entropy: StudioEntropy): 
 
   const owner = normalizeStudioAddress(draft.owner);
   const target = normalizeStudioAddress(draft.target);
-  const requester = normalizeStudioAddress(draft.requester);
+  const requester = draft.requester.trim() ? normalizeStudioAddress(draft.requester) : null;
+  const allowRequesters = [
+    ...(draft.payeeCanRequest ? [target] : []),
+    ...(requester ? [requester] : []),
+  ].filter((candidate, index, values) => candidate.toLowerCase() !== owner.toLowerCase()
+    && values.findIndex((value) => value.toLowerCase() === candidate.toLowerCase()) === index);
   const policyName = draft.policyName.trim();
   const policy: PolicyV1 = {
     schemaVersion: 1,
@@ -255,7 +275,7 @@ export function compileStudioDraft(draft: StudioDraft, entropy: StudioEntropy): 
     maxOccurrences: Number(BigInt(draft.maxOccurrences)),
     allowTargets: [target],
     denyTargets: [],
-    allowRequesters: [requester],
+    allowRequesters,
     allowActionTypes: [ACTION_FTESTXRP_TRANSFER],
     requireFtso: false,
     ftsoFeedId: ZERO_BYTES32,
@@ -304,7 +324,7 @@ export function compileStudioDraft(draft: StudioDraft, entropy: StudioEntropy): 
       { label: "Policy window", value: `${policy.startAt}–${policy.endAt} UTC epoch seconds` },
       { label: "Recurring rule", value: policy.scheduleIntervalSeconds === 0n ? "Ad-hoc" : `Every ${policy.scheduleIntervalSeconds}s · ${policy.scheduleGraceSeconds}s grace` },
       { label: "Occurrence limit", value: policy.maxOccurrences === 0 ? "No policy-specific limit" : String(policy.maxOccurrences) },
-      { label: "Requester rule", value: requester === owner ? "Policy owner" : requester },
+      { label: "Requester rule", value: allowRequesters.length === 0 ? "Policy owner only" : `Policy owner + ${allowRequesters.length} authorized wallet${allowRequesters.length === 1 ? "" : "s"}` },
       { label: "Secret material", value: "Random salt and submission nonce (values never displayed)" },
     ],
   };
@@ -314,7 +334,7 @@ export function normalizeStudioAddress(value: string): Hex {
   return getAddress(value.trim()) as Hex;
 }
 
-function decimalField(draft: StudioDraft, field: keyof StudioDraft, issues: StudioIssue[], bits = 256): bigint | null {
+function decimalField(draft: StudioDraft, field: "startAt" | "endAt" | "scheduleIntervalSeconds" | "scheduleGraceSeconds" | "maxOccurrences", issues: StudioIssue[], bits = 256): bigint | null {
   const value = draft[field];
   if (!DECIMAL.test(value)) {
     issues.push({ field, message: `${fieldLabel(field)} must be an unsigned decimal integer.` });
@@ -354,6 +374,7 @@ function fieldLabel(field: keyof StudioDraft): string {
     router: "Router",
     asset: "Asset",
     target: "Allowed target",
+    payeeCanRequest: "Payee requester access",
     requester: "Authorized requester",
     maxPerAction: "Maximum per payment",
     dailyCap: "Maximum per day",
