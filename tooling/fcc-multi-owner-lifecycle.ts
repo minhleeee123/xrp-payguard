@@ -227,7 +227,10 @@ async function run(options: MultiOwnerCLI): Promise<void> {
 
     stage = "independent owner and requester funding";
     const ownerGasTarget = parseEther("2");
-    const requesterGasTarget = parseEther("1");
+    // Requester performs three request creations plus one execution; retain a
+    // conservative buffer so a denial-matrix failure cannot be mistaken for a
+    // policy result when Coston2 gas prices move.
+    const requesterGasTarget = parseEther("2.5");
     const tokenFundingTarget = 1_000_000n;
     const [sourceGas, sourceToken, ownerGasBefore, ownerTokenBefore, requesterGasBefore] = await Promise.all([
       client.getBalance({ address: configured.account.address }),
@@ -400,8 +403,8 @@ async function run(options: MultiOwnerCLI): Promise<void> {
       privateMaterialRecorded: false,
     }, null, 2));
   } catch (error) {
-    void error;
-    throw new Error(`multi-owner lifecycle failed closed at ${stage}; ephemeral recovery remains at ${recoveryPath}`);
+    const detail = error instanceof Error ? error.message.split("\n", 1)[0] : "unknown public-safe error";
+    throw new Error(`multi-owner lifecycle failed closed at ${stage}: ${detail}; ephemeral recovery remains at ${recoveryPath}`);
   }
 }
 
