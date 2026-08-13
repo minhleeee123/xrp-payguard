@@ -182,7 +182,7 @@ export class ProductionMonitor {
   }
 
   #recordIncident(kind, severity, state, at) {
-    this.#incidents.push({ kind, severity, state, at, runbook: "docs/technology/operations-runbook.md" });
+    this.#incidents.push({ kind, severity, state, at, runbook: "docs/technology/verification.md" });
     if (this.#incidents.length > MAX_INCIDENTS) this.#incidents.splice(0, this.#incidents.length - MAX_INCIDENTS);
   }
 }

@@ -1,7 +1,8 @@
 # XRP PayGuard submission draft
 
-> Prepared 2026-08-09 and technically refreshed 2026-08-13. This is a copy-ready draft, not evidence that a
-> DoraHacks submission, demo video, organizer review, or user pilot occurred.
+> Prepared 2026-08-09 and technically refreshed 2026-08-13. This is a
+> copy-ready draft, not evidence that a DoraHacks submission, public video
+> upload, organizer review, or user pilot occurred.
 
 ## Project
 
@@ -102,9 +103,9 @@ evidence without publishing the policy rules themselves.
 - Architecture: [`technology/architecture.md`](technology/architecture.md)
 - Verification matrix: [`technology/verification.md`](technology/verification.md)
 - Threat model: [`technology/threat-model.md`](technology/threat-model.md)
-- Roadmap: [`product/production-readiness-plan.md`](product/production-readiness-plan.md)
-- Demo video: local captioned capture recorded and validated; **public upload
-  URL not yet available**. See [`demo-video.md`](demo-video.md).
+- Roadmap: [`../PLAN.md`](../PLAN.md)
+- Demo video: final local video is ready; its public upload URL remains an
+  owner submission field until supplied.
 
 ## Coston2 public identifiers
 
@@ -137,7 +138,6 @@ its documented boundary. VeilBid was read-only: its secrets, deployments,
 evidence, signatures, extension IDs, and machine identities were not copied.
 The complete retrospective new-work classification is in
 [`new-work-ledger.md`](new-work-ledger.md). Detailed adaptation provenance is in
-[`technology/reuse-ledger.md`](technology/reuse-ledger.md) and
 [`technology/reuse-inventory.md`](technology/reuse-inventory.md).
 
 ## Honest limitations
@@ -153,6 +153,9 @@ The complete retrospective new-work classification is in
   The older isolated three-actor lifecycle is historical evidence only.
 - No verified PayGuard release manifest, external audit, mainnet integration,
   user interview, pilot, revenue, partnership, or traction claim exists.
+- On 2026-08-13 the owner confirmed testing every implemented
+  submission-boundary surface and flow, and all passed to the owner's
+  satisfaction. This is founder acceptance, not independent user validation.
 - Ordinary XRP/FXRP transfers expose amount, recipient, timing, and transaction
   graph. PayGuard is not private money or a mixer.
 
@@ -180,8 +183,11 @@ caps, incident coverage, and a verified release manifest.
   disabled.
 - [x] Record and locally validate a captioned production demo without showing
   `.env.local`, credentials, keys, raw signatures, or private policy material.
-- [ ] Owner-review and upload the demo video, then add its public URL.
-- [ ] Add only user/community/pilot facts that actually occurred; otherwise
-  retain the explicit zero-session statement.
+- [x] Complete owner acceptance across every implemented submission-boundary
+  surface and flow; all passed to the owner's satisfaction on 2026-08-13.
+- [x] Owner-review and accept the final local demo video.
+- [ ] Upload the demo video and add its public URL.
+- [x] Keep structured external validation as a disclosed post-hackathon target;
+  do not relabel owner acceptance or informal feedback as participant evidence.
 - [ ] Submit from the owner's account and save the resulting public submission
   URL or receipt.

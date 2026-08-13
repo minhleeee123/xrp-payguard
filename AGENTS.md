@@ -22,7 +22,6 @@ nonce, time window, and code version.
 10. `docs/technology/threat-model.md`
 11. `docs/technology/verification.md`
 12. `docs/technology/reuse-inventory.md`
-13. `docs/lessons/veilbid-build-lessons.md`
 
 ## 3. Source priority
 

@@ -195,16 +195,19 @@ body byte-for-byte to its reviewed local source. A fresh production Chrome
 read also observed `production monitor healthy` and the aggregate `5
 dependencies · 0 active alerts` row with no browser credential. The prior full
 Coston2 lifecycle and Lighthouse results remain attached to their earlier
-pinned artifacts. The hackathon headline is **103 of 105 pre-hackathon gates
-(98.1%)**. The two open items are owner/account confirmation and real user
-validation. The completed production-monitoring row was pulled forward and
+pinned artifacts. The hackathon headline is **104 of 105 pre-hackathon gates
+(99.0%)**. On 2026-08-13 the owner confirmed hands-on testing of every
+implemented submission-boundary surface and flow, and all passed to the
+owner's satisfaction. The only open pre-submission item is the owner-only
+form/account/video-upload/submission action; the final local video has already
+been reviewed and accepted by the owner. The completed production-monitoring row was pulled forward and
 added to both sides of the count; other post-hackathon roadmap rows remain
 excluded.
 
 ## Remaining-gate audit
 
-`PLAN.md` retains 17 unchecked full-roadmap rows: two pre-submission items and
-15 post-hackathon items. They require external, user, uncontrolled-protocol,
+`PLAN.md` retains 17 unchecked full-roadmap rows: one pre-submission item and
+16 post-hackathon items. They require external, user, uncontrolled-protocol,
 hardware, audit, or release evidence that the repository cannot manufacture
 through another local unit test. A post-hackathon row is not a pre-submission
 technical blocker:
@@ -212,7 +215,8 @@ technical blocker:
 | Timing | Dependency | Open evidence required |
 | --- | --- | --- |
 | Before submission — owner-only | Organizer/account | Enabled final form, owner eligibility, bounty selection, public video URL, submission URL/receipt |
-| Before submission — validation target | Users | 15 interviews/usability sessions; retain the explicit zero-session disclosure until they occur |
+| Completed before submission | Owner acceptance | Owner confirmed every implemented submission-boundary surface and flow was tested and passed; this is not independent user validation |
+| Post-hackathon | External users | 15 consented interviews/usability sessions; retain the explicit zero-session disclosure until they occur |
 | Post-hackathon | Remaining FCC operations | Hardware-backed independent operators; verified-release promotion; proxy, RPC, FDC, FTSO, and indexer outage drills. Hosted simulated V2 relay/web and lifecycle plus V1 replacement/executor recovery already pass. |
 | Post-hackathon | Uncontrolled protocol conditions | A real `DirectMintingDelayed` resume and official partial/default FAssets recovery with canonical PayGuard consumption |
 | Post-hackathon | Independent assurance | External contract/TEE review, exact-candidate remediation, and production security audit |

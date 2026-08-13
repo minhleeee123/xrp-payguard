@@ -10,5 +10,6 @@ packages/contracts/out/
 .local/
 .vercel/
 evidence/local/
+submission/
 *.log
 .DS_Store

@@ -23,7 +23,7 @@ independent license or supply-chain audit.
 
 | Input | Classification | Exact boundary |
 |---|---|---|
-| Owner-supplied Summer Signal material under `docs/reference/original/` | `REFERENCE_ONLY` | Copied during bootstrap at `329f2f1`; source workspace commit and SHA-256 values are frozen in [`reference/SOURCE-PROVENANCE.md`](reference/SOURCE-PROVENANCE.md). It supplies context, not implementation or PayGuard evidence. |
+| Owner-supplied Summer Signal material | `REFERENCE_ONLY` | Reviewed during bootstrap at `329f2f1`; historical source and hash records remain available in Git history. It supplies context, not implementation or PayGuard evidence. |
 | VeilBid workspace at `d28b2d448e8f08f684b55162453dd69b5ba46964` | `REFERENCE_ONLY` with specifically recorded `ADAPTED` patterns | Read-only lessons, ECIES interoperability, domain/relay, and operational patterns. No `.env`, secret, deployment, address, extension ID, machine identity, signature, ciphertext, or evidence is a PayGuard fact. Accepted adaptations are enumerated in [`technology/reuse-inventory.md`](technology/reuse-inventory.md). |
 | Official Flare FCE scaffold, initial review `ffb6c4ca7c160c49be59e00fe537e24d2477b000`, current operational pin `e3f587949069780084e2ced8a53c9419ed05c250` | `THIRD_PARTY` pattern/dependency | Container and instruction-routing contract inspected read-only. The pinned checkout had no license file, so no source file was copied wholesale. PayGuard has its own commands, domains, ingress, policy logic, images, deployment, and evidence. |
 | Official Flare contracts, registries, documentation, `tee-node`, and `go-flare-common` | `THIRD_PARTY` protocol/dependencies | Used through pinned packages, supported registry discovery, and runtime verification. A documentation or reference address does not become a PayGuard release fact. |
@@ -54,8 +54,8 @@ the repository's Git history and path-level history.
 
 - Toolchains, package-manager output, third-party packages, official protocol
   behavior, public chain state, and external service responses.
-- Files under `docs/reference/original/`, copied `.reference.md` material, and
-  lessons derived from VeilBid.
+- Historical owner-supplied and VeilBid reference inputs retained in Git
+  history, plus lessons derived from VeilBid.
 - Any key, credential, account, deployment, signature, machine identity, or
   evidence originating in VeilBid.
 - Organizer approval, bounty eligibility, user research, pilots, audits,

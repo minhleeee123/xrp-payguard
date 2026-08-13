@@ -142,8 +142,8 @@ the supplied state. V1 derives a purpose-separated, chain-bound ABI message for
 the pinned tee-node `v0.0.24` sign port, then recovers the registered signer
 through the Ethereum signed-message wrapper. Raw-digest, wrong-chain,
 cross-purpose, and high-S signatures fail closed; the exact convention and
-remaining live boundary are recorded in `fcc-attestation-domain.md`. The local
-token adapter accepts only explicitly enabled ERC-20-like assets and does not
+remaining live boundary are covered by shared fixtures and the verification
+plan. The local token adapter accepts only explicitly enabled ERC-20-like assets and does not
 claim that any Flare reference address is a PayGuard release fact. Local
 replacement coverage registers a different machine only for a separately
 receipted policy version; the replacement signer is rejected for the old

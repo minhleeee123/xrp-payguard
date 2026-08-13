@@ -29,13 +29,14 @@ Forbidden evidence:
 | F — Vault conservation | deposits/reservations/spend/refund and adversarial invariants | LOCAL PASS / VAULT DEPLOYED / LIVE FAssets REQUEST/PAYOUT OBSERVED / CANONICAL SETTLEMENT + DEFAULT RECOVERY OPEN |
 | G — XRP-native funding | XRPL payment, FDC proof, Smart Account deposit | PASS — live PayGuard-owned Coston2 evidence in [`evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json`](../../evidence/coston2/xrp-fdc-smart-account-funding-2026-08-09.json) covers validated XRPL Testnet payment, FDC request/finalized round/proof commitment, on-chain `verifyXRPPayment`, `executeDirectMintingWithData`, and verified PayGuardVault accounting. The credential-free [`coston2-funding-resume-audit-2026-08-09.json`](../../evidence/coston2/coston2-funding-resume-audit-2026-08-09.json) reconstructs that checkpoint and re-verifies its proof/runtime bindings. The separate [`xrpl-fdc-trigger-pending-2026-08-09.json`](../../evidence/coston2/xrpl-fdc-trigger-pending-2026-08-09.json) binds a second validated XRPL payment and finalized proof to atomic replay consumption and one canonical router `Pending` request. Canonical private FDC evaluation passes locally, but that exact live trigger was not sent through the separately verified simulated FCC lifecycle; delayed resubmission, end-to-end FDC→FCC execution, and release gates remain open. |
 | H — Product release | full roles, recovery, accessibility, live deployment | INTERACTIVE VERCEL DAPP + SELF-SERVICE OWNER UI + LIVE RAILWAY SIMULATED-FCC V2 MULTI-OWNER LIFECYCLE + INDEPENDENT AUTHENTICATED AGGREGATE MONITORING + V1 REPLACEMENT/EXECUTOR RECOVERY + PUBLIC-SAFE REPOSITORY EVIDENCE + LANDING + BROWSER SMOKE / HARDWARE, V2 OUTAGE MATRIX, CANONICAL V2 REDEMPTION, USER VALIDATION, AND RELEASE MANIFEST OPEN |
-| I — User validation | interviews, usability, and design-partner pilot | NOT STARTED — INTERVIEWS/USABILITY ARE A PRE-SUBMISSION VALIDATION TARGET; PILOTS AND RELEASE ACCEPTANCE REMAIN POST-HACKATHON |
+| I — Acceptance and user validation | owner acceptance, interviews, usability, and design-partner pilot | OWNER ACCEPTANCE PASS — ON 2026-08-13 THE OWNER CONFIRMED EVERY IMPLEMENTED SUBMISSION-BOUNDARY SURFACE AND FLOW WAS TESTED AND PASSED; STRUCTURED EXTERNAL COHORT VALIDATION AND PILOTS REMAIN NOT STARTED/POST-HACKATHON |
 
 Gate timing is explicit: owner account/form/video/submission actions happen
-before an actual hackathon submission can be claimed; interviews/usability are
-an open pre-submission validation target and must retain a zero-session
-disclosure until real participants complete them. The live portions of Gates
-0/A–H, the design-partner pilot portion of Gate I, external review, release
+before an actual hackathon submission can be claimed. Founder acceptance is
+complete for the implemented submission boundary. Structured interviews,
+usability, and pilots remain post-hackathon and retain a zero-session disclosure
+until real participants complete them. The live portions of Gates 0/A–H, the
+external-validation and design-partner portions of Gate I, external review, release
 promotion, and production/mainnet work are post-hackathon, except for the
 completed production-monitoring row explicitly pulled into the submission
 boundary on 2026-08-11. The simulated demo
@@ -296,9 +297,9 @@ verifies:
 The source-complete V2 preparation layer is checked separately with
 `pnpm candidate:build`. It produces an ignored `local-build` record with
 `verified: false` and cannot satisfy this release section. The structural live
-validators and the human/network re-observation sequence are defined in the
-[V2 promotion runbook](coston2-v2-promotion-runbook.md). The tracked candidate
-plan retains six explicit external blockers until those activities occur.
+validators and human/network re-observation inputs are tracked by
+`releases/candidates/coston2-v2.plan.json`. The candidate remains
+non-authoritative until every recorded blocker is independently satisfied.
 
 ## 5. Release acceptance
 

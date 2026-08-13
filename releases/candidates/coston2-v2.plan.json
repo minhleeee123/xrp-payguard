@@ -76,9 +76,9 @@
     "tooling/coston2-v2-outage-drills.mjs",
     "tooling/coston2-v2-redemption.mjs",
     "tooling/user-validation.mjs",
-    "docs/technology/coston2-v2-promotion-runbook.md",
-    "docs/product/user-validation-protocol.md",
-    "docs/product/user-validation-aggregate.template.json"
+    "docs/technology/verification.md",
+    "PLAN.md",
+    "tooling/fixtures/user-validation-aggregate.template.json"
   ],
   "promotionRules": [
     "Never copy this plan to the authoritative manifest path",

@@ -101,8 +101,8 @@ export function userValidationPlan() {
   return {
     status: "planned",
     verified: false,
-    protocol: "docs/product/user-validation-protocol.md",
-    template: "docs/product/user-validation-aggregate.template.json",
+    protocol: "PLAN.md#phase-9--post-hackathon-pilots-and-distribution",
+    template: "tooling/fixtures/user-validation-aggregate.template.json",
     tasks: USER_TASKS,
     minimumCohorts: { xrplUsers: 5, treasuryOrDaoUsers: 5, paymentRecipientsOrExecutors: 5 },
     command: "pnpm candidate:user-validation:verify -- <aggregate-report.json>",

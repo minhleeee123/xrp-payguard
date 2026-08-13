@@ -2,12 +2,12 @@
 
 ## 1. Authority and freshness
 
-The owner-supplied Summer Signal materials are copied under
-[`reference/original/`](reference/original/). Their project dates, prize values,
-submission fields, and organizer links are preserved as supplied, but must be
-reconfirmed with the organizer before any submission. This document converts
-the supplied brief into PayGuard engineering gates; it does not assert that an
-old date or prize remains current.
+The owner-supplied Summer Signal materials were reviewed during repository
+bootstrap and remain recoverable from Git history. Their project dates, prize
+values, submission fields, and organizer links must be reconfirmed with the
+organizer before submission. This document converts that supplied brief into
+PayGuard engineering gates; it does not assert that an old date or prize
+remains current.
 
 On 2026-08-09, the server-rendered public
 [DoraHacks event](https://dorahacks.io/hackathon/flaresummersignal) identified
@@ -147,9 +147,14 @@ The demo must explain what is public, what remains inside FCC, why the action
 was allowed or denied, and how to recover. The roadmap must distinguish shipped
 facts from planned audit, mainnet, operator, and product work.
 
-## 5. Pre-submission validation targets
+## 5. Acceptance and post-hackathon validation
 
-Before submission, target at least:
+On 2026-08-13 the owner confirmed hands-on testing of every implemented
+submission-boundary surface and flow, and all passed to the owner's
+satisfaction. This founder-acceptance gate does not establish independent user
+validation, production readiness, or traction.
+
+Post-hackathon, target at least:
 
 - five XRPL-user interviews;
 - five treasury/DAO interviews;
@@ -159,5 +164,5 @@ Before submission, target at least:
 
 Never invent usage, acquisition, partnership, security, or production claims.
 If these sessions have not occurred, retain the explicit zero-session
-disclosure and leave the validation gate open. Repository tests cannot replace
-participant evidence.
+disclosure and leave the external-validation gate open. Owner acceptance and
+repository tests cannot replace participant evidence.

@@ -9,5 +9,6 @@ release manifest.
 `candidates/coston2-v2.plan.json` is the non-authoritative V2 preparation plan.
 It is deliberately `planned`, `verified: false`, and lists every live blocker.
 `pnpm candidate:build` creates only an ignored local build record; neither that
-record nor the plan may be copied to the authoritative manifest path. Follow
-the [promotion runbook](../docs/technology/coston2-v2-promotion-runbook.md).
+record nor the plan may be copied to the authoritative manifest path. Release
+acceptance remains defined in the
+[verification plan](../docs/technology/verification.md#5-release-acceptance).

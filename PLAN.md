@@ -95,12 +95,19 @@ owner, payee, executor, and auditor inspect public execution evidence
 Unchecked boxes do not all have the same deadline:
 
 - **Before submission — owner actions:** confirm the enabled DoraHacks form,
-  account eligibility, and bounty selection; review/upload the video; submit
-  from the owner account; retain the resulting public URL or receipt.
-- **Before submission — validation target:** the Phase 0 interviews/usability
-  sessions improve product evidence but remain honestly `0 sessions` until real
-  participants complete them. Local tests cannot close this gate, and the
-  submission must not imply that it passed.
+  account eligibility, and bounty selection; upload the owner-reviewed final
+  video; submit from the owner account; retain the resulting public URL or
+  receipt.
+- **Before submission — owner acceptance:** on 2026-08-13 the owner confirmed
+  hands-on testing of every implemented submission-boundary surface and flow,
+  including the landing, Policy Studio, vault, requests, Payment details, Demo
+  lifecycle, public evidence, relay, and monitoring states. All passed to the
+  owner's satisfaction. This is founder acceptance, not independent user
+  validation or a production-release claim.
+- **Post-hackathon — external validation:** the structured XRPL-user,
+  treasury/DAO, and recipient/executor sessions remain honestly `0 sessions`
+  until qualifying participants complete them. Owner acceptance and local tests
+  do not close that separate research gate.
 - **Post-hackathon — live/release work:** these gates stay separate from the
   submission count even when completed later. Stable A/B/D FCC origins,
   authenticated indexer access, registered simulated custody/evaluation,
@@ -112,9 +119,9 @@ Unchecked boxes do not all have the same deadline:
 
 One formerly post-hackathon production-monitoring row was deliberately pulled
 into the pre-submission boundary and completed on 2026-08-11. Therefore the
-current hackathon count is 103 completed gates out of 105, while the same two
-owner/user gates remain open. No other post-hackathon row is included in that
-headline.
+current hackathon count is 104 completed gates out of 105. The only open
+pre-submission gate is the owner-only DoraHacks/form/submission action. No
+post-hackathon row is included in that headline.
 
 The original hackathon boundary did not require a V2 deployment or a verified
 production FCC release to demonstrate its explicitly simulated solution-3
@@ -130,10 +137,11 @@ be claimed.
   organizer approval, or granted infrastructure.
 - [ ] Confirm final dates, form mechanics, bounty eligibility, and any granted
   FCC access in the owner's DoraHacks/organizer session before submission.
-- [ ] Pre-submission validation target: conduct at least five XRPL-user
-  interviews, five treasury/DAO interviews, and five payment-recipient
-  usability sessions. Until then, retain the explicit zero-session disclosure;
-  do not treat source tests as user validation.
+- [x] Owner acceptance: on 2026-08-13 the owner confirmed testing every
+  implemented part of the submission-boundary product and reported that all
+  tested surfaces and flows passed. This covers founder acceptance only; it
+  does not claim independent cohort validation, hardware-backed FCC, audit,
+  mainnet, or verified-release readiness.
 - [x] Select the first narrow policy problem and record why private policy
   evaluation is necessary instead of an ordinary public smart contract.
 - [x] Freeze product non-claims, data map, threat model, and one-sentence demo.
@@ -597,6 +605,11 @@ Exit: source, runtime, bindings, UI, docs, and public-safe evidence agree.
 
 ### Phase 9 — post-hackathon pilots and distribution
 
+- [ ] Post-hackathon: conduct at least five XRPL-user interviews, five
+  treasury/DAO interviews, and five payment-recipient/executor usability
+  sessions under the consented validation protocol. Until then, retain the
+  explicit zero-session disclosure and do not treat owner acceptance or source
+  tests as independent user validation.
 - [ ] Post-hackathon: run one personal subscription pilot and one treasury
   recurring-payment pilot.
 - [ ] Post-hackathon: measure setup completion, activation time, failed-action

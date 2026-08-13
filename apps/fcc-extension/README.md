@@ -70,7 +70,8 @@ The second starts three disposable simulated machines, verifies distinct fresh
 identities and container hardening, exercises fail-closed malformed ingress,
 checks identity rotation on restart, then removes all test resources. The image
 defaults to production attestation; only `compose.local.yaml` opts into
-simulation. See `docs/technology/fcc-container-build.md` for the exact boundary.
+simulation. The exact confidentiality and release boundaries are summarized in
+`docs/technology/architecture.md` and `docs/technology/verification.md`.
 
 Do not copy the VeilBid extension wholesale or reuse its extension ID, code hash,
 machine identities, sealed data, or deployment evidence.
