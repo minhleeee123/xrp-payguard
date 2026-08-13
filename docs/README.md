@@ -7,8 +7,8 @@ product, verify its implementation boundary, or reproduce the public evidence.
 
 - [`hackathon-handoff.md`](hackathon-handoff.md): current demo boundary,
   validation results, public links, and limitations.
-- [`submission-draft.md`](submission-draft.md): copy-ready submission facts and
-  owner-only completion steps.
+- [`submission-draft.md`](submission-draft.md): submitted BUIDL facts, public
+  links, provenance, and post-submission claim boundaries.
 - [`competition.md`](competition.md): selected track, judging requirements, and
   claim boundaries.
 - [`new-work-ledger.md`](new-work-ledger.md): new, adapted, third-party, and

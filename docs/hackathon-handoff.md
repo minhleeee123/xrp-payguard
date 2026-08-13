@@ -41,8 +41,10 @@ path may be presented as hardware-backed confidentiality or mainnet production.
 
 - Application: <https://xrp-payguard.vercel.app/>
 - Evidence index: <https://xrp-payguard.vercel.app/evidence/index.json>
-- Demo video: local validated MP4 exists under ignored `evidence/local/`; public
-  upload remains owner-only and no public video URL is claimed.
+- Demo video: <https://www.youtube.com/watch?v=1J21DoN9PuI> — owner-reviewed
+  final 7:02 demonstration with synchronized English narration and captions.
+- Submitted BUIDL: <https://dorahacks.io/buidl/47777> — Interoperable Asset
+  Products, confirmed by the owner on 2026-08-14.
 - Vercel deployment ID: `dpl_EUQheMMg5snBo5ht7CWAHWPgEYth`
 - Deployed source commit: `62f8a9717dc5adedab1302772521707dcb4f18a4`
 - Railway relay: <https://payguard-live-relay-production.up.railway.app>
@@ -195,26 +197,26 @@ body byte-for-byte to its reviewed local source. A fresh production Chrome
 read also observed `production monitor healthy` and the aggregate `5
 dependencies · 0 active alerts` row with no browser credential. The prior full
 Coston2 lifecycle and Lighthouse results remain attached to their earlier
-pinned artifacts. The hackathon headline is **104 of 105 pre-hackathon gates
-(99.0%)**. On 2026-08-13 the owner confirmed hands-on testing of every
+pinned artifacts. The hackathon headline is **105 of 105 pre-hackathon gates
+(100%)**. On 2026-08-13 the owner confirmed hands-on testing of every
 implemented submission-boundary surface and flow, and all passed to the
-owner's satisfaction. The only open pre-submission item is the owner-only
-form/account/video-upload/submission action; the final local video has already
-been reviewed and accepted by the owner. The completed production-monitoring row was pulled forward and
+owner's satisfaction. On 2026-08-14 the owner published the final demo and
+confirmed submission of [BUIDL 47777](https://dorahacks.io/buidl/47777) to
+Interoperable Asset Products. The completed production-monitoring row was pulled forward and
 added to both sides of the count; other post-hackathon roadmap rows remain
 excluded.
 
 ## Remaining-gate audit
 
-`PLAN.md` retains 17 unchecked full-roadmap rows: one pre-submission item and
-16 post-hackathon items. They require external, user, uncontrolled-protocol,
+`PLAN.md` retains 16 unchecked full-roadmap rows, all post-hackathon. They
+require external, user, uncontrolled-protocol,
 hardware, audit, or release evidence that the repository cannot manufacture
 through another local unit test. A post-hackathon row is not a pre-submission
 technical blocker:
 
 | Timing | Dependency | Open evidence required |
 | --- | --- | --- |
-| Before submission — owner-only | Organizer/account | Enabled final form, owner eligibility, bounty selection, public video URL, submission URL/receipt |
+| Completed before submission | Organizer/account | Owner confirmed final form/account/bounty selection, published the video, and retained BUIDL 47777 |
 | Completed before submission | Owner acceptance | Owner confirmed every implemented submission-boundary surface and flow was tested and passed; this is not independent user validation |
 | Post-hackathon | External users | 15 consented interviews/usability sessions; retain the explicit zero-session disclosure until they occur |
 | Post-hackathon | Remaining FCC operations | Hardware-backed independent operators; verified-release promotion; proxy, RPC, FDC, FTSO, and indexer outage drills. Hosted simulated V2 relay/web and lifecycle plus V1 replacement/executor recovery already pass. |

@@ -94,10 +94,10 @@ owner, payee, executor, and auditor inspect public execution evidence
 
 Unchecked boxes do not all have the same deadline:
 
-- **Before submission — owner actions:** confirm the enabled DoraHacks form,
-  account eligibility, and bounty selection; upload the owner-reviewed final
-  video; submit from the owner account; retain the resulting public URL or
-  receipt.
+- **Completed before submission — owner actions:** on 2026-08-14 the owner
+  confirmed the enabled DoraHacks form/account/bounty selection, published the
+  reviewed final video, submitted to Interoperable Asset Products, and retained
+  the public [BUIDL 47777](https://dorahacks.io/buidl/47777) URL.
 - **Before submission — owner acceptance:** on 2026-08-13 the owner confirmed
   hands-on testing of every implemented submission-boundary surface and flow,
   including the landing, Policy Studio, vault, requests, Payment details, Demo
@@ -119,14 +119,14 @@ Unchecked boxes do not all have the same deadline:
 
 One formerly post-hackathon production-monitoring row was deliberately pulled
 into the pre-submission boundary and completed on 2026-08-11. Therefore the
-current hackathon count is 104 completed gates out of 105. The only open
-pre-submission gate is the owner-only DoraHacks/form/submission action. No
-post-hackathon row is included in that headline.
+current hackathon count is 105 completed gates out of 105 (100%). No
+pre-submission gate remains open, and no post-hackathon row is included in that
+headline.
 
 The original hackathon boundary did not require a V2 deployment or a verified
 production FCC release to demonstrate its explicitly simulated solution-3
-boundary. It does need the owner actions above before an actual submission can
-be claimed.
+boundary. The required owner actions are now complete; hardware, release,
+external-validation, pilot, and production work remains post-hackathon.
 
 ### Phase 0 — competition, product, and user discovery
 
@@ -135,8 +135,11 @@ be claimed.
   existing-project, and currently-disabled-form observations plus FCC's
   not-fully-public status without calling any of them account eligibility,
   organizer approval, or granted infrastructure.
-- [ ] Confirm final dates, form mechanics, bounty eligibility, and any granted
-  FCC access in the owner's DoraHacks/organizer session before submission.
+- [x] On 2026-08-14 confirm the final form mechanics and owner account/bounty
+  selection, publish the reviewed demo, submit to Interoperable Asset Products,
+  and retain public [BUIDL 47777](https://dorahacks.io/buidl/47777). This does
+  not claim organizer acceptance, an eligibility determination, granted FCC
+  hardware, judging outcome, or an award.
 - [x] Owner acceptance: on 2026-08-13 the owner confirmed testing every
   implemented part of the submission-boundary product and reported that all
   tested surfaces and flows passed. This covers founder acceptance only; it

@@ -1,10 +1,16 @@
 # Protocol and contract specification
 
-> The local V1 ABI/state machine now exists under `packages/contracts/src` and
-> is covered by Foundry tests. Its three contracts and vault wiring are verified
-> on Coston2 in `evidence/coston2/contracts-deployment.json`. A separate
-> registered Coston2 `SIMULATED_TEE` lifecycle exercises both V1 historical and
-> active V2 candidate contracts,
+> **Version clarification:** the active submission route is the PayGuard V2
+> Coston2 registry/vault/router namespace. This specification retains “V1” for
+> the original ABI/state-machine generation and `POLICY_SCHEMA_V1`; those labels
+> do not mean the hosted demo or submission is deployed on V1. The retained V1
+> deployment and evidence are historical rollback/recovery provenance only.
+>
+> The base V1 ABI/state machine exists under `packages/contracts/src` and is
+> covered by Foundry tests. Its historical three-contract deployment and vault
+> wiring are recorded in `evidence/coston2/contracts-deployment.json`. A
+> separate registered Coston2 `SIMULATED_TEE` lifecycle exercises the active V2
+> candidate while preserving historical V1 observations,
 > but this document does not assert hardware-backed FCC execution, a complete
 > release, or a production audit.
 > A manager-backed `PayGuardPolicyRegistryV2` is deployed and runtime/constructor

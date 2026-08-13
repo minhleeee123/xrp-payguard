@@ -1,8 +1,9 @@
 # XRP PayGuard submission draft
 
-> Prepared 2026-08-09 and technically refreshed 2026-08-13. This is a
-> copy-ready draft, not evidence that a DoraHacks submission, public video
-> upload, organizer review, or user pilot occurred.
+> Prepared 2026-08-09 and technically refreshed through 2026-08-14. The owner
+> confirmed submission of [BUIDL 47777](https://dorahacks.io/buidl/47777) to
+> Interoperable Asset Products and published the final demo. This is not
+> evidence of organizer acceptance, judging outcome, award, or user pilot.
 
 ## Project
 
@@ -10,9 +11,10 @@
 
 **Selected bounty:** Interoperable Asset Products
 
-The owner confirmed this track selection on 2026-08-09. DoraHacks account
-eligibility, final form availability, submission, acceptance, and any award
-remain unverified until evidenced from the owner's session.
+The owner confirmed this track selection on 2026-08-09 and submission of
+[BUIDL 47777](https://dorahacks.io/buidl/47777) on 2026-08-14. Organizer
+acceptance, an independent eligibility determination, judging outcome, and any
+award remain unverified.
 
 **One-sentence description:** XRP PayGuard lets an XRPL-native user fund a
 public Flare vault and define a confidential recurring-payment policy whose
@@ -104,8 +106,8 @@ evidence without publishing the policy rules themselves.
 - Verification matrix: [`technology/verification.md`](technology/verification.md)
 - Threat model: [`technology/threat-model.md`](technology/threat-model.md)
 - Roadmap: [`../PLAN.md`](../PLAN.md)
-- Demo video: final local video is ready; its public upload URL remains an
-  owner submission field until supplied.
+- Demo video: <https://www.youtube.com/watch?v=1J21DoN9PuI>
+- Submitted BUIDL: <https://dorahacks.io/buidl/47777>
 
 ## Coston2 public identifiers
 
@@ -177,17 +179,14 @@ caps, incident coverage, and a verified release manifest.
 - [x] Flare integration, new work, provenance, and limitations drafted.
 - [x] Recheck the public event page for the exact deadline, published package,
   track direction, existing-project policy, and public form state.
-- [ ] Reconfirm the enabled final form fields, account eligibility, and bounty
-  selection directly in the owner's DoraHacks session before submitting; the
-  last recorded public-page check on 2026-08-09 found the submission form
-  disabled.
+- [x] Owner confirmed the enabled final form/account/bounty selection and
+  submitted BUIDL 47777 to Interoperable Asset Products on 2026-08-14.
 - [x] Record and locally validate a captioned production demo without showing
   `.env.local`, credentials, keys, raw signatures, or private policy material.
 - [x] Complete owner acceptance across every implemented submission-boundary
   surface and flow; all passed to the owner's satisfaction on 2026-08-13.
 - [x] Owner-review and accept the final local demo video.
-- [ ] Upload the demo video and add its public URL.
+- [x] Upload the demo video and add its public YouTube URL.
 - [x] Keep structured external validation as a disclosed post-hackathon target;
   do not relabel owner acceptance or informal feedback as participant evidence.
-- [ ] Submit from the owner's account and save the resulting public submission
-  URL or receipt.
+- [x] Submit from the owner's account and retain the public BUIDL 47777 URL.

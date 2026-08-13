@@ -30,11 +30,26 @@ PayGuard is not private money, a mixer, or a hidden-transfer system. Amount,
 recipient, timing, asset, and transaction graph remain visible on their
 respective public ledgers.
 
+## Current status
+
+| Dimension | Status |
+| --- | --- |
+| Active contract deployment | **PayGuard V2** on Flare Coston2, chain ID `114` |
+| FCC profile | Registered A/B/D machines using `SIMULATED_TEE` |
+| Hackathon submission | **Submitted** to Interoperable Asset Products as [BUIDL 47777](https://dorahacks.io/buidl/47777) |
+| Production release maturity | Live testnet candidate; not yet a hardware-attested verified release |
+| V1 status | Historical rollback and recovery provenance only; not the active demo or submission deployment |
+
+`V2` identifies the active PayGuard contract/deployment generation. “Verified
+release” is a separate maturity status; the V2 candidate is live and tested on
+Coston2 without being represented as hardware-attested production.
+
 ## Judge highlights
 
 - **Real XRP interoperability:** a validated XRPL Testnet payment was proven
   through FDC, minted through a Flare Smart Account, and accounted for in the
-  PayGuard vault; public FAssets redemption observations complete the XRP path.
+  PayGuard vault; separate public FAssets redemption observations demonstrate
+  the exit segment back to XRPL.
 - **Private rules, public authorization:** three registered Coston2 FCC
   machines hold the policy copies and two matching machine-signed evaluations
   authorize the exact public action. The current machines are explicitly
@@ -92,8 +107,9 @@ reviewed runbook and authorization.
 ## Hackathon track
 
 **Selected track: Interoperable Asset Products.** The owner confirmed this as
-the primary track on 2026-08-09. This selection is not a claim that the project
-has already been submitted, accepted, judged eligible, or awarded a bounty.
+the primary track on 2026-08-09 and submitted [BUIDL 47777](https://dorahacks.io/buidl/47777)
+to that track on 2026-08-14. Submission is not a claim of organizer acceptance,
+judging outcome, eligibility determination, or award.
 
 This is the strongest evidence-backed fit because the repository records a real
 testnet XRP interoperability path:
@@ -105,6 +121,11 @@ testnet XRP interoperability path:
 4. exact vault accounting and public conservation; and
 5. separate public amount-based and destination-tag FAssets redemption
    observations.
+
+These are connected product segments with separate live testnet evidence, not
+one claimed transaction journey spanning FDC funding, FCC authorization,
+execution, and redemption. That single canonical end-to-end evidence run
+remains post-hackathon work.
 
 The **Confidential Compute Apps** track is not selected for the current
 submission boundary. PayGuard now has three stable, registered Coston2
@@ -134,7 +155,7 @@ individuals and treasury teams.
 
 ## Flagship journey
 
-The end-to-end product flow is:
+The intended end-to-end product flow is:
 
 1. The owner creates a spending policy locally and sends encrypted copies to
    three registered FCC machines; policy plaintext never enters public chain
@@ -188,6 +209,9 @@ different assurance levels:
   `2 = PRODUCTION`, and completed real dispatch/delivery plus verified TEE,
   proxy, custody, and evaluation signatures. The runtime remains explicitly
   `SIMULATED_TEE`; status `2` is not represented as hardware attestation.
+- FAssets redemption is evidenced separately from the funding and FCC runs;
+  the repository does not claim one canonical FDC→FCC→execute→redemption
+  transaction journey.
 
 ## How PayGuard uses Flare
 
@@ -196,8 +220,8 @@ different assurance levels:
 | FAssets / FTestXRP / FXRP | Public XRP-backed vault asset and supported redemption exit | Live Coston2 funding and two public redemption observations; canonical default recovery remains open |
 | FDC | Verify exact XRPL payments and selected external trigger facts | Live `XRPPayment` funding and one atomic `Pending` trigger pass; Web2Json remains local-only |
 | Smart Accounts | Bind an XRPL user, PersonalAccount, nonce, fee, and exact `0xFE` operation | One direct-mint-to-vault transaction and a credential-free historical reconstruction pass |
-| FTSOv2 | Supply a canonical, bounded, fresh reference value for policies denominated outside the native asset | Deterministic TypeScript/Go/Solidity logic and fail-closed adapters pass locally; no live FCC lifecycle using an FTSO snapshot is claimed |
-| FCC | Store sealed policy copies and produce machine-signed deterministic evaluations | Typed extension, ciphertext-only atomic store, reproducible Railway image, authenticated Coston2 indexer, three stable registered simulated machines, signed PING, all-three live V2 custody, live two-of-three ALLOW/execute/CAP-denial, and V1 C→D replacement recovery; hardware attestation, the remaining V2 outage matrix, and verified release remain open |
+| FTSOv2 | Supply a canonical, bounded, fresh reference value for policies denominated outside the native asset | Deterministic TypeScript/Go/Solidity logic and fail-closed adapters pass locally; no live FCC lifecycle using an FTSO snapshot is claimed, and FTSO is not required by the demonstrated fixed-FTestXRP journey |
+| FCC | Store sealed policy copies and produce machine-signed deterministic evaluations | Typed extension, ciphertext-only atomic store, reproducible Railway image, authenticated Coston2 indexer, three stable registered simulated machines, signed PING, all-three live V2 custody, and live two-of-three ALLOW/execute/CAP-denial pass; hardware attestation, the remaining V2 outage matrix, and verified-release promotion remain open |
 
 ## Policy and authorization model
 
@@ -233,30 +257,35 @@ On-chain state is the canonical replay and rollback authority.
 
 ## What is verified now
 
-Snapshot: 2026-08-13. [`PLAN.md`](PLAN.md) records **104 of 105 pre-hackathon
-gates (99.0%)** complete. The owner confirmed hands-on testing of every
-implemented submission-boundary surface and flow, and all passed to the
-owner's satisfaction. The only open pre-submission gate is the owner-only final
-form/account/bounty/video-upload/submission action; the final local video has
-already been reviewed and accepted by the owner. Structured external cohort
-validation remains a disclosed post-hackathon target and is not inferred from
-owner acceptance. The live production-monitoring gate was deliberately
+Snapshot: 2026-08-14. [`PLAN.md`](PLAN.md) records **105 of 105 pre-hackathon
+gates (100%)** complete. The owner confirmed hands-on testing of every
+implemented submission-boundary surface and flow, published the final demo,
+and submitted [BUIDL 47777](https://dorahacks.io/buidl/47777) to Interoperable
+Asset Products. Structured external cohort validation remains a disclosed
+post-hackathon research target and is not inferred from founder acceptance.
+It is not an incomplete submission gate. The live production-monitoring gate was deliberately
 pulled forward and added to both numerator and denominator; all remaining
 explicit post-hackathon gates stay outside this headline count.
 
 | Area | Verified result | Important limitation |
 | --- | --- | --- |
-| Contracts | A parallel V2 registry/vault/router namespace is deployed and runtime/constructor/wiring checked on Coston2; V2 immutably binds the official manager, extension `66037`, code hash, and chain-114-only simulated profile | This is a live simulated candidate, not the hardware-attested verified release manifest; V1 remains available only as a rollback namespace |
+| Contracts | The active V2 registry/vault/router deployment is runtime/constructor/wiring checked on Coston2; V2 immutably binds the official manager, extension `66037`, code hash, and chain-114-only simulated profile | This is a live simulated V2 candidate, not yet a hardware-attested verified release |
 | XRP-native funding | Validated XRPL Payment → finalized FDC proof → on-chain `verifyXRPPayment` → Smart Account direct mint → `1,000,000` UBA vault deposit | The observed mint did not enter `DirectMintingDelayed` |
 | Canonical FDC trigger | A separate 100-drop payment/proof was atomically replay-consumed into one router request with status `Pending` | No FCC evaluation, `ALLOW`, reserve, or execution followed |
 | Private protocol | Cross-language policy codecs, schedule/spend math, FTSO/FDC composition, threshold domains, replay, atomic ciphertext persistence, adversarial vectors, stable FCC origins, authenticated indexer access, registration, signed PING, all-three custody, two-of-three live evaluation, and replacement recovery pass | The live machines use organizer-supported simulated attestation; hardware-backed custody and the full dependency-outage matrix remain absent |
-| Live FCC lifecycle | Three registered Railway machines encrypted/stored one policy independently, returned three verified receipts/evaluations, and drove V2 through ALLOW→execute, `CAP_EXCEEDED` DENY, owner-only stop/resume/revoke, and exact vault conservation; the earlier V1 run also records executor-pause and replacement recovery | `SIMULATED_TEE=true`; the complete V2 outage matrix and hardware release manifest remain open |
+| Live FCC lifecycle | Three registered Railway machines encrypted/stored one policy independently, returned three verified receipts/evaluations, and drove the active V2 deployment through ALLOW→execute, `CAP_EXCEEDED` DENY, owner-only stop/resume/revoke, and exact vault conservation | `SIMULATED_TEE=true`; the complete V2 outage matrix and hardware release manifest remain open |
 | Solution-3 demo lifecycle | Fourteen successful Coston2 transactions cover simulated three-machine registration, policy registration, recurring allow, cap denial, stop/resume/revoke, and exact vault conservation | The older demo identities and result signers are explicitly ephemeral simulation and separate from the live Railway run |
 | FAssets exit | Amount-based and `redeemWithTag` Coston2 requests have matching validated XRPL payouts and `RedemptionPerformed` observations | Partial/default recovery and canonical PayGuard settlement consumption remain open |
 | Web2Json | Local source commitment allowlist, exact public request, jq/tuple ABI, MIC/response, source-asserted freshness, replay, and verifier failure tests pass | No production source, live proof, source-truth guarantee, private policy evaluation, or on-chain consumer |
-| Web + hosted relay | The production Vercel dApp and Railway relay use the V2 namespace for authenticated ciphertext-only ingress, three custody receipts, request-ID-only two-of-three evaluation, execution, cap denial, and owner lifecycle. Its 26-asset evidence mirror includes aggregate production-monitor, stale-machine pause, and independent-owner lifecycle evidence; explicit V1 addresses remain rollback metadata | This is the Coston2 `SIMULATED_TEE=true` V2 candidate, not a hardware-backed verified release or mainnet production |
+| Web + hosted relay | The production Vercel dApp and Railway relay use the active V2 namespace for authenticated ciphertext-only ingress, three custody receipts, request-ID-only two-of-three evaluation, execution, cap denial, and owner lifecycle. Its 26-asset evidence mirror includes aggregate production-monitor, stale-machine pause, and independent-owner lifecycle evidence | This is the Coston2 `SIMULATED_TEE=true` V2 candidate, not a hardware-backed verified release or mainnet production |
 | Production monitoring | An independent Railway service probes the relay, Coston2 RPC, and A/B/D, retains bounded aggregate samples/incidents, exposes only origin-bound aggregate health publicly, and protects status/metrics/incidents with a managed bearer | This is availability monitoring for the simulated testnet candidate, not an SLA, security audit, hardware proof, or release promotion |
 | Release | Release and V2 candidate validators fail closed | `pnpm release:check` remains `planned`; the live candidate stays `verified: false` until the post-hackathon outage, canonical redemption, independent pilot-validation, and hardware-release gates pass; these are not submission blockers |
+
+Historical V1 addresses and recovery observations are retained only as rollback
+and provenance evidence. They are not the active demo, hosted route, or
+submission deployment. Likewise, the live FDC funding/trigger, V2 FCC
+authorization/execution, and FAssets redemption observations are separate
+evidence segments; no single canonical run spanning all three is claimed.
 
 ## Coston2 public identifiers
 
@@ -273,7 +302,7 @@ hashes, wiring, and the exact source commit used for each deployment.
 | `PayGuardXrplFdcTrigger` | [`0x4b626E2DA4D45034C8fAA38D10AbDfD4921486b2`](https://coston2-explorer.flare.network/address/0x4b626E2DA4D45034C8fAA38D10AbDfD4921486b2) |
 | `FlareTeeManager` | [`0x1a9C4A0f9D76c0b1D91d22E24E573a9b377618aE`](https://coston2-explorer.flare.network/address/0x1a9C4A0f9D76c0b1D91d22E24E573a9b377618aE) |
 | FCC extension and machines | Extension `66037`; active registered simulated machines A/B/D are indexed by the [Coston2 Systems Explorer](https://coston2-systems-explorer.flare.network/tee/objects) |
-| Hosted FCC relay | <https://payguard-live-relay-production.up.railway.app> · `COSTON2_SIMULATED_V2` · authenticated owner ingress and exact-requester evaluation · V1 Railway rollback retained |
+| Hosted FCC relay | <https://payguard-live-relay-production.up.railway.app> · active `COSTON2_SIMULATED_V2` route · authenticated owner ingress and exact-requester evaluation |
 | Supported test asset | FTestXRP `0x0b6A3645c240605887a5532109323A3E12273dc7`, resolved and checked through supported Flare runtime sources |
 
 Exact machine identities, dispatch/freeze/ALLOW/DENY transactions, rollback
@@ -517,14 +546,15 @@ Railway machines now exercise the organizer-supported `SIMULATED_TEE=true`
 Coston2 path; this improves live integration evidence without being presented
 as hardware attestation.
 
-Before an actual hackathon submission can be claimed, the owner must confirm
-the enabled DoraHacks form/account/bounty selection, upload the reviewed final
-demo video, submit from the owner account, and retain the public URL or receipt.
-The owner has completed founder acceptance across all implemented
-submission-boundary surfaces and flows. Structured interviews and usability
-sessions remain a post-hackathon validation target; until real sessions occur,
-the project retains the explicit zero-session disclosure and does not present
-owner acceptance as independent user validation.
+The owner completed the form/account/bounty checks, published the reviewed
+final demo, and submitted [BUIDL 47777](https://dorahacks.io/buidl/47777) to
+Interoperable Asset Products on 2026-08-14. This establishes submission, not
+organizer acceptance, eligibility, judging outcome, or an award. The owner also
+completed founder acceptance across all implemented submission-boundary
+surfaces and flows. Structured interviews and usability sessions remain a
+post-hackathon research target; until real sessions occur, the project retains
+the explicit zero-session disclosure and does not present owner acceptance as
+independent user validation.
 
 The remaining technical, release, pilot, and production gates are explicitly
 **post-hackathon**:
@@ -555,7 +585,8 @@ current hackathon scope.
 7. [`docs/technology/architecture.md`](docs/technology/architecture.md) —
    component, data-flow, trust, and recovery model.
 8. [`docs/technology/contract-spec.md`](docs/technology/contract-spec.md) —
-   V1 schemas, domains, state transitions, and contract rules.
+   `POLICY_SCHEMA_V1`, domains, state transitions, and contract rules used by
+   the active V2 deployment; the schema version is not the deployment version.
 9. [`docs/technology/verification.md`](docs/technology/verification.md) — test
    matrix, evidence gates, and release acceptance.
 10. [`docs/hackathon-handoff.md`](docs/hackathon-handoff.md) — reproducible demo,

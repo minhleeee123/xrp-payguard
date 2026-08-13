@@ -26,8 +26,11 @@ interoperable asset track. It also reports that the public submission and
 registration forms were disabled at that check. Those fields are a dated
 public-page observation, not proof that the owner's account is eligible, that a
 final form will expose identical fields, that PayGuard has been accepted into a
-bounty, or that any organizer FCC capacity was granted. Final account/form/
-selection checks therefore remain an owner-session Gate 0 item.
+bounty, or that any organizer FCC capacity was granted. The owner later
+completed the account/form/selection check and submitted
+[BUIDL 47777](https://dorahacks.io/buidl/47777) to Interoperable Asset Products
+on 2026-08-14. This records submission, not organizer acceptance, eligibility,
+judging outcome, or an award.
 
 The [official FCC overview](https://dev.flare.network/fcc/overview), fetched on
 the same date, states that FCC is in the final stages of development and is not
@@ -38,9 +41,10 @@ submission.
 ## 2. Target bounty strategy
 
 The owner confirmed **Interoperable Asset Products** as PayGuard's selected
-hackathon track on 2026-08-09. This records the project decision only; it does
-not prove account eligibility, an enabled or submitted form, organizer
-acceptance, bounty selection receipt, or an award.
+hackathon track on 2026-08-09 and confirmed submission of
+[BUIDL 47777](https://dorahacks.io/buidl/47777) to that track on 2026-08-14.
+This does not prove organizer acceptance, an independent eligibility
+determination, judging outcome, or an award.
 
 ### Interoperable Asset Products — evidence-backed submission target
 
