@@ -7,7 +7,9 @@ describe("desktop application presentation state", () => {
     expect(parseAppRoute("")).toEqual({ surface: "app", view: "demo" });
     expect(parseAppRoute("#app/unknown")).toEqual({ surface: "app", view: "demo" });
     expect(parseAppRoute("#app/overview")).toEqual({ surface: "app", view: "demo" });
-    expect(parseAppRoute("#app/team")).toEqual({ surface: "app", view: "auditor" });
+    expect(parseAppRoute("#app/team")).toEqual({ surface: "app", view: "payment" });
+    expect(parseAppRoute("#app/payee")).toEqual({ surface: "app", view: "payment" });
+    expect(parseAppRoute("#app/auditor")).toEqual({ surface: "app", view: "payment" });
   });
 
   it("keeps landing section anchors on the landing surface", () => {

@@ -250,10 +250,10 @@ provider failure, or state mismatch and never accepts a private key.
 The wallet-free request reader accepts only a non-zero bytes32 ID. It pins the
 router tuple, deployed runtime hashes, registry/vault wiring, and finalized block
 timestamp to one read checkpoint, then re-computes the canonical request hash
-through the shared protocol package. Requests, Payee, and Auditor consume that
-same validated public state. A request lookup never becomes a threshold-result
-or FCC-evidence claim; executed Payee status additionally requires an exact
-settlement transaction receipt.
+through the shared protocol package. Payment details is the sole UI consumer of
+that lookup for status, payee, actor, and verification facts. A router lookup
+never silently becomes a threshold-result, FCC-evidence, conservation, or exact
+settlement-receipt claim; each narrower evidence layer is labelled separately.
 
 The generic router writer can call `execute`, `expire`, or `cancel` only after
 reloading the finalized request and registry policy owner. For an active policy,
@@ -268,13 +268,15 @@ requester or policy owner. The writer then simulates, signs in the injected
 wallet, validates the exact router event, and re-reads the expected terminal
 state. No caller-supplied decision exists in this path.
 
-Overview, Notifications, and Team reuse the same in-memory finalized request
-checkpoint. Notifications hash a single public observation with the block/time
-and request hash; only canonical Allowed/Denied/Executed/Expired states receive
-the corresponding typed request kind, while Pending/Cancelled remain a neutral
-evidence observation. Team labels the bound policy owner, requester, and payee
-as observed actors when no independent role registry exists. Neither projection
-creates an authorization or governance assignment.
+Payment details and the notification tray reuse the same in-memory finalized
+request checkpoint. Notifications hash a single public observation
+with the block/time and request hash; only canonical
+Allowed/Denied/Executed/Expired states receive the corresponding typed request
+kind, while Pending/Cancelled remain a neutral evidence observation. Payment
+details labels owner and requester as public identifiers because no independent
+role registry exists; this creates no authorization or governance assignment.
+The removed Overview route redirects to Demo lifecycle. Removed Team, Payee,
+and Auditor routes redirect to Payment details.
 
 The Demo lifecycle is an evidence consumer, not an evaluator. Its same-origin
 JSON decoder validates the exact solution-3 mode/network/contracts, three
@@ -283,6 +285,13 @@ allow/deny semantics, vault conservation, and mandatory negative production
 assertions before rendering. The Vite evidence plugin applies the existing
 recursive public-safety and simulation guards in both development and build
 delivery; any body drift fails the page closed.
+
+The Landing presents the broader XRP-native architecture as three composable
+paths: XRPL/FDC/Smart Account funding, FCC policy authorization and public
+transfer, and optional FAssets exit. These are separately reviewed Coston2
+observations, not one asserted end-to-end proof. The evidence CTA therefore
+opens Demo lifecycle, where the exact active V2 custody/evaluation scope and its
+hardware/release limitations are decoded.
 
 ### Hosted V2 FCC path and V1 rollback
 

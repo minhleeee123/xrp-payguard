@@ -382,7 +382,7 @@ function fieldLabel(field: keyof StudioDraft): string {
     endAt: "End time",
     scheduleIntervalSeconds: "Schedule interval",
     scheduleGraceSeconds: "Schedule grace",
-    maxOccurrences: "Maximum occurrences",
+    maxOccurrences: "Maximum number of payments",
   })[field];
 }
 

@@ -81,8 +81,13 @@
 .technical-details { margin-top: 14px; }
 .technical-details > .panel { border-right: 0; border-bottom: 0; border-left: 0; }
 .activation-summary > .commitment-card, .activation-summary > .boundary-card { margin-top: 14px; }
-.activation-summary > .activation-action-card { margin: 0; border-color: var(--color-signal-lime); padding: 20px; background: var(--color-carbon); }
-.activation-technical-details { margin: 18px 0 0; }
+.activation-summary > .activation-action-card { margin: 14px 0 0; border-color: var(--color-signal-lime); padding: 20px; background: var(--color-carbon); }
+.activation-policy-commitment { margin-top: 14px; border-left: 2px solid var(--color-signal-lime); padding: 11px 13px; background: var(--color-carbon); }
+.activation-policy-commitment span,
+.activation-policy-commitment small { display: block; }
+.activation-policy-commitment span { color: var(--color-ash); font: 600 9px/1.2 var(--font-inter-tight); letter-spacing: .12em; }
+.activation-policy-commitment code { display: block; overflow-wrap: anywhere; margin: 7px 0 5px; color: var(--color-signal-lime); font: 11px/1.5 var(--font-jetbrains-mono); }
+.activation-policy-commitment small { color: var(--color-ash); font-size: 10px; }
 .activation-action-card > .primary-button,
 .activation-action-card > .outline-button { width: 100%; margin-top: 14px; }
 .activation-owner-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }

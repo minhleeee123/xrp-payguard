@@ -106,6 +106,8 @@ Failure expectations:
 
 ## 4. Payee — inspect settlement
 
+The payee uses the shared **Payment details** destination and enters the public
+Request ID; there is no separate role-specific page or wallet requirement.
 The payee sees the public request, amount, asset, expected window, result status,
 transaction receipt, and any redemption request. The payee never sees target
 rules, aggregate limits, other recipients, internal merchant classifications,
@@ -125,7 +127,9 @@ or private denial reasons.
 
 ## 6. Auditor — verify without a wallet
 
-The auditor reads one finalized checkpoint and verifies:
+The auditor uses the same **Payment details** lookup, then expands its
+verification section rather than repeating the payee/request summary. The
+auditor reads one finalized checkpoint and verifies:
 
 - owner/vault/policy commitment and version;
 - extension, code version, machines, key fingerprints, and receipt quorum;

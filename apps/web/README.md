@@ -1,15 +1,15 @@
 # Web application
 
 Vite laptop-first Coston2 dApp with a full editorial landing page at `#landing`, plus
-Policy Studio, Vaults, Requests, a strict solution-3 Demo lifecycle,
-Payee, and wallet-free Auditor surfaces. Its visual language follows the
+Policy Studio, Vaults, Requests, a strict solution-3 Demo lifecycle, and a
+wallet-free Payment details surface. Its visual language follows the
 repository-level [`DESIGN.md`](../../DESIGN.md). Policy Studio uses a gated
 `Template → Rules → Review → Activate` flow and computes a domain-bound
 commitment from an in-memory draft only. It derives the owner from the connected
 wallet, resolves the configured contract domain, uses human-readable UTC
 controls, and separates disclosure review from activation. All four sections
 remain visible in one vertical document; a sticky step bar follows scrolling and
-jumps to any section without bypassing locked actions. The local candidate can
+jumps to any section without bypassing locked actions. The deployed candidate can
 select the hosted V2 Coston2 candidate, independently encrypt to registered A/B/D
 machines, collect verified receipts through the Railway relay, and register the
 commitment for the connected wallet as policy owner. The owner signs custody,
@@ -25,26 +25,31 @@ hashes against reviewed PayGuard evidence, verifies router/vault wiring and
 the supported FTestXRP metadata, then displays exact C2FLR, wallet FTestXRP,
 allowance, and conservation-checked vault accounting. Runtime, wiring, asset,
 RPC, schema, or conservation drift fails closed and clears every asserted live
-balance. The Vaults writer supports exact FTestXRP approval, deposit, and
-withdrawal through a two-step preview. Before opening the wallet it reuses the
-verified finalized snapshot for balance/allowance checks; it then simulates the
-call, waits for the receipt and a finalized block, validates the exact contract
-event, and proves the expected post-transaction balance change. A rejection,
+balance. The Vaults writer presents one deposit intent and conditionally
+sequences an exact approval before deposit when the finalized allowance is
+insufficient; withdrawal remains a separate action. Before opening the wallet
+it reuses the verified finalized snapshot for balance/allowance checks; it then
+simulates each required call, waits for its receipt and a finalized block,
+validates the exact contract event, and proves the expected post-transaction
+balance change. A rejection,
 revert, missing event, provider failure, or postcondition mismatch is never
 reported as success. Request and execution controls remain separate reviewed
 units.
 
-The landing page includes a public/private data boundary, three inline SVG
-guardian mascots, the complete XRPL/FDC/Smart Account/FAssets/FCC journey,
-policy use cases, public-safe evidence scope, FAQ/limitations, and
-reduced-motion-compatible ambient effects. It makes no remote image request and
-never upgrades the local FCC simulation into a live release claim.
+The landing page includes a public/private data boundary, three compact inline
+SVG guardian mascots, separately labelled funding, confidential authorization,
+and optional-exit paths across XRPL/FDC/Smart Account/FAssets/FCC, policy use
+cases, public-safe evidence scope, FAQ/limitations, and reduced-motion-compatible
+ambient effects. It does not present separate Coston2 observations as one
+end-to-end proof, makes no remote image request, and never upgrades the local
+FCC simulation into a live release claim.
 
 Overview is removed because the Landing already owns onboarding and every
 remaining fact has a dedicated task. Legacy `#app/overview` routes redirect to
 Demo lifecycle. The sidebar groups `Policy Studio → Vaults → Requests` as the
-main flow and `Demo lifecycle → Payee → Auditor` as verification. The former
-Team/roles route redirects to Auditor because no editable role registry exists.
+main flow and `Payment details → Demo lifecycle` as verification. The former
+Team/roles, Payee, and Auditor routes redirect to Payment details because no
+editable role registry exists and all three used the same public ID lookup.
 
 Desktop application views use refresh-safe hashes such as `#app/requests` and
 participate in browser Back/Forward navigation. Landing section hashes remain
@@ -70,8 +75,9 @@ The application shell intentionally omits the repeated workspace label, V2
 candidate banner, sidebar dependency card, and duplicate help link. Header
 balances appear only after a verified finalized read. Vaults omits the large
 explanatory EVM/XRPL path cards; Requests omits the repeated recovery strip; and
-Team omits the duplicate role-registry footer note. Contextual fail-closed
-reasons and evidence limits remain in the task that they qualify.
+the former Team, Payee, and Auditor pages are consolidated into Payment details.
+Contextual fail-closed reasons and evidence limits remain in the task that they
+qualify.
 
 Demo lifecycle makes the reviewed hosted V2 candidate the primary wallet-free
 proof. Its strict decoder requires exactly three distinct status-2 simulated
@@ -93,30 +99,30 @@ secondary accounting, runtime, finality, prepared-operation, and explorer facts
 remain visible directly below it without a disclosure header. Unit coverage and
 a browser preview smoke are complete; a fresh owner-wallet transaction submitted
 from this UI is not yet recorded as release evidence.
-Requests & schedules accepts an exact bytes32 request ID and reads the canonical
+Payment details accepts an exact bytes32 Request ID and reads the canonical
 router tuple at one finalized Coston2 block without requiring a wallet. It
 verifies reviewed runtime hashes, router wiring, the full contract domain, the
 cross-language request hash, status/decision consistency, occurrence window,
-threshold fields, and expiry before publishing any fact. A shared selector on
-Requests, Payee, and Auditor contains only four previously created V2 test IDs
-plus `Enter request ID`. Selecting a test ID copies it into the editable bytes32
+threshold fields, and expiry before publishing any fact. Its selector contains
+only four previously created V2 test IDs plus `Enter Request ID`. Selecting a
+test ID copies it into the editable bytes32
 field below; selecting `Enter request ID` clears that field for manual input.
 Loading either kind still performs a fresh finalized lookup, and a compact note
 separately explains that the four offered IDs come from earlier test runs.
 Canonical on-chain status and time-derived readiness are displayed separately:
 for example, `PENDING` plus `EXPIRED` means the time window passed while the
-request still awaits an on-chain expiry transition. The Payee view uses the same
-separation and never describes that state as an expected future payment;
-executed settlement remains unavailable until its exact transaction receipt is
-also proven.
+request still awaits an on-chain expiry transition. The same result keeps the
+amount, payee, and public outcome visible. An executed router state is not hidden
+when the exact separate payee settlement receipt is unavailable; that narrower
+evidence layer is labelled `PARTIAL` instead.
 
 Requests accepts a public policy commitment shared by its owner. Any connected
 wallet can create a public request as itself; only the exact requester then
 signs the request-specific FCC evaluation authorization. The policy owner does
 not approve each payment. The relay reconstructs public state, obtains two matching
 machine results, and submits them through its bounded executor; the browser
-cannot send a decision or `ALLOW`. The same surface then exposes the router's
-public transitions:
+cannot send a decision or `ALLOW`. Payment details separately exposes the
+router's public transitions:
 execute a chain-derived `ALLOWED` request before its approved expiry, expire a
 `PENDING`/`ALLOWED` request after its request expiry, or cancel as the exact
 requester/policy owner. The policy owner is read from the bound registry policy,
@@ -124,21 +130,18 @@ not supplied by the browser. Each action uses a separate preview, preflight
 simulation, injected-wallet signature, exact router-event verification, and
 finalized terminal-state check. A stopped or revoked policy cannot create
 another request; only a stopped policy can be resumed by its exact owner.
-Auditor request lookup uses the same wallet-free finalized router read and labels
-it only as canonical request-state verification. Full auditor evidence remains
-schema-checked against the request/evaluation digest, frozen machine set,
-finalized input marker, execution status, and vault conservation equation;
-signatures and private policy material are not accepted by the public evidence
-wire, and a Pending request is never upgraded into FCC evidence.
-Payee receipts bind the public target, asset, amount, expected timing, request
-hash, settlement transaction, and resulting checkpoint; missing or drifting
-receipts remain unavailable.
+The collapsed verification section distinguishes finalized router facts from
+reviewed hosted FCC evidence, exact payee settlement receipts, and conservation.
+The reviewed ALLOW and DENY IDs attach their matching hosted evidence; Pending
+and Cancelled examples do not invent an FCC result. Payee receipts bind the
+public target, asset, amount, expected timing, request hash, settlement
+transaction, and resulting checkpoint; missing or drifting receipts remain
+explicitly unavailable without erasing a valid router result.
 The standalone Team & roles page is removed because the active product has no
-editable role registry or team-management controls. Auditor instead shows a
-compact `Actors & permissions` card for the loaded request: registry-bound
-policy owner, exact requester, and public payee. These rows are observations,
-not editable grants, and make no team permission claim. The legacy `#app/team`
-route redirects to Auditor rather than leaving a dead link.
+editable role registry or team-management controls. Payment details shows the
+registry-bound policy owner and exact requester only as public identifiers, not
+editable grants. Legacy `#app/team`, `#app/payee`, and `#app/auditor` routes
+redirect to `#app/payment` rather than leaving dead links.
 Policy Studio custody progress accepts only the schema-checked three-machine
 receipt bundle: each digest/signature must match the frozen binding and the
 shared submission nonce/time window. The configured hosted relay supplies this
@@ -162,6 +165,10 @@ Run locally with the pinned Node toolchain:
 ```sh
 PATH="$PWD/.local/toolchains/bin:$PATH" pnpm --filter @xrp-payguard/web dev
 ```
+
+The current Railway relay allowlist admits the Vite port printed by this
+workspace, `http://localhost:4173`, plus `http://127.0.0.1:4173`. Other local
+ports and unlisted origins fail closed at the relay CORS boundary.
 
 The verified Railway relay origin is also the source default, so a plain
 production build cannot silently omit the live path. A reviewed deployment may
@@ -206,6 +213,6 @@ ciphertext, keys, credentials, or private denial details. The Vercel deployment
 record stays repository-only rather than recursively embedding an inevitably
 stale deployment identifier in its own artifact.
 
-The Auditor view may display this index as a static evidence mirror. It keeps
-the live audit state unavailable until a verified RPC/provider supplies a
-finalized request, result, signer mapping, and conservation snapshot.
+Demo lifecycle and the direct evidence-index link expose this broader corpus.
+Payment details stays request-specific: it attaches hosted FCC/conservation
+evidence only when the decoded reviewed lifecycle matches the exact Request ID.

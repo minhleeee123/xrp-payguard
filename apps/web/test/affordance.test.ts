@@ -86,7 +86,7 @@ describe("application information density", () => {
     expect(main).toContain("nav-group nav-group-proof");
     expect(main).not.toContain("nav-group nav-group-admin");
     expect(main).not.toContain('navItem("team"');
-    expect(main).toContain("observedRequestActorsView()");
+    expect(main).toContain("paymentDetailsView()");
     expect(main).not.toContain('navItem("overview"');
     expect(main).not.toContain("function overviewView");
   });
@@ -138,15 +138,19 @@ describe("application information density", () => {
     expect(main).toContain("void submitVaultTransaction();");
   });
 
-  it("uses human FTestXRP amounts and separates request creation from inspection", () => {
+  it("uses human FTestXRP amounts and separates request creation from payment details", () => {
     expect(main).toContain('inputmode="decimal"');
     expect(main).not.toContain("Maximum per action: 100000");
     expect(main).toContain('inputmode="decimal"');
-    expect(main).toContain('data-request-mode="CREATE"');
-    expect(main).toContain('data-request-mode="INSPECT"');
+    expect(main).toContain('navItem("payment", "Payment details", "◌")');
+    expect(main).toContain('pageIntro("REQUESTS", "Request a payment", "")');
+    expect(main).toContain('pageIntro("PAYMENT DETAILS", "Check a payment", "")');
+    expect(main).not.toContain('data-request-mode="CREATE"');
+    expect(main).not.toContain('data-request-mode="INSPECT"');
     expect(main).not.toContain("Owner creates policy");
     expect(styles).not.toContain(".payment-flow-guide");
-    expect(styles).toContain(".request-mode-tabs");
+    expect(styles).not.toContain(".request-mode-tabs");
+    expect(styles).toContain(".payment-summary-grid");
   });
 
   it("keeps one visible progress trail across multi-signature wallet flows", () => {
@@ -199,15 +203,13 @@ describe("application information density", () => {
     for (const intro of [
       'pageIntro("POLICY STUDIO", "Create a payment policy", "")',
       'pageIntro("VAULTS", "Fund your payment policy", "")',
-      'pageIntro("REQUESTS", "Request or inspect a payment", "")',
+      'pageIntro("REQUESTS", "Request a payment", "")',
       'pageIntro("VERIFY", "Coston2 lifecycle", "")',
-      'pageIntro("PAYEE", "Payment status", "")',
-      'pageIntro("AUDITOR", "Verify public evidence", "")',
+      'pageIntro("PAYMENT DETAILS", "Check a payment", "")',
     ]) expect(main).toContain(intro);
     expect(main).not.toContain("These four public test IDs were created before this browser session");
     expect(main).not.toContain("WHAT REMAINS PRIVATE");
-    expect(main).toContain('class="auditor-more"');
-    expect(main).toContain('class="sr-only"');
+    expect(main).toContain('class="auditor-more payment-verification"');
     expect(styles).toContain("@media (min-width: 761px)");
     expect(styles).toContain(".page-intro h1 { font-size: 48px; }");
     expect(styles).toContain(".nav-item { min-height: 49px;");

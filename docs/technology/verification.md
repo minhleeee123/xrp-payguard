@@ -171,9 +171,9 @@ zero/false. Deterministic tests cover state/time/authorization eligibility,
 exact router events, and terminal postconditions. No new router transaction was
 broadcast from this UI during the check.
 
-The shared-state browser check exposed the finalized request readiness on
-Overview, a hashed public evidence observation in Notifications, and the bound
-policy owner/requester/payee under Team's "observed actors" boundary. It did not
+The earlier shared-state browser check exposed the finalized request readiness
+on Overview, a hashed public evidence observation in Notifications, and the
+bound policy owner/requester/payee under Team's "observed actors" boundary. It did not
 label those actors as editable role grants or turn the Pending request into
 Allowed. The 1440px run retained zero browser storage and no horizontal
 overflow.
@@ -193,17 +193,17 @@ primary action and described wallet reads/guarded writes without upgrading the
 simulated FCC boundary. Visual inspection found no clipped horizontal content;
 the placeholder Team invite and generic detail-toast controls were absent.
 
-Fresh Lighthouse 13.4.1 lab runs against the production landing and Overview
-route scored 99 performance and 100 accessibility, best practices, and SEO for
-both routes. The landing measured FCP/LCP 1,578 ms, TBT 25 ms, and CLS 0; the
-Overview measured FCP/LCP 1,570 ms, TBT 19 ms, and CLS 0. The specific
+Lighthouse 13.4.1 lab runs against the earlier pinned production Landing and
+Overview routes scored 99 performance and 100 accessibility, best practices,
+and SEO for both routes. The landing measured FCP/LCP 1,578 ms, TBT 25 ms, and
+CLS 0; the Overview measured FCP/LCP 1,570 ms, TBT 19 ms, and CLS 0. The specific
 visible-label/accessibility-name mismatch and color-contrast audits both have
 zero remaining nodes after aligning the brand name and raising the canonical
 muted-text token to `#a0a0a0`. Lighthouse estimated 53,714 landing and 55,555
 Overview bytes of unused first-load JavaScript in this run; lab results remain
 environment-dependent.
-This audit covers the landing and Overview routes, not every authenticated or
-provider-bound application state.
+This historical audit covers those Landing and Overview routes, not the
+streamlined 2026-08-13 navigation or every authenticated/provider-bound state.
 
 The production evidence-corpus audit recorded on 2026-08-09 fetched the pinned
 Vercel origin, required JSON content types and HTTP 200, and matched the
@@ -259,6 +259,10 @@ source `62f8a9717dc5adedab1302772521707dcb4f18a4`. The production audit matched
 all 26 bodies byte-for-byte: 25 chain-114 records and three overlapping,
 explicitly bounded simulation records. The current repository-only result is
 [`public-evidence-deployment-audit-2026-08-13.json`](../../evidence/web/public-evidence-deployment-audit-2026-08-13.json).
+The deployed navigation contains only Policy Studio, Vaults, Requests, Demo
+lifecycle, Payee, and Auditor. Legacy Overview and Team routes redirect to Demo
+lifecycle and Auditor; request-bound actor observations moved into Auditor, and
+the notification feed remains a tray rather than a separate workspace.
 
 On 2026-08-10 the isolated interactive namespace passed a 133.29-second gate
 against the public Vercel actor APIs and separate Coston2 contracts. The test
@@ -318,3 +322,14 @@ Release still requires hardware lifecycle evidence, the remaining V2 dependency
 outage and redemption paths, release-bound generated bindings, release-bound
 browser smoke, external review, user testing, and documentation whose claims
 exactly match the deployed state.
+
+## 6. Pending local payment-details validation
+
+The local web workspace consolidates the former Requests inspection tab, Payee,
+and Auditor into `#app/payment`. One finalized router checkpoint now drives the
+primary outcome, while reviewed FCC lifecycle evidence, conservation, and an
+exact payee settlement receipt remain separately gated. Legacy Payee, Auditor,
+and Team hashes redirect to that surface. This change is not yet part of the
+deployed verification record: focused tests, typecheck/build, browser review,
+commit, push, deployment, and hosted smoke remain intentionally pending for the
+owner-approved final batch.

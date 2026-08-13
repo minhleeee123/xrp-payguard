@@ -71,8 +71,10 @@ no credentials. It is not the production network policy.
 
 Three stable Railway origins were built from the pinned extension stack and
 registered through the supported Coston2 flow. A/B/D report manager status `2`,
-and separate evidence verifies proxy/TEE identity, all-three ingress receipts,
-threshold results, C→D replacement, and executor-pause recovery. They run
+while stale machine C was moved to manager status `4` by a separately verified
+pause transaction. Separate evidence verifies proxy/TEE identity, all-three
+ingress receipts, threshold results, C→D replacement, and executor-pause
+recovery. The active machines run
 `SIMULATED_TEE=true` and therefore do not establish hardware confidentiality.
 Neither this local smoke nor an image hash alone may be promoted to PayGuard
 custody/evaluation evidence; only the sanitized live records support those

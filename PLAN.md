@@ -453,11 +453,13 @@ open.
   activation block; hosted V2 ingress, receipt, and activation evidence now pass.
 - [x] Build the Accounts/Vaults surface with injected-wallet Coston2 connection,
   one-finalized-block runtime/wiring/asset verification, public wallet and vault
-  balances, conservation, and recovery copy. Add two-step exact FTestXRP
-  approval/deposit/withdrawal controls with preflight simulation, injected-wallet
-  signing, finalized receipt/event checks, and exact postcondition verification;
-  unit and browser preview checks pass, while a fresh UI-submitted transaction
-  remains outside the current evidence set.
+  balances, conservation, and recovery copy. Add one human-unit deposit intent
+  that conditionally sequences exact FTestXRP approval and deposit, plus a
+  separate withdrawal action, while preserving preflight simulation,
+  injected-wallet signing, per-transaction progress, finalized receipt/event
+  checks, and exact postcondition verification. Unit and browser preview checks
+  pass, while a fresh UI-submitted transaction remains outside the current
+  evidence set.
 - [x] Build the local Schedule/Requests surface with occurrence readiness,
   public threshold decisions, expiry, and recovery. Connect wallet-free exact-ID
   lookup to one finalized Coston2 block with runtime/wiring/domain/request-hash
@@ -478,18 +480,21 @@ open.
   Coston2 transactions, matching allow/deny results, lifecycle governance, and
   conservation while preserving every false production-FCC assertion. Serve the
   same scanner-approved evidence in Vite development and production builds.
-- [x] Build the local Team/Treasury workspace and role-aware public controls;
-  no client role can authorize. Where no role registry exists, show only
-  finalized registry/request actors as observations rather than invented grants;
-  live editable governance remains open.
+- [x] Build and validate the role-aware public projection; no client role can
+  authorize. Because no role registry exists, the final UI consolidates the
+  former Team workspace into Auditor and shows only finalized registry/request
+  actors as observations rather than invented grants; live editable governance
+  remains open.
 - [x] Build a strict public notification feed and export with finalized block/time
   facts and domain-separated hashes. Derive exact terminal request kinds or a
   neutral evidence-checkpoint observation from the validated Coston2 request;
   never infer Ready/Allowed from Pending readiness.
 - [x] Make laptop UX primary with responsive/mobile layout, focus states, and
-  explicit loading/error/recovery copy. Production landing/Overview Lighthouse
-  and all-view responsive/reduced-motion checks pass; manual assistive-technology
-  testing remains open.
+  explicit loading/error/recovery copy. Historical production
+  Landing/Overview Lighthouse and all-view responsive/reduced-motion checks
+  passed; the 2026-08-13 artifact separately passed its targeted production
+  browser, navigation, and corpus checks after Overview/Team consolidation.
+  Manual assistive-technology testing remains open.
 - [x] Add an isolated Interactive Demo namespace with three stateless
   ciphertext-only simulated actors, independently computed signed receipts and
   results, exact wallet previews, two-result threshold submission, lifecycle
@@ -564,10 +569,12 @@ Exit: failure is resumable or explicitly denied, never represented as success.
 - [ ] Post-hackathon: record live personal recurring-payment, cap-denial,
   emergency-stop, recovery, Smart Account funding, and redemption lifecycles.
 - [x] Publish only sanitized public identifiers, hashes, blocks, transactions,
-  timings, and assertion booleans; the latest production-corpus audit fetched all
-  24 listed assets, matched every JSON body byte-for-byte to its reviewed source,
-  reran the public-field/simulation guards, and remains repository-only to avoid
-  recursive evidence publication.
+  timings, and assertion booleans; the 2026-08-13 production-corpus audit fetched
+  all 26 listed assets, matched every JSON body byte-for-byte to its reviewed
+  source, reran the public-field/simulation guards, and remains repository-only
+  to avoid recursive evidence publication. The corpus contains 25 chain-114
+  records and three explicitly bounded simulation records, with overlapping
+  categories.
 - [x] Post-hackathon: deploy the authenticated hosted relay, connect the
   production web to registered A/B/D `SIMULATED_TEE` machines, reject a
   client-supplied decision, and pass one complete Coston2 custody/ALLOW/execute/

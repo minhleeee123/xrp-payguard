@@ -1,6 +1,6 @@
 # Privacy-preserving observability
 
-## Implemented local boundary
+## Implemented telemetry boundary
 
 The relay includes aggregate Prometheus telemetry with a closed label set. The
 metrics endpoint is disabled by default and requires a runtime-only bearer
@@ -18,13 +18,24 @@ timing, and request bodies. Tests assert that rendered metrics contain none of
 these values and that the bearer token never appears in health, errors, or the
 metrics body.
 
-## Production gate
+## Deployed Coston2 monitoring boundary
 
-The local implementation is not deployed monitoring evidence. A production
-release must additionally keep `/metrics` on an operator-only network path,
-source its credential from a managed runtime secret, terminate authenticated
-transport, restrict scraper and dashboard access, define aggregate retention,
-and verify proxy/access/application logs are bodyless and credential-free.
+An independent Railway monitor is deployed at
+<https://payguard-monitor-production.up.railway.app> from source
+`b8512decc0b77acb3669a4d45804a5d07ba3ae03`, deployment
+`89ff04bb-3bbb-4248-acc0-1f2254c66c81`. The reviewed record in
+[`../../evidence/coston2/production-monitoring.json`](../../evidence/coston2/production-monitoring.json)
+verifies five aggregate dependency probes for the relay, Coston2 RPC, and
+active A/B/D machine set; origin-bound public health; managed bearer protection
+for metrics/status/incidents; 1,440-sample and 128-incident retention bounds;
+fixed alerts; and credential-free runtime-log checks. The observed snapshot had
+all five dependencies ready and zero active alerts.
+
+This closes the hackathon deployment-monitoring row for the simulated Coston2
+candidate. It is not an SLA, dependency-outage drill, security audit, hardware
+attestation, verified release, or mainnet-readiness claim. A production release
+must still review operator-network isolation, scraper/dashboard access,
+longer-lived log behavior, and release-bound incident operation.
 
 Alerts may indicate capacity, aggregate unavailability, split outcomes, or
 submission errors. They must link to public-safe runbooks and canonical chain

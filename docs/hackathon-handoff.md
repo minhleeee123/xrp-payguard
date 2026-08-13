@@ -46,7 +46,8 @@ path may be presented as hardware-backed confidentiality or mainnet production.
 - Vercel deployment ID: `dpl_EUQheMMg5snBo5ht7CWAHWPgEYth`
 - Deployed source commit: `62f8a9717dc5adedab1302772521707dcb4f18a4`
 - Railway relay: <https://payguard-live-relay-production.up.railway.app>
-- Railway relay deployment ID: `e30aa889-01dc-4f44-84e8-aa026c5114b3`
+- Railway relay deployment ID: `8500d5e0-5f9b-4ff3-a71d-510447d163cf`
+  — configuration-only redeploy of the same `b8512de` source/image
 - Railway monitor: <https://payguard-monitor-production.up.railway.app>
 - Railway monitor deployment ID: `89ff04bb-3bbb-4248-acc0-1f2254c66c81`
 
@@ -54,8 +55,16 @@ The deployment was built and uploaded through Vercel CLI. It serves the static
 Vite application and a 26-entry reviewed evidence index. The live FCC
 configuration comes from the separate Railway relay; its evaluation route
 rejects any non-empty/client-decision body and accepts only the exact on-chain
-requester's short-lived signature. Historical serverless demo actor
+requester’s short-lived signature. Historical serverless demo actor
 routes are not part of this static artifact and therefore fail closed.
+
+The relay origin allowlist also admits exactly `http://localhost:4173` and
+`http://127.0.0.1:4173` for the reviewed local Vite workflow. After deployment
+`8500d5e0…`, both local origins and the production Vercel origin returned the
+ready V2 config with their exact CORS header, while an unlisted HTTPS origin
+returned `403 origin unavailable`. This changes browser transport access only;
+wallet signatures, exact owner/requester authorization, FCC validation, and
+on-chain thresholds remain mandatory.
 
 A repository-only audit independently fetched the current production index and
 all 26 listed JSON assets, required HTTP 200 plus JSON content types,
@@ -118,9 +127,10 @@ Observed results on the current baseline:
 - The final documentation review secret scan inspected 498 current files and
   291 revisions with zero history findings. Privacy scan inspected 62
   browser/relay/FCC source and build files and found no browser persistence API.
-  The evidence gate accepted 22 sanitized testnet-only Coston2 records. The
-  hosted 25-entry corpus is separately byte-audited and includes the reviewed
-  Railway FCC evidence plus the independent-owner lifecycle.
+  The current evidence gate accepts 23 sanitized testnet-only Coston2 records.
+  The hosted 26-entry corpus is separately byte-audited and includes the
+  reviewed Railway FCC evidence, stale-machine pause, and independent-owner
+  lifecycle.
 - The release check returned `planned` because no verified PayGuard Coston2
   release manifest exists; this is the expected fail-closed outcome.
 
@@ -162,13 +172,15 @@ public RPC:
   on Coston2, and atomically created one replay-protected `Pending` request.
   It deliberately stopped before evaluation, reserve, or execution and used
   only ephemeral simulated policy custody.
-- Production Chrome verified the expanded eight-section/three-SVG-mascot
+- Earlier pinned production Chrome verified the expanded
+  eight-section/three-SVG-mascot
   landing at desktop `1440x1200` and mobile `390x844`, Enter-key activation,
   zero storage entries, no HTTP/console errors, and no horizontal overflow.
   The three guardians now have distinct custody/witness/checkpoint silhouettes;
   the reduced-motion CSS gate reran against the deployed source.
-  Lighthouse 13.4.1 scored both Landing and Overview at 99 performance and 100
-  accessibility, best practices, and SEO, with zero recorded contrast failures.
+  That artifact's Lighthouse 13.4.1 run scored both Landing and Overview at 99
+  performance and 100 accessibility, best practices, and SEO, with zero
+  recorded contrast failures.
 - The fixed-origin V2 demo recorder produced a 74-second, 592-frame, 1440×900 H.264
   MP4 with a silent AAC track and burned captions. `ffprobe` verified the media,
   and the current SHA-256 is
@@ -285,9 +297,21 @@ policy evaluation, or canonical on-chain Web2 consumer.
 - `ea02ba9` — V2-first production demo recorder.
 - `fb626ef` — canonical documentation aligned with the V2 candidate.
 - `3a271bd` — retired V1 actor probes removed from production startup.
+- `dbd5f9a` — self-service policy ownership for arbitrary connected wallets.
+- `119c97e` — independent-owner custody, registration, execution, and governance evidence.
+- `7f7dfc7` — delegated requester/payment path with exact requester authorization.
+- `9f9d2dd` — two-wallet delegated lifecycle and authorization-negative evidence.
+- `4e54463` — consolidated desktop workflows, navigation, and role surfaces.
+- `c71481d` — production artifact audit for the consolidated desktop UI.
+- `5b47b52` / `4c87b83` / `0dfa51a` — simplified policy, payment, and verification flows.
+- `b8512de` — active-machine freshness enforcement and stale-C exclusion.
+- `bddd5ab` — fresh A/B/D monitoring deployment evidence.
+- `62f8a97` — refreshed hosted V2 lifecycle against the exact active set.
+- `cbcb8bd` / `6078bdd` — 26-asset production-corpus baseline and audit.
 
 This list is a handoff-oriented index, not the complete implementation history;
 the remote Git history is authoritative.
 
-The remote `main` branch must match the local HEAD before recording any later
-demo or submission claim.
+Before recording any later demo or submission claim, commit and push the exact
+submission branch, then bind the deployed artifact and evidence audit to that
+reviewed source. Do not infer that an unmerged branch is already on `main`.

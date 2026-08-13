@@ -57,13 +57,19 @@ payload, request identifier, policy, decision, signature, or private key. It is
 not an outage-drill result, SLA, security audit, hardware attestation, verified
 release, or mainnet-readiness claim.
 
-`coston2/fcc-hosted-relay-lifecycle.json` records the hosted Coston2 V1 path
+`coston2/fcc-hosted-relay-lifecycle.json` records the hosted Coston2 V2 path
 through the production Railway relay and registered A/B/D `SIMULATED_TEE`
 machines. It covers authenticated ciphertext-only ingress, three verified
 custody receipts, request-ID-only canonical evaluation, two matching ALLOW and
 DENY submissions, execution, governance, and vault conservation. It contains
 no policy, ciphertext, authorization, signature, credential, or key and does
-not prove hardware attestation, V2, mainnet readiness, or a verified release.
+not prove hardware attestation, mainnet readiness, or a verified release.
+
+`coston2/fcc-stale-machine-c-pause.json` records the verified Coston2 manager
+transaction that moved stale machine C from status `2` to status `4`. It binds
+the exact retained A/B/D status-2 set and contains no private key or credential.
+It proves cleanup of the simulated testnet machine set, not hardware
+attestation or release promotion.
 
 `coston2/fcc-multi-owner-lifecycle.json` records the hosted Coston2 V2
 self-service delegated path with fresh owner and requester wallets funded by
@@ -89,12 +95,18 @@ remains repository-only and is not embedded in its own deployment, avoiding a
 recursive artifact whose deployment identifier would always be one release
 stale.
 
-`web/public-evidence-deployment-audit-2026-08-12.json` is the repository-only
-audit of the current production alias. It fetched the metadata index and all 25
-listed bodies, required HTTP 200/JSON, reran recursive public-safety and
-simulation-boundary checks, and matched every byte to the reviewed local
-source. It is deliberately excluded from the hosted corpus to avoid recursive
-deployment claims and does not promote the simulated candidate to a release.
+`web/public-evidence-deployment-audit-2026-08-12.json` is the historical
+repository-only audit of the previous 25-entry production corpus. It fetched
+the metadata index and every then-listed body, required HTTP 200/JSON, reran
+recursive public-safety and simulation-boundary checks, and matched every byte
+to the reviewed local source.
+
+`web/public-evidence-deployment-audit-2026-08-13.json` is the current
+repository-only audit of the production alias. It matched all 26 hosted bodies
+byte-for-byte to reviewed local sources: 25 chain-114 records and three
+explicitly bounded simulation records, with overlapping categories. It is
+deliberately excluded from the hosted corpus to avoid recursive deployment
+claims and does not promote the simulated candidate to a release.
 
 `simulation/fcc-local-three-machine-2026-08-09.json` records the disposable
 credential-free three-machine Docker smoke selected for the hackathon demo. It
@@ -102,8 +114,8 @@ contains only source/image identifiers and assertion booleans; it explicitly
 records the absence of hardware TEE attestation, stable origins, authenticated
 indexer access, production registration, and a live private-policy lifecycle.
 
-The Vercel build publishes the reviewed Coston2 and explicitly labelled
-simulation JSON files plus the metadata-only
+The Vercel build publishes a 26-entry corpus of reviewed Coston2 and explicitly
+labelled simulation JSON files plus the metadata-only
 `https://xrp-payguard.vercel.app/evidence/index.json` endpoint. The endpoint is
 an evidence mirror, not an authorization endpoint or a release manifest. The
 separate hosted relay URL and its limitations are recorded in the lifecycle

@@ -1,18 +1,12 @@
 import "./styles.css";
 import "./studio.css";
 import {
-  unavailableAuditState,
-  unavailablePolicyCustodyState,
   unavailableNotificationState,
-  unavailablePayeeState,
   unavailableRequestState,
   buildPublicNotificationExport,
   buildUnavailableNotificationExport,
   encodePublicNotificationExport,
-  type PublicAuditReadState,
-  type PublicPolicyCustodyReadState,
   type PublicNotificationReadState,
-  type PublicPayeeReadState,
   type PublicRequestReadState,
   type PublicRequestSnapshotV1,
 } from "@xrp-payguard/integrations";
@@ -31,7 +25,6 @@ import {
   type StudioIssue,
   type StudioTemplateId,
 } from "./model.js";
-import { fetchPublicWebEvidenceIndex, type PublicWebEvidenceIndex } from "./web-evidence.js";
 import { fetchSimulatedLifecycleEvidence, type SimulatedLifecycleEvidence } from "./demo-evidence.js";
 import { fetchLiveV2LifecycleEvidence, type LiveV2LifecycleEvidence } from "./live-lifecycle-evidence.js";
 import { landingView } from "./landing.js";
@@ -104,10 +97,6 @@ import {
 } from "./coston2.js";
 
 const COSTON2_FAUCET = "https://faucet.flare.network";
-type PublicEvidenceMirrorState =
-  | { status: "LOADING" }
-  | { status: "READY"; index: PublicWebEvidenceIndex }
-  | { status: "UNAVAILABLE"; reason: "NOT_PUBLISHED" | "INVALID" };
 type DemoUiState = { status: "LOADING" } | { status: "READY"; evidence: SimulatedLifecycleEvidence } | { status: "UNAVAILABLE" };
 type LiveV2EvidenceUiState = { status: "LOADING" } | { status: "READY"; evidence: LiveV2LifecycleEvidence } | { status: "UNAVAILABLE" };
 type InteractiveConfigUiState = { status: "LOADING" } | { status: "READY"; config: DemoDomainConfig } | { status: "UNAVAILABLE" };
@@ -130,7 +119,6 @@ type VaultTransactionUiState =
   | { status: "SUCCESS"; action: VaultUserAction; amount: bigint; transactions: readonly VaultTransactionSummary[] }
   | { status: "ERROR"; message: string; action?: VaultUserAction; amount?: bigint; steps?: readonly VaultTransactionKind[]; transactions?: readonly VaultTransactionSummary[] };
 type VaultTransactionSummary = { kind: VaultTransactionKind; hash: `0x${string}`; blockNumber: bigint };
-type RequestsMode = "CREATE" | "INSPECT";
 type CustodyProgressStatus = "WAITING" | "ACTIVE" | "COMPLETE" | "ERROR";
 type CustodyProgressStep = { index: 1 | 2 | 3; label: string; status: CustodyProgressStatus; digest?: `0x${string}` };
 type RequestTransactionUiState =
@@ -158,15 +146,13 @@ let studioCompilation: StudioCompilation | null = null;
 let studioIssues: readonly StudioIssue[] = [];
 let appNotice = "";
 let appNoticeTimer: number | undefined;
+let policyCommitmentCopied = false;
+let policyCommitmentCopyTimer: number | undefined;
 let requestState: PublicRequestReadState = unavailableRequestState();
-let auditState: PublicAuditReadState = unavailableAuditState();
-let custodyState: PublicPolicyCustodyReadState = unavailablePolicyCustodyState();
-let payeeState: PublicPayeeReadState = unavailablePayeeState();
 let notificationState: PublicNotificationReadState = unavailableNotificationState();
 let notificationOpen = false;
 let mobileMenuOpen = false;
 let landingOpen = initialRoute.surface === "landing";
-let publicEvidenceMirrorState: PublicEvidenceMirrorState = { status: "LOADING" };
 let demoState: DemoUiState = { status: "LOADING" };
 let liveV2EvidenceState: LiveV2EvidenceUiState = { status: "LOADING" };
 let interactiveConfigState: InteractiveConfigUiState = { status: "UNAVAILABLE" };
@@ -207,7 +193,6 @@ let liveReadSequence = 0;
 let vaultAmountInput = "1";
 let vaultIntent: { action: VaultUserAction; amount: bigint; steps: readonly VaultTransactionKind[] } | null = null;
 let vaultTransactionState: VaultTransactionUiState = { status: "IDLE" };
-let requestsMode: RequestsMode = "CREATE";
 let requestInput: string = REVIEWED_V2_REQUEST_ID;
 let requestLoading = false;
 let requestNotice = "Loading the reviewed Coston2 request from the finalized router…";
@@ -235,10 +220,10 @@ function render(): void {
         <button class="brand brand-link" type="button" data-action="landing" aria-label="Open PayGuard landing page"><span class="brand-mark">P</span><span>PayGuard</span><span class="brand-beta">TESTNET</span></button>
         <nav class="primary-nav" aria-label="Primary navigation">
           <div class="nav-group nav-group-main"><span class="nav-group-label">MAIN FLOW</span>${navItem("studio", "Policy Studio", "◈")}${navItem("vaults", "Vaults", "▣")}${navItem("requests", "Requests", "↗")}</div>
-          <div class="nav-group nav-group-proof"><span class="nav-group-label">VERIFY</span>${navItem("demo", "Demo lifecycle", "⌁")}${navItem("payee", "Payee", "◍")}${navItem("auditor", "Auditor", "◌")}</div>
+          <div class="nav-group nav-group-proof"><span class="nav-group-label">VERIFY</span>${navItem("payment", "Payment details", "◌")}${navItem("demo", "Demo lifecycle", "⌁")}</div>
           <button class="nav-item mobile-more" type="button" data-action="mobile-menu" aria-expanded="${mobileMenuOpen}" aria-controls="mobile-secondary-nav"><span class="nav-icon">＋</span>More</button>
         </nav>
-        ${mobileMenuOpen ? `<div class="mobile-secondary-nav" id="mobile-secondary-nav" aria-label="Secondary navigation">${navItem("demo", "Demo", "⌁")}${navItem("payee", "Payee", "◍")}${navItem("auditor", "Auditor", "◌")}</div>` : ""}
+        ${mobileMenuOpen ? `<div class="mobile-secondary-nav" id="mobile-secondary-nav" aria-label="Secondary navigation">${navItem("payment", "Payment details", "◌")}${navItem("demo", "Demo", "⌁")}</div>` : ""}
         <div class="sidebar-bottom">
           ${sidebarUserRow()}
         </div>
@@ -255,10 +240,10 @@ function render(): void {
 
 function navItem(view: View, text: string, icon: string): string {
   const requestCount = requestState.status === "UNAVAILABLE" ? "" : '<span class="nav-count">1</span>';
-  return `<button class="nav-item nav-item-${view} ${activeView === view ? "active" : ""}" type="button" data-view="${view}"><span class="nav-icon">${icon}</span>${text}${view === "requests" ? requestCount : ""}</button>`;
+  return `<button class="nav-item nav-item-${view} ${activeView === view ? "active" : ""}" type="button" data-view="${view}"><span class="nav-icon">${icon}</span>${text}${view === "payment" ? requestCount : ""}</button>`;
 }
 
-function label(view: View): string { return ({ studio: "Policy Studio", vaults: "Vaults", requests: "Requests", demo: "Demo lifecycle", payee: "Payee", auditor: "Auditor" })[view]; }
+function label(view: View): string { return ({ studio: "Policy Studio", vaults: "Vaults", requests: "Requests", demo: "Demo lifecycle", payment: "Payment details" })[view]; }
 
 function connectedAccount(): Address | null {
   return walletState.status === "CONNECTED" || walletState.status === "WRONG_CHAIN" ? walletState.account : null;
@@ -340,8 +325,7 @@ function viewContent(): string {
   if (activeView === "vaults") return vaultsView();
   if (activeView === "requests") return requestsView();
   if (activeView === "demo") return demoView();
-  if (activeView === "payee") return payeeView();
-  if (activeView === "auditor") return auditorView();
+  if (activeView === "payment") return paymentDetailsView();
   return demoView();
 }
 
@@ -398,7 +382,7 @@ function studioRulesStep(): string {
       <input type="hidden" name="owner" value="${esc(draftOwner)}" /><input type="hidden" name="registry" value="${esc(studioDraft.registry)}" /><input type="hidden" name="vault" value="${esc(studioDraft.vault)}" /><input type="hidden" name="router" value="${esc(studioDraft.router)}" /><input type="hidden" name="asset" value="${esc(studioDraft.asset)}" />
       <section class="studio-rule-group studio-rule-payment"><div class="studio-rule-group-label">PAYMENT</div><div class="studio-rule-identity">${studioField("policyName", "Policy name", "Used to derive the policy ID.", "text")}${studioField("target", "Payee address", "Receives an allowed payment.", "text")}</div>${!ownerMatches ? `<div class="owner-binding-inline"><span class="status-dot amber"></span><div><strong>Owner needs attention</strong><small>${account ? "Rebind this draft before review." : "Connect a wallet to continue."}</small></div>${ownerAction}</div>` : ""}</section>
       <section class="studio-rule-group studio-rule-authorization"><div class="studio-rule-group-label">AUTHORIZATION</div>${studioRequesterControl()}</section>
-      <section class="studio-rule-group studio-rule-limits"><div class="studio-rule-group-label">LIMITS &amp; SCHEDULE</div><div class="two-col studio-limit-grid">${studioField("maxPerAction", "Maximum per payment", "FTestXRP amount, up to 6 decimals.", "decimal")}${studioField("dailyCap", "Maximum per day", "Total FTestXRP allowed per day.", "decimal")}</div><div class="studio-schedule-row"><div class="schedule-choice"><span>Schedule</span><div><label><input type="radio" name="scheduleMode" value="adhoc" ${recurring ? "" : "checked"} />Ad-hoc</label><label><input type="radio" name="scheduleMode" value="recurring" ${recurring ? "checked" : ""} />Recurring</label></div></div><div class="two-col studio-date-grid">${studioDateField("startAt", "Starts at (UTC)")}${studioDateField("endAt", "Ends at (UTC)")}</div></div>${recurring ? `<div class="two-col studio-recurring-grid">${studioField("scheduleIntervalSeconds", "Interval", "Seconds between payment windows.", "numeric")}${studioField("scheduleGraceSeconds", "Grace period", "Must be shorter than the interval.", "numeric")}</div>` : '<input type="hidden" name="scheduleIntervalSeconds" value="0" /><input type="hidden" name="scheduleGraceSeconds" value="0" />'}<details class="domain-details more-options"><summary>Advanced options</summary><div>${studioField("maxOccurrences", "Payment limit", "0 means no policy-specific limit.", "numeric")}</div></details></section>
+      <section class="studio-rule-group studio-rule-limits"><div class="studio-rule-group-label">LIMITS &amp; SCHEDULE</div><div class="two-col studio-limit-grid">${studioField("maxPerAction", "Maximum per payment", "FTestXRP amount, up to 6 decimals.", "decimal")}${studioField("dailyCap", "Maximum per day", "Total FTestXRP allowed per day.", "decimal")}</div><div class="studio-schedule-row"><div class="schedule-choice"><span>Schedule</span><div><label><input type="radio" name="scheduleMode" value="adhoc" ${recurring ? "" : "checked"} />Ad-hoc</label><label><input type="radio" name="scheduleMode" value="recurring" ${recurring ? "checked" : ""} />Recurring</label></div></div><div class="two-col studio-date-grid">${studioDateField("startAt", "Starts at (UTC)")}${studioDateField("endAt", "Ends at (UTC)")}</div></div>${recurring ? `<div class="two-col studio-recurring-grid">${studioField("scheduleIntervalSeconds", "Interval", "How often a new payment window opens. Example: 604800 = every 7 days.", "numeric")}${studioField("scheduleGraceSeconds", "Grace period", "How long each payment window stays open. Example: 86400 = 1 day; must be shorter than Interval.", "numeric")}</div>` : '<input type="hidden" name="scheduleIntervalSeconds" value="0" /><input type="hidden" name="scheduleGraceSeconds" value="0" />'}<details class="domain-details more-options"><summary>Advanced options</summary><div>${studioField("maxOccurrences", "Maximum number of payments", "Total successful payments allowed by this policy. Enter 0 for unlimited.", "numeric")}</div></details></section>
       <div class="studio-action-bar"><button class="outline-button" type="button" data-studio-step="1">Back</button><span id="studio-notice">${esc(studioNotice)}</span><button class="primary-button" type="submit" ${ownerMatches && !locked ? "" : "disabled"}>Review policy</button></div>
     </fieldset>
   </form>`;
@@ -433,7 +417,11 @@ function studioActivateStep(): string {
   const state = !liveFccPolicyRegistration ? ready ? "ACTION REQUIRED" : "LOCKED · COMPUTE FIRST"
     : liveFccPolicyStatus === 1 ? "POLICY ACTIVE"
       : liveFccPolicyStatus === 2 ? "POLICY STOPPED" : "POLICY REVOKED";
-  return `<div class="studio-activate-layout"><section class="panel studio-step-panel activation-summary"><div class="form-header"><div><div class="eyebrow">STEP 04</div><h2>Activate policy</h2></div><span class="state-tag ${active ? "green-tag" : ready ? "amber-tag" : "gray-tag"}">${state}</span></div>${ready ? studioCustodyPanel() : ""}<details class="domain-details activation-technical-details"><summary>Commitment & data map</summary>${studioPreview()}</details><div class="studio-action-bar"><button class="outline-button" type="button" data-studio-step="3">Back</button><button class="text-button" type="button" data-view="demo">Lifecycle evidence ↗</button></div></section></div>`;
+  const commitment = studioCompilation?.publicEvidence.policyCommitment;
+  const commitmentSummary = commitment
+    ? `<div class="activation-policy-commitment"><span>POLICY COMMITMENT</span><code>${esc(commitment)}</code><small>Validated locally · used for custody and on-chain registration</small></div>`
+    : "";
+  return `<div class="studio-activate-layout"><section class="panel studio-step-panel activation-summary"><div class="form-header"><div><div class="eyebrow">STEP 04</div><h2>Activate policy</h2></div><span class="state-tag ${active ? "green-tag" : ready ? "amber-tag" : "gray-tag"}">${state}</span></div>${commitmentSummary}${ready ? studioCustodyPanel() : ""}<div class="studio-action-bar"><button class="outline-button" type="button" data-studio-step="3">Back</button><button class="text-button" type="button" data-view="demo">Lifecycle evidence ↗</button></div></section></div>`;
 }
 
 function unixToDateTimeInput(value: string): string {
@@ -513,7 +501,7 @@ function studioCustodyPanel(): string {
   const policyActive = Boolean(liveFccPolicyRegistration && liveFccPolicyStatus === 1);
   const custodyCompleted = liveFccSession ? 3 : liveCustodyProgress?.filter((step) => step.status === "COMPLETE").length ?? 0;
   const custodyStepCopy = liveFccSession ? "A/B/D receipts verified in memory" : `${custodyCompleted}/3 receipts verified · sign one exact authorization per machine`;
-  const invite = liveFccPolicyRegistration && liveFccSession ? `<div class="request-created-summary policy-invite"><span>Share with the authorized requester</span><input class="policy-share-value" value="${esc(liveFccSession.binding.policyCommitment)}" readonly aria-label="Public policy commitment" /><small>This commitment is public. The requester pastes it in Requests; no private rule is shared.</small><div class="vault-actions"><button class="outline-button" type="button" data-action="copy-policy-commitment">Copy commitment</button><button class="primary-button" type="button" data-action="open-delegated-policy">Open delegated request →</button></div></div>` : "";
+  const invite = liveFccPolicyRegistration && liveFccSession ? `<div class="request-created-summary policy-invite"><span>Share with the authorized requester</span><div class="policy-share-field"><input class="policy-share-value" value="${esc(liveFccSession.binding.policyCommitment)}" readonly aria-label="Public policy commitment" /><button class="icon-button policy-copy-button${policyCommitmentCopied ? " copied" : ""}" type="button" data-action="copy-policy-commitment" aria-label="${policyCommitmentCopied ? "Policy commitment copied" : "Copy public policy commitment"}" title="${policyCommitmentCopied ? "Copied" : "Copy commitment"}">${policyCommitmentCopied ? "✓" : `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="1.5"></rect><path d="M16 8V6.5A1.5 1.5 0 0 0 14.5 5h-9A1.5 1.5 0 0 0 4 6.5v9A1.5 1.5 0 0 0 5.5 17H8"></path></svg>`}</button></div><small>This commitment is public. The requester pastes it in Requests; no private rule is shared.</small><div class="vault-actions"><button class="primary-button" type="button" data-action="open-delegated-policy">Open delegated request →</button></div></div>` : "";
   return `<section class="panel receipt-card activation-action-card"><div class="eyebrow">COMPLETE ACTIVATION</div><h3>Your policy on Coston2</h3><span class="state-tag ${ownerMatches ? "green-tag" : "gray-tag"}">${esc(ownerLabel)}</span><span class="state-tag gray-tag">SIMULATED TEE · TESTNET</span><p class="panel-copy">Your wallet authorizes three independent encrypted copies. After all receipts verify, the same wallet registers the policy and becomes its on-chain owner.</p><div class="activation-steps"><div class="${ownerMatches ? "complete" : "current"}"><span>${ownerMatches ? "✓" : "1"}</span><strong>Owner wallet</strong><small>${ownerMatches ? "Connected wallet matches the policy owner" : "Connect or bind your wallet"}</small></div><div class="${liveFccSession ? "complete" : ownerMatches ? "current" : ""}"><span>${liveFccSession ? "✓" : "2"}</span><strong>Three custody receipts</strong><small>${custodyStepCopy}</small></div><div class="${liveFccPolicyRegistration ? "complete" : liveFccSession ? "current" : ""}"><span>${liveFccPolicyRegistration ? "✓" : "3"}</span><strong>On-chain registration</strong><small>${liveFccPolicyRegistration ? `${registeredState} · finalized block ${liveFccPolicyRegistration.blockNumber}` : "Confirm the registry transaction in your wallet"}</small></div></div>${liveFccSession || liveCustodyProgress ? rows : ""}<div class="activation-block"><span class="status-dot ${policyActive ? "green" : "amber"}"></span><div><strong>${liveFccPolicyRegistration ? `Policy ${registeredState} on Coston2` : liveFccSession ? "3 / 3 receipts ready · registration required" : "Policy not active yet"}</strong><small>${liveFccPolicyRegistration ? "Only this policy owner can stop, resume, or revoke it." : "Private policy, ciphertexts, authorizations, and receipts are discarded on refresh."}</small></div></div>${invite}${action}<small class="panel-copy">${esc(liveFccNotice)}</small></section>`;
 }
 
@@ -532,8 +520,9 @@ function studioField(field: StudioTextField, labelText: string, hint: string, in
   const issue = studioIssues.find((candidate) => candidate.field === field);
   const hintId = `studio-hint-${field}`;
   const decisionField = field === "target" || field === "requester" || field === "maxPerAction" || field === "dailyCap";
+  const visibleHint = field === "scheduleIntervalSeconds" || field === "scheduleGraceSeconds" || field === "maxOccurrences";
   const placeholder = field === "target" || field === "requester" ? "0x…" : field === "maxPerAction" ? "e.g. 0.1" : field === "dailyCap" ? "e.g. 0.5" : "";
-  return `<label class="studio-field ${issue ? "field-error" : ""}">${esc(labelText)}${decisionField ? '<span class="required-label">REQUIRED</span>' : ""}${inputMode === "decimal" ? '<span class="field-unit">FTestXRP</span>' : ""}<input name="${field}" value="${esc(studioDraft[field])}" ${inputMode === "numeric" ? 'inputmode="numeric"' : inputMode === "decimal" ? 'inputmode="decimal"' : 'spellcheck="false"'} ${placeholder ? `placeholder="${placeholder}"` : ""} ${decisionField ? "required" : ""} autocomplete="off" aria-invalid="${Boolean(issue)}" aria-describedby="${hintId}" title="${esc(hint)}" />${issue ? `<span class="field-message" id="${hintId}">${esc(issue.message)}</span>` : `<small class="sr-only" id="${hintId}" data-studio-hint="${field}" data-base-hint="${esc(hint)}">${esc(studioHumanHint(field, studioDraft[field], hint))}</small>`}</label>`;
+  return `<label class="studio-field ${issue ? "field-error" : ""}">${esc(labelText)}${decisionField ? '<span class="required-label">REQUIRED</span>' : ""}${inputMode === "decimal" ? '<span class="field-unit">FTestXRP</span>' : ""}<input name="${field}" value="${esc(studioDraft[field])}" ${inputMode === "numeric" ? 'inputmode="numeric"' : inputMode === "decimal" ? 'inputmode="decimal"' : 'spellcheck="false"'} ${placeholder ? `placeholder="${placeholder}"` : ""} ${decisionField ? "required" : ""} autocomplete="off" aria-invalid="${Boolean(issue)}" aria-describedby="${hintId}" title="${esc(hint)}" />${issue ? `<span class="field-message" id="${hintId}">${esc(issue.message)}</span>` : `<small class="${visibleHint ? "field-hint" : "sr-only"}" id="${hintId}" data-studio-hint="${field}" data-base-hint="${esc(hint)}">${esc(studioHumanHint(field, studioDraft[field], hint))}</small>`}</label>`;
 }
 
 function studioHumanHint(field: StudioTextField, value: string, baseHint: string): string {
@@ -602,7 +591,10 @@ function vaultTransactionPanel(live: Coston2AccountSnapshot | null, account: Add
     : vaultTransactionState.status === "ERROR"
       ? `<div class="transaction-result error-result"><span class="status-dot amber"></span><div><strong>Operation not completed</strong><small>${esc(vaultTransactionState.message)}</small>${vaultTransactionState.transactions?.length ? transactionLinks(vaultTransactionState.transactions) : ""}</div></div>`
       : "";
-  return `<section class="panel vault-transaction-panel"><div class="panel-heading"><div><div class="eyebrow">VAULT ACTION</div><h2>Deposit or withdraw</h2></div><span class="state-tag ${live ? "green-tag" : "amber-tag"}">${live ? "COSTON2 LIVE" : "CONNECT WALLET"}</span></div><label class="transaction-amount">Amount<input id="vault-amount" value="${esc(vaultAmountInput)}" inputmode="decimal" autocomplete="off" placeholder="0.1" ${!live || busy ? "disabled" : ""} /><span class="input-unit">FTestXRP</span><small>${live ? `Wallet ${token(live.tokenBalance)} · vault ${token(live.accounting.available)}` : "Connect wallet to continue"}</small></label><div class="transaction-actions"><button class="primary-button" type="button" data-vault-action="DEPOSIT" ${!live || busy ? "disabled" : ""}>Deposit FTestXRP</button><button class="outline-button" type="button" data-vault-action="WITHDRAW" ${!live || busy ? "disabled" : ""}>Withdraw FTestXRP</button></div>${vaultTransactionProgress()}${result}</section>`;
+  const balances = live
+    ? `<span class="vault-balance-preview"><span>Vault <strong>${token(live.accounting.available)}</strong></span><i>·</i><span>Wallet <strong>${token(live.tokenBalance)}</strong></span><small>FTestXRP</small></span>`
+    : `<span class="vault-balance-preview unavailable">Connect wallet to continue</span>`;
+  return `<section class="panel vault-transaction-panel"><div class="panel-heading"><div><div class="eyebrow">VAULT ACTION</div><h2>Deposit or withdraw</h2></div><span class="state-tag ${live ? "green-tag" : "amber-tag"}">${live ? "COSTON2 LIVE" : "CONNECT WALLET"}</span></div><label class="transaction-amount">Amount<input id="vault-amount" value="${esc(vaultAmountInput)}" inputmode="decimal" autocomplete="off" placeholder="0.1" ${!live || busy ? "disabled" : ""} /><span class="input-unit">FTestXRP</span>${balances}</label><div class="transaction-actions"><button class="primary-button" type="button" data-vault-action="DEPOSIT" ${!live || busy ? "disabled" : ""}>Deposit FTestXRP</button><button class="outline-button" type="button" data-vault-action="WITHDRAW" ${!live || busy ? "disabled" : ""}>Withdraw FTestXRP</button></div>${vaultTransactionProgress()}${result}</section>`;
 }
 
 function vaultTransactionProgress(): string {
@@ -625,22 +617,7 @@ function vaultTransactionProgress(): string {
 }
 
 function requestsView(): string {
-  const snapshot = requestState.status === "UNAVAILABLE" ? undefined : requestState.snapshot;
-  const unavailableReason = requestState.status === "UNAVAILABLE" ? requestUnavailableReason(requestState.reason) : "Finalized public request";
-  const liveReadiness = requestState.status === "UNAVAILABLE" ? undefined : requestState.readiness;
-  const readiness = snapshot && liveReadiness ? requestReadinessLabel(liveReadiness) : "UNAVAILABLE";
-  const stateLabels = snapshot && liveReadiness ? requestStateLabels(snapshot.status, liveReadiness) : undefined;
-  const requestCell = snapshot ? `<strong>${esc(short(snapshot.requestId))}</strong><small>Occurrence ${snapshot.occurrence} · nonce ${snapshot.requestNonce}</small>` : `<strong>—</strong><small>No verified request ID</small>`;
-  const actionCell = snapshot ? `<strong>${esc(short(snapshot.target))}</strong><small>${token(snapshot.amount)} FTestXRP · public transfer</small>` : `<strong>—</strong><small>Target and amount unavailable</small>`;
-  const checkpointCell = snapshot ? `<strong>${esc(short(snapshot.spendCheckpoint))}</strong><small>${snapshot.scheduleSlot > 0n ? `Slot ${snapshot.scheduleSlot}` : "Ad-hoc"} · expires ${utc(snapshot.expiry)}</small>` : `<strong>—</strong><small>Waiting for RPC</small>`;
-  const publicState = snapshot
-    ? `<div class="request-public-state"><div><span>State</span><strong>${stateLabels?.canonical}</strong></div><div><span>Timing</span><strong>${stateLabels?.timing}${stateLabels?.needsExpiryFinalization ? " · finalize expiry" : ""}</strong></div><div><span>Decision</span><strong>${snapshot.decision === "PENDING" ? "Waiting for threshold" : snapshot.decision === "ALLOW" ? "Threshold ALLOW" : `DENY · ${snapshot.publicReasonClass ?? "UNKNOWN"}`}</strong></div><div><span>Checkpoint</span><strong class="mono-value">${esc(short(snapshot.requestHash))}</strong></div></div>`
-    : `<div class="request-public-state"><div><span>State</span><strong>Unavailable</strong></div><div><span>Timing</span><strong>Unavailable</strong></div><div><span>Decision</span><strong>No chain result</strong></div><div><span>Checkpoint</span><strong>—</strong></div></div>`;
-  const modes = `<div class="request-mode-tabs" role="tablist" aria-label="Request tasks"><button type="button" role="tab" data-request-mode="CREATE" aria-selected="${requestsMode === "CREATE"}" class="${requestsMode === "CREATE" ? "active" : ""}"><span>01</span><strong>Request payment</strong></button><button type="button" role="tab" data-request-mode="INSPECT" aria-selected="${requestsMode === "INSPECT"}" class="${requestsMode === "INSPECT" ? "active" : ""}"><span>02</span><strong>Inspect request</strong></button></div>`;
-  const inspector = `${requestLookup()}<section class="panel table-panel"><div class="panel-heading"><div><div class="eyebrow">ACTION REQUEST</div><h2>${snapshot ? "Public request state" : requestLoading ? "Reading finalized state…" : "No verified request loaded"}</h2></div><div class="table-tools"><button class="icon-button" type="button" data-action="load-request" aria-label="Refresh request">↻</button></div></div><div class="request-table"><div class="table-head"><span>REQUEST</span><span>PUBLIC ACTION</span><span>CHECKPOINT</span><span>ON-CHAIN STATE</span><span></span></div><div class="table-row"><span>${requestCell}</span><span>${actionCell}</span><span>${checkpointCell}</span><span><span class="state-tag ${snapshot?.status === "ALLOWED" || snapshot?.status === "EXECUTED" ? "green-tag" : snapshot ? "gray-tag" : "amber-tag"}">${esc(snapshot?.status ?? "UNAVAILABLE")}</span><small>${snapshot ? `Timing: ${esc(readiness)}` : "No timing fact"}</small></span><span></span></div></div>${publicState}<div class="table-footer"><span class="muted">${requestFinalizedBlock ? `Coston2 block ${requestFinalizedBlock}` : esc(unavailableReason)} · finalized read</span></div></section>${requestTransactionPanel(snapshot)}`;
-  return `${pageIntro("REQUESTS", "Request or inspect a payment", "")}
-    ${modes}
-    <div role="tabpanel">${requestsMode === "CREATE" ? livePolicyRequestPanel() : inspector}</div>`;
+  return `${pageIntro("REQUESTS", "Request a payment", "")}${livePolicyRequestPanel()}`;
 }
 
 function livePolicyRequestPanel(): string {
@@ -652,7 +629,7 @@ function livePolicyRequestPanel(): string {
   const requestStatus = liveFccExecution ? "EXECUTED" : liveFccEvaluation?.routerStatus === 3 ? "DENIED" : liveFccEvaluation?.routerStatus === 2 ? "ALLOWED" : request ? "PENDING" : loaded?.status === 1 ? "READY" : policyStatus;
   const policyValue = delegatedPolicyInput || liveFccSession?.binding.policyCommitment || "";
   const targetValue = delegatedTargetInput || (account ?? "");
-  const builder = !request ? `<div class="request-example-picker delegated-request-fields"><label>Policy commitment<input id="delegated-policy-commitment" value="${esc(policyValue)}" autocomplete="off" spellcheck="false" placeholder="0x…" /></label><label>Payee address<input id="delegated-target" value="${esc(targetValue)}" autocomplete="off" spellcheck="false" placeholder="0x…" /></label><label>Amount<input id="live-fcc-request-amount" value="${esc(liveFccRequestAmountInput)}" inputmode="decimal" autocomplete="off" /><span class="input-unit">FTestXRP</span></label></div><div class="vault-actions"><button class="outline-button" type="button" data-action="load-delegated-policy" ${liveFccBusy ? "disabled" : ""}>${liveFccBusy === "LOAD_POLICY" ? "Reading registry…" : "Load policy"}</button>${loaded?.status === 1 && account ? `<button class="primary-button" type="button" data-action="create-live-request" ${liveFccBusy ? "disabled" : ""}>${liveFccBusy === "REQUEST" ? "Waiting for finality…" : "Request payment"}</button>` : !account ? '<button class="primary-button" type="button" data-action="connect">Connect wallet</button>' : ""}</div>${delegatedPolicyNotice ? `<small class="action-status">${esc(delegatedPolicyNotice)}</small>` : ""}` : "";
+  const builder = !request ? `<div class="request-example-picker delegated-request-fields"><label>Policy commitment · from owner<input id="delegated-policy-commitment" value="${esc(policyValue)}" autocomplete="off" spellcheck="false" placeholder="0x…" /><small>Created in Policy Studio · this is not a Request ID.</small></label><label>Payee address<input id="delegated-target" value="${esc(targetValue)}" autocomplete="off" spellcheck="false" placeholder="0x…" /></label><label>Amount<input id="live-fcc-request-amount" value="${esc(liveFccRequestAmountInput)}" inputmode="decimal" autocomplete="off" /><span class="input-unit">FTestXRP</span></label></div><div class="vault-actions"><button class="outline-button" type="button" data-action="load-delegated-policy" ${liveFccBusy ? "disabled" : ""}>${liveFccBusy === "LOAD_POLICY" ? "Reading registry…" : "Load policy"}</button>${loaded?.status === 1 && account ? `<button class="primary-button" type="button" data-action="create-live-request" ${liveFccBusy ? "disabled" : ""}>${liveFccBusy === "REQUEST" ? "Waiting for finality…" : "Request payment"}</button>` : !account ? '<button class="primary-button" type="button" data-action="connect">Connect wallet</button>' : ""}</div>${delegatedPolicyNotice ? `<small class="action-status">${esc(delegatedPolicyNotice)}</small>` : ""}` : "";
   const action = !request ? builder
     : !requesterConnected
       ? `<div class="unavailable-box"><span class="status-dot amber"></span><div><strong>Exact requester wallet required</strong><small>Connect ${esc(short(request.requester))}. The policy owner does not sign this request.</small></div></div>`
@@ -660,7 +637,7 @@ function livePolicyRequestPanel(): string {
         ? `<div class="request-created-summary"><span>Request ID</span><strong class="mono-value">${esc(request.requestId)}</strong></div><button class="primary-button" type="button" data-action="evaluate-live-request" ${liveFccBusy ? "disabled" : ""}>${liveFccBusy === "EVALUATE" ? "A/B/D evaluating…" : "Authorize FCC evaluation"}</button>`
         : liveFccEvaluation.decision === "ALLOW" && liveFccEvaluation.routerStatus === 2 && !liveFccExecution
           ? `<div class="request-created-summary"><span>Threshold result</span><strong>ALLOW · ${token(request.amount)} FTestXRP</strong></div><button class="primary-button" type="button" data-action="execute-live-request" ${liveFccBusy ? "disabled" : ""}>${liveFccBusy === "EXECUTE" ? "Waiting for finality…" : "Receive authorized payment"}</button>`
-          : `<div class="request-created-summary"><span>Final result</span><strong>${esc(requestStatus)}${liveFccEvaluation ? ` · ${esc(liveFccEvaluation.publicReasonClass)}` : ""}</strong></div><button class="outline-button" type="button" data-action="reset-live-request">Prepare another request</button>`;
+          : `<div class="request-created-summary"><span>Final result</span><strong>${esc(requestStatus)}${liveFccEvaluation ? ` · ${esc(liveFccEvaluation.publicReasonClass)}` : ""}</strong></div><div class="vault-actions"><button class="primary-button" type="button" data-view="payment">View payment details →</button><button class="outline-button" type="button" data-action="reset-live-request">Prepare another request</button></div>`;
   const facts = request ? `<div class="live-policy-request-meta"><span>Policy <strong>${esc(short(request.policyCommitment))}</strong></span><span>Owner <strong>${esc(short(loaded?.binding.owner ?? liveFccSession?.binding.owner ?? "—"))}</strong></span><span>Requester <strong>${esc(short(request.requester))}</strong></span><span>Payee <strong>${esc(short(request.target))}</strong></span></div>` : loaded ? `<div class="live-policy-request-meta"><span>Policy <strong>${esc(short(loaded.binding.policyCommitment))}</strong></span><span>Owner <strong>${esc(short(loaded.binding.owner))}</strong></span><span>Status <strong>${policyStatus}</strong></span></div>` : "";
   return `<section class="panel live-policy-request-panel"><div class="panel-heading"><div><div class="eyebrow">POLICY PAYMENT</div><h2>Request payment</h2></div><span class="state-tag ${requestStatus === "READY" || requestStatus === "ALLOWED" || requestStatus === "EXECUTED" ? "green-tag" : requestStatus === "STOPPED" || requestStatus === "REVOKED" ? "amber-tag" : "gray-tag"}">${esc(requestStatus)}</span></div>${facts}<div class="live-policy-request-action">${action}</div>${liveFccNotice ? `<small class="action-status">${esc(liveFccNotice)}</small>` : ""}</section>`;
 }
@@ -668,7 +645,7 @@ function livePolicyRequestPanel(): string {
 function requestLookup(): string {
   const options = REVIEWED_REQUEST_EXAMPLES.map((item) => `<option value="${item.id}" ${requestExampleSelection === item.id ? "selected" : ""}>${item.id}</option>`).join("");
   const custom = requestExampleSelection === "custom";
-  return `<section class="panel request-lookup"><div class="request-lookup-heading"><div class="eyebrow">FINALIZED LOOKUP</div><h2>Inspect request</h2><span class="state-tag sample-context-tag">${isReviewedRequestInput() ? "PREVIOUS TEST ID" : "PUBLIC ID"}</span></div><div class="request-example-picker"><label>Test request<select id="request-example">${options}<option value="custom" ${custom ? "selected" : ""}>Enter request ID</option></select></label><label>Request ID<input id="request-id" value="${esc(requestInput)}" autocomplete="off" spellcheck="false" placeholder="0x…" /></label></div><button class="primary-button" type="button" data-action="load-request" ${requestLoading ? "disabled" : ""}>${requestLoading ? "Reading finalized block…" : "Load request"}</button>${requestNotice ? `<small class="action-status">${esc(requestNotice)}</small>` : ""}</section>`;
+  return `<section class="panel request-lookup"><div class="request-lookup-heading"><div class="eyebrow">FINALIZED LOOKUP</div><h2>Inspect existing request</h2><span class="state-tag sample-context-tag">${isReviewedRequestInput() ? "PREVIOUS TEST ID" : "REQUEST ID ONLY"}</span></div><div class="request-example-picker"><label>Test request<select id="request-example">${options}<option value="custom" ${custom ? "selected" : ""}>Enter Request ID</option></select></label><label>Existing Request ID<input id="request-id" value="${esc(requestInput)}" autocomplete="off" spellcheck="false" placeholder="Created after Request payment" /></label><small>Do not paste a Policy commitment here.</small></div><button class="primary-button" type="button" data-action="load-request" ${requestLoading ? "disabled" : ""}>${requestLoading ? "Reading finalized block…" : "Load request"}</button>${requestNotice ? `<small class="action-status">${esc(requestNotice)}</small>` : ""}</section>`;
 }
 
 function isReviewedRequestInput(): boolean {
@@ -718,7 +695,7 @@ function liveFccDemoView(): string {
   return `${demoSectionIntro("V2 LIVE CANDIDATE · COSTON2", "Run or verify the registered three-machine lifecycle", "Every connected wallet may own a policy. A/B/D custody the encrypted rules; the relay only dispatches public state and submits matching machine results.")}
     <div class="demo-boundary interactive-boundary"><span class="state-tag green-tag">V2 · 3 REGISTERED MACHINES · STATUS 2</span><strong>Live Coston2 · ciphertext-only relay</strong><span>SIMULATED_TEE=true · not hardware attestation · live candidate, not verified release</span></div>
     <div class="demo-actor-mini">${config.machines.map((machine) => `<span>MACHINE ${machine.index} · ${esc(short(machine.teeId))} · PRODUCTION SET</span>`).join("")}</div>
-    <div class="section-grid interactive-demo-grid"><section class="panel"><div class="panel-heading"><div><div class="eyebrow">01 · YOUR V2 VAULT</div><h2>${account ? "Wallet connected" : "Connect your wallet"}</h2></div><span class="state-tag ${account ? "green-tag" : "amber-tag"}">${account ? "SELF-CUSTODIED" : "READ ONLY"}</span></div><p class="panel-copy">Your wallet owns its policy and vault balance. The relay executor pays only for bounded FCC dispatch and cannot stop, revoke, or rewrite your policy.</p>${account ? `<div class="demo-account-grid"><div><span>C2FLR gas</span><strong>${snapshot ? nativeToken(snapshot.nativeBalance) : "—"}</strong></div><div><span>Your vault available</span><strong>${snapshot ? token(snapshot.accounting.available) : "—"} FTestXRP</strong></div><div><span>Finalized block</span><strong>${snapshot?.finalizedBlock ?? "—"}</strong></div></div><div class="vault-actions"><button class="outline-button" type="button" data-action="refresh">Refresh</button><button class="primary-button" type="button" data-view="vaults">Fund your vault</button></div>` : `<div class="vault-actions"><button class="primary-button" type="button" data-action="connect">Connect wallet</button><button class="outline-button" type="button" data-view="auditor">Wallet-free audit</button></div>`}</section>
+    <div class="section-grid interactive-demo-grid"><section class="panel"><div class="panel-heading"><div><div class="eyebrow">01 · YOUR V2 VAULT</div><h2>${account ? "Wallet connected" : "Connect your wallet"}</h2></div><span class="state-tag ${account ? "green-tag" : "amber-tag"}">${account ? "SELF-CUSTODIED" : "READ ONLY"}</span></div><p class="panel-copy">Your wallet owns its policy and vault balance. The relay executor pays only for bounded FCC dispatch and cannot stop, revoke, or rewrite your policy.</p>${account ? `<div class="demo-account-grid"><div><span>C2FLR gas</span><strong>${snapshot ? nativeToken(snapshot.nativeBalance) : "—"}</strong></div><div><span>Your vault available</span><strong>${snapshot ? token(snapshot.accounting.available) : "—"} FTestXRP</strong></div><div><span>Finalized block</span><strong>${snapshot?.finalizedBlock ?? "—"}</strong></div></div><div class="vault-actions"><button class="outline-button" type="button" data-action="refresh">Refresh</button><button class="primary-button" type="button" data-view="vaults">Fund your vault</button></div>` : `<div class="vault-actions"><button class="primary-button" type="button" data-action="connect">Connect wallet</button><button class="outline-button" type="button" data-view="payment">Check a payment</button></div>`}</section>
     <section class="panel"><div class="panel-heading"><div><div class="eyebrow">02 · PRIVATE CUSTODY</div><h2>${liveFccPolicyRegistration ? "Your policy is registered" : liveFccSession ? "Three receipts ready" : "Prepare in Policy Studio"}</h2></div><span class="state-tag ${liveFccPolicyRegistration ? "green-tag" : "gray-tag"}">${liveFccPolicyStatus === 1 ? "ACTIVE" : liveFccPolicyStatus === 2 ? "STOPPED" : liveFccPolicyStatus === 3 ? "REVOKED" : "NOT REGISTERED"}</span></div>${liveFccSession ? `<div class="commitment-value">${esc(liveFccSession.binding.policyCommitment)}</div><div class="demo-actor-mini">${liveFccSession.custody.map((item, index) => `<span>MACHINE ${index + 1} · ${esc(short(item.digest))}</span>`).join("")}</div>` : `<p class="panel-copy">Policy Studio encrypts the same private policy independently for all three registered public keys and verifies all three receipts before registration.</p>`}<div class="vault-actions"><button class="outline-button" type="button" data-view="studio">Open Policy Studio</button>${liveFccSession && !liveFccPolicyRegistration && ownerConnected ? `<button class="primary-button" type="button" data-action="register-live-policy" ${liveFccBusy ? "disabled" : ""}>Register your policy</button>` : ""}</div></section></div>
     <div class="section-grid interactive-demo-grid"><section class="panel"><div class="panel-heading"><div><div class="eyebrow">03 · PUBLIC V2 REQUEST</div><h2>${request ? `Occurrence ${request.occurrence}` : "Create exact action"}</h2></div><span class="state-tag ${request ? "green-tag" : "gray-tag"}">${esc(requestStatus)}</span></div><p class="panel-copy">Amount, target and timing are public. Caps, schedule relationships, salt and policy plaintext remain private.</p>${policyActive && ownerConnected ? `<label class="demo-amount-label">Request amount<input id="live-fcc-request-amount" value="${esc(liveFccRequestAmountInput)}" inputmode="decimal" autocomplete="off" /></label>${request ? `<dl class="demo-request-facts"><div><dt>Request</dt><dd>${esc(short(request.requestId))}</dd></div><div><dt>Amount</dt><dd>${token(request.amount)} FTestXRP</dd></div><div><dt>Checkpoint</dt><dd>${esc(short(request.spendCheckpoint))}</dd></div><div><dt>Expiry</dt><dd>${utc(request.expiry)}</dd></div></dl><button class="outline-button" type="button" data-action="reset-live-request" ${liveFccBusy ? "disabled" : ""}>Prepare next request</button>` : `<button class="primary-button" type="button" data-action="create-live-request" ${liveFccBusy || !snapshot || snapshot.accounting.available <= 0n ? "disabled" : ""}>${liveFccBusy === "REQUEST" ? "Waiting for finality…" : "Create V2 request"}</button>`}` : `<div class="unavailable-box"><span class="status-dot amber"></span><div><strong>Prerequisite missing</strong><small>Connect the policy owner wallet, fund its vault, and register an active V2 policy.</small></div></div>`}</section>
     <section class="panel"><div class="panel-heading"><div><div class="eyebrow">04 · FCC QUORUM</div><h2>${liveFccEvaluation ? `${liveFccEvaluation.decision} · ${esc(liveFccEvaluation.publicReasonClass)}` : "Dispatch and verify"}</h2></div><span class="state-tag ${liveFccEvaluation ? "green-tag" : "gray-tag"}">${liveFccEvaluation ? `ROUTER ${liveFccEvaluation.routerStatus}` : "WAITING"}</span></div><p class="panel-copy">The policy owner signs a request-specific relay authorization. The relay reads public state, pays bounded dispatcher gas, and cannot supply ALLOW or alter the policy.</p><div class="vault-actions">${request && !liveFccEvaluation && ownerConnected ? `<button class="primary-button" type="button" data-action="evaluate-live-request" ${liveFccBusy ? "disabled" : ""}>${liveFccBusy === "EVALUATE" ? "A/B/D evaluating…" : "Evaluate with live A/B/D"}</button>` : ""}${liveFccEvaluation?.decision === "ALLOW" && liveFccEvaluation.routerStatus === 2 && !liveFccExecution ? `<button class="primary-button" type="button" data-action="execute-live-request" ${liveFccBusy ? "disabled" : ""}>Execute authorized transfer</button>` : ""}</div></section></div>
@@ -806,91 +783,75 @@ function requestTransactionPanel(snapshot: PublicRequestSnapshotV1 | undefined):
   return `<section class="panel request-transaction-panel"><div class="panel-heading"><div><div class="eyebrow">PUBLIC ROUTER CONTROLS</div><h2>Advance only the canonical state</h2></div><span class="state-tag ${account ? "green-tag" : "amber-tag"}">${account ? "WALLET CONNECTED" : "CONNECT WALLET"}</span></div><div class="transaction-actions"><button class="primary-button" type="button" data-request-kind="EXECUTE" ${!can("EXECUTE") || busy ? "disabled" : ""}>Prepare execution</button><button class="outline-button" type="button" data-request-kind="EXPIRE" ${!can("EXPIRE") || busy ? "disabled" : ""}>Prepare expiry</button><button class="outline-button" type="button" data-request-kind="CANCEL" ${!can("CANCEL") || busy ? "disabled" : ""}>Prepare cancellation</button></div>${!account ? `<button class="text-button request-connect" type="button" data-action="connect">Connect Coston2 wallet ↗</button>` : ""}${review}${result}</section>`;
 }
 
-function requestUnavailableReason(reason: string): string {
-  return ({
-    RPC_UNCONFIGURED: "No verified RPC provider configured",
-    RPC_UNAVAILABLE: "RPC provider unavailable",
-    SNAPSHOT_UNFINALIZED: "Snapshot is not finalized",
-    SNAPSHOT_INVALID: "Public snapshot failed validation",
-  } as Record<string, string>)[reason] ?? "Public request unavailable";
+function paymentDetailsView(): string {
+  const read = requestState.status === "UNAVAILABLE" ? null : requestState;
+  const request = read?.snapshot;
+  const result = read ? paymentResultView(read.snapshot, read.readiness) : `<section class="panel payment-empty-state"><div class="eyebrow">PAYMENT RESULT</div><div class="empty-state"><div class="empty-orbit">◌</div><strong>No payment loaded</strong><span>${esc(requestNotice)} Enter a Request ID above; a Policy commitment belongs in Requests.</span></div></section>`;
+  const controls = request && (request.status === "PENDING" || request.status === "ALLOWED") ? requestTransactionPanel(request) : "";
+  return `${pageIntro("PAYMENT DETAILS", "Check a payment", "")}${requestLookup()}${result}${controls}`;
 }
 
-function requestReadinessLabel(readiness: string): string {
-  return readiness.replaceAll("_", " ");
+function paymentResultView(request: PublicRequestSnapshotV1, readiness: Parameters<typeof requestStateLabels>[1]): string {
+  const labels = requestStateLabels(request.status, readiness);
+  const reviewed = REVIEWED_REQUEST_EXAMPLES.find((example) => example.id.toLowerCase() === request.requestId.toLowerCase());
+  const hosted = reviewedHostedEvidence(request);
+  const status = paymentStatusCopy(request, labels.needsExpiryFinalization);
+  const checkpoint = hosted?.transactionHash ?? reviewed?.referenceTransaction;
+  const checkpointLabel = request.status === "EXECUTED" ? "Open execution" : request.status === "DENIED" ? "Open final decision" : request.status === "CANCELLED" ? "Open cancellation" : "Open public checkpoint";
+  const reviewedContext = reviewed ? `<span class="payment-sample-note">Previously recorded test ID · loaded again from finalized Coston2 state</span>` : "";
+  const checkpointLink = checkpoint ? `<a class="outline-button inline-link" href="${explorerTransaction(checkpoint)}" target="_blank" rel="noreferrer">${checkpointLabel} ↗</a>` : "";
+  return `<section class="panel payment-result-card ${status.tone}"><div class="panel-heading"><div><div class="eyebrow">FINALIZED PAYMENT</div><h2>${status.title}</h2></div><span class="state-tag ${status.tagClass}">${esc(request.status)}</span></div>${reviewedContext}<div class="payment-summary-grid"><div><span>Amount</span><strong>${token(request.amount)} FTestXRP</strong></div><div><span>Payee</span><strong class="mono-value">${esc(short(request.target))}</strong></div><div><span>Timing</span><strong>${esc(labels.timing)}</strong></div><div><span>Finalized block</span><strong>${requestFinalizedBlock ?? "—"}</strong></div></div><div class="payment-outcome"><span class="status-dot ${request.status === "EXECUTED" || request.status === "ALLOWED" ? "green" : "amber"}"></span><div><strong>${status.outcome}</strong><small>${status.copy}</small></div></div><div class="payment-result-actions">${checkpointLink}<button class="text-button" type="button" data-action="load-request">Refresh finalized state ↻</button></div></section>${paymentVerificationDetails(request, hosted)}`;
 }
 
-function payeeView(): string {
-  const receipt = payeeState.status === "UNAVAILABLE" ? undefined : payeeState.receipt;
-  const unavailableReason = payeeState.status === "UNAVAILABLE" ? payeeUnavailableReason(payeeState.reason) : "Finalized public settlement";
-  const matchingRequest = receipt && requestState.status !== "UNAVAILABLE" && requestState.snapshot.requestId.toLowerCase() === receipt.requestId.toLowerCase()
-    ? requestState : undefined;
-  const labels = matchingRequest ? requestStateLabels(matchingRequest.status, matchingRequest.readiness) : undefined;
-  const expiredPending = receipt?.status === "PENDING" && labels?.needsExpiryFinalization;
-  const paymentHeading = receipt?.status === "SETTLED" ? "Payment settled"
-    : receipt?.status === "DENIED" ? "Payment denied"
-      : receipt?.status === "EXPIRED" ? "Payment expired"
-        : receipt?.status === "CANCELLED" ? "Payment cancelled"
-          : expiredPending ? "Payment window expired" : "Expected payment";
-  const expectedPanel = receipt
-    ? `<h2>${paymentHeading}</h2><div class="request-public-state payee-public-state"><div><span>Amount</span><strong>${token(receipt.expectedAmount)} FTestXRP</strong></div><div><span>Target</span><strong class="mono-value">${esc(short(receipt.payee))}</strong></div><div><span>Expected</span><strong>${utc(receipt.expectedAt)}</strong></div><div><span>Expiry</span><strong>${utc(receipt.expiry)}</strong></div></div><div class="unavailable-box ${expiredPending ? "expired-window-box" : ""}"><span class="status-dot ${receipt.status === "SETTLED" ? "green" : "amber"}"></span><div><strong>${receipt.status}${labels ? ` · ${labels.timing}` : ""}</strong><small>${receipt.status === "SETTLED" ? `Transaction ${esc(short(receipt.settlementTransactionHash))} · checkpoint ${esc(short(receipt.settlementCheckpoint))}` : expiredPending ? "Window passed · finalize expiry on-chain" : `Request ${esc(short(receipt.requestId))} · policy private`}</small></div></div>`
-    : `<h2>No verified request</h2><div class="unavailable-box"><span class="status-dot amber"></span><div><strong>Public state unavailable</strong><small>${esc(unavailableReason)}</small></div></div>`;
-  return `${pageIntro("PAYEE", "Payment status", "")}
-    ${requestLookup()}
-    <section class="panel payee-result-panel"><div class="eyebrow">${receipt ? "PUBLIC PAYMENT STATE" : "NO VERIFIED PAYMENT"}</div>${expectedPanel}</section>`;
+function paymentStatusCopy(request: PublicRequestSnapshotV1, needsExpiryFinalization: boolean): { title: string; outcome: string; copy: string; tone: string; tagClass: string } {
+  if (request.status === "EXECUTED") return { title: "Payment executed", outcome: `${token(request.amount)} FTestXRP sent to the payee`, copy: "The router records terminal execution. The transfer amount and recipient are public; an exact separate payee receipt is not loaded here.", tone: "payment-success", tagClass: "green-tag" };
+  if (request.status === "DENIED") return { title: "Payment denied", outcome: `DENY · ${request.publicReasonClass ?? "UNKNOWN"}`, copy: `${request.matchingCount} matching machine results were recorded. No funds moved.`, tone: "payment-denied", tagClass: "amber-tag" };
+  if (request.status === "CANCELLED") return { title: "Payment cancelled", outcome: "Cancelled before payment", copy: "This state is terminal. No transfer occurred and FCC authorization is not required for the cancellation result.", tone: "payment-terminal", tagClass: "gray-tag" };
+  if (request.status === "EXPIRED") return { title: "Payment expired", outcome: "Payment window closed", copy: "This state is terminal and no transfer occurred.", tone: "payment-terminal", tagClass: "gray-tag" };
+  if (request.status === "ALLOWED") return { title: "Payment authorized", outcome: `ALLOW · ${token(request.approvedAmount)} FTestXRP`, copy: `${request.matchingCount} matching machine results authorized the exact amount. Execution remains separate.`, tone: "payment-success", tagClass: "green-tag" };
+  if (needsExpiryFinalization) return { title: "Payment window expired", outcome: "Expiry must be finalized", copy: "The request is still Pending on-chain, but its public execution window has passed.", tone: "payment-pending", tagClass: "amber-tag" };
+  return { title: "Awaiting authorization", outcome: "Pending FCC evaluation", copy: "No threshold decision or transfer is asserted yet.", tone: "payment-pending", tagClass: "gray-tag" };
 }
 
-function payeeUnavailableReason(reason: string): string {
-  return ({
-    RPC_UNCONFIGURED: "No verified RPC provider configured",
-    RPC_UNAVAILABLE: "RPC provider unavailable",
-    RECEIPT_UNFINALIZED: "Settlement receipt is not finalized",
-    RECEIPT_INVALID: "Public settlement receipt failed validation",
-  } as Record<string, string>)[reason] ?? "Public settlement unavailable";
-}
-
-function auditorView(): string {
-  const evidence = auditState.status === "UNAVAILABLE" ? undefined : auditState.evidence;
-  const unavailableReason = auditState.status === "UNAVAILABLE" ? auditUnavailableReason(auditState.reason) : "Finalized public evidence";
-  const checklist = evidence
-    ? `<li><span class="evidence-icon">#</span><div><strong>Policy commitment</strong><small>${esc(short(evidence.policy.policyCommitment))} · schema ${esc(short(evidence.policy.schema))}</small></div><span class="state-tag green-tag">VERIFIED</span></li><li><span class="evidence-icon">♧</span><div><strong>Machine/key binding</strong><small>3 frozen identities · ${evidence.policy.resultThreshold}-of-${evidence.policy.machineIds.length} result threshold</small></div><span class="state-tag green-tag">VERIFIED</span></li><li><span class="evidence-icon">↗</span><div><strong>Decision digest</strong><small>${evidence.decision} · ${esc(short(evidence.resultDigest))} · ${evidence.executionStatus}</small></div><span class="state-tag green-tag">VERIFIED</span></li><li><span class="evidence-icon">∑</span><div><strong>Conservation</strong><small>${token(evidence.conservation.deposited)} = ${token(evidence.conservation.available)} + ${token(evidence.conservation.reserved)} + ${token(evidence.conservation.spent)} + ${token(evidence.conservation.withdrawn)} + ${token(evidence.conservation.refunded)} FTestXRP</small></div><span class="state-tag green-tag">VERIFIED</span></li><li><span class="evidence-icon">◇</span><div><strong>External input</strong><small>${evidence.inputKind} · ${evidence.inputFinalized ? "finalized" : "not required"}</small></div><span class="state-tag green-tag">VERIFIED</span></li>`
-    : `<li><span class="evidence-icon">#</span><div><strong>Policy commitment</strong><small>Hash only · no rules or ciphertext</small></div><span class="state-tag gray-tag">WAITING</span></li><li><span class="evidence-icon">♧</span><div><strong>Machine/key binding</strong><small>Three frozen identities · 2-of-3 result threshold</small></div><span class="state-tag gray-tag">WAITING</span></li><li><span class="evidence-icon">↗</span><div><strong>Decision digest</strong><small>Exact request, checkpoint, expiry, and signers</small></div><span class="state-tag gray-tag">WAITING</span></li><li><span class="evidence-icon">∑</span><div><strong>Conservation</strong><small>Deposited = available + reserved + spent + withdrawn + refunded</small></div><span class="state-tag gray-tag">WAITING</span></li><li><span class="evidence-icon">◇</span><div><strong>External input</strong><small>FTSO/FDC commitment and finalization status</small></div><span class="state-tag gray-tag">WAITING</span></li>`;
-  const request = requestState.status === "UNAVAILABLE" ? undefined : requestState.snapshot;
-  const chainCheckpoint = request
-    ? `<div class="unavailable-box live-request-box"><span class="status-dot green"></span><div><strong>Canonical request verified</strong><small>Finalized block ${requestFinalizedBlock ?? "—"} · ${request.status} · hash ${esc(short(request.requestHash))}. This is request-state verification, not FCC evidence.</small></div></div>`
-    : `<div class="unavailable-box"><span class="status-dot amber"></span><div><strong>No canonical request verified</strong><small>${esc(requestNotice)} No transaction, proof, signer, or authorization result is asserted.</small></div></div>`;
-  return `${pageIntro("AUDITOR", "Verify public evidence", "")}
-    ${requestLookup()}
-    <div class="auditor-grid"><section class="panel verify-card"><div class="eyebrow">PUBLIC CHECKPOINT</div><h2>Finalized result</h2>${chainCheckpoint}<div class="audit-boundary"><strong>FCC evidence</strong><small>${evidence ? `Block ${evidence.evidenceBlock}` : esc(unavailableReason)}</small></div></section><section class="panel evidence-card"><div class="eyebrow">CHECKLIST</div><h2>Verified assertions</h2><ul class="evidence-list">${checklist}</ul></section></div>
-    <details class="auditor-more"><summary><span><strong>More public evidence</strong><small>Actors and reviewed artifact index</small></span><em>Open</em></summary><div>${observedRequestActorsView()}${publicEvidenceMirrorView()}</div></details>`;
-}
-
-function observedRequestActorsView(): string {
-  const request = requestState.status === "UNAVAILABLE" ? undefined : requestState.snapshot;
-  const rows = request && requestPolicyOwner
-    ? `<div class="role-row"><div class="avatar purple">O</div><div class="role-person"><strong>Policy owner</strong><small>${esc(short(requestPolicyOwner))} · registry-bound public account</small></div><span class="role-permission">May cancel or recover</span></div><div class="role-row"><div class="avatar dashed">R</div><div class="role-person"><strong>Requester</strong><small>${esc(short(request.requester))} · exact request creator</small></div><span class="role-permission">May cancel</span></div><div class="role-row"><div class="avatar dashed">P</div><div class="role-person"><strong>Payee</strong><small>${esc(short(request.target))} · public transfer target</small></div><span class="role-permission">Receives after execution</span></div>`
-    : `<div class="role-row"><div class="avatar dashed">—</div><div class="role-person"><strong>No actors loaded</strong><small>Load a finalized request above to inspect its public accounts.</small></div><span class="role-permission">Unavailable</span></div>`;
-  return `<section class="panel roles-panel auditor-actors"><div class="panel-heading"><div><div class="eyebrow">PUBLIC ACTORS</div><h2>Request actors</h2></div><span class="state-tag ${request ? "green-tag" : "gray-tag"}">${request ? "OBSERVED" : "WAITING"}</span></div>${rows}</section>`;
-}
-
-function publicEvidenceMirrorView(): string {
-  if (publicEvidenceMirrorState.status === "LOADING") {
-    return `<section class="panel evidence-mirror"><div class="eyebrow">STATIC EVIDENCE MIRROR</div><h2>Checking public index…</h2><p class="panel-copy">Only reviewed testnet metadata is loaded. No policy, signature, or authorization result is requested.</p></section>`;
+function reviewedHostedEvidence(request: PublicRequestSnapshotV1): { kind: "ALLOW" | "DENY"; transactionHash: Hex; evidence: LiveV2LifecycleEvidence } | null {
+  if (liveV2EvidenceState.status !== "READY") return null;
+  const evidence = liveV2EvidenceState.evidence;
+  if (request.requestId.toLowerCase() === evidence.allowRequestId.toLowerCase() && request.status === "EXECUTED") {
+    const transactionHash = evidence.steps.find((step) => step.label === "Threshold-authorized transfer executed")?.transactionHash;
+    return transactionHash ? { kind: "ALLOW", transactionHash, evidence } : null;
   }
-  if (publicEvidenceMirrorState.status === "UNAVAILABLE") {
-    return `<section class="panel evidence-mirror"><div class="eyebrow">STATIC EVIDENCE MIRROR</div><h2>Evidence mirror unavailable</h2><p class="panel-copy">The static public index is not published or failed schema validation. This UI does not substitute a local evidence result.</p><span class="state-tag amber-tag">UNAVAILABLE</span></section>`;
+  if (request.requestId.toLowerCase() === evidence.denyRequestId.toLowerCase() && request.status === "DENIED" && request.publicReasonClass === evidence.denyReason) {
+    const transactionHash = [...evidence.steps].reverse().find((step) => step.label.startsWith("DENY result"))?.transactionHash;
+    return transactionHash ? { kind: "DENY", transactionHash, evidence } : null;
   }
-  const { index } = publicEvidenceMirrorState;
-  const simulated = index.entries.filter((entry) => entry.path.startsWith("/evidence/simulation/")).length;
-  return `<section class="panel evidence-mirror"><div class="panel-heading"><div><div class="eyebrow">STATIC EVIDENCE MIRROR</div><h2>${index.entries.length} reviewed artifacts</h2></div><span class="state-tag green-tag">TESTNET · PUBLIC</span></div><p class="panel-copy">This index exposes public facts and explicitly labelled local simulation records only. It is not a live policy provider or authorization result.</p><div class="evidence-mirror-meta"><span>${index.entries.filter((entry) => entry.chainId === "114").length} Coston2 artifacts</span><span>${simulated} local simulation artifact${simulated === 1 ? "" : "s"}</span><span>Private fields rejected</span><a href="/evidence/index.json" target="_blank" rel="noreferrer">Open index ↗</a></div></section>`;
+  return null;
 }
 
-function auditUnavailableReason(reason: string): string {
-  return ({
-    RPC_UNCONFIGURED: "No verified RPC provider configured",
-    RPC_UNAVAILABLE: "RPC provider unavailable",
-    EVIDENCE_UNFINALIZED: "Evidence is not finalized",
-    EVIDENCE_INVALID: "Public evidence failed validation",
-  } as Record<string, string>)[reason] ?? "Public evidence unavailable";
+function paymentVerificationDetails(request: PublicRequestSnapshotV1, hosted: ReturnType<typeof reviewedHostedEvidence>): string {
+  const threshold = hosted
+    ? verificationItem("♧", "FCC authorization", `Reviewed hosted evidence binds three registered status-2 machines and two matching ${hosted.kind} results.`, "VERIFIED", "green-tag")
+    : request.status === "PENDING"
+      ? verificationItem("♧", "FCC authorization", "No threshold result has been recorded for this request.", "WAITING", "gray-tag")
+      : request.status === "CANCELLED" || request.status === "EXPIRED"
+        ? verificationItem("♧", "FCC authorization", "No FCC decision is required for this terminal outcome.", "NOT REQUIRED", "gray-tag")
+        : request.matchingCount >= 2
+          ? verificationItem("♧", "FCC authorization", `${request.matchingCount} matching results are recorded on-chain; no separate reviewed evidence bundle is loaded for this ID.`, "CHAIN STATE", "green-tag")
+          : verificationItem("♧", "FCC authorization", "No request-specific reviewed FCC evidence is loaded.", "NOT LOADED", "gray-tag");
+  const settlement = request.status === "EXECUTED"
+    ? verificationItem("↗", "Payee settlement", "Router execution is finalized. The exact separate payee settlement receipt remains unavailable.", "PARTIAL", "amber-tag")
+    : verificationItem("↗", "Payee settlement", "No public transfer is asserted for this state.", "NO TRANSFER", "gray-tag");
+  const conservation = hosted
+    ? (() => {
+      const state = hosted.kind === "ALLOW" ? hosted.evidence.afterAllow : hosted.evidence.afterDeny;
+      return verificationItem("∑", "Vault conservation", `${token(state.deposited)} = ${token(state.available)} available + ${token(state.reserved)} reserved + ${token(state.spent)} spent + ${token(state.withdrawn)} withdrawn + ${token(state.refunded)} refunded.`, "VERIFIED", "green-tag");
+    })()
+    : verificationItem("∑", "Vault conservation", "No request-specific reviewed conservation record is loaded. Aggregate lifecycle proof remains in Demo lifecycle.", "NOT LOADED", "gray-tag");
+  const identifiers = `<div class="payment-identifier-grid"><div><span>Request ID</span><code>${esc(request.requestId)}</code></div><div><span>Policy commitment</span><code>${esc(request.policyCommitment)}</code></div><div><span>Request hash</span><code>${esc(request.requestHash)}</code></div><div><span>Owner / requester</span><code>${esc(short(requestPolicyOwner ?? "—"))} / ${esc(short(request.requester))}</code></div></div>`;
+  return `<details class="auditor-more payment-verification"><summary><span><strong>Verification details</strong><small>Public chain, FCC and settlement checks</small></span><em>Open</em></summary><div><section class="payment-identifiers">${identifiers}</section><section class="panel evidence-card"><div class="eyebrow">VERIFIED ASSERTIONS</div><ul class="evidence-list">${verificationItem("#", "Finalized router state", `Runtime, wiring, request hash and policy domain matched at Coston2 block ${requestFinalizedBlock ?? "—"}.`, "VERIFIED", "green-tag")}${threshold}${settlement}${conservation}</ul></section></div></details>`;
+}
+
+function verificationItem(icon: string, title: string, copy: string, status: string, tagClass: string): string {
+  return `<li><span class="evidence-icon">${icon}</span><div><strong>${esc(title)}</strong><small>${esc(copy)}</small></div><span class="state-tag ${tagClass}">${esc(status)}</span></li>`;
 }
 
 function notificationTray(): string {
@@ -945,12 +906,6 @@ function wireEvents(): void {
   app.querySelectorAll<HTMLButtonElement>("[data-policy-action]").forEach((button) => button.addEventListener("click", () => void submitInteractiveGovernance(button.dataset.policyAction ?? "")));
   app.querySelectorAll<HTMLButtonElement>("[data-live-policy-action]").forEach((button) => button.addEventListener("click", () => void submitLiveFccGovernance(button.dataset.livePolicyAction ?? "")));
   app.querySelectorAll<HTMLButtonElement>("[data-request-kind]").forEach((button) => button.addEventListener("click", () => prepareRequestTransaction(button.dataset.requestKind ?? "")));
-  app.querySelectorAll<HTMLButtonElement>("[data-request-mode]").forEach((button) => button.addEventListener("click", () => {
-    const mode = button.dataset.requestMode;
-    if (mode !== "CREATE" && mode !== "INSPECT") return;
-    requestsMode = mode;
-    render();
-  }));
   app.querySelector<HTMLSelectElement>("#request-example")?.addEventListener("change", (event) => {
     requestExampleSelection = (event.currentTarget as HTMLSelectElement).value;
     const example = REVIEWED_REQUEST_EXAMPLES.find((item) => item.id === requestExampleSelection);
@@ -1071,9 +1026,8 @@ function cardHelpText(card: HTMLElement, title: string): string {
   if (card.classList.contains("receipt-card")) return "Inspect the frozen machine identities and custody progress here. Registration remains blocked unless the exact domain and all three signed receipts verify; unavailable dependencies fail closed.";
   if (card.classList.contains("verify-card") || card.classList.contains("evidence-card") || card.classList.contains("evidence-mirror")) return "This is a wallet-free verification surface. Enter or inspect public identifiers only; missing finalized evidence stays unavailable and never becomes an inferred success.";
   if (activeView === "demo") return `Inspect ${title} as public testnet evidence. Status labels come from decoded artifacts or finalized state; explorer links are the source of truth, and simulated TEE claims never imply hardware verification.`;
-  if (activeView === "payee") return `Use ${title} to inspect only the expected public settlement facts. Private caps, target relationships, delegates, and denial details are intentionally absent.`;
-  if (activeView === "auditor") return `Use ${title} to verify public commitments, checkpoints, and conservation without connecting a wallet. No private policy or raw signature is requested.`;
-  if (activeView === "requests") return `Use ${title} to inspect finalized public request state. Canonical status and time-derived readiness are separate; do not treat a pending but expired window as an expected payment.`;
+  if (activeView === "payment") return `Use ${title} to read one finalized payment outcome. Public request, payee and verification facts share one lookup; missing FCC or settlement evidence stays explicitly unavailable.`;
+  if (activeView === "requests") return `Use ${title} to load an active policy commitment and create one exact public payment request. The resulting Request ID can be checked in Payment details.`;
   return `Use ${title} to inspect the current public-safe state. Hover or focus controls for actions; status labels and values are informational.`;
 }
 
@@ -1102,7 +1056,6 @@ function handleAction(action: string): void {
   if (action === "open-app") { navigateToView("studio"); return; }
   if (action === "landing-studio") { navigateToView("studio"); return; }
   if (action === "landing-demo") { navigateToView("demo"); return; }
-  if (action === "landing-auditor") { navigateToView("auditor"); return; }
   if (action === "studio-compute") { computeStudioAndActivate(); return; }
   if (action === "dismiss-notice") { clearAppNotice(); render(); return; }
   if (action === "notifications") { notificationOpen = !notificationOpen; render(); return; }
@@ -1301,7 +1254,6 @@ async function submitRequestTransaction(): Promise<void> {
     const result = await executeRequestTransaction(kind, requestInput, account, walletProvider);
     if (connectedAccount()?.toLowerCase() !== account.toLowerCase()) throw new RequestTransactionError("POSTCONDITION_FAILED");
     requestState = result.after.request;
-    payeeState = result.after.payee;
     requestFinalizedBlock = result.after.finalizedBlock;
     requestFinalizedAt = result.after.finalizedAt;
     requestPolicyOwner = result.after.policyOwner;
@@ -1329,7 +1281,6 @@ function resetRequestLookup(notice: string): void {
   requestIntent = null;
   requestTransactionState = { status: "IDLE" };
   requestState = unavailableRequestState();
-  payeeState = unavailablePayeeState();
   notificationState = unavailableNotificationState();
   requestNotice = notice;
 }
@@ -1337,6 +1288,21 @@ function resetRequestLookup(notice: string): void {
 async function refreshPublicRequest(announce = true): Promise<void> {
   const sequence = ++requestReadSequence;
   const requestedId = requestInput.trim();
+  const knownPolicyCommitment = [delegatedPolicyInput, liveFccSession?.binding.policyCommitment]
+    .some((commitment) => Boolean(commitment) && commitment?.toLowerCase() === requestedId.toLowerCase());
+  if (activeView === "payment" && knownPolicyCommitment) {
+    const policyAlreadyLoaded = delegatedPolicyRead?.binding.policyCommitment.toLowerCase() === requestedId.toLowerCase();
+    delegatedPolicyInput = requestedId;
+    if (!policyAlreadyLoaded) delegatedPolicyRead = null;
+    delegatedPolicyNotice = policyAlreadyLoaded
+      ? "Active policy loaded. Create a payment request to generate a new Request ID."
+      : "Policy commitment recognized. Load the policy, then create a payment request.";
+    resetRequestLookup("That value is a Policy commitment, not a Request ID.");
+    navigateToView("requests");
+    if (announce) showAppNotice("Policy commitment recognized. Use it here to create a payment; a Request ID is generated afterward.", 10_000);
+    render();
+    return;
+  }
   requestLoading = true;
   requestFinalizedBlock = null;
   requestFinalizedAt = null;
@@ -1344,14 +1310,12 @@ async function refreshPublicRequest(announce = true): Promise<void> {
   requestIntent = null;
   requestTransactionState = { status: "IDLE" };
   requestState = unavailableRequestState("RPC_UNAVAILABLE");
-  payeeState = unavailablePayeeState("RPC_UNAVAILABLE");
   requestNotice = "Reading one finalized Coston2 block and verifying runtime, wiring, domain and request hash…";
   render();
   try {
     const result = await loadCoston2PublicRequest(requestedId);
     if (sequence !== requestReadSequence || requestedId !== requestInput.trim()) return;
     requestState = result.request;
-    payeeState = result.payee;
     requestFinalizedBlock = result.finalizedBlock;
     requestFinalizedAt = result.finalizedAt;
     requestPolicyOwner = result.policyOwner;
@@ -1361,7 +1325,6 @@ async function refreshPublicRequest(announce = true): Promise<void> {
   } catch {
     if (sequence !== requestReadSequence) return;
     requestState = unavailableRequestState("SNAPSHOT_INVALID");
-    payeeState = unavailablePayeeState("RECEIPT_INVALID");
     notificationState = unavailableNotificationState("FEED_INVALID");
     requestFinalizedAt = null;
     requestPolicyOwner = null;
@@ -1740,14 +1703,23 @@ function openDelegatedPolicy(): void {
 
 async function copyPolicyCommitment(): Promise<void> {
   if (!liveFccSession || !navigator.clipboard) {
+    policyCommitmentCopied = false;
     showAppNotice("Clipboard is unavailable. Select the public commitment field and copy it manually.");
     render();
     return;
   }
   try {
     await navigator.clipboard.writeText(liveFccSession.binding.policyCommitment);
+    if (policyCommitmentCopyTimer !== undefined) window.clearTimeout(policyCommitmentCopyTimer);
+    policyCommitmentCopied = true;
     showAppNotice("Public policy commitment copied. Share only this value—not the private policy.");
+    policyCommitmentCopyTimer = window.setTimeout(() => {
+      policyCommitmentCopied = false;
+      policyCommitmentCopyTimer = undefined;
+      if (!landingOpen) render();
+    }, 2_000);
   } catch {
+    policyCommitmentCopied = false;
     showAppNotice("Copy was blocked. Select the public commitment field and copy it manually.");
   }
   render();
@@ -2221,9 +2193,6 @@ if (initialRoute.surface === "landing" && initialRoute.anchor !== "landing") res
 walletProvider?.on?.("accountsChanged", walletChanged);
 walletProvider?.on?.("chainChanged", walletChanged);
 void refreshPublicRequest(false).finally(() => restoreWalletSession());
-void fetchPublicWebEvidenceIndex()
-  .then((index) => { publicEvidenceMirrorState = { status: "READY", index }; if (!landingOpen) render(); })
-  .catch(() => { publicEvidenceMirrorState = { status: "UNAVAILABLE", reason: "NOT_PUBLISHED" }; if (!landingOpen) render(); });
 void fetchSimulatedLifecycleEvidence()
   .then((evidence) => { demoState = { status: "READY", evidence }; if (!landingOpen) render(); })
   .catch(() => { demoState = { status: "UNAVAILABLE" }; if (!landingOpen) render(); });

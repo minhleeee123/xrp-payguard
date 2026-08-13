@@ -1,25 +1,26 @@
 # Desktop UI/UX working notes
 
-Last updated: 2026-08-12
+Last updated: 2026-08-13
 
-This file records owner-reviewed desktop UI/UX decisions before the next
-combined implementation and deployment. Mobile is outside the current review
+This file preserves the owner-reviewed desktop UI/UX decision log for the
+combined implementation deployed on 2026-08-13. Mobile was outside that review
 scope. These notes do not change PayGuard's protocol, privacy, evidence, or
 release claims.
 
 ## Status legend
 
-- `IMPLEMENTED LOCALLY`: present in the current uncommitted local UI pass.
-- `RESOLVED / IMPLEMENTED LOCALLY`: an earlier choice was resolved during the
-  combined implementation and is present locally.
+- `IMPLEMENTED · DEPLOYED`: present in the production artifact pinned in
+  [`../hackathon-handoff.md`](../hackathon-handoff.md).
+- `RESOLVED · DEPLOYED`: an earlier choice was resolved during the combined
+  implementation and is present in that artifact.
 
 ## 1. Interaction affordance
 
-Status: `IMPLEMENTED LOCALLY`
+Status: `IMPLEMENTED · DEPLOYED`
 
 The previous UI did not separate actions, information, and editable fields
-strongly enough. The local pass now applies these rules across Landing and all
-desktop app views:
+strongly enough. The deployed combined pass applies these rules across Landing
+and all desktop app views:
 
 - Primary actions use a filled lime button with hover, active, focus, and
   disabled states.
@@ -40,7 +41,7 @@ typecheck, build, and focused tests.
 
 ## 2. Landing navigation
 
-Status: `IMPLEMENTED LOCALLY`
+Status: `IMPLEMENTED · DEPLOYED`
 
 Reduce the landing header navigation from five items to three:
 
@@ -53,7 +54,7 @@ on the page. Rename `ARCHITECTURE` to the more user-facing `HOW IT WORKS`.
 
 ## 3. Landing calls to action
 
-Status: `IMPLEMENTED LOCALLY`
+Status: `IMPLEMENTED · DEPLOYED`
 
 The landing currently contains too many repeated buttons into the app. Retain
 one contextual entry for each distinct task:
@@ -70,12 +71,12 @@ Remove:
 
 Keep `Understand the boundary` and `Evidence index` as text links.
 
-## 4. Remove the current Overview surface
+## 4. Remove the former Overview surface
 
-Status: `IMPLEMENTED LOCALLY`
+Status: `IMPLEMENTED · DEPLOYED`
 
-The current Overview repeats onboarding and calls to action already provided by
-Landing. Its remaining facts already have dedicated destinations:
+The former Overview repeated onboarding and calls to action already provided by
+Landing. Its remaining facts already had dedicated destinations:
 
 - Balances and conservation → Vaults.
 - Request state → Requests.
@@ -94,7 +95,7 @@ Implemented changes:
 
 ## 5. Landing CTA overlap after Overview removal
 
-Status: `RESOLVED / IMPLEMENTED LOCALLY`
+Status: `RESOLVED · DEPLOYED`
 
 The overlap is resolved by routing header `Open app` to Policy Studio, the first
 main workflow, while the hero `Verify live V2 lifecycle` remains the contextual
@@ -104,7 +105,7 @@ inside the hero.
 
 ## 6. Policy Studio information architecture
 
-Status: `IMPLEMENTED LOCALLY`
+Status: `IMPLEMENTED · DEPLOYED`
 
 Use one vertical four-step task flow. All four sections remain visible from top
 to bottom; locked sections expose their context but keep state-changing controls
@@ -159,7 +160,7 @@ refresh intentionally discards them.
 
 ## 7. Policy Studio compact step navigation
 
-Status: `IMPLEMENTED LOCALLY`
+Status: `IMPLEMENTED · DEPLOYED`
 
 Add one compact horizontal stepper below the Policy Studio title:
 
@@ -183,7 +184,7 @@ pages. No private draft value may enter the URL or browser persistence.
 
 ## 8. Vault information architecture
 
-Status: `IMPLEMENTED LOCALLY`
+Status: `IMPLEMENTED · DEPLOYED`
 
 The current Vault screen gives too much space to informational summaries and
 funding explanations before the user reaches the actual task. Reorder the page
@@ -246,11 +247,11 @@ The final desktop order is:
 
 ## 9. Application information density
 
-Status: `IMPLEMENTED LOCALLY`
+Status: `IMPLEMENTED · DEPLOYED`
 
 The application was repeating release, hardware, workspace, and dependency
 context around nearly every task. This made ordinary status copy compete with
-real controls and canonical data. The current local implementation removes:
+real controls and canonical data. The deployed implementation removes:
 
 - The global workspace label and V2 live-candidate banner.
 - The sidebar candidate/dependency card and duplicate landing/help link.
@@ -271,7 +272,7 @@ without competing with the primary V2 policy workflow.
 
 ## 10. Contextual card guidance
 
-Status: `IMPLEMENTED LOCALLY`
+Status: `IMPLEMENTED · DEPLOYED`
 
 Every major Landing card and application panel now receives a compact `?`
 control in its upper-right corner. Its task-specific guidance opens on hover or
@@ -279,9 +280,9 @@ keyboard focus, can be pinned with a click, and closes with blur or `Escape`.
 The card itself remains informational unless it contains a separately styled
 button, link, input, or disclosure control.
 
-To reduce default density, the local pass moves optional usage explanations out
-of Landing guardian, architecture-step, and use-case cards, plus the Vault and
-Requests action cards. The visible surface retains titles, statuses, inputs,
+To reduce default density, the combined pass moves optional usage explanations
+out of Landing guardian, architecture-step, and use-case cards, plus the Vault
+and Requests action cards. The visible surface retains titles, statuses, inputs,
 actions, and canonical values. It also deliberately keeps safety-critical facts
 visible: fail-closed reasons, public/private boundaries, testnet and hardware
 limitations, request state, exact amounts, wallet previews, and disabled-action
@@ -297,7 +298,7 @@ card. The legacy route redirects to Auditor.
 
 ## 11. Reviewed request identifiers
 
-Status: `IMPLEMENTED LOCALLY`
+Status: `IMPLEMENTED · DEPLOYED`
 
 Requests, Payee, Auditor, notifications, and Auditor's observed actors share one
 validated request checkpoint. The former prefilled XRPL/FDC request belongs to
@@ -311,13 +312,13 @@ the current browser session:
   `PENDING`; create transaction `0x80d4921a…6c34dd`.
 - `0x6eef6875…7efc2b` — created and then `CANCELLED` at block `33941321`;
   cancellation transaction `0x28edbafb…c151f`.
-- `0x61dfc0cd…93817` — previously `DENIED` with `CAP_EXCEEDED` in the reviewed
+- `0x43b3edbe…9b8e6b` — previously `DENIED` with `CAP_EXCEEDED` in the reviewed
   hosted-relay lifecycle.
-- `0xc4147a70…83658` — previously threshold-approved and `EXECUTED` in the
+- `0x16273aab…aa907` — previously threshold-approved and `EXECUTED` in the
   reviewed hosted-relay lifecycle.
 
 The Pending and Cancelled examples use a new active V2 test policy frozen at
-block `33941301` after three registered A/B/D custody receipts. The local UI
+block `33941301` after three registered A/B/D custody receipts. The browser UI
 records no private policy, ciphertext, credential, authorization, signature,
 or key. This remains Coston2 `SIMULATED_TEE` test evidence, not hardware
 attestation or a verified release.
@@ -359,6 +360,35 @@ Terminal denied, expired, and cancelled Payee states must not use an `Expected
 payment` heading; the executed example remains unavailable in Payee until its
 exact settlement receipt is also verified.
 
+## 13. Unified payment details
+
+Status: `IMPLEMENTED LOCALLY · VALIDATION AND DEPLOYMENT PENDING`
+
+The separate Payee page, Auditor page, and Requests inspection tab repeated one
+Request ID lookup while rendering different state stores. That allowed a
+canonical router read to succeed while a neighboring card incorrectly said
+`No verified request` or `No verified RPC provider configured`.
+
+Requests now owns creation only. A new `Payment details` destination owns the
+single wallet-free Request ID lookup and renders one result in this order:
+
+1. canonical Pending, Allowed, Denied, Executed, Expired, or Cancelled outcome;
+2. amount, payee, timing, and finalized read block;
+3. an exact reviewed Explorer checkpoint when available; and
+4. collapsed router, FCC, settlement, conservation, and identifier details.
+
+Router verification is no longer erased merely because a narrower evidence
+layer is absent. The reviewed hosted ALLOW/execute and DENY IDs attach their
+exact lifecycle evidence. Pending and Cancelled samples show FCC as waiting or
+not required. An Executed router result stays visible while the separate payee
+receipt is honestly labelled `PARTIAL`. No client decision, private policy,
+ciphertext, signature, or credential is introduced.
+
+The sidebar Verify group is now `Payment details → Demo lifecycle`. Legacy
+`#app/team`, `#app/payee`, and `#app/auditor` routes redirect to
+`#app/payment`. This local pass intentionally has not yet run the combined test,
+visual-QA, commit, push, or deployment gates requested for the final batch.
+
 ## Combined-pass validation
 
 - Desktop visual QA completed at 1440×1000 for Landing and the application
@@ -383,6 +413,36 @@ exact settlement receipt is also verified.
 
 ## Deployment boundary
 
-The owner approved this combined desktop set for a focused commit and push,
-followed by one production Vercel deployment on 2026-08-12. Production must be
-rebuilt from the committed source and checked at the public alias after publish.
+The owner approved this combined desktop set, and the production Vercel
+artifact was rebuilt from committed source and checked at the public alias on
+2026-08-13. Exact source/deployment identifiers and the 26-entry corpus audit
+are recorded in [`../hackathon-handoff.md`](../hackathon-handoff.md).
+
+## 14. Landing clarity and density pass
+
+Status: `IMPLEMENTED LOCALLY · VALIDATION AND DEPLOYMENT PENDING`
+
+The landing page now distinguishes three composable paths instead of displaying
+XRPL, FDC, Smart Account, FAssets, and FCC as one continuously proven lifecycle:
+
+1. XRPL/FDC/Smart Account funding into the vault;
+2. FCC policy evaluation of a public request into a public transfer; and
+3. an optional FAssets exit back toward XRPL.
+
+The evidence terminal identifies the XRPL funding observation as separate,
+removes the stale calendar date, and sends its primary CTA to Demo lifecycle.
+Public threshold and execution artifacts are qualified with `when produced`,
+and the private-side copy names the hidden allowlist rather than implying that
+the public request target itself is private.
+
+Desktop navigation, hero proof labels, status copy, guardian labels, journey
+states, evidence rows, and footer notices use materially larger type. The
+guardian band keeps all three code-native mascots but removes its repeated
+explanatory paragraph, shortens the artwork and cards, and leaves detailed
+responsibility copy in the existing contextual help. This local pass has not
+yet run the combined test, visual-QA, commit, push, or deployment gates.
+
+The approved Landing presentation scale is now `115%` on desktop. It is applied
+only while `.landing-shell` exists, so Policy Studio and every application view
+remain at their existing `100%` density. Desktop previews at 1440×1000 and
+1280×900 show no horizontal clipping.

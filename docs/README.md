@@ -83,7 +83,8 @@
 - [`technology/contract-spec.md`](technology/contract-spec.md): V1 schemas,
   local state machines, and live signature-domain requirements.
 - [`technology/observability.md`](technology/observability.md): aggregate-only,
-  bearer-protected relay metrics and the still-open deployed monitoring gate.
+  bearer-protected relay metrics and the verified independent Railway monitoring
+  boundary.
 - [`technology/operations-runbook.md`](technology/operations-runbook.md): fixed
   production alerts, operator access, bounded retention, and incident recovery.
 - [`technology/threat-model.md`](technology/threat-model.md): attacker model,

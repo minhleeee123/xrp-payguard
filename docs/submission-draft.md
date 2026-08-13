@@ -1,6 +1,6 @@
 # XRP PayGuard submission draft
 
-> Prepared 2026-08-09 and technically refreshed 2026-08-11. This is a copy-ready draft, not evidence that a
+> Prepared 2026-08-09 and technically refreshed 2026-08-13. This is a copy-ready draft, not evidence that a
 > DoraHacks submission, demo video, organizer review, or user pilot occurred.
 
 ## Project
@@ -46,12 +46,14 @@ evidence without publishing the policy rules themselves.
   two-of-three ALLOW execution and `CAP_EXCEEDED` denial, conservation,
   stop/resume/revoke, supported C→D replacement without frozen-policy identity
   mutation, and complete executor pause/resume with unchanged pending state.
+  The stale C identity is now manager status `4` after a separately verified
+  pause transaction, leaving A/B/D as the exact active set.
 - One separate solution-3 run exercised the deployed Coston2 contracts through
   14 successful transactions using three ephemeral simulated signers. It
   demonstrates two-of-three recurring authorization, cap denial,
   stop/resume/revoke, and vault conservation, but not live FCC custody or
   hardware confidentiality.
-- A public Vercel dApp exposes a reviewed 25-entry evidence mirror and a hosted
+- A public Vercel dApp exposes a reviewed 26-entry evidence mirror and a hosted
   V2 candidate path through the Railway relay and registered A/B/D `SIMULATED_TEE`
   machines. The older isolated serverless-actor lifecycle remains historical
   evidence; neither path is hardware-backed or a verified release.
@@ -61,11 +63,12 @@ evidence without publishing the policy rules themselves.
   simulated FCC machines. It is live simulated-FCC evidence, not hardware-backed
   production or verified-release evidence; the older isolated V1 run remains
   simulation-only historical evidence.
-- The current repository-only production-corpus audit fetched all 25 hosted
+- The current repository-only production-corpus audit fetched all 26 hosted
   evidence assets, required HTTP/JSON boundaries, and matched each body
   byte-for-byte to its reviewed local source without recursively publishing
-  its own audit. The earlier 15-body audit remains historical evidence for the
-  earlier pinned artifact.
+  its own audit. It contains 25 chain-114 records and three explicitly bounded
+  simulation records with overlapping categories. Earlier 15-, 23-, and
+  25-body audits remain historical evidence for their pinned artifacts.
 
 ## How PayGuard uses Flare
 

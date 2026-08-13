@@ -23,21 +23,29 @@ The website has two related surfaces with one visual system:
 | Surface | Purpose | Layout |
 | --- | --- | --- |
 | Landing | Explain the private-policy/public-action problem, trust boundary, and flagship journey | Editorial single column, max 1280px |
-| Application | Let owner, funder, executor, payee, team member, and auditor inspect public-safe state | Persistent app chrome, dense two-column workspaces |
+| Application | Let owner, funder, requester, payee, and auditor complete or inspect public-safe tasks | Persistent app chrome, dense two-column workspaces |
 | Documentation | Explain protocol, threats, verification, and limitations | Reading column with protocol/code panels |
 
 The application navigation is grouped by purpose:
 
 - Main flow: `Policy Studio` · `Vaults` · `Requests`.
-- Verify: `Demo lifecycle` · `Payee` · `Auditor`.
-- Admin: `Team & roles`.
+- Verify: `Payment details` · `Demo lifecycle`.
 
 There is no Overview screen. Landing owns onboarding; legacy
 `#app/overview` routes redirect to the wallet-free Demo lifecycle.
+There are no standalone Team & roles, Payee, or Auditor screens. The active
+product has no editable role registry, and all request-bound public payment,
+actor, and verification facts share one `Payment details` lookup. Legacy
+`#app/team`, `#app/payee`, and `#app/auditor` routes redirect there.
 
 The landing page may use a centered hero and a dotted globe illustration. The
 application must prioritize task completion, public checkpoints, recovery, and
 clear dependency state; it is not a marketing page disguised as a dashboard.
+
+On desktop, Landing is rendered at a deliberate `115%` presentation scale to
+match the approved reading density. The scale is scoped to `body` only while the
+Landing shell is mounted; opening the application restores the normal `100%`
+workspace scale.
 
 ## 2. Brand voice and content rules
 
@@ -148,8 +156,8 @@ the center has uppercase ghost links; the right side has `OPEN APP` as an
 outlined lime action. The bar never implies a connected wallet or live release.
 
 Application uses the same top bar language with the current network and
-connection state at the right. `Coston2 · planned` is valid; `Coston2 · live`
-is not valid without a verified manifest.
+connection state at the right. A finalized Coston2 block may be shown as a live
+testnet read, but it must not imply a verified release or hardware attestation.
 
 ### Application sidebar
 
@@ -160,8 +168,8 @@ background. Repeated workspace, release-candidate, dependency-health, and help
 cards do not occupy the global shell. The sidebar footer never shows a private
 key, seed, or credential.
 
-Desktop navigation labels the three groups `MAIN FLOW`, `VERIFY`, and `ADMIN`.
-This hierarchy must remain visible without turning group labels into controls.
+Desktop navigation labels the two groups `MAIN FLOW` and `VERIFY`. This
+hierarchy must remain visible without turning group labels into controls.
 
 At widths below `760px`, the sidebar becomes a fixed bottom navigation with five
 high-value destinations; secondary destinations remain reachable from a menu.
@@ -299,8 +307,10 @@ production activation panel remains blocked and visually separate.
 Hero eyebrow: `[ PRIVATE POLICY · PUBLIC ACTION ]`.
 
 Headline: `Authorize public value with private rules.` Use one italic lime
-accent word at most. The supporting copy says that ordinary FTestXRP/FXRP
-transfers reveal amount, recipient, and timing. The CTA is `OPEN POLICY STUDIO`.
+accent word at most. The supporting copy says that the private rule stays in a
+frozen three-machine FCC set while public requests and resulting transfers
+remain auditable. The primary hero CTA opens the reviewed V2 Demo lifecycle;
+the final CTA opens Policy Studio.
 
 Below the hero, one 6px lime divider appears once. Follow with three sharp cards:
 
@@ -308,19 +318,23 @@ Below the hero, one 6px lime divider appears once. Follow with three sharp cards
 - `PUBLIC EXECUTION` — two matching results over the exact request/checkpoint;
 - `RECOVERABLE STATE` — chain checkpoints remain replay/rollback authority.
 
-After the trust cards, the complete landing narrative uses this order:
+The desktop narrative uses this order:
 
 1. public-ledger/private-rulebook data boundary;
 2. three code-native guardian mascots;
-3. XRPL → FDC/Smart Account → Flare vault → FCC gate → public action journey;
+3. separately labelled fund, authorize, and optional-exit paths across XRPL,
+   FDC/Smart Account, Flare vault, FCC, and FAssets;
 4. personal subscription, treasury vendor, and delegated-budget templates;
 5. public-safe verified-versus-limited evidence terminal;
 6. FAQ/limitations; and
 7. a final local Policy Studio CTA.
 
-No logo wall, partner claim, fake live metric, invented pilot, or repeated neon
-divider is allowed. A longer landing page must increase comprehension rather
-than repeat marketing copy.
+No logo wall, partner claim, fake live metric, invented pilot, static evidence
+date, or repeated neon divider is allowed. The page must not visually imply
+that separately reviewed Coston2 observations are one end-to-end proof. Small
+desktop labels remain at least 10px, with navigation and status copy at least
+11px. A longer landing page must increase comprehension rather than repeat
+marketing copy.
 
 ### Guardian mascot system
 
@@ -336,6 +350,10 @@ Lime status point. They use no raster assets, gradients, multicolor fills,
 drop-shadows, remote requests, or hidden product claims. Each sits beside a
 textual role and explicit `LOCAL`, `TARGET`, or `TESTED` label, so the SVG can be
 decorative (`aria-hidden`) without losing information.
+
+The guardian band is intentionally compact: one short heading, three distinct
+mascots, role names, and honest status rails. Detailed responsibility copy lives
+in contextual help instead of repeating beneath every card.
 
 The three silhouettes must remain visibly distinct, not one robot with swapped
 symbols. Cipher is a broad shield/vault with three converging custody nodes;
@@ -380,37 +398,26 @@ explorer/faucet link remain visible below those headline values without a
 disclosure header. With no verified provider, show `UNAVAILABLE` and recovery
 instructions; never show a simulated balance.
 
-### Requests and schedules
+### Requests
 
-Use a public table for request ID, target, amount, schedule slot, checkpoint,
-expiry, and terminal status. Pending requests do not reserve funds. Executor
-buttons advance public checkpoints only and never accept a decision argument.
-Show split, stale, unavailable, denied, expired, and executed states separately.
-Always present canonical on-chain status separately from time-derived readiness.
-For example, a request may be canonically `PENDING` while its window is
-`EXPIRED`; explain that expiry still needs an on-chain transition instead of
-implying payment remains expected.
+Keep this surface focused on creation: load one owner-shared public policy
+commitment, verify the active registry binding, enter the public payee and human
+FTestXRP amount, create the request, authorize FCC evaluation, and receive an
+allowed payment. The resulting Request ID links to `Payment details`.
 
-### Payee
+### Payment details
 
-The payee sees expected public asset, amount, timing, request status, transfer
-receipt, and supported redemption status. The page explicitly says that private
-target rules, caps, delegates, and private denial reasons are not exposed.
-
-### Auditor
-
-Wallet-free by default. The auditor enters a public request ID or transaction
-hash and receives only finalized evidence: policy commitment, machine/code
-binding, FDC/FTSO facts, decision digest/signers, execution receipt, and
-conservation assertions. An unconfigured evidence endpoint says it cannot assert
-anything; it must not infer success from a local shell.
-
-### Team and roles
-
-Show policy author, funder, executor, payee, and auditor as separate roles. A
-role description must state which public controls it has and that no role can
-provide or override `ALLOW`. Policy changes are new versions with fresh custody
-receipts; active rules never silently mutate.
+Wallet-free by default. One Request ID lookup produces one non-duplicated result:
+canonical outcome first; amount, payee, timing, and finalized block second; and
+optional verification details last. Pending, allowed, denied, executed, expired,
+and cancelled states have distinct copy. A verified router execution remains
+visible even when an exact separate payee settlement receipt is unavailable.
+Request-specific FCC and conservation claims appear only when the reviewed
+hosted evidence matches that exact ID; otherwise the missing layer is labelled
+`WAITING`, `NOT REQUIRED`, `PARTIAL`, or `NOT LOADED` without invalidating the
+already verified router state. Public identifiers and actor accounts live in the
+collapsed verification section. Private policy material and raw signatures
+never appear.
 
 ### Desktop navigation and feedback
 
@@ -477,8 +484,8 @@ Before a UI commit, verify:
 3. Fresh browser storage is empty after Studio use; no private payload appears
    in network or console output.
 4. Laptop screenshots cover Landing, all four Studio steps, Vaults, Requests,
-   Demo, Payee, Auditor, and Team states; `#app/overview` is checked as a Demo
-   redirect.
+   Demo, and Payment details; `#app/overview` is checked as a Demo redirect and
+   `#app/team`, `#app/payee`, and `#app/auditor` as Payment-details redirects.
 5. Responsive screenshots cover the Studio form, boundary map, receipt progress,
    and recovery copy without horizontal overflow.
 6. The rendered interface agrees with this document and never upgrades a

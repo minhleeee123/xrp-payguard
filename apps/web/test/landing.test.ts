@@ -22,7 +22,7 @@ describe("editorial landing page", () => {
     expect(html).toContain('href="#journey">HOW IT WORKS</a>');
     expect(html).not.toContain('href="#why">WHY</a>');
     expect(html).not.toContain('href="#guardians">GUARDIANS</a>');
-    expect(html.match(/data-action="landing-demo"/g)).toHaveLength(1);
+    expect(html.match(/data-action="landing-demo"/g)).toHaveLength(2);
     expect(html.match(/data-action="landing-studio"/g)).toHaveLength(1);
     expect(html).not.toContain("hosted V1 lifecycle");
     expect(html).not.toContain("Hardware attestation, V2, and a verified PayGuard release");
@@ -31,6 +31,13 @@ describe("editorial landing page", () => {
     expect(html.match(/class="neon-divider"/g)).toHaveLength(1);
     expect(html.match(/<details/g)).toHaveLength(4);
     expect(html.match(/data-help=/g)).toHaveLength(11);
+    expect(html).toContain("COMPOSABLE TESTNET PATH");
+    expect(html).toContain("distinct Coston2 observations");
+    expect(html).toContain("Threshold result and execution receipt, when produced");
+    expect(html).toContain("CURRENT PUBLIC EVIDENCE");
+    expect(html).toContain("Open Demo lifecycle");
+    expect(html).not.toContain("2026-08-11");
+    expect(html).not.toContain('data-action="landing-auditor"');
     expect(html).not.toContain("<h3>Personal subscriptions</h3><p>");
     expect(html).not.toContain("<h3>Policy custodian</h3><p>");
   });
@@ -67,6 +74,7 @@ describe("editorial landing page", () => {
     expect(css).not.toContain(".use-case-card:hover");
     expect(css).toContain(".faq-list summary:hover");
     expect(css).toContain(".landing-text-link:hover");
+    expect(css).toContain("body:has(.landing-shell) { zoom: 1.15; }");
   });
 
   it("ships a local SVG favicon instead of causing a production asset miss", () => {
