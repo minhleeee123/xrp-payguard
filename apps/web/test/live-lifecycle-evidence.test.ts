@@ -32,7 +32,7 @@ describe("wallet-free live V2 lifecycle evidence", () => {
 
   it("fetches only the supported same-origin evidence body", async () => {
     const decoded = await fetchLiveV2LifecycleEvidence(async () => new Response(JSON.stringify(source), { status: 200 }));
-    expect(decoded.observedBlock).toBe(33_975_786n);
+    expect(decoded.observedBlock).toBe(34_044_096n);
     await expect(fetchLiveV2LifecycleEvidence(async () => new Response("", { status: 404 }))).rejects.toThrow(/HTTP 404/);
   });
 });

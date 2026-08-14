@@ -309,8 +309,11 @@ production Vercel app exposes the earlier isolated three-actor record as
 historical evidence and an explicitly labelled live V2 simulated candidate through
 the hosted Railway relay and registered A/B/D `SIMULATED_TEE` machines. A
 sanitized end-to-end run verifies private ingress, custody, two-of-three
-evaluation, execution, denial, governance, and conservation. Hardware release
-release acceptance remains open.
+evaluation, execution, denial, governance, and conservation. After A restarted
+on 2026-08-14, its fresh identity was promoted to status 2, the unreachable old
+identity was paused, and the complete multi-owner lifecycle passed again with
+the exact replacement A/B/D set. Hardware-backed release acceptance remains
+open.
 
 One separate solution-3 record now proves the deployed Coston2 registry,
 router, and vault path with three ephemeral simulated signers, two matching

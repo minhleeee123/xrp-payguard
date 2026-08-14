@@ -39,8 +39,12 @@ The hackathon build uses solution 3:
 Three stable Railway origins, authenticated indexer access, registered status-2
 `SIMULATED_TEE` machines, signed `PING_V1`, all-three custody, two-of-three
 evaluation, C→D replacement, and executor-pause recovery pass on Coston2. The
-current Vercel app is wired to the hosted V2 simulated-candidate path, and a
-sanitized end-to-end relay run is mirrored in public evidence. Hardware TEE
+current A identity was replaced and re-promoted on 2026-08-14 after its process
+restart; the stale identity was paused, while B/D retained their existing
+identities. A fresh all-three custody and multi-owner ALLOW/DENY/governance/
+conservation run then passed against the exact replacement set. The current
+Vercel app is wired to the hosted V2 simulated-candidate path, and the sanitized
+end-to-end relay run is mirrored in public evidence. Hardware TEE
 attestation, verified-release promotion,
 remaining dependency outages, and a complete release remain open. No simulated
 path may be presented as hardware-backed confidentiality or mainnet production.

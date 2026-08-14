@@ -16,7 +16,7 @@ const root = resolve(import.meta.dirname, "..");
 export const PUBLIC_WEB_ORIGIN = "https://xrp-payguard.vercel.app";
 export const PUBLIC_WEB_DEPLOYMENT_AUDIT_PATH = resolve(
   root,
-  "evidence/web/public-evidence-deployment-audit-2026-08-13.json",
+  "evidence/web/public-evidence-deployment-audit-2026-08-14.json",
 );
 const MAX_JSON_BYTES = 256 * 1024;
 const REVIEWED_CORPUS_COUNTS = Object.freeze({ total: 26, chain114: 25, simulation: 3 });

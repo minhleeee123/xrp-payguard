@@ -82,6 +82,12 @@ keys, policies, ciphertexts, authorizations, signatures, and
 credentials, and remains `SIMULATED_TEE` testnet evidence rather than hardware,
 mainnet, or verified-release proof.
 
+The current record was rerun on 2026-08-14 after machine A restarted. Its new
+identity was registered and promoted, the unreachable A identity was paused,
+and B/D retained their existing identities. The fresh record therefore checks
+the exact current A/B/D set rather than treating the historical A identity as a
+live machine.
+
 `web/github-pages-preview-2026-08-09.json` is a historical record of the
 retired public-safe GitHub Pages static-shell deployment and its HTTP
 HTML/JS/CSS smoke. The site was removed before the Vercel deployment; the

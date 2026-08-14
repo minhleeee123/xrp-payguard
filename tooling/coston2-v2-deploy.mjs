@@ -30,7 +30,7 @@ export const EXTENSION_ID = 66_037n;
 export const CODE_HASH = "0x194844cf417dde867073e5ab7199fa4d21fd82b5dbe2bdea8b3d7fc18d10fdc2";
 export const SIMULATED_PLATFORM = padHex(stringToHex("TEST_PLATFORM"), { size: 32, dir: "right" });
 export const MACHINE_SIGNERS = [
-  getAddress("0x1C911D007f8203484eD4099bC11849d7e9691044"),
+  getAddress("0x752aBf6369b9aE2217727fF06925Ba6e67b7a59b"),
   getAddress("0xff49A99535b8c52345D3c0b76bCf60194De7C29b"),
   getAddress("0xd871bc2044a75e8cc2CF06aCdeaDC4CBbEef349A"),
 ];

@@ -4,97 +4,97 @@
   "status": "verified-hosted-live-simulated-fcc-multi-owner-lifecycle",
   "registryVersion": "V2",
   "deploymentProfile": "COSTON2_SIMULATED_V2",
-  "recordedAt": "2026-08-12T08:31:30.498Z",
+  "recordedAt": "2026-08-14T08:44:49.557Z",
   "network": {
     "name": "flare-coston2",
     "chainId": 114,
-    "observedBlock": "33959050"
+    "observedBlock": "34043283"
   },
   "publicIdentifiers": {
-    "verificationSourceCommit": "5785452785888982e27a4bba5d1b24ed3d978504",
+    "verificationSourceCommit": "2c08bf45a3711e89286566bed70cf5e2af6360cf",
     "relayOrigin": "https://payguard-live-relay-production.up.railway.app",
     "fundingSource": "0xDC1cc527423C882156a632C250528D1922d18Fc7",
-    "independentPolicyOwner": "0x97FA4e2bBD4a00D5243197a250E5F3613a87B469",
-    "independentAuthorizedRequester": "0x9D491F3E06BDf4d6E81267908c198e1E3EE303de",
-    "policyCommitment": "0xe1bbd600410029bda8ffc6689e385ef1827353c8c1efe648493847a03114d681",
+    "independentPolicyOwner": "0xAF7A866545eeb305eF34a0D7390BD62B4B2fAEE4",
+    "independentAuthorizedRequester": "0x9F3f8e0f6d79ABe1347075121Fb9Ab842e9067cE",
+    "policyCommitment": "0xe09a68ea97819a518af8f3e02e09b9ed5a68f48262e8f95277957da82849c443",
     "fundingTransactions": {
-      "ownerGas": "0x787ad6fc2d870580bd3ec93ecf6fd9e3f0daef70b8df22e7708b202d46daafa4",
-      "ownerToken": "0xc05110835426d2420174df92ec2dc86807bd237a9f68be4b7168838de42959e7",
-      "requesterGas": "0xa1c7c56e06a81987758d6cb09159e7266af397b6b3ac7290279fac61612ff977"
+      "ownerGas": "0x24a6d027c2eb39cd962da0234e280e2ebb4380ba5dea2829189e62b712c46d15",
+      "ownerToken": "0xf49e224512f2bdce7c3cb9f98051e13315172603504dc471687c8bb488b7619f",
+      "requesterGas": "0xc4b1a4a87b965e77c2f52ad346fed3aaff1005d9dee66dc2f0ac56338939dd23"
     },
-    "custodyFreezeTransaction": "0xc89261d67f1952963c31d2019dae55e5790b7b91027f2bb4c48f4ed15008cdbb",
+    "custodyFreezeTransaction": "0x0b73b08c45d0d0b71d2a46772928e1872aafe5fc7f98bac573bbd061cccd6ceb",
     "allow": {
-      "requestId": "0x9733f65a17f0895e14cbba1bb1d92cc36f9d27bb14be24c2c38e0f6e6b10a4a1",
-      "instructionId": "0x7bb74689515fd312f90bfd1cd63361c322ec728d6ab32cac36584342a1a05c6c",
-      "create": "0xb0c870f8c683f344880075769277414355f6709e0ab01d8f6434fce36c02ce37",
-      "dispatch": "0xc80441fa46091dbef36a489c3fd6fb3815ac7aee2d3d98d080c1b8ee664aca0f",
+      "requestId": "0xb26029928463f84785a355f4cf08a63f63b2a95fe7c624f851a73c4534041813",
+      "instructionId": "0x6380b4411894420e8263755054c8b2a56fc99f9c21ee55087a7f1db8cd275c97",
+      "create": "0xe4b3e91644055fcd289f6e65e24c7dfc2452d67e4b9dfd4ce185ee6a1daba48c",
+      "dispatch": "0xd585aca2fa738d67263e362e32669a01839fe50cb37c9ccd214ff7db816111d0",
       "submit": [
-        "0x5de0e3ee3b40a5ae799f05d710f1bee668b13edef55543ae390b6b40bf055384",
-        "0xdda6ad68f99f7fe0ad1431ab6d319209d5d5ef85b63a83b3ca12819bd90dcaa9"
+        "0xf9f63007f408525986ae1864f64bad59fd49b44aae2049c50136a41507aea1f5",
+        "0xc557d7bac974dfc066e8264ce4b479528923d5b30f9707faf1fa965503f65f3c"
       ],
-      "execute": "0x00ba5893771543c3c2a2792293d3b7f57a0ab9e1bfc0561d9c9743c539509cea"
+      "execute": "0x6cc2403b670ddde3db3fbbae1010c47a18fdd835c16b9a3ac166da434a1fd072"
     },
     "denies": {
       "requester": {
         "status": "threshold-submitted",
-        "requestId": "0x8cd06b348553c4cc7b76551977f959ca165364bf3d0c9a3da8f734101e5a6193",
+        "requestId": "0xc6e8d561ee108023e7f7152b12df97d991ec90f70dd57da9d462754573a1c61a",
         "routerStatus": 3,
         "decision": "DENY",
         "publicReasonClass": "REQUESTER_DENIED",
-        "instructionId": "0x581ba4609e9f2ea1d57e30020a8e5acaf5fbc7d47931a7eada43dbe12cb6cb9b",
+        "instructionId": "0x76b6f6b5762781dc1754bc01debf5508ac1cec3cf07ea65291760bc03ad560a9",
         "transactions": {
-          "dispatch": "0xc217c3e534f62da822ef9b95306ef01017baaf33ef5d3d93c1bc30d313e6dd78",
+          "dispatch": "0x0dd4a662b7a07584792df07e95d6dce21474c0da76d77d68ce4a883ef499d910",
           "submit": [
-            "0x0b6d2e0ae0dc04b504c2afd4b4c0ec8a6afe2e2ecb11da8f9bb7d372e6a89628",
-            "0x14e8e32440a7c1e50728bfe73e68bd2a17a4350dcf89ff74dcf8038f4384fd1a"
+            "0x238bf59fbde0a24f7b6a42d1fdb4587d55fe170d18da655c5024216e36e5e7ee",
+            "0x9128a546c58d28843460b084b3415e8be15f44ba38b7182856e9781326421808"
           ]
         },
-        "create": "0xd1a3108762972d4a6576f8b64bc235b9602d084a978687dcf494c7fcd8f309d3"
+        "create": "0x36612ea2666c1f7c8f8d656ce3fb917a45e5769b9bb9054bcb0e70851e05d63e"
       },
       "target": {
         "status": "threshold-submitted",
-        "requestId": "0xaa35513de46ddbb7f97e213141f0bad88749a6dd0fdfb4c558bb7b1ca7ce3a67",
+        "requestId": "0x0aca1030ceff6caf7708898b1ab20c35379002cbd311f4f8ad750b73703964c3",
         "routerStatus": 3,
         "decision": "DENY",
         "publicReasonClass": "TARGET_DENIED",
-        "instructionId": "0x9855f646b5d0fd59119f3d145e5e1f28664029d9e3de8f8e19c595e07606a74d",
+        "instructionId": "0x80ebf7009e09f337c92b22f6f04ddcb2c4db7ddf7cf9f9de204da7117fff62b4",
         "transactions": {
-          "dispatch": "0x52d181eaa66d2f419344c351e6d65ad9adc19f77f5f74d9291b9e4a6abbd4a98",
+          "dispatch": "0x7a2f14e4eb4dd6cf99e20eedad3dde2835670641655aaf13840008dd333fdde1",
           "submit": [
-            "0xcb813d8b13742f85c5899d024f085870e964936af8942a7ca7e6e1c1563a06f0",
-            "0x9c171717e0afa03a135005baebbb796d66e69dda307d614bd04812d425ef94cc"
+            "0xcc0b0a00afa790af0a74552352a9f8d19882285667601e4181c17fcdf3c5250b",
+            "0x340a1aa3ea1cbed5d6d91cbd6443a9a2b7d609aee9a5384b1a3a75e1e279cd2b"
           ]
         },
-        "create": "0xab6fe54027f7764e1f011124a1875be2dc777564a116db435d22d56f7ae36d80"
+        "create": "0x9b0444e7fc463154540d0a8919a7eace751f38a6c19c3d21d2fbc31b07353b4f"
       },
       "cap": {
         "status": "threshold-submitted",
-        "requestId": "0xf0dd9ccca2ed16c429bfb933a733d94449b2331bb56a5bfda5cef8a30fa2a169",
+        "requestId": "0xc0ae95b48d0c0382de551a10a4bde953c4601f08816269358161000b91d9f5eb",
         "routerStatus": 3,
         "decision": "DENY",
         "publicReasonClass": "CAP_EXCEEDED",
-        "instructionId": "0x28ad122c4ed2a91386c9b6f21ae768eeef8bcb40115990fd6c82fc1feeeb36fa",
+        "instructionId": "0xb92aa923fae48819e098364788aba2acd18b65bf614acb5f03709ea268cd6752",
         "transactions": {
-          "dispatch": "0xdf2bda3b45ebbca02c82df72915da77bc7111ae2df491d86fbde793fb98ec8c0",
+          "dispatch": "0x0b394d3cdb51261f1775f29de5f99e3f737b7a97f3f34f3baafeb8ba0e24efbb",
           "submit": [
-            "0xeebd0d0bc0ad953dde0525a7ef668549232c3e0c181ad870424412b78c14454b",
-            "0x6a8345ccdd493f2a248c6831cd7b8eecc1a538271ad84cc770747b1e4d5f7423"
+            "0x200245bea9a486ddb91fb1ccccdd16269f89c94dcc48f6ecfaeb02b92dae7d0a",
+            "0x942e37c31e325a299c92c8679b6cb2e326b37377c22dbc68b79153a091c2ed25"
           ]
         },
-        "create": "0x8fe324f455ef94907b2dfddf197707ac95864e377f18f714adf9bab85e6a63fd"
+        "create": "0x84be3d0d19fe116b04157631abea6c9e8ef4041961e6e7cca75c8af39531cb75"
       }
     },
     "policyLifecycleTransactions": {
-      "stop": "0x22750617498f7f8b45e7baabf8bdf0876aca4fd6c8be54a5d0e6ca68b8f90b0b",
-      "resume": "0x5ab9f068f53bb678b7b5adabd834cc22f44ec571fe5502f0714fa3114c55e2ac",
-      "revoke": "0xb028f9e2f08ee75938f798ef1c2ccec6e615617a655f96526d983bbab8d3fb81"
+      "stop": "0x96bbaa9993fd4fdb73269b37c706e6f01d12b450fe52bdf4fd12cd7da00a97cc",
+      "resume": "0xea11daf32c6f40fa111696009f3200b1582c50da79225547e936acb656744bb9",
+      "revoke": "0xb960bc89cdfea8fc7999130999125f77af6b1f65d6e39516f7f78651ad1811c4"
     },
     "cleanupTransactions": {
-      "withdraw": "0xa44539fa8651b0aceccab1bb71a19092ea8286e9cf7107f89df1cf06e5e0f1bf",
-      "ownerTokenReturn": "0x9c3bcddb9f3a7065ddbb713bb807f43ac297b34132d65bb752ae12f44d332fee",
-      "requesterTokenReturn": "0x09dd879c9967273696f5d79873278147e49fbe753198af09cb8b2cb7e13761dd",
-      "ownerGasReturn": "0x9e4c62ab31e5805ebb40d81f6f1322681322ca67321ff7fc22f3a1cae7a7f861",
-      "requesterGasReturn": "0x982cfeef422531155672c9001909099fa07bb226917fcdedcabcda3e10ebfb6f"
+      "withdraw": "0xbd9da541a9ab4e671a02f7f1df98ab0df5851255b33d475d0fe3b4d5a24615e4",
+      "ownerTokenReturn": "0x25e601d42ce111a7fc3c7060014077f723a24e89ecf4c1f2d330eff38f1e937f",
+      "requesterTokenReturn": "0x9fcb1d87ec33fb7d052e4490b61ec47013639c075ba92e034d27e1f8c4ae558f",
+      "ownerGasReturn": "0x24924bff2b30ce8e9895bc8834f3fe657dc182dc69f7adbe4f3156baec6c4cde",
+      "requesterGasReturn": "0xb53371434963095c2ccf0ea43919663dc9b6377d36d938c045d0039e323e7c9c"
     },
     "accounting": {
       "before": {

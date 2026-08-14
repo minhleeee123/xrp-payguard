@@ -6,12 +6,12 @@
   "hardwareTeeVerified": false,
   "simulatedTee": true,
   "profile": "COSTON2_SIMULATED_V2",
-  "recordedAt": "2026-08-11T11:55:29.806Z",
+  "recordedAt": "2026-08-14T08:46:10.124Z",
   "sourceCommit": "4bb30adb18dc2366439c71eb756638573af8007c",
   "network": {
     "name": "flare-coston2",
     "chainId": 114,
-    "observedBlock": "33919116"
+    "observedBlock": "34043337"
   },
   "teeManager": "0x1a9C4A0f9D76c0b1D91d22E24E573a9b377618aE",
   "extensionId": "66037",
@@ -56,8 +56,8 @@
   },
   "machines": [
     {
-      "signer": "0x1C911D007f8203484eD4099bC11849d7e9691044",
-      "machineId": "0x0000000000000000000000001c911d007f8203484ed4099bc11849d7e9691044",
+      "signer": "0x752aBf6369b9aE2217727fF06925Ba6e67b7a59b",
+      "machineId": "0x000000000000000000000000752abf6369b9ae2217727ff06925ba6e67b7a59b",
       "origin": "https://payguard-fcc-a-production.up.railway.app",
       "status": 2,
       "simulated": true

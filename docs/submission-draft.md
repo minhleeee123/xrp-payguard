@@ -129,7 +129,7 @@ resulting transfer remain public.
 | V1 rollback namespace | Registry `0x8DFb…D4A4`; vault `0xFFe7…84dB`; router `0x28A9…a7Da` |
 | FCC foundation sender extension | `66037` |
 | FCC three-machine dispatcher | `0x18Ea713cEf10ECf5cAC23c08dD25Ac17D2f07e3d` |
-| Active simulated FCC machines | A `0x1C911D007f8203484eD4099bC11849d7e9691044`; B `0xff49A99535b8c52345D3c0b76bCf60194De7C29b`; D `0xd871bc2044a75e8cc2CF06aCdeaDC4CBbEef349A` |
+| Active simulated FCC machines | A `0x752aBf6369b9aE2217727fF06925Ba6e67b7a59b`; B `0xff49A99535b8c52345D3c0b76bCf60194De7C29b`; D `0xd871bc2044a75e8cc2CF06aCdeaDC4CBbEef349A` |
 
 The exact deployment transactions, blocks, runtime hashes, constructor/wiring
 assertions, machine registration/status, replacement transactions, and live
