@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/payguard-logo.png" alt="XRP PayGuard logo" width="180" height="180" />
+</p>
+
 # XRP PayGuard
 
 > Confidential payment-policy enforcement for XRP-native treasury teams, with
