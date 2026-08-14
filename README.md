@@ -1,34 +1,46 @@
 # XRP PayGuard
 
-> Confidential payment-policy controls for XRP-native users, with public,
-> independently verifiable execution on Flare.
+> Confidential payment-policy enforcement for XRP-native treasury teams, with
+> publicly verifiable execution on Flare.
 
 [Live application](https://xrp-payguard.vercel.app/) ·
 [Five-minute judge walkthrough](#live-application-and-judge-walkthrough) ·
 [Public evidence index](https://xrp-payguard.vercel.app/evidence/index.json) ·
 [Hackathon handoff](docs/hackathon-handoff.md) ·
+[Product positioning](docs/product/competitive-analysis.md) ·
 [Architecture](docs/technology/architecture.md) ·
 [Threat model](docs/technology/threat-model.md) ·
 [Verification matrix](docs/technology/verification.md)
 
-XRP PayGuard lets an XRPL user fund a public Flare vault and commit to a
-private, deterministic spending policy. The target authorization path freezes
-three compatible Flare Confidential Compute (FCC) machines, requires all three
-to acknowledge custody of the same policy commitment, and accepts an action
-only after two distinct machines sign the same exact evaluation result.
+XRP PayGuard helps XRP-native treasury teams automate recurring vendor payments
+without publishing private spending rules or handing signing keys and
+authorization control to an automation operator. A treasury stores encrypted
+policy copies with three registered Flare Confidential Compute (FCC) machines,
+a vendor submits an exact public payment request, and execution requires two
+matching machine-signed evaluations of the private policy.
 
-PayGuard separates **control** from **custody**:
+**Example:** a DAO creates a private recurring-payment policy for a security
+vendor. The vendor can request payment without receiving the policy's internal
+limits, schedule, or approval conditions. FCC evaluations bind the exact
+recipient, asset, amount, nonce, policy, contracts, and expiry, so an executor
+cannot change those fields while reusing the authorization. Treasury members
+and auditors can inspect the public request, threshold evidence, execution
+result, and vault accounting.
+
+PayGuard separates **policy confidentiality** from **transaction privacy**:
 
 - the vault and resulting XRP/FTestXRP/FXRP movements remain public;
-- the owner keeps policy limits, schedules, target rules, and internal
+- the treasury keeps policy limits, schedules, target rules, and internal
   operating constraints out of public calldata, events, storage, analytics,
   browser persistence, logs, and evidence; and
-- no client, relay, executor, payee, owner, or administrator can directly
-  supply an `ALLOW` decision.
+- no client, relay, executor, vendor, policy owner, or administrator can
+  directly supply an `ALLOW` decision.
 
 PayGuard is not private money, a mixer, or a hidden-transfer system. Amount,
-recipient, timing, asset, and transaction graph remain visible on their
-respective public ledgers.
+recipient, timing, participation, vault accounting, asset, and transaction
+graph remain visible on their respective public ledgers. The current Coston2
+machines use the explicit `SIMULATED_TEE` profile and are not represented as
+independently operated hardware infrastructure.
 
 ## Current status
 
@@ -140,36 +152,44 @@ decision.
 
 ## The problem
 
-XRPL users can transfer value efficiently, but programmable recurring payments
-and treasury controls usually force one of three compromises:
+The primary target is an XRP-native treasury team that needs to give a vendor a
+recurring allowance without publishing the complete rule or giving an
+automation service signing keys and approval discretion. Today that workflow
+usually forces one of three operating models:
 
 - publish schedules, limits, counterparties, and internal rules in a smart
   contract;
 - delegate keys and decision authority to a custodial automation provider; or
 - keep every approval manual and lose reliable, auditable automation.
 
-PayGuard keeps the rule private while making the resulting action and its
-authorization evidence public. The first narrow product is confidential,
-bounded recurring subscriptions and vendor allowances for XRP-native
-individuals and treasury teams.
+PayGuard keeps the authorization policy private while making the request,
+threshold result, resulting action, and vault accounting public. Its first
+narrow product is a bounded recurring vendor allowance for XRP-native treasury
+and DAO operators. Personal subscriptions and developer integrations remain
+secondary use cases rather than the opening product story.
+
+The [product positioning analysis](docs/product/competitive-analysis.md)
+compares this model with manual multisig, public policy contracts, and
+custodial automation. It states its assumptions explicitly and does not present
+the comparison as measured adoption, user research, or traction.
 
 ## Flagship journey
 
 The intended end-to-end product flow is:
 
-1. The owner creates a spending policy locally and sends encrypted copies to
-   three registered FCC machines; policy plaintext never enters public chain
-   data or evidence.
+1. The treasury operator creates a vendor allowance locally and sends encrypted
+   policy copies to three registered FCC machines; policy plaintext never
+   enters public chain data or evidence.
 2. All three machines return signed custody receipts for the same policy
    commitment, allowing the owner to register and freeze that exact machine
    set on Coston2.
-3. The owner funds the policy vault through the XRP-native path: an XRPL
+3. The treasury funds the policy vault through the XRP-native path: an XRPL
    payment is verified by FDC and minted through a Flare Smart Account, or the
    owner deposits supported FTestXRP directly.
-4. An authorized requester creates an exact public payment request containing
-   the target, asset, amount, nonce, schedule slot, and expiry—but not the
-   private policy.
-5. The FCC machines independently evaluate the stored policy. Two matching,
+4. The authorized vendor/requester creates an exact public payment request
+   containing the target, asset, amount, nonce, schedule slot, and expiry—but
+   not the private policy.
+5. Each FCC machine separately evaluates the stored policy. Two matching,
    request-bound signed results are required; no browser, relay, owner, or
    administrator can supply `ALLOW` directly.
 6. The router verifies the threshold and current on-chain state, then executes
@@ -186,7 +206,7 @@ flowchart LR
     U -->|encrypted policy copies| M1[FCC machine 1]
     U -->|encrypted policy copies| M2[FCC machine 2]
     U -->|encrypted policy copies| M3[FCC machine 3]
-    X[Owner or permissionless executor] -->|exact public request| R[PayGuardActionRouter]
+    X[Authorized vendor/requester] -->|exact public request| R[PayGuardActionRouter]
     V --> R
     M1 -->|signed evaluation| R
     M2 -->|matching signed evaluation| R
@@ -250,10 +270,13 @@ On-chain state is the canonical replay and rollback authority.
 | Policy plaintext | Private | Owner memory and the intended confidential machine runtime only |
 | Policy ciphertext | Private/opaque | Private ingress transport and sealed machine state only; never public evidence or chain state |
 | XRPL/EVM/FCC private keys, seeds, credentials | Secret | Ignored local runtime configuration or external signer only |
+| Internal limits, schedules, target rules, and approval conditions | Private | Inside the encrypted policy and intended machine runtime only |
 | Policy commitment, machine/key/code fingerprints | Public | Registry, receipts, release/evidence records |
-| Request hash, public amount, target, asset, nonce, timestamps | Public | Router, vault, transaction receipts, evidence |
+| Payment request, requester, target, asset, amount, nonce, and timing | Public | Router, vault, transaction receipts, evidence |
+| Minimal authorization result and result signers | Public | Router state, events, and sanitized evidence |
+| Private denial rule and intermediate evaluation values | Private | Intended machine runtime only |
 | FDC/FTSO checkpoints and proof/result commitments | Public | Chain state and sanitized evidence |
-| Token transfers and redemption | Public | XRPL and Flare ledgers |
+| Vault balances, token transfers, and redemption | Public | XRPL and Flare ledgers |
 
 ## What is verified now
 
@@ -580,20 +603,22 @@ current hackathon scope.
 4. [`docs/README.md`](docs/README.md) — complete documentation index.
 5. [`docs/product/product-plan.md`](docs/product/product-plan.md) — product,
    users, editions, capabilities, and acceptance criteria.
-6. [`docs/product/user-journeys.md`](docs/product/user-journeys.md) — owner,
-   treasury, payee, executor, and auditor journeys.
-7. [`docs/technology/architecture.md`](docs/technology/architecture.md) —
+6. [`docs/product/user-journeys.md`](docs/product/user-journeys.md) — the
+   treasury/vendor flagship flow plus owner, payee, and auditor journeys.
+7. [`docs/product/competitive-analysis.md`](docs/product/competitive-analysis.md)
+   — operating-model comparison, differentiation, and claim boundaries.
+8. [`docs/technology/architecture.md`](docs/technology/architecture.md) —
    component, data-flow, trust, and recovery model.
-8. [`docs/technology/contract-spec.md`](docs/technology/contract-spec.md) —
+9. [`docs/technology/contract-spec.md`](docs/technology/contract-spec.md) —
    `POLICY_SCHEMA_V1`, domains, state transitions, and contract rules used by
    the active V2 deployment; the schema version is not the deployment version.
-9. [`docs/technology/verification.md`](docs/technology/verification.md) — test
+10. [`docs/technology/verification.md`](docs/technology/verification.md) — test
    matrix, evidence gates, and release acceptance.
-10. [`docs/hackathon-handoff.md`](docs/hackathon-handoff.md) — reproducible demo,
+11. [`docs/hackathon-handoff.md`](docs/hackathon-handoff.md) — reproducible demo,
     validation facts, limitations, and pushed history.
-11. [`docs/submission-draft.md`](docs/submission-draft.md) — copy-ready
+12. [`docs/submission-draft.md`](docs/submission-draft.md) — copy-ready
     Interoperable Asset Products submission material.
-12. [`docs/new-work-ledger.md`](docs/new-work-ledger.md) — retrospective
+13. [`docs/new-work-ledger.md`](docs/new-work-ledger.md) — retrospective
     classification of new, adapted, third-party, and reference-only work.
 
 VeilBid is read-only reference material. No VeilBid secret, deployment,
