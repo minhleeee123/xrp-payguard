@@ -16,51 +16,66 @@
 [Threat model](docs/technology/threat-model.md) ·
 [Verification matrix](docs/technology/verification.md)
 
-XRP PayGuard helps XRP-native treasury teams automate recurring vendor payments
-without publishing private spending rules or handing signing keys and
-authorization control to an automation operator. A treasury stores encrypted
-policy copies with three registered Flare Confidential Compute (FCC) machines,
-a vendor submits an exact public payment request, and execution requires two
-matching machine-signed evaluations of the private policy.
+XRP PayGuard lets an XRP/Flare treasury activate one bounded private vendor
+policy, so an authorized vendor can request eligible public payments without a
+fresh treasury signature each time and without giving an automation operator
+the payment key or unilateral `ALLOW` discretion.
 
-**Example:** a DAO creates a private recurring-payment policy for a security
-vendor. The vendor can request payment without receiving the policy's internal
-limits, schedule, or approval conditions. FCC evaluations bind the exact
-recipient, asset, amount, nonce, policy, contracts, and expiry, so an executor
-cannot change those fields while reusing the authorization. Treasury members
-and auditors can inspect the public request, threshold evidence, execution
-result, and vault accounting.
+## The user problem
 
-PayGuard separates **policy confidentiality** from **transaction privacy**:
+An XRP-native treasury may approve the same operational vendor every month,
+but today it cannot automate that relationship without accepting one of three
+trade-offs:
 
-- the vault and resulting XRP/FTestXRP/FXRP movements remain public;
-- the treasury keeps policy limits, schedules, target rules, and internal
-  operating constraints out of public calldata, events, storage, analytics,
-  browser persistence, logs, and evidence; and
-- no client, relay, executor, vendor, policy owner, or administrator can
-  directly supply an `ALLOW` decision.
+1. **Manual multisig:** treasury members repeatedly coordinate and sign every
+   eligible payment.
+2. **Public automation:** an on-chain policy exposes its ceiling, schedule,
+   expiry, and operating thresholds.
+3. **Custodial automation:** a bot or service receives a signing key or
+   unilateral discretion to decide whether a payment is allowed.
 
-PayGuard is not private money, a mixer, or a hidden-transfer system. Amount,
-recipient, timing, participation, vault accounting, asset, and transaction
-graph remain visible on their respective public ledgers. The current Coston2
-machines use the explicit `SIMULATED_TEE` profile and are not represented as
-independently operated hardware infrastructure.
+### Illustrative treasury scenario
 
-## Current status
+Consider a 3-of-5 treasury paying one security vendor monthly. Manual execution
+requires at least **36 individual signature actions per year** for that single
+relationship: 12 payments × 3 required signers. This is an illustrative
+operating scenario, not measured user behavior, market research, or a claim
+about a PayGuard customer.
 
-| Dimension | Status |
-| --- | --- |
-| Active contract deployment | **PayGuard V2** on Flare Coston2, chain ID `114` |
-| FCC profile | Registered A/B/D machines using `SIMULATED_TEE` |
-| Hackathon submission | **Submitted** to Interoperable Asset Products as [BUIDL 47777](https://dorahacks.io/buidl/47777) |
-| Production release maturity | Live testnet candidate; not yet a hardware-attested verified release |
-| V1 status | Historical rollback and recovery provenance only; not the active demo or submission deployment |
+A public recurring-payment contract removes those repeated signatures but
+publishes the policy. A hosted bot can keep the policy off-chain only by
+becoming a trusted signing or authorization boundary. PayGuard instead lets
+the treasury activate one bounded private policy. The vendor can then request
+eligible payments without a new owner signature; the automation operator
+cannot manufacture `ALLOW`, redirect the payment, or change its amount. The
+request, authorization threshold, transfer, and vault accounting remain
+publicly inspectable.
 
-`V2` identifies the active PayGuard contract/deployment generation. “Verified
-release” is a separate maturity status; the V2 candidate is live and tested on
-Coston2 without being represented as hardware-attested production.
+Policy fields can contain potentially sensitive operating information: the
+maximum budget allocated to a vendor, future payment cadence and expiry,
+aggregate limits and cooldowns, or emergency conditions. PayGuard keeps those
+rules out of public chain data and public application surfaces. It does **not**
+hide the vendor/recipient, amount, timing, asset, or transaction graph once a
+request or payment is public.
 
-## Judge highlights
+| Treasury requirement | Manual multisig | Public policy | Custodial bot | PayGuard |
+| --- | --- | --- | --- | --- |
+| No new owner signature for each eligible payment | No | Yes | Yes | Yes |
+| Private rule fields stay off the public chain | Usually | No | Yes, but visible to the operator | Yes, inside the documented FCC boundary |
+| Automation operator holds neither payment key nor `ALLOW` discretion | Not applicable | Yes | No | Yes |
+| Authorization and resulting accounting are publicly inspectable | Partial | Yes | Service-dependent | Yes |
+
+This table compares operating models, not named competitors, market share, or
+measured adoption. PayGuard protects **policy confidentiality**, not
+transaction privacy. The current Coston2 machines use the explicit
+`SIMULATED_TEE` profile; they are not independently operated hardware
+infrastructure or a production-custody claim.
+
+The first product is deliberately narrow: a private recurring vendor allowance
+for XRP-native treasury and DAO operators. Personal subscriptions and developer
+integrations remain secondary use cases.
+
+## What is demonstrably working
 
 - **Real XRP interoperability:** a validated XRPL Testnet payment was proven
   through FDC, minted through a Flare Smart Account, and accounted for in the
@@ -75,6 +90,20 @@ Coston2 without being represented as hardware-attested production.
   [five-minute walkthrough](#live-application-and-judge-walkthrough), or audit
   the [public evidence index](https://xrp-payguard.vercel.app/evidence/index.json)
   without a wallet.
+
+## Current status
+
+| Dimension | Status |
+| --- | --- |
+| Active contract deployment | **PayGuard V2** on Flare Coston2, chain ID `114` |
+| FCC profile | Registered A/B/D machines using `SIMULATED_TEE` |
+| Hackathon submission | **Submitted** to Interoperable Asset Products as [BUIDL 47777](https://dorahacks.io/buidl/47777) |
+| Production release maturity | Live testnet candidate; not yet a hardware-attested verified release |
+| V1 status | Historical rollback and recovery provenance only; not the active demo or submission deployment |
+
+`V2` identifies the active PayGuard contract/deployment generation. “Verified
+release” is a separate maturity status; the V2 candidate is live and tested on
+Coston2 without being represented as hardware-attested production.
 
 ## Quick start
 
@@ -153,29 +182,6 @@ Coston2 simulated profile, but this is not hardware attestation or a verified
 release. See
 [`docs/competition.md`](docs/competition.md) for the evidence-based track
 decision.
-
-## The problem
-
-The primary target is an XRP-native treasury team that needs to give a vendor a
-recurring allowance without publishing the complete rule or giving an
-automation service signing keys and approval discretion. Today that workflow
-usually forces one of three operating models:
-
-- publish schedules, limits, counterparties, and internal rules in a smart
-  contract;
-- delegate keys and decision authority to a custodial automation provider; or
-- keep every approval manual and lose reliable, auditable automation.
-
-PayGuard keeps the authorization policy private while making the request,
-threshold result, resulting action, and vault accounting public. Its first
-narrow product is a bounded recurring vendor allowance for XRP-native treasury
-and DAO operators. Personal subscriptions and developer integrations remain
-secondary use cases rather than the opening product story.
-
-The [product positioning analysis](docs/product/competitive-analysis.md)
-compares this model with manual multisig, public policy contracts, and
-custodial automation. It states its assumptions explicitly and does not present
-the comparison as measured adoption, user research, or traction.
 
 ## Flagship journey
 
@@ -566,6 +572,24 @@ The full attacker model, residual trust, and non-claims are documented in
 [`docs/technology/threat-model.md`](docs/technology/threat-model.md).
 
 ## Current limitations and roadmap
+
+### Product-validation boundary
+
+The product problem has a testable technical basis, while market demand and
+external usability remain hypotheses to validate. The README keeps those two
+evidence classes separate:
+
+| Claim | Current evidence |
+| --- | --- |
+| Threshold multisig requires repeated signer actions | Direct consequence of the illustrated threshold workflow; not a user-study result |
+| A public policy contract makes its policy state observable | Technically inspectable property of public on-chain state |
+| PayGuard removes the per-payment owner signature from an eligible delegated request | Implemented, founder-tested, and evidenced in the live Coston2 simulated-FCC lifecycle |
+| External treasury users can complete the workflow reliably | Not yet validated through structured external sessions |
+| Treasury operators will adopt or pay for confidential vendor allowances | Not yet validated through interviews, pilots, or market research |
+
+The [product positioning analysis](docs/product/competitive-analysis.md)
+contains the fuller operating-model comparison and its assumptions. It does
+not present the comparison as measured adoption, user research, or traction.
 
 The hackathon uses real public Coston2/XRPL facts, a deployed static
 product/evidence shell, and explicit simulated FCC authorization. Three stable
