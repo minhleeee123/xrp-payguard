@@ -24,10 +24,12 @@
 ## 1. Product objective
 
 Build the strongest credible confidential payment-policy product for XRPL and
-Flare users. XRP PayGuard lets a user or treasury pre-fund a public asset vault,
-keep authorization rules private inside a fixed FCC machine set, and execute a
-public payment or contract call only after a threshold of registered machines
-evaluates the exact request against the exact policy.
+Flare users. The first narrow product serves XRP-native treasury teams that
+need recurring vendor allowances: the treasury pre-funds a public asset vault,
+keeps authorization rules private inside a fixed FCC machine set, and executes
+a public payment only after a threshold of registered machines evaluates the
+exact request against the exact policy. Personal allowances and developer
+integrations remain secondary use cases.
 
 The product is larger than a hackathon MVP. The build starts with the smallest
 real vertical slice, then grows into personal, team, treasury, and developer
@@ -36,7 +38,7 @@ surfaces without weakening the same privacy, threshold, and recovery model.
 ## 2. Flagship journey
 
 ```text
-XRPL owner creates a PayGuard account and private policy
+XRPL treasury owner creates a PayGuard account and private vendor policy
         |
 policy is encrypted independently to three registered FCC machines
         |
@@ -44,11 +46,11 @@ all three signed receipts bind one public policy commitment
         |
 XRPL Payment/FAssets mint funds the user's Smart Account or PayGuard vault
         |
-an owner, scheduled executor, or attested external event requests an action
+an authorized vendor, scheduled executor, or attested event requests an action
         |
 close/evaluation freezes request, spend checkpoint, FTSO input, nonce, expiry
         |
-three TEEs independently evaluate the sealed policy and canonical public state
+each registered machine separately evaluates the sealed policy and public state
         |
 two matching registered results authorize or deny the exact request
         |
