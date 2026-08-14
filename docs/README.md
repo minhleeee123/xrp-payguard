@@ -15,8 +15,11 @@ product, verify its implementation boundary, or reproduce the public evidence.
   reference-only work classification.
 - [`product/product-plan.md`](product/product-plan.md): product thesis, users,
   capabilities, acceptance criteria, and roadmap direction.
-- [`product/user-journeys.md`](product/user-journeys.md): owner, requester,
-  payee, recovery, and auditor journeys.
+- [`product/user-journeys.md`](product/user-journeys.md): treasury/vendor
+  flagship flow plus owner, requester, payee, recovery, and auditor journeys.
+- [`product/competitive-analysis.md`](product/competitive-analysis.md):
+  operating-model comparison, differentiation, assumptions, and user-facing
+  trust boundaries.
 
 ## Technical review
 

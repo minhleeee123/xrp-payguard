@@ -14,6 +14,7 @@ const required = [
   "docs/integration-guide.md",
   "docs/product/product-plan.md",
   "docs/product/user-journeys.md",
+  "docs/product/competitive-analysis.md",
   "docs/technology/requirements.md",
   "docs/technology/architecture.md",
   "docs/technology/contract-spec.md",
