@@ -16,14 +16,23 @@ The owner confirmed this track selection on 2026-08-09 and submission of
 acceptance, an independent eligibility determination, judging outcome, and any
 award remain unverified.
 
-**One-sentence description:** XRP PayGuard lets an XRPL-native user fund a
-public Flare vault and define a confidential recurring-payment policy whose
-future authorization is designed to require matching results from a frozen FCC
-machine set.
+**One-sentence description:** XRP PayGuard helps XRP-native treasury teams
+automate recurring vendor payments without publishing private spending rules or
+handing signing keys and authorization control to an automation operator;
+execution requires matching results from a frozen FCC machine set and remains
+publicly inspectable on Flare.
 
-**Target user:** XRPL-native individuals and treasury teams that need repeatable
-payment controls, explicit failure/recovery states, and public settlement
-evidence without publishing the policy rules themselves.
+**Target user:** the primary user is an XRP/Flare treasury or DAO operator that
+needs to give an approved vendor a bounded recurring allowance without
+publishing the complete authorization policy. Personal subscriptions and wallet
+or dApp integrations are secondary use cases.
+
+**Example:** a DAO defines a private recurring-payment policy for a security
+vendor. The vendor submits an exact public request without receiving the
+policy's internal limits, schedule, or approval conditions. Registered FCC
+machines evaluate the policy, and the router executes only after two matching
+request-bound results. Amount, recipient, timing, vault accounting, and the
+resulting transfer remain public.
 
 ## What works now
 
@@ -102,6 +111,7 @@ evidence without publishing the policy rules themselves.
 - Evidence index: <https://xrp-payguard.vercel.app/evidence/index.json>
 - Repository: <https://github.com/minhleeee123/xrp-payguard>
 - Demo runbook: [`hackathon-handoff.md`](hackathon-handoff.md)
+- Product positioning: [`product/competitive-analysis.md`](product/competitive-analysis.md)
 - Architecture: [`technology/architecture.md`](technology/architecture.md)
 - Verification matrix: [`technology/verification.md`](technology/verification.md)
 - Threat model: [`technology/threat-model.md`](technology/threat-model.md)

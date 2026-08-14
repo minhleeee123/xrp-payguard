@@ -125,8 +125,10 @@ hardware or mainnet claim.
 
 ### Product usefulness
 
-The private policy must address a validated payment-control problem for an XRPL
-user or treasury. A protocol-only dashboard fails this gate.
+The primary product story is an XRP-native treasury granting a recurring vendor
+allowance without publishing the complete policy or delegating signing keys and
+approval discretion to an automation operator. Personal and developer use cases
+are secondary. A protocol-only dashboard fails this gate.
 
 ### Flare integration quality
 
