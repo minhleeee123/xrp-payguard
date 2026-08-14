@@ -75,7 +75,7 @@ resulting transfer remain public.
   simulated FCC machines. It is live simulated-FCC evidence, not hardware-backed
   production or verified-release evidence; the older isolated V1 run remains
   simulation-only historical evidence.
-- The current repository-only production-corpus audit fetched all 26 hosted
+- The current 2026-08-14 repository-only production-corpus audit fetched all 26 hosted
   evidence assets, required HTTP/JSON boundaries, and matched each body
   byte-for-byte to its reviewed local source without recursively publishing
   its own audit. It contains 25 chain-114 records and three explicitly bounded

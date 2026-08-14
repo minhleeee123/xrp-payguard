@@ -1,14 +1,16 @@
 # XRP PayGuard hackathon handoff
 
 > The current production web artifact is pinned to source commit
-> `62f8a9717dc5adedab1302772521707dcb4f18a4` and Vercel deployment
-> `dpl_EUQheMMg5snBo5ht7CWAHWPgEYth`. Its delegated V2 FCC UI,
+> `089c8506002b4901fdc9bc676e5475fe4689ed8a` and Vercel deployment
+> `dpl_Ac8mMHrPtrF73TH2AMyKzSYpQbpj`. Its delegated V2 FCC UI,
 > production bytes, relay freshness gate, and 26-entry evidence corpus were
-> checked on 2026-08-13.
+> checked on 2026-08-14 after the A identity replacement and fresh owner-wallet
+> lifecycle.
 > The older V1 interactive lifecycle remains explicitly historical and is not
 > silently reassigned to the active V2 deployment. The full workspace, Go,
 > Forge, security, privacy, evidence, release, build, production-corpus audit,
-> live Coston2 reads, and browser-recorder baseline was rerun on 2026-08-12.
+> live Coston2 reads, and browser-recorder baseline was rerun on 2026-08-12;
+> the full source validation and production-corpus audit reran on 2026-08-14.
 > This remains a
 > Coston2 `SIMULATED_TEE` candidate handoff, not a hardware-attested verified
 > PayGuard release.
@@ -57,8 +59,8 @@ path may be presented as hardware-backed confidentiality or mainnet production.
   final 7:02 demonstration with synchronized English narration and captions.
 - Submitted BUIDL: <https://dorahacks.io/buidl/47777> — Interoperable Asset
   Products, confirmed by the owner on 2026-08-14.
-- Vercel deployment ID: `dpl_EUQheMMg5snBo5ht7CWAHWPgEYth`
-- Deployed source commit: `62f8a9717dc5adedab1302772521707dcb4f18a4`
+- Vercel deployment ID: `dpl_Ac8mMHrPtrF73TH2AMyKzSYpQbpj`
+- Deployed source commit: `089c8506002b4901fdc9bc676e5475fe4689ed8a`
 - Railway relay: <https://payguard-live-relay-production.up.railway.app>
 - Railway relay deployment ID: `8500d5e0-5f9b-4ff3-a71d-510447d163cf`
   — configuration-only redeploy of the same `b8512de` source/image
@@ -204,7 +206,7 @@ public RPC:
   review/upload.
 
 A fresh HTTPS read of deployment
-`dpl_EUQheMMg5snBo5ht7CWAHWPgEYth` returned 200 for the application and
+`dpl_Ac8mMHrPtrF73TH2AMyKzSYpQbpj` returned 200 for the application and
 26-entry evidence index. The public-corpus audit matched every hosted evidence
 body byte-for-byte to its reviewed local source. A fresh production Chrome
 read also observed `production monitor healthy` and the aggregate `5

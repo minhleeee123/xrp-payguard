@@ -107,7 +107,10 @@ the metadata index and every then-listed body, required HTTP 200/JSON, reran
 recursive public-safety and simulation-boundary checks, and matched every byte
 to the reviewed local source.
 
-`web/public-evidence-deployment-audit-2026-08-13.json` is the current
+`web/public-evidence-deployment-audit-2026-08-13.json` is the historical audit
+of the prior 26-entry production artifact.
+
+`web/public-evidence-deployment-audit-2026-08-14.json` is the current
 repository-only audit of the production alias. It matched all 26 hosted bodies
 byte-for-byte to reviewed local sources: 25 chain-114 records and three
 explicitly bounded simulation records, with overlapping categories. It is

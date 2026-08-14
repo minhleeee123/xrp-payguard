@@ -256,10 +256,14 @@ metadata-only index all passed. The repository-only result is
 it is not recursively published and does not upgrade any release claim.
 
 The 2026-08-13 refresh added the public-safe stale-machine-C pause record and
-redeployed the streamlined UI plus fresh A/B/D hosted lifecycle evidence from
-source `62f8a9717dc5adedab1302772521707dcb4f18a4`. The production audit matched
-all 26 bodies byte-for-byte: 25 chain-114 records and three overlapping,
-explicitly bounded simulation records. The current repository-only result is
+the first 26-entry audit. On 2026-08-14 the A process replacement was promoted,
+the stale identity was paused, the owner-wallet hosted lifecycle was rerun, and
+the static artifact was rebuilt from source
+`089c8506002b4901fdc9bc676e5475fe4689ed8a`. The production audit matched all
+26 bodies byte-for-byte: 25 chain-114 records and three overlapping, explicitly
+bounded simulation records. The current repository-only result is
+[`public-evidence-deployment-audit-2026-08-14.json`](../../evidence/web/public-evidence-deployment-audit-2026-08-14.json).
+The previous result remains historical at
 [`public-evidence-deployment-audit-2026-08-13.json`](../../evidence/web/public-evidence-deployment-audit-2026-08-13.json).
 The deployed navigation contains only Policy Studio, Vaults, Requests, Demo
 lifecycle, Payee, and Auditor. Legacy Overview and Team routes redirect to Demo

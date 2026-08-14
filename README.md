@@ -425,7 +425,7 @@ Public evidence is allowlisted, sanitized, and testnet-only. Start with
 | [Three-machine custody](evidence/coston2/fcc-live-three-machine-custody.json) and [threshold lifecycle](evidence/coston2/fcc-live-threshold-lifecycle.json) | Three independently stored policy copies, verified receipts, two-of-three ALLOW execution, cap denial, governance, and conservation |
 | [Replacement recovery](evidence/coston2/fcc-live-replacement-lifecycle.json) and [stale-machine pause](evidence/coston2/fcc-stale-machine-c-pause.json) | Fresh machine replacement, frozen-identity safety, executor pause/resume, and manager cleanup |
 | [Independent owner/requester](evidence/coston2/fcc-multi-owner-lifecycle.json) and [production monitoring](evidence/coston2/production-monitoring.json) | Delegated self-service authorization negatives plus aggregate five-dependency readiness |
-| [Interactive demo](evidence/simulation/coston2-interactive-demo-deployment-2026-08-10.json) and [current public-corpus audit](evidence/web/public-evidence-deployment-audit-2026-08-13.json) | Isolated demo contracts and byte-for-byte verification of all 26 hosted evidence bodies |
+| [Interactive demo](evidence/simulation/coston2-interactive-demo-deployment-2026-08-10.json) and [current public-corpus audit](evidence/web/public-evidence-deployment-audit-2026-08-14.json) | Isolated demo contracts and byte-for-byte verification of all 26 hosted evidence bodies |
 
 Evidence may contain only public addresses, hashes, blocks, transaction IDs,
 result commitments, timings, amounts already public by protocol design, and
