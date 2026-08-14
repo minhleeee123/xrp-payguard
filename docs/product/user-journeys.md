@@ -1,6 +1,23 @@
 # Canonical user journeys
 
-## 1. Policy owner — create and activate
+The primary product story is one treasury-to-vendor flow:
+
+```text
+Treasury creates a private recurring vendor allowance
+    → three registered FCC machines acknowledge policy custody
+    → treasury funds the public vault through FDC/Smart Account or direct deposit
+    → the authorized vendor creates an exact public payment request
+    → each FCC machine separately evaluates the private policy
+    → two matching results let PayGuardActionRouter execute
+    → treasury members and auditors verify the public evidence
+```
+
+Smart Accounts belong to the XRP-native funding segment. They do not replace
+the router as the policy-authorized execution component. The current A/B/D
+machines are registered under the explicit Coston2 `SIMULATED_TEE` profile;
+“separately evaluates” does not claim independent hardware operators.
+
+## 1. Treasury operator — create and activate
 
 1. Connect an explicit Coston2 wallet or derive the Flare PersonalAccount from
    an XRPL owner address without requesting a seed.
@@ -46,7 +63,7 @@ Failure expectations:
 - Refreshing requires the owner to re-enter an uncommitted draft; the app does
   not pretend it recovered private content.
 
-## 2. XRPL owner — fund a PayGuard vault
+## 2. Treasury/XRPL owner — fund a PayGuard vault
 
 For the direct Coston2 test-token path, the owner enters a human FTestXRP
 amount once and selects **Deposit**. The UI derives the minimum transaction
@@ -73,23 +90,23 @@ Failure expectations:
   destination drift fails closed.
 - A new browser can resume from public identifiers without a secret.
 
-## 3. Authorized requester — request and receive a payment
+## 3. Authorized vendor/requester — request and receive a payment
 
-1. Receive only the public policy commitment from the owner; no private rule is
-   shared.
+1. Receive only the public policy commitment from the treasury; the complete
+   private rule is not shared.
 2. Connect the exact requester wallet frozen in the private policy and prepare
    a public request with policy ID, vault, target, asset, amount,
    schedule slot, action type, nonce, attempt, and expiry.
 3. Read the canonical spend checkpoint and, if required, capture a fresh FTSO
    value or finalized FDC external trigger.
-4. Create the request on-chain as the exact requester. The policy owner does not
-   sign or approve this payment.
+4. Create the request on-chain as the exact requester. The treasury owner does
+   not sign or manually approve this individual payment.
 5. Sign a short-lived relay authorization bound to this exact request and
-   requester. FCC machines independently rebuild the private policy and
+   requester. Each FCC machine separately rebuilds the private policy and
    canonical public state.
 6. Machines sign only the exact `ALLOW` or `DENY` result domain.
-7. Anyone may submit two matching valid results. After `ALLOW`, the requester
-   can execute the transfer to the public payee; `DENY` or expiry changes no
+7. Anyone may submit two matching valid results. After `ALLOW`, the router can
+   execute the transfer to the public payee; `DENY` or expiry changes no
    balance.
 
 Failure expectations:

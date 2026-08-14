@@ -15,6 +15,14 @@
 
 ## Delivery boundary
 
+The primary product story is an XRP-native treasury granting an approved vendor
+a bounded recurring-payment path without publishing the complete policy or
+handing signing keys and approval discretion to an automation operator. The
+vendor creates an exact public request, registered FCC machines evaluate the
+private policy, and `PayGuardActionRouter` executes only after two matching
+request-bound results. Smart Accounts serve the separate XRP-native funding
+segment; they are not the policy execution component.
+
 The hackathon build uses solution 3:
 
 - a credential-free local three-machine simulated FCC stack;
@@ -88,10 +96,11 @@ a verified release.
    conservation, and thirteen Coston2 checkpoints.
 3. Follow any public checkpoint to Coston2 Explorer. Then inspect the live
    Railway readiness card and explicit `SIMULATED_TEE` label.
-4. Connect wallet A, prepare its V2 policy in **Policy Studio**, designate
-   wallet B as requester/payee, collect three receipts, register and fund it,
-   then share only the public commitment. Connect B in **Requests** to create,
-   evaluate, and receive the payment without another A signature.
+4. Treat wallet A as the treasury owner: prepare its V2 vendor policy in
+   **Policy Studio**, designate wallet B as vendor/requester/payee, collect
+   three receipts, register and fund it, then share only the public commitment.
+   Connect B in **Requests** to create, evaluate, and receive the payment
+   without another A signature.
 5. Point out that the evaluation body is empty and requester-authenticated; the
    browser cannot supply `ALLOW` or override canonical chain history.
 6. Close with the permanent boundary: V2 simulated candidate, self-service
